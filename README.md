@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CampusTrader
 
-## Getting Started
+CampusTrader is a campus commerce marketplace for trust-first C2C trading between students and nearby registered businesses.
 
-First, run the development server:
+## Vision
+
+CampusTrader helps students buy, sell, discover services, and coordinate safe trades inside a campus-first marketplace. The platform is designed around inspection before payment, in-app messaging, manual verification, and community groups instead of anonymous public feeds.
+
+## Problem Solved
+
+Campus buyers and sellers often rely on scattered chats, status updates, and unverified accounts. That makes discovery messy and trust difficult. CampusTrader centralizes listings, seller messaging, safety reporting, verification workflows, and community groups in one campus commerce hub.
+
+## Target Users
+
+- Students selling or buying used items, food, services, books, electronics, fashion, furniture, and refurbished goods.
+- Nearby registered businesses that serve campus communities.
+- Campus admins and moderators who need simple tools for verification and safety review.
+
+## Current MVP
+
+- Home discovery with search, category chips, and Supabase-powered listing sections.
+- Sell flow with Supabase Auth guard, image/video upload to the public `listing-media` bucket, and Kenyan Shilling pricing.
+- Listing details with media gallery, seller messaging, save placeholder, report form, and safety notice.
+- In-app messaging with conversation creation, message sending, and safety warning terms.
+- Profile page with account info, verification request UI, active listings count, and business profile creation.
+- Community tab modeled after WhatsApp Communities with controlled groups and placeholder persistence TODOs.
+- Admin dashboard for manual verification, business approval, listing moderation, report status updates, and user moderation placeholders.
+
+## Core Categories
+
+Electronics, Fashion, Furniture, Books, Food, Services, Refurbished, Other.
+
+## Safety Model
+
+CampusTrader encourages users to:
+
+- Meet in public.
+- Inspect before paying.
+- Avoid advance payments.
+- Keep conversations in-app early in the transaction.
+- Report scams, fake listings, harassment, unsafe meetup requests, wrong categories, and other issues.
+
+## Payment Placeholder
+
+Payments are not active in this MVP. A future-ready fallback contact is reserved for manual M-Pesa coordination: `0745706087`.
+
+Future payment support may include:
+
+- M-Pesa Paybill.
+- Buy Goods/Till.
+- STK Push.
+- Escrow or protected payments.
+
+## Future Roadmap
+
+- Stronger verification flows for students, national ID, and businesses.
+- Business subscriptions.
+- Boosted listings.
+- M-Pesa Paybill and Buy Goods/Till support.
+- Optional escrow or protected payments.
+- AI moderation for listings, reports, and risky chat behavior.
+- Campus expansion and multi-campus discovery.
+- Predictive marketplace insights.
+- Persistent community groups, memberships, and admin notices.
+
+## Setup
+
+```bash
+npm install
+cp .env.local.example .env.local
+```
+
+Add these environment variables to `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app expects Supabase environment variables in `.env.local` and uses the client in `lib/supabase.ts`.
 
-## Learn More
+Required variables:
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Required storage bucket:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `listing-media`, public.
 
-## Deploy on Vercel
+## Deployment Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Before deployment:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Run the SQL in [supabase/final-required-policies.sql](supabase/final-required-policies.sql) in the Supabase SQL Editor.
+2. Add these environment variables in Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+3. Add your deployed Vercel URL to the Supabase Auth redirect URLs.
+4. Confirm the public storage bucket exists:
+   - `listing-media`

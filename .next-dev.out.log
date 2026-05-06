@@ -1,0 +1,25 @@
+
+> campushub@0.1.0 dev
+> next dev --hostname 127.0.0.1
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+✓ Ready in 1343ms
+Creating turbopack project { dir: 'C:\\Users\\san\\Desktop\\campushub', testMode: true }
+
+ GET / 200 in 709ms (next.js: 339ms, application-code: 370ms)
+ GET /sell 200 in 126ms (next.js: 49ms, application-code: 78ms)
+ GET /messages 200 in 162ms (next.js: 51ms, application-code: 111ms)
+ GET /community 200 in 200ms (next.js: 57ms, application-code: 143ms)
+ GET /profile 200 in 185ms (next.js: 60ms, application-code: 125ms)
+ GET /signin 200 in 197ms (next.js: 56ms, application-code: 141ms)
+ GET /admin 200 in 133ms (next.js: 57ms, application-code: 76ms)
+ GET / 200 in 127ms (next.js: 8ms, application-code: 119ms)
+ GET /sell 200 in 71ms (next.js: 5ms, application-code: 66ms)
+ GET /messages 200 in 125ms (next.js: 6ms, application-code: 119ms)
+ GET /community 200 in 72ms (next.js: 6ms, application-code: 67ms)
+ GET /profile 200 in 81ms (next.js: 5ms, application-code: 76ms)
+ GET /signin 200 in 76ms (next.js: 3ms, application-code: 73ms)
+ GET /admin 200 in 98ms (next.js: 5ms, application-code: 92ms)
