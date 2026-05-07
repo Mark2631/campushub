@@ -115,3 +115,5 @@ Creating turbopack project { dir: 'C:\\Users\\san\\Desktop\\campushub', testMode
  GET / 200 in 146ms (next.js: 89ms, application-code: 57ms)
  GET / 200 in 290ms (next.js: 5ms, application-code: 285ms)
  GET /community 200 in 196ms (next.js: 155ms, application-code: 42ms)
+ GET / 200 in 1597ms (next.js: 503ms, application-code: 1094ms)
+ GET /profile 200 in 328ms (next.js: 266ms, application-code: 62ms)
