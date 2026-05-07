@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function ReportButton({ targetType, targetId, label = 'Report' }: Props) {
-  const { user } = useUser();
+  const { user, pushNotification } = useUser();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(reportReasons[0]);
   const [details, setDetails] = useState('');
@@ -42,6 +42,11 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
       return;
     }
 
+    await pushNotification({
+      type: 'report',
+      title: 'Report submitted',
+      body: `Your ${targetType} report has been sent for review.`,
+    });
     setMessage('Report submitted for admin review.');
     setDetails('');
     window.setTimeout(() => setOpen(false), 900);

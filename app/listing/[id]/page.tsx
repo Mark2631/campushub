@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
@@ -14,8 +15,6 @@ type Props = {
 
 export default async function ListingPage({ params }: Props) {
   const { listing, error } = await getListingById(params.id);
-  const isMockListing = params.id.startsWith('mock-');
-  const isLaunchListing = isMockListing || listing?.sellerName === 'CampusTrader Admin';
 
   if (error || !listing) {
     return (
@@ -24,7 +23,10 @@ export default async function ListingPage({ params }: Props) {
         <main className="flex-1 px-4 py-20 text-center">
           <div className="mx-auto max-w-md rounded-2xl border-2 border-gray-300 bg-white p-10 dark:border-zinc-800 dark:bg-zinc-900">
             <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Listing not found</h1>
-            <p className="text-gray-600 dark:text-zinc-400">{error || 'This item may have been removed or the link is invalid.'}</p>
+            <p className="text-gray-600 dark:text-zinc-400">{error || 'No listings yet. Be the first to post.'}</p>
+            <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+              Post listing
+            </Link>
           </div>
         </main>
         <BottomNav />
@@ -43,7 +45,7 @@ export default async function ListingPage({ params }: Props) {
       <div>
         <p className="text-xs font-black uppercase tracking-[0.24em]">{listing.category}</p>
         <p className="mt-3 text-2xl font-bold">{listing.title}</p>
-        <p className="mt-2 text-sm text-blue-50/90">Demo-safe visual fallback for listings without working media.</p>
+        <p className="mt-2 text-sm text-blue-50/90">Listing preview for items without uploaded media.</p>
       </div>
     </div>
   );
@@ -86,9 +88,9 @@ export default async function ListingPage({ params }: Props) {
               </div>
 
               <div className="space-y-6">
-                {isLaunchListing ? (
+                {listing.status === 'sold' ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                    Launch listing. This is a curated listing from CampusTrader while live campus inventory is still growing.
+                    This listing has been marked as sold.
                   </div>
                 ) : null}
 
@@ -130,14 +132,14 @@ export default async function ListingPage({ params }: Props) {
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-lg font-bold text-white">S</div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || (isLaunchListing ? 'CampusTrader Admin' : 'CampusTrader seller')}</p>
-                        {isLaunchListing ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                            Admin / Verified
-                          </span>
-                        ) : listing.badgeType === 'gold' ? (
+                        <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader seller'}</p>
+                        {listing.badgeType === 'gold' ? (
                           <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                             Gold tick
+                          </span>
+                        ) : listing.badgeType === 'admin' ? (
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                            Admin
                           </span>
                         ) : listing.badgeType === 'blue' ? (
                           <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
@@ -148,16 +150,23 @@ export default async function ListingPage({ params }: Props) {
                       <p className="text-sm text-gray-600 dark:text-zinc-400">
                         {listing.sellerType === 'business'
                           ? 'Nearby campus business'
-                          : isLaunchListing
-                            ? 'Curated by CampusTrader for the first public launch.'
-                            : 'Verification badge appears here when approved.'}
+                          : 'Verification badge appears here when approved.'}
                       </p>
+                      {listing.sellerSince ? (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                      ) : null}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
+                  {listing.status === 'sold' ? (
+                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300" disabled>
+                      Sold
+                    </button>
+                  ) : (
+                    <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
+                  )}
                   <button className="w-full rounded-2xl border border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-gray-900 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900">
                     Save
                   </button>

@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { insertListing } from '../../lib/listings';
-import { supabase } from '../../lib/supabase';
+import { getListingById, insertListing, updateListing, uploadListingMedia } from '../../lib/listings';
 
 const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Refurbished', 'Other'];
 const conditions = ['New', 'Like New', 'Good', 'Fair'];
@@ -21,9 +20,11 @@ type SelectedMedia = {
   previewUrl: string;
 };
 
-export default function SellPage() {
+function SellPageContent() {
   const router = useRouter();
-  const { user, loading } = useUser();
+  const searchParams = useSearchParams();
+  const { user, loading, pushNotification, profileContext } = useUser();
+  const editListingId = searchParams.get('edit');
   const [formData, setFormData] = useState({
     title: '',
     category: categories[0],
@@ -39,8 +40,46 @@ export default function SellPage() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [createdListingId, setCreatedListingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [postWithoutMediaReady, setPostWithoutMediaReady] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([]);
+  const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
+
+  useEffect(() => {
+    const loadEditListing = async () => {
+      if (!editListingId || !user) return;
+      setLoadingEdit(true);
+      const { listing, error } = await getListingById(editListingId);
+      setLoadingEdit(false);
+
+      if (error) {
+        setMessage({ type: 'error', text: error });
+        return;
+      }
+
+      if (!listing || listing.seller_id !== user.id) {
+        setMessage({ type: 'error', text: 'You can only edit your own listings.' });
+        return;
+      }
+
+      setFormData({
+        title: listing.title,
+        category: listing.category,
+        price: listing.price?.toString() || '',
+        negotiable: listing.negotiable,
+        condition: listing.condition,
+        description: listing.description || '',
+        location: listing.location || '',
+      });
+      setCreatedListingId(listing.id);
+      setExistingMediaUrls(listing.media_urls || []);
+      setExistingVideoUrl(listing.video_url || null);
+    };
+
+    void loadEditListing();
+  }, [editListingId, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -118,22 +157,71 @@ export default function SellPage() {
     setVideoPreview(null);
   };
 
-  const uploadMediaFile = async (userId: string, file: File) => {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-    const path = `${userId}/${Date.now()}-${safeName}`;
-    const { error } = await supabase.storage.from('listing-media').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      category: categories[0],
+      price: '',
+      negotiable: false,
+      condition: conditions[0],
+      description: '',
+      location: '',
     });
+    images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    if (videoPreview) URL.revokeObjectURL(videoPreview.previewUrl);
+    setImages([]);
+    setVideoPreview(null);
+    setPostWithoutMediaReady(false);
+    setExistingMediaUrls([]);
+    setExistingVideoUrl(null);
+  };
 
-    if (error) {
-      console.error('Listing post failed:', JSON.stringify(error, null, 2));
-      console.error('Error uploading listing media:', error, { path, fileName: file.name });
-      throw new Error(error.message);
+  const createListing = async (options?: { skipMedia?: boolean }) => {
+    if (!user) {
+      throw new Error('Sign in to post a listing.');
     }
 
-    const { data } = supabase.storage.from('listing-media').getPublicUrl(path);
-    return data.publicUrl;
+    setUploadStatus(images.length || videoPreview ? 'Uploading media...' : 'Creating listing...');
+    const mediaUrls: string[] = options?.skipMedia ? [] : [...existingMediaUrls];
+    let videoUrl: string | null = options?.skipMedia ? null : existingVideoUrl;
+
+    if (!options?.skipMedia) {
+      for (const image of images) {
+        const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, image.file);
+        if (error || !publicUrl) {
+          throw new Error(error || 'Image upload failed.');
+        }
+        mediaUrls.push(publicUrl);
+      }
+
+      if (videoPreview) {
+        const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, videoPreview.file);
+        if (error || !publicUrl) {
+          throw new Error(error || 'Video upload failed.');
+        }
+        videoUrl = publicUrl;
+      }
+    }
+
+    setUploadStatus('Creating listing...');
+    const listingPayload = {
+      title: formData.title,
+      category: formData.category,
+      price: formData.price,
+      negotiable: formData.negotiable,
+      condition: formData.condition,
+      description: formData.description,
+      location: formData.location,
+      businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
+      mediaUrls,
+      videoUrl,
+    };
+
+    if (editListingId) {
+      return updateListing(editListingId, user.id, listingPayload);
+    }
+
+    return insertListing(user.id, listingPayload);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -155,30 +243,11 @@ export default function SellPage() {
 
     try {
       setIsSubmitting(true);
-      setUploadStatus(images.length || videoPreview ? 'Uploading media...' : 'Creating listing...');
       setMessage(null);
       setCreatedListingId(null);
+      setPostWithoutMediaReady(false);
 
-      const mediaUrls = await Promise.all(images.map((image) => uploadMediaFile(user.id, image.file)));
-      let videoUrl: string | null = null;
-
-      if (videoPreview) {
-        videoUrl = await uploadMediaFile(user.id, videoPreview.file);
-      }
-
-      setUploadStatus('Creating listing...');
-
-      const { listing, error } = await insertListing(user.id, {
-        title: formData.title,
-        category: formData.category,
-        price: formData.price,
-        negotiable: formData.negotiable,
-        condition: formData.condition,
-        description: formData.description,
-        location: formData.location,
-        mediaUrls,
-        videoUrl,
-      });
+      const { listing, error } = await createListing();
 
       if (error) {
         setMessage({ type: 'error', text: error });
@@ -186,25 +255,25 @@ export default function SellPage() {
       }
 
       setCreatedListingId(listing?.id || null);
-      setMessage({ type: 'success', text: 'Listing posted successfully.' });
-      setFormData({
-        title: '',
-        category: categories[0],
-        price: '',
-        negotiable: false,
-        condition: conditions[0],
-        description: '',
-        location: '',
+      setMessage({ type: 'success', text: editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.' });
+      await pushNotification({
+        type: 'listing',
+        title: editListingId ? 'Listing updated' : 'Listing posted successfully',
+        body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
       });
-      images.forEach((image) => URL.revokeObjectURL(image.previewUrl));
-      if (videoPreview) URL.revokeObjectURL(videoPreview.previewUrl);
-      setImages([]);
-      setVideoPreview(null);
+      resetForm();
       window.dispatchEvent(new Event('campustrader:listings-refresh'));
       router.refresh();
+      if (editListingId) {
+        router.replace('/profile#my-listings');
+      }
     } catch (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : String(error) });
+      const text = error instanceof Error ? error.message : String(error);
+      setMessage({ type: 'error', text });
+      if ((images.length > 0 || videoPreview) && /upload|policy|row-level|timed out|storage/i.test(text)) {
+        setPostWithoutMediaReady(true);
+      }
     } finally {
       setIsSubmitting(false);
       setUploadStatus('');
@@ -233,7 +302,7 @@ export default function SellPage() {
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
             <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to post a listing</h2>
-            <p className="text-gray-600 dark:text-zinc-400 mb-6">You need to be signed in to sell items or services on CampusTrader.</p>
+            <p className="text-gray-600 dark:text-zinc-400 mb-6">Sign in to post a listing.</p>
             <Link href="/signin" className="inline-block rounded-2xl bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 px-6 py-3 font-semibold text-white transition">
               Sign In
             </Link>
@@ -249,9 +318,13 @@ export default function SellPage() {
       <Header />
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold">Sell an item or service</h1>
+          <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell an item or service'}</h1>
           <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post an item, service, food offer, or refurbished product.</p>
+          <p className="mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
+            Posting as: {profileContext.mode === 'business' ? profileContext.businessName : 'Personal profile'}
+          </p>
         </header>
+        {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
 
         {message && (
           <div className={`mb-6 rounded-2xl border p-4 ${message.type === 'success' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
@@ -268,6 +341,42 @@ export default function SellPage() {
                 </Link>
               </div>
             )}
+            {message.type === 'error' && postWithoutMediaReady ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setIsSubmitting(true);
+                      setMessage(null);
+                      const { listing, error } = await createListing({ skipMedia: true });
+                      if (error) {
+                        setMessage({ type: 'error', text: error });
+                        return;
+                      }
+                      setCreatedListingId(listing?.id || null);
+                      setMessage({ type: 'success', text: 'Listing posted successfully.' });
+                      await pushNotification({
+                        type: 'listing',
+                        title: 'Listing posted successfully',
+                        body: `${listing?.title || 'Your listing'} is now live without media.`,
+                      });
+                      resetForm();
+                      window.dispatchEvent(new Event('campustrader:listings-refresh'));
+                      router.refresh();
+                    } catch (fallbackError) {
+                      setMessage({ type: 'error', text: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) });
+                    } finally {
+                      setIsSubmitting(false);
+                      setUploadStatus('');
+                    }
+                  }}
+                  className="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                >
+                  Post without media
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -511,5 +620,23 @@ export default function SellPage() {
 
       <BottomNav />
     </div>
+  );
+}
+
+export default function SellPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+          <Header />
+          <main className="max-w-6xl mx-auto flex w-full flex-1 items-center justify-center px-4 py-8">
+            <div className="h-12 w-12 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin dark:border-zinc-700" />
+          </main>
+          <BottomNav />
+        </div>
+      }
+    >
+      <SellPageContent />
+    </Suspense>
   );
 }

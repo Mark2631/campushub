@@ -1,10 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ensureProfile } from '../lib/profiles';
 import { checkIsAdmin } from '../lib/admins';
+import { AppNotification, createNotificationRecord, getUserNotifications, markNotificationRead } from '../lib/notifications';
+import { ProfileContext, personalProfileContext, readStoredProfileContext, storeProfileContext } from '../lib/profileContext';
 
 type Theme = 'dark' | 'light';
 
@@ -17,6 +19,12 @@ type AppContextValue = {
   theme: Theme;
   toggleTheme: () => void;
   refreshSession: () => Promise<Session | null>;
+  notifications: AppNotification[];
+  unreadNotifications: number;
+  pushNotification: (notification: { title: string; body: string; type: string }) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
+  profileContext: ProfileContext;
+  setProfileContext: (context: ProfileContext) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -32,10 +40,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return 'dark';
     return window.localStorage.getItem('campustrader-theme') === 'light' ? 'light' : 'dark';
   });
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [profileContext, setProfileContextState] = useState<ProfileContext>(() => {
+    if (typeof window === 'undefined') return personalProfileContext;
+    return readStoredProfileContext();
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    storeProfileContext(profileContext);
+  }, [profileContext]);
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +85,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const syncNotifications = async (userToSync: User | null) => {
+      if (!userToSync) {
+        setNotifications([]);
+        return;
+      }
+
+      const { notifications: nextNotifications } = await getUserNotifications(userToSync.id);
+      if (isMounted) {
+        setNotifications(nextNotifications);
+      }
+    };
+
     const initAuth = async () => {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
@@ -91,10 +120,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (sessionData.session && isMounted) {
             setSession(sessionData.session);
             setLoading(false);
-            await Promise.all([
-              syncProfile(sessionData.session.user),
-              syncAdmin(sessionData.session.user),
-            ]);
+            await Promise.all([syncProfile(sessionData.session.user), syncAdmin(sessionData.session.user), syncNotifications(sessionData.session.user)]);
             return;
           }
         }
@@ -109,7 +135,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       setSession(data.session ?? null);
       setLoading(false);
-      await Promise.all([syncProfile(data.session?.user ?? null), syncAdmin(data.session?.user ?? null)]);
+      await Promise.all([
+        syncProfile(data.session?.user ?? null),
+        syncAdmin(data.session?.user ?? null),
+        syncNotifications(data.session?.user ?? null),
+      ]);
     };
 
     initAuth();
@@ -119,6 +149,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       void syncProfile(nextSession?.user ?? null);
       void syncAdmin(nextSession?.user ?? null);
+      void syncNotifications(nextSession?.user ?? null);
     });
 
     return () => {
@@ -148,6 +179,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const pushNotification = useCallback(async (notification: { title: string; body: string; type: string }) => {
+    const localNotification: AppNotification = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: notification.title,
+      body: notification.body,
+      type: notification.type,
+      read: false,
+      created_at: new Date().toISOString(),
+    };
+
+    setNotifications((current) => [localNotification, ...current].slice(0, 20));
+
+    if (!session?.user?.id) return;
+
+    const { notification: created } = await createNotificationRecord({
+      userId: session.user.id,
+      type: notification.type,
+      title: notification.title,
+      body: notification.body,
+    });
+
+    if (created) {
+      setNotifications((current) => [created, ...current.filter((item) => item.id !== localNotification.id)].slice(0, 20));
+    }
+  }, [session]);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    const unread = notifications.filter((notification) => !notification.read);
+    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    await Promise.all(unread.map((notification) => markNotificationRead(notification.id)));
+  }, [notifications]);
+
+  const setProfileContext = (context: ProfileContext) => {
+    setProfileContextState(context);
+  };
+
   const value = useMemo<AppContextValue>(
     () => ({
       user: session?.user ?? null,
@@ -158,8 +225,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       theme,
       toggleTheme,
       refreshSession,
+      notifications,
+      unreadNotifications: notifications.filter((notification) => !notification.read).length,
+      pushNotification,
+      markAllNotificationsRead,
+      profileContext,
+      setProfileContext,
     }),
-    [adminLoading, isAdmin, loading, session, theme]
+    [adminLoading, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, theme]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

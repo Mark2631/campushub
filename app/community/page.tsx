@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
+import { communityLinks } from '../../lib/communityLinks';
 
 type CommunityGroup = {
   id: string;
@@ -11,14 +13,6 @@ type CommunityGroup = {
   members: number;
   action: 'Open' | 'Join';
 };
-
-const usefulLinks = [
-  { label: 'Student Portal', note: 'Preview' },
-  { label: 'E-learning', note: 'Preview' },
-  { label: 'Library Resources', note: 'Preview' },
-  { label: 'School Website', note: 'Preview' },
-  { label: 'Support / Help', note: 'Preview' },
-];
 
 const groups: CommunityGroup[] = [
   { id: 'deals-discounts', name: 'Deals & Discounts', description: 'Quick price drops, bundles, and useful student offers.', members: 842, action: 'Open' },
@@ -32,6 +26,8 @@ const groups: CommunityGroup[] = [
 ];
 
 export default function CommunityPage() {
+  const [groupMessage, setGroupMessage] = useState<string | null>(null);
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white">
       <Header />
@@ -56,11 +52,17 @@ export default function CommunityPage() {
             <span className="text-sm text-slate-500 dark:text-slate-400">Easy to expand later</span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {usefulLinks.map((link) => (
-              <div key={link.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+            {communityLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-700"
+              >
                 <p className="font-semibold text-slate-900 dark:text-white">{link.label}</p>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{link.note}</p>
-              </div>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Open link</p>
+              </a>
             ))}
           </div>
         </section>
@@ -82,16 +84,30 @@ export default function CommunityPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:items-end">
-                    <button className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto">
+                    <button
+                      onClick={() => setGroupMessage('Group interactions will open as the community grows.')}
+                      className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto"
+                    >
                       {group.action}
                     </button>
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Preview</span>
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Responsive</span>
                   </div>
                 </div>
               </article>
             ))}
           </div>
         </section>
+
+        {groupMessage ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{groupMessage}</p>
+              <button onClick={() => setGroupMessage(null)} className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white">
+                Close
+              </button>
+            </div>
+          </div>
+        ) : null}
       </main>
 
       <BottomNav />

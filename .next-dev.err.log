@@ -1,0 +1,3799 @@
+⚠ Fast Refresh had to perform a full reload when ./components/AppProvider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⨯ ./app/messages/page.tsx:9:1
+Module not found: Can't resolve '../../lib/conversations'
+  [90m 7 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../../components/SafetyBanner'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { getUserConversations } [36mfrom[0m [32m'../../lib/conversations'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mtype[0m [33mConversationSummary[0m = {
+  [90m12 |[0m   id: string;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/messages/page.tsx:9:1
+Module not found: Can't resolve '../../lib/conversations'
+  [90m 7 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../../components/SafetyBanner'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { getUserConversations } [36mfrom[0m [32m'../../lib/conversations'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mtype[0m [33mConversationSummary[0m = {
+  [90m12 |[0m   id: string;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/messages/page.tsx:9:1
+Module not found: Can't resolve '../../lib/conversations'
+  [90m 7 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../../components/SafetyBanner'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { getUserConversations } [36mfrom[0m [32m'../../lib/conversations'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mtype[0m [33mConversationSummary[0m = {
+  [90m12 |[0m   id: string;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/messages/page.tsx:9:1
+Module not found: Can't resolve '../../lib/conversations'
+  [90m 7 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../../components/SafetyBanner'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { getUserConversations } [36mfrom[0m [32m'../../lib/conversations'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m
+  [90m11 |[0m [36mtype[0m [33mConversationSummary[0m = {
+  [90m12 |[0m   id: string;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[browser] Uncaught Error: ./app/messages/page.tsx:9:1
+Module not found: Can't resolve '../../lib/conversations'
+   7 | import SafetyBanner from '../../components/SafetyBanner';
+   8 | import useUser from '../../hooks/useUser';
+>  9 | import { getUserConversations } from '../../lib/conversations';
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  10 |
+  11 | type ConversationSummary = {
+  12 |   id: string;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./app/messages/page.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (Error: (./app/messages/page.tsx:9:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+⨯ ./app/sell/page.tsx:9:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m 7 |[0m [36mimport[0m [33mHeader[0m [36mfrom[0m [32m'../../components/Header'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { insertListing } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../../lib/supabase'[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/sell/page.tsx:9:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m 7 |[0m [36mimport[0m [33mHeader[0m [36mfrom[0m [32m'../../components/Header'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { insertListing } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../../lib/supabase'[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/sell/page.tsx:9:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m 7 |[0m [36mimport[0m [33mHeader[0m [36mfrom[0m [32m'../../components/Header'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { insertListing } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../../lib/supabase'[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/sell/page.tsx:9:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m 7 |[0m [36mimport[0m [33mHeader[0m [36mfrom[0m [32m'../../components/Header'[0m;
+  [90m 8 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { insertListing } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../../lib/supabase'[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:20:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m18 |[0m   upsertProfile,
+  [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+[31m[1m>[0m [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+  [90m23 |[0m [36mconst[0m verificationTypes = [
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:20:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m18 |[0m   upsertProfile,
+  [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+[31m[1m>[0m [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+  [90m23 |[0m [36mconst[0m verificationTypes = [
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:20:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m18 |[0m   upsertProfile,
+  [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+[31m[1m>[0m [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+  [90m23 |[0m [36mconst[0m verificationTypes = [
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:20:1
+Module not found: Can't resolve '../../lib/listings'
+  [90m18 |[0m   upsertProfile,
+  [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+[31m[1m>[0m [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+  [90m23 |[0m [36mconst[0m verificationTypes = [
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+  [90m 8 |[0m [36mimport[0m [33mSafetyBanner[0m [36mfrom[0m [32m'../components/SafetyBanner'[0m;
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[browser] Uncaught Error: ./app/page.tsx:10:1
+Module not found: Can't resolve '../lib/listings'
+   8 | import SafetyBanner from '../components/SafetyBanner';
+   9 | import useUser from '../hooks/useUser';
+> 10 | import { getListings, Listing } from '../lib/listings';
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  11 | import { getProfileById } from '../lib/profiles';
+  12 |
+  13 | const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'R...
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./app/page.tsx:10:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (Error: (./app/page.tsx:10:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/messages/page.tsx [Client Component Browser]
+    ./app/messages/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/messages/page.tsx [Client Component SSR]
+    ./app/messages/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/sell/page.tsx [Client Component Browser]
+    ./app/sell/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/sell/page.tsx [Client Component SSR]
+    ./app/sell/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./components/Header.tsx [Client Component Browser]
+    ./app/community/page.tsx [Client Component Browser]
+    ./app/community/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./components/Header.tsx [Client Component SSR]
+    ./app/community/page.tsx [Client Component SSR]
+    ./app/community/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./components/Header.tsx [Client Component Browser]
+    ./app/community/page.tsx [Client Component Browser]
+    ./app/community/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./components/Header.tsx [Client Component SSR]
+    ./app/community/page.tsx [Client Component SSR]
+    ./app/community/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./components/Header.tsx [Client Component Browser]
+    ./app/community/page.tsx [Client Component Browser]
+    ./app/community/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./components/Header.tsx [Client Component SSR]
+    ./app/community/page.tsx [Client Component SSR]
+    ./app/community/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./components/Header.tsx [Client Component Browser]
+    ./app/community/page.tsx [Client Component Browser]
+    ./app/community/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./components/Header.tsx [Client Component SSR]
+    ./app/community/page.tsx [Client Component SSR]
+    ./app/community/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/signin/page.tsx [Client Component Browser]
+    ./app/signin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/signin/page.tsx [Client Component SSR]
+    ./app/signin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/signin/page.tsx [Client Component Browser]
+    ./app/signin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/signin/page.tsx [Client Component SSR]
+    ./app/signin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/signin/page.tsx [Client Component Browser]
+    ./app/signin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/signin/page.tsx [Client Component SSR]
+    ./app/signin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/signin/page.tsx [Client Component Browser]
+    ./app/signin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/signin/page.tsx [Client Component SSR]
+    ./app/signin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/profile/page.tsx:12:1
+Module not found: Can't resolve '../../lib/profiles'
+  [90m10 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../../hooks/useUser'[0m;
+  [90m11 |[0m [36mimport[0m useTheme [36mfrom[0m [32m'../../hooks/useTheme'[0m;
+[31m[1m>[0m [90m12 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mBusinessRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mProfileRecord[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m   createBusinessProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m16 |[0m   getBusinessProfiles,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m17 |[0m   submitVerificationRequest,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m18 |[0m   upsertProfile,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m19 |[0m } [36mfrom[0m [32m'../../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m20 |[0m [36mimport[0m { getListingsByUser } [36mfrom[0m [32m'../../lib/listings'[0m;
+  [90m21 |[0m [36mimport[0m { createComplaint } [36mfrom[0m [32m'../../lib/complaints'[0m;
+  [90m22 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useTheme.ts [Client Component Browser]
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useTheme.ts [Client Component SSR]
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useTheme.ts [Client Component Browser]
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useTheme.ts [Client Component SSR]
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useTheme.ts [Client Component Browser]
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useTheme.ts [Client Component SSR]
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useTheme.ts [Client Component Browser]
+    ./app/profile/page.tsx [Client Component Browser]
+    ./app/profile/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useTheme.ts [Client Component SSR]
+    ./app/profile/page.tsx [Client Component SSR]
+    ./app/profile/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/admin/page.tsx [Client Component Browser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/admin/page.tsx [Client Component SSR]
+    ./app/admin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/admin/page.tsx [Client Component Browser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/admin/page.tsx [Client Component SSR]
+    ./app/admin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/admin/page.tsx [Client Component Browser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/admin/page.tsx [Client Component SSR]
+    ./app/admin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/admin/page.tsx [Client Component Browser]
+    ./app/admin/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/admin/page.tsx [Client Component SSR]
+    ./app/admin/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m 9 |[0m [36mimport[0m useUser [36mfrom[0m [32m'../hooks/useUser'[0m;
+  [90m10 |[0m [36mimport[0m { getListings, [33mListing[0m } [36mfrom[0m [32m'../lib/listings'[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m { getProfileById } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m12 |[0m
+  [90m13 |[0m [36mconst[0m categories = [[32m'Electronics'[0m, [32m'Fashion'[0m, [32m'Furniture'[0m, [32m'Books'[0m, [32m'Food'[0m, [32m'Services'[0m, [32m'R...[0m
+  [90m14 |[0m
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+
+./components/AppProvider.tsx:6:1
+Module not found: Can't resolve '../lib/profiles'
+  [90m4 |[0m [36mimport[0m [36mtype[0m { [33mSession[0m, [33mUser[0m } [36mfrom[0m [32m'@supabase/supabase-js'[0m;
+  [90m5 |[0m [36mimport[0m { supabase } [36mfrom[0m [32m'../lib/supabase'[0m;
+[31m[1m>[0m [90m6 |[0m [36mimport[0m { ensureProfile } [36mfrom[0m [32m'../lib/profiles'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m [36mimport[0m { checkIsAdmin } [36mfrom[0m [32m'../lib/admins'[0m;
+  [90m8 |[0m [36mimport[0m { [33mAppNotification[0m, createNotificationRecord, getUserNotifications, markNotificationR...
+  [90m9 |[0m [36mimport[0m { [33mProfileContext[0m, personalProfileContext, readStoredProfileContext, storeProfileCont...
+
+
+
+Import traces:
+  Server Component:
+    ./components/AppProvider.tsx
+    ./app/layout.tsx
+
+  Client Component Browser:
+    ./components/AppProvider.tsx [Client Component Browser]
+    ./hooks/useUser.ts [Client Component Browser]
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AppProvider.tsx [Client Component SSR]
+    ./hooks/useUser.ts [Client Component SSR]
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+[browser] Uncaught Error: ./app/page.tsx:11:1
+Module not found: Can't resolve '../lib/profiles'
+   9 | import useUser from '../hooks/useUser';
+  10 | import { getListings, Listing } from '../lib/listings';
+> 11 | import { getProfileById } from '../lib/profiles';
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  12 |
+  13 | const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'R...
+  14 |
+
+
+
+Import traces:
+  Client Component Browser:
+    ./app/page.tsx [Client Component Browser]
+    ./app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/page.tsx [Client Component SSR]
+    ./app/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (Error: ./app/page.tsx:11:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (Error: (./app/page.tsx:11:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+⚠ Fast Refresh had to perform a full reload when ./components/AppProvider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./components/AppProvider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload

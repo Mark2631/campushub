@@ -7,8 +7,9 @@ import Logo from './Logo';
 import SettingsPanel from './SettingsPanel';
 
 export default function Header() {
-  const { user, loading, isAdmin } = useUser();
+  const { user, loading, isAdmin, notifications, unreadNotifications, markAllNotificationsRead } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const userLabel = user?.email ? user.email : 'Signed in';
   const avatar = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
@@ -27,6 +28,54 @@ export default function Header() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setNotificationsOpen((current) => !current);
+                    if (!notificationsOpen && unreadNotifications > 0) {
+                      void markAllNotificationsRead();
+                    }
+                  }}
+                  className="relative rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-slate-700 transition hover:border-blue-300 sm:px-4 sm:text-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
+                >
+                  Bell
+                  {unreadNotifications > 0 ? (
+                    <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {unreadNotifications}
+                    </span>
+                  ) : null}
+                </button>
+
+                {notificationsOpen ? (
+                  <div className="absolute right-0 top-14 z-50 w-[18rem] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-slate-950">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
+                      <button
+                        onClick={() => setNotificationsOpen(false)}
+                        className="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="max-h-72 space-y-2 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <div key={notification.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
+                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                          No notifications yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <button
               onClick={() => setSettingsOpen(true)}
               className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-slate-700 transition hover:border-blue-300 sm:px-4 sm:text-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"

@@ -14,10 +14,11 @@ import {
   ProfileRecord,
   createBusinessProfile,
   getBusinessProfiles,
+  saveProfileAvatar,
   submitVerificationRequest,
   upsertProfile,
 } from '../../lib/profiles';
-import { getListingsByUser } from '../../lib/listings';
+import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import { createComplaint } from '../../lib/complaints';
 
 const verificationTypes = [
@@ -40,10 +41,11 @@ function formatStatus(status?: string | null) {
 }
 
 export default function ProfilePage() {
-  const { user, loading, isAdmin } = useUser();
+  const { user, loading, isAdmin, pushNotification, profileContext, setProfileContext } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
+  const [userListings, setUserListings] = useState<Listing[]>([]);
   const [activeListingsCount, setActiveListingsCount] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
   const [verificationType, setVerificationType] = useState(verificationTypes[0].value);
@@ -53,6 +55,8 @@ export default function ProfilePage() {
   const [businessSubmitting, setBusinessSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [listingActionId, setListingActionId] = useState<string | null>(null);
   const [complaintForm, setComplaintForm] = useState({
     subject: '',
     message: '',
@@ -93,6 +97,7 @@ export default function ProfilePage() {
       if (!isMounted) return;
       setProfile(syncedProfile);
       setBusinesses(userBusinesses);
+      setUserListings(userListings);
       setActiveListingsCount(userListings.filter((listing) => listing.status === 'active').length);
       setProfileLoading(false);
     };
@@ -125,6 +130,30 @@ export default function ProfilePage() {
     setDocumentPreview(file ? URL.createObjectURL(file) : null);
   };
 
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file || !user) return;
+
+    setAvatarUploading(true);
+    setMessage(null);
+    const { avatarUrl, error } = await saveProfileAvatar(user.id, file);
+    setAvatarUploading(false);
+    event.currentTarget.value = '';
+
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      return;
+    }
+
+    setProfile((current) => (current ? { ...current, avatar_url: avatarUrl } : current));
+    await pushNotification({
+      type: 'profile',
+      title: 'Profile picture updated',
+      body: 'Your account photo has been updated.',
+    });
+    setMessage({ type: 'success', text: 'Profile picture updated.' });
+  };
+
   const clearDocumentFile = () => {
     if (documentPreview) {
       URL.revokeObjectURL(documentPreview);
@@ -146,7 +175,13 @@ export default function ProfilePage() {
     setMessage(null);
 
     // TODO: Upload verification documents to a private verification-documents bucket when available.
-    const { error } = await submitVerificationRequest(user.id, verificationType, documentFile.name);
+    const { error } = await submitVerificationRequest({
+      userId: user.id,
+      requestType: verificationType,
+      documentName: documentFile.name,
+      documentUrls: [],
+      businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
+    });
     setVerificationSubmitting(false);
 
     if (error) {
@@ -154,7 +189,12 @@ export default function ProfilePage() {
       return;
     }
 
-    setMessage({ type: 'success', text: 'Verification submitted. Admin will review your documents.' });
+    await pushNotification({
+      type: 'verification',
+      title: 'Verification submitted',
+      body: 'Verification submitted for admin review.',
+    });
+    setMessage({ type: 'success', text: 'Verification submitted for admin review.' });
     clearDocumentFile();
     setVerificationType(verificationTypes[0].value);
   };
@@ -194,7 +234,12 @@ export default function ProfilePage() {
       location: '',
       description: '',
     });
-    setMessage({ type: 'success', text: 'Business profile created. Verification is reviewed manually by admin.' });
+    await pushNotification({
+      type: 'business',
+      title: 'Business profile created',
+      body: 'Your business profile is ready and waiting for verification.',
+    });
+    setMessage({ type: 'success', text: 'Business profile created.' });
   };
 
   const handleComplaintSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -223,7 +268,35 @@ export default function ProfilePage() {
     }
 
     setComplaintForm({ subject: '', message: '' });
+    await pushNotification({
+      type: 'complaint',
+      title: 'Issue reported',
+      body: 'Your issue has been submitted for review.',
+    });
     setMessage({ type: 'success', text: 'Complaint submitted. Admin will review it.' });
+  };
+
+  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden') => {
+    if (!user) return;
+    setListingActionId(listingId);
+    setMessage(null);
+    const { error } = await updateListingLifecycleStatus(listingId, user.id, status);
+    setListingActionId(null);
+
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      return;
+    }
+
+    setUserListings((current) => current.map((listing) => (listing.id === listingId ? { ...listing, status } : listing)));
+    setActiveListingsCount((current) => Math.max(0, status === 'sold' || status === 'hidden' ? current - 1 : current));
+    await pushNotification({
+      type: 'listing',
+      title: status === 'sold' ? 'Listing marked as sold' : 'Listing hidden',
+      body: status === 'sold' ? 'Listing marked as sold.' : 'Listing removed from the active feed.',
+    });
+    setMessage({ type: 'success', text: status === 'sold' ? 'Listing marked as sold.' : 'Listing hidden.' });
+    window.dispatchEvent(new Event('campustrader:listings-refresh'));
   };
 
   return (
@@ -279,6 +352,10 @@ export default function ProfilePage() {
                         Admin badge
                       </div>
                     ) : null}
+                    <label className="mt-4 inline-flex cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+                      {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
+                    </label>
                   </div>
                 </div>
                 <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 xl:flex">
@@ -364,6 +441,13 @@ export default function ProfilePage() {
                 <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Verification</p>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Verify account</h2>
                 <p className="text-sm text-gray-600 dark:text-zinc-400">Verification is reviewed manually by admin.</p>
+                <p className="text-xs text-gray-500 dark:text-zinc-500">
+                  {verificationType === 'student'
+                    ? 'Student verification: upload school ID or admission/student card.'
+                    : verificationType === 'national_id'
+                      ? 'National ID verification: upload the front side of your national ID. Optional back side later.'
+                      : 'Business verification: upload owner ID plus business proof if available.'}
+                </p>
               </div>
 
               <form onSubmit={handleVerificationSubmit} className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
@@ -394,7 +478,7 @@ export default function ProfilePage() {
                   <label className="relative block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-blue-500">
                     <input
                       type="file"
-                      accept="image/*,.pdf"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
                       onChange={handleDocumentChange}
                       className="absolute inset-0 cursor-pointer opacity-0"
                     />
@@ -443,6 +527,26 @@ export default function ProfilePage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Help & Settings</h2>
                 <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Change theme, sign out, or report an issue if something is not working.</p>
               </div>
+              <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Current profile</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })}
+                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'}`}
+                  >
+                    Personal
+                  </button>
+                  {businesses.map((business) => (
+                    <button
+                      key={business.id}
+                      onClick={() => setProfileContext({ mode: 'business', businessId: business.id, businessName: business.business_name })}
+                      className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'business' && profileContext.businessId === business.id ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'}`}
+                    >
+                      {business.business_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="mb-4 flex flex-wrap gap-3">
                 <button
                   onClick={toggleTheme}
@@ -485,10 +589,49 @@ export default function ProfilePage() {
               <section id="my-listings" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
                 <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">See what you have posted and add a new listing when you are ready.</p>
-                <div className="mt-4 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{activeListingsCount} active listings</p>
-                  <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Your active listings count is live. More listing management tools can be added later.</p>
-                  <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                <div className="mt-4 space-y-4">
+                  {userListings.length > 0 ? (
+                    userListings.map((listing) => (
+                      <article key={listing.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{listing.title}</p>
+                            <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                              {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'No location'} · {formatStatus(listing.status)}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                            <Link href={`/listing/${listing.id}`} className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                              View
+                            </Link>
+                            <Link href={`/sell?edit=${listing.id}`} className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                              Edit
+                            </Link>
+                            <button
+                              disabled={listing.status === 'sold' || listingActionId === listing.id}
+                              onClick={() => handleListingStatus(listing.id, 'sold')}
+                              className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                            >
+                              Mark as Sold
+                            </button>
+                            <button
+                              disabled={listingActionId === listing.id}
+                              onClick={() => handleListingStatus(listing.id, 'hidden')}
+                              className="rounded-2xl bg-gray-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                            >
+                              Hide
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{activeListingsCount} active listings</p>
+                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">You have not posted anything yet.</p>
+                    </div>
+                  )}
+                  <Link href="/sell" className="inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
                     Post Listing
                   </Link>
                 </div>

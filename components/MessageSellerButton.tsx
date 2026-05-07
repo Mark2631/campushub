@@ -12,17 +12,13 @@ type Props = {
 
 export default function MessageSellerButton({ listingId, sellerId }: Props) {
   const router = useRouter();
-  const { user, loading } = useUser();
+  const { user, loading, pushNotification } = useUser();
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const handleClick = async () => {
-    if (listingId.startsWith('mock-')) {
-      setStatus('This is demo marketplace data. Real messaging opens once the listing comes from your live database.');
-      return;
-    }
-
     if (!user) {
+      setStatus('Sign in to message sellers.');
       router.push(`/signin?next=${encodeURIComponent(`/listing/${listingId}`)}`);
       return;
     }
@@ -41,6 +37,11 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
       return;
     }
 
+    await pushNotification({
+      type: 'message',
+      title: 'Conversation ready',
+      body: 'Your conversation with the seller is open.',
+    });
     router.push(`/messages/${conversation.id}`);
   };
 

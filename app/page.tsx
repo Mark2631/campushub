@@ -49,6 +49,15 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [error, setError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    minPrice: '',
+    maxPrice: '',
+    condition: 'all',
+    location: '',
+    sellerType: 'all',
+    negotiableOnly: false,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -105,10 +114,17 @@ export default function Home() {
         listing.category.toLowerCase().includes(normalizedQuery) ||
         listing.description?.toLowerCase().includes(normalizedQuery) ||
         listing.location?.toLowerCase().includes(normalizedQuery);
+      const numericPrice = typeof listing.price === 'number' ? listing.price : null;
+      const matchesMinPrice = !filters.minPrice || (numericPrice != null && numericPrice >= Number(filters.minPrice));
+      const matchesMaxPrice = !filters.maxPrice || (numericPrice != null && numericPrice <= Number(filters.maxPrice));
+      const matchesCondition = filters.condition === 'all' || listing.condition.toLowerCase() === filters.condition.toLowerCase();
+      const matchesLocation = !filters.location || (listing.location || '').toLowerCase().includes(filters.location.toLowerCase());
+      const matchesSellerType = filters.sellerType === 'all' || listing.sellerType === filters.sellerType;
+      const matchesNegotiable = !filters.negotiableOnly || listing.negotiable;
 
-      return matchesCategory && matchesQuery;
+      return matchesCategory && matchesQuery && matchesMinPrice && matchesMaxPrice && matchesCondition && matchesLocation && matchesSellerType && matchesNegotiable;
     });
-  }, [activeCategory, listings, query]);
+  }, [activeCategory, filters, listings, query]);
 
   const sectionListings = (category: string) => {
     const exact = filteredListings.filter((listing) => listing.category === category);
@@ -143,7 +159,10 @@ export default function Home() {
               placeholder="Search items, services, businesses..."
               className="min-w-0 flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none dark:text-white dark:placeholder-zinc-500"
             />
-            <button className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600">
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600"
+            >
               Filter
             </button>
           </div>
@@ -183,17 +202,79 @@ export default function Home() {
               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
                 <p className="font-semibold">Live listings are having trouble right now</p>
                 <p className="mt-1 text-sm">{error}</p>
-                <p className="mt-2 text-sm">Showing curated launch listings so the marketplace still feels ready while live inventory catches up.</p>
               </div>
             ) : null}
-            <ListingSection title="Recently Posted" listings={filteredListings.slice(0, 8)} />
-            <ListingSection title="Services Around Campus" listings={sectionListings('Services')} />
-            <ListingSection title="Refurbished Deals" listings={sectionListings('Refurbished')} />
-            <ListingSection title="Student Essentials" listings={studentEssentialsListings} />
-            <ListingSection title="Verified Businesses" listings={verifiedBusinessListings} />
+            {filteredListings.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {listings.length === 0 ? 'No listings yet. Be the first to post.' : 'No matching listings found.'}
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    Post listing
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                <ListingSection title="Recently Posted" listings={filteredListings.slice(0, 8)} />
+                <ListingSection title="Services Around Campus" listings={sectionListings('Services')} />
+                <ListingSection title="Refurbished Deals" listings={sectionListings('Refurbished')} />
+                <ListingSection title="Student Essentials" listings={studentEssentialsListings} />
+                <ListingSection title="Verified Businesses" listings={verifiedBusinessListings} />
+              </>
+            )}
           </>
         )}
       </main>
+
+      {filtersOpen ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 py-4 sm:items-center">
+          <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
+              <button onClick={() => setFiltersOpen(false)} className="text-sm font-semibold text-gray-500 dark:text-zinc-400">Close</button>
+            </div>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <input value={filters.minPrice} onChange={(event) => setFilters((current) => ({ ...current, minPrice: event.target.value }))} placeholder="Min KSh" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
+                <input value={filters.maxPrice} onChange={(event) => setFilters((current) => ({ ...current, maxPrice: event.target.value }))} placeholder="Max KSh" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
+              </div>
+              <select value={filters.condition} onChange={(event) => setFilters((current) => ({ ...current, condition: event.target.value }))} className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
+                <option value="all">All conditions</option>
+                <option value="new">New</option>
+                <option value="used">Used</option>
+                <option value="refurbished">Refurbished</option>
+                <option value="service">Service</option>
+              </select>
+              <input value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))} placeholder="Location" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
+              <select value={filters.sellerType} onChange={(event) => setFilters((current) => ({ ...current, sellerType: event.target.value }))} className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
+                <option value="all">All sellers</option>
+                <option value="student">Students</option>
+                <option value="business">Businesses</option>
+              </select>
+              <label className="flex items-center justify-between rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
+                <span>Negotiable only</span>
+                <input type="checkbox" checked={filters.negotiableOnly} onChange={(event) => setFilters((current) => ({ ...current, negotiableOnly: event.target.checked }))} />
+              </label>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setFilters({ minPrice: '', maxPrice: '', condition: 'all', location: '', sellerType: 'all', negotiableOnly: false });
+                  setFiltersOpen(false);
+                }}
+                className="rounded-2xl border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:text-zinc-200"
+              >
+                Clear filters
+              </button>
+              <button onClick={() => setFiltersOpen(false)} className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white">
+                Apply filters
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Link href="/sell" className="fixed bottom-24 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-2xl text-white shadow-lg transition hover:scale-110 hover:from-blue-600 hover:to-blue-700 sm:right-6">
         +

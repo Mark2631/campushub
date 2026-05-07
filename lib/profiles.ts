@@ -14,12 +14,14 @@ export interface ProfileRecord {
 
 export interface BusinessRecord {
   id: string;
-  user_id: string;
+  owner_id?: string;
+  user_id?: string;
   business_name: string;
   category: string;
   location: string;
   description: string;
   verification_status: string;
+  badge_type?: string | null;
   created_at?: string;
 }
 
@@ -27,21 +29,38 @@ function serializeError(error: unknown) {
   return JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
 }
 
-function extractMissingColumn(message: string) {
-  const match = message.match(/column\s+profiles\.([a-zA-Z0-9_]+)\s+does not exist/i);
+function extractMissingColumn(message: string, table: string) {
+  const match = message.match(new RegExp(`column\\s+${table}\\.([a-zA-Z0-9_]+)\\s+does not exist`, 'i'));
   return match?.[1] || null;
 }
 
-async function upsertProfilePayload(payload: Record<string, unknown>) {
-  return supabase.from('profiles').upsert(payload, { onConflict: 'id' }).select('*').single();
+async function safeUpsert(table: string, payload: Record<string, unknown>, onConflict = 'id') {
+  const workingPayload = { ...payload };
+
+  while (true) {
+    const { data, error } = await supabase.from(table).upsert(workingPayload, { onConflict }).select('*').single();
+
+    if (!error) {
+      return { data, error: null };
+    }
+
+    const missingColumn = extractMissingColumn(error.message, table);
+    console.error(`${table} upsert error:`, serializeError(error), { workingPayload });
+
+    if (!missingColumn || !(missingColumn in workingPayload) || Object.keys(workingPayload).length <= 1) {
+      return { data: null, error: error.message };
+    }
+
+    delete workingPayload[missingColumn];
+  }
 }
 
 export async function ensureProfile(user: User) {
   const fullName =
-    user.user_metadata?.full_name || user.user_metadata?.fullName || user.user_metadata?.name || null;
+    user.user_metadata?.full_name || user.user_metadata?.fullName || user.user_metadata?.name || '';
   const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar || null;
 
-  const payload: Record<string, unknown> = {
+  const { data, error } = await safeUpsert('profiles', {
     id: user.id,
     email: user.email || null,
     full_name: fullName,
@@ -49,26 +68,9 @@ export async function ensureProfile(user: User) {
     verification_status: 'unverified',
     badge_type: 'none',
     role: 'user',
-  };
+  });
 
-  const workingPayload = { ...payload };
-
-  while (true) {
-    const { data, error } = await upsertProfilePayload(workingPayload);
-
-    if (!error) {
-      return { profile: (data || { id: user.id, ...workingPayload }) as ProfileRecord, error: null };
-    }
-
-    const missingColumn = extractMissingColumn(error.message);
-    console.error('Profile sync error:', serializeError(error), { workingPayload });
-
-    if (!missingColumn || !(missingColumn in workingPayload) || Object.keys(workingPayload).length <= 1) {
-      return { profile: null, error: error.message };
-    }
-
-    delete workingPayload[missingColumn];
-  }
+  return { profile: (data || null) as ProfileRecord | null, error };
 }
 
 export async function upsertProfile(user: User) {
@@ -90,78 +92,86 @@ export async function getProfileById(userId: string) {
   return { profile: (data || null) as ProfileRecord | null, error: null };
 }
 
+export async function saveProfileAvatar(userId: string, file: File) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+  const path = `${userId}/${Date.now()}-${safeName}`;
+  const buckets = ['profile-media', 'listing-media'];
+
+  let uploadedUrl: string | null = null;
+  let lastError: string | null = null;
+
+  for (const bucket of buckets) {
+    const { error } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+    if (!error) {
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+      uploadedUrl = data.publicUrl;
+      break;
+    }
+
+    console.error('Profile avatar upload failed:', serializeError(error), { bucket, path });
+    lastError = error.message;
+  }
+
+  if (!uploadedUrl) {
+    return {
+      avatarUrl: null,
+      error: lastError || 'Unable to upload profile picture. Check storage policies for profile-media or listing-media.',
+    };
+  }
+
+  const { data, error } = await safeUpsert('profiles', {
+    id: userId,
+    avatar_url: uploadedUrl,
+  });
+
+  if (error) {
+    return { avatarUrl: null, error };
+  }
+
+  return { avatarUrl: (data as ProfileRecord | null)?.avatar_url || uploadedUrl, error: null };
+}
+
 export async function createBusinessProfile(userId: string, business: {
   business_name: string;
   category: string;
   location: string;
   description: string;
 }) {
-  const { data, error } = await supabase
+  const modernPayload = {
+    owner_id: userId,
+    business_name: business.business_name,
+    category: business.category,
+    location: business.location,
+    description: business.description,
+    verification_status: 'unverified',
+    badge_type: 'none',
+  };
+
+  let { data, error } = await supabase
     .from('businesses')
-    .insert({
+    .insert(modernPayload)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('Error creating business profile with owner_id:', serializeError(error), modernPayload);
+    const legacyPayload = {
       user_id: userId,
       business_name: business.business_name,
       category: business.category,
       location: business.location,
       description: business.description,
       verification_status: 'unverified',
-    })
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('Error creating business profile:', serializeError(error));
-    return { business: null, error: error.message };
-  }
-
-  return { business: data as BusinessRecord, error: null };
-}
-
-export async function getBusinessProfiles(userId: string) {
-  const { data, error } = await supabase
-    .from('businesses')
-    .select('id, user_id, business_name, category, location, description, verification_status, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching business profiles:', serializeError(error));
-    return { businesses: [], error: error.message };
-  }
-
-  return { businesses: (data || []) as BusinessRecord[], error: null };
-}
-
-export async function submitVerificationRequest(userId: string, requestType: string, documentName: string | null) {
-  const requestToInsert = {
-    user_id: userId,
-    business_id: null,
-    type: requestType,
-    request_type: requestType,
-    document_urls: documentName ? [documentName] : [],
-    document_name: documentName,
-    status: 'pending',
-  };
-
-  let { data, error } = await supabase
-    .from('verification_requests')
-    .insert(requestToInsert)
-    .select('*')
-    .single();
-
-  if (error) {
-    console.error('Error submitting verification request:', serializeError(error), { requestToInsert });
-
-    const legacyRequest = {
-      user_id: userId,
-      request_type: requestType,
-      document_name: documentName,
-      status: 'pending',
+      badge_type: 'none',
     };
 
     const legacyResponse = await supabase
-      .from('verification_requests')
-      .insert(legacyRequest)
+      .from('businesses')
+      .insert(legacyPayload)
       .select('*')
       .single();
 
@@ -169,7 +179,85 @@ export async function submitVerificationRequest(userId: string, requestType: str
     error = legacyResponse.error;
 
     if (error) {
-      console.error('Error submitting legacy verification request:', serializeError(error), { legacyRequest });
+      console.error('Error creating legacy business profile:', serializeError(error), legacyPayload);
+      return { business: null, error: error.message };
+    }
+  }
+
+  return { business: data as BusinessRecord, error: null };
+}
+
+export async function getBusinessProfiles(userId: string) {
+  let { data, error } = await supabase
+    .from('businesses')
+    .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, created_at')
+    .eq('owner_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching businesses by owner_id:', serializeError(error));
+    const legacyResponse = await supabase
+      .from('businesses')
+      .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    data = legacyResponse.data;
+    error = legacyResponse.error;
+  }
+
+  if (error) {
+    console.error('Error fetching business profiles:', serializeError(error));
+    return { businesses: [] as BusinessRecord[], error: error.message };
+  }
+
+  return { businesses: (data || []) as BusinessRecord[], error: null };
+}
+
+export async function submitVerificationRequest(args: {
+  userId: string;
+  requestType: string;
+  documentName: string | null;
+  documentUrls?: string[];
+  businessId?: string | null;
+}) {
+  const payload = {
+    user_id: args.userId,
+    business_id: args.businessId || null,
+    type: args.requestType,
+    document_urls: args.documentUrls || [],
+    document_name: args.documentName,
+    status: 'pending',
+  };
+
+  let { data, error } = await supabase
+    .from('verification_requests')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('Error submitting verification request:', serializeError(error), payload);
+    const fallbackPayload = {
+      user_id: args.userId,
+      business_id: args.businessId || null,
+      type: args.requestType,
+      request_type: args.requestType,
+      document_urls: args.documentUrls || [],
+      status: 'pending',
+    };
+
+    const fallbackResponse = await supabase
+      .from('verification_requests')
+      .insert(fallbackPayload)
+      .select('*')
+      .single();
+
+    data = fallbackResponse.data;
+    error = fallbackResponse.error;
+
+    if (error) {
+      console.error('Fallback verification request failed:', serializeError(error), fallbackPayload);
       return { request: null, error: error.message };
     }
   }

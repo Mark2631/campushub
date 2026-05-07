@@ -8,13 +8,20 @@ export interface Message {
   conversation_id?: string;
 }
 
-interface ConversationRecord {
+type ConversationRow = {
   id: string;
-  listing_id: string;
+  listing_id: string | null;
   buyer_id: string;
   seller_id: string;
-  listing?: { title: string }[];
-  messages?: Message[];
+};
+
+type ListingTitleRow = {
+  id: string;
+  title: string;
+};
+
+function serializeError(error: unknown) {
+  return JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
 }
 
 export async function findOrCreateConversation(
@@ -31,7 +38,7 @@ export async function findOrCreateConversation(
     .maybeSingle();
 
   if (fetchError) {
-    console.error('Error fetching conversation:', fetchError);
+    console.error('Error fetching conversation:', serializeError(fetchError));
     return { conversation: null, error: fetchError.message };
   }
 
@@ -46,76 +53,138 @@ export async function findOrCreateConversation(
     .single();
 
   if (insertError) {
-    console.error('Error creating conversation:', insertError);
+    console.error('Error creating conversation:', serializeError(insertError));
     return { conversation: null, error: insertError.message };
   }
 
   return { conversation: inserted, error: null };
 }
 
+async function fetchConversationMessages(conversationIds: string[]) {
+  if (conversationIds.length === 0) return { messagesByConversation: {} as Record<string, Message[]>, error: null };
+
+  const { data, error } = await supabase
+    .from('messages')
+    .select('id, conversation_id, sender_id, content, created_at')
+    .in('conversation_id', conversationIds)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching conversation messages:', serializeError(error));
+    return { messagesByConversation: {} as Record<string, Message[]>, error: error.message };
+  }
+
+  const messagesByConversation = (data || []).reduce<Record<string, Message[]>>((acc, row) => {
+    const conversationId = row.conversation_id as string;
+    if (!acc[conversationId]) acc[conversationId] = [];
+    acc[conversationId].push(row as Message);
+    return acc;
+  }, {});
+
+  return { messagesByConversation, error: null };
+}
+
+async function fetchListingTitles(listingIds: string[]) {
+  if (listingIds.length === 0) return { titles: {} as Record<string, string>, error: null };
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id, title')
+    .in('id', listingIds);
+
+  if (error) {
+    console.error('Error fetching listing titles:', serializeError(error));
+    return { titles: {} as Record<string, string>, error: error.message };
+  }
+
+  const titles = (data || []).reduce<Record<string, string>>((acc, row) => {
+    const listing = row as ListingTitleRow;
+    acc[listing.id] = listing.title;
+    return acc;
+  }, {});
+
+  return { titles, error: null };
+}
+
 export async function getUserConversations(userId: string) {
   const { data, error } = await supabase
     .from('conversations')
-    .select('id, listing_id, buyer_id, seller_id, listing(title), messages(id, content, created_at, sender_id)')
-    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
+    .select('id, listing_id, buyer_id, seller_id')
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching conversations:', error);
+    console.error('Error fetching conversations:', serializeError(error));
     return { conversations: [], error: error.message };
   }
 
-  const conversations = (data || []).map((conversation: ConversationRecord) => {
-    const messages = Array.isArray(conversation.messages) ? conversation.messages : [];
-    const lastMessage = messages
-      .slice()
-      .sort((a: Message, b: Message) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0] || null;
+  const rows = (data || []) as ConversationRow[];
+  if (rows.length === 0) {
+    return { conversations: [], error: null };
+  }
+
+  const conversationIds = rows.map((row) => row.id);
+  const listingIds = rows.map((row) => row.listing_id).filter(Boolean) as string[];
+
+  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }] = await Promise.all([
+    fetchConversationMessages(conversationIds),
+    fetchListingTitles(Array.from(new Set(listingIds))),
+  ]);
+
+  const derivedError = messagesError || titlesError;
+
+  const conversations = rows.map((conversation) => {
+    const messages = messagesByConversation[conversation.id] || [];
+    const lastMessage = messages[messages.length - 1] || null;
 
     return {
       id: conversation.id,
-      listingTitle: conversation.listing?.[0]?.title || 'Listing',
+      listingTitle: conversation.listing_id ? titles[conversation.listing_id] || 'Listing unavailable' : 'General conversation',
       lastMessage,
-      listingId: conversation.listing_id,
+      listingId: conversation.listing_id || '',
     };
   });
 
-  return { conversations, error: null };
+  return { conversations, error: derivedError };
 }
 
 export async function getConversationById(conversationId: string, userId: string) {
   const { data, error } = await supabase
     .from('conversations')
-    .select('id, listing_id, buyer_id, seller_id, listing(title), messages(id, content, created_at, sender_id)')
+    .select('id, listing_id, buyer_id, seller_id')
     .eq('id', conversationId)
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching conversation by id:', error);
+    console.error('Error fetching conversation by id:', serializeError(error));
     return { conversation: null, error: error.message };
   }
 
   if (!data) {
-    return { conversation: null, error: 'Conversation not found' };
+    return { conversation: null, error: 'Conversation not found.' };
   }
 
   if (data.buyer_id !== userId && data.seller_id !== userId) {
-    return { conversation: null, error: 'Not authorized' };
+    return { conversation: null, error: 'Not authorized.' };
   }
 
-  const messages = Array.isArray(data.messages) ? data.messages : [];
-  const orderedMessages = messages
-    .slice()
-    .sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }] = await Promise.all([
+    fetchConversationMessages([data.id]),
+    fetchListingTitles(data.listing_id ? [data.listing_id] : []),
+  ]);
+
+  const derivedError = messagesError || titlesError;
 
   return {
     conversation: {
       id: data.id,
-      listingId: data.listing_id,
-      listingTitle: data.listing?.[0]?.title || 'Listing',
-      messages: orderedMessages,
+      listingId: data.listing_id || '',
+      listingTitle: data.listing_id ? titles[data.listing_id] || 'Listing unavailable' : 'General conversation',
+      messages: messagesByConversation[data.id] || [],
       buyerId: data.buyer_id,
       sellerId: data.seller_id,
     },
-    error: null,
+    error: derivedError,
   };
 }
 
@@ -127,9 +196,9 @@ export async function sendMessage(conversationId: string, senderId: string, cont
     .single();
 
   if (error) {
-    console.error('Error sending message:', error);
+    console.error('Error sending message:', serializeError(error));
     return { message: null, error: error.message };
   }
 
-  return { message: data, error: null };
+  return { message: data as Message, error: null };
 }

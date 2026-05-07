@@ -26,7 +26,7 @@ type ConversationDetails = {
 const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery fee', 'call me', 'outside app'];
 
 export default function ConversationPage({ params }: Props) {
-  const { user, loading } = useUser();
+  const { user, loading, pushNotification } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -72,6 +72,11 @@ export default function ConversationPage({ params }: Props) {
 
     setConversation(refreshed.conversation);
     setMessages(refreshed.conversation.messages || []);
+    await pushNotification({
+      type: 'message',
+      title: 'Message sent',
+      body: 'Your message was sent successfully.',
+    });
   };
 
   if (loading) {
@@ -123,11 +128,11 @@ export default function ConversationPage({ params }: Props) {
             <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 p-5">
               <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">About this listing</p>
               <p className="mt-2 text-lg font-bold text-blue-900 dark:text-blue-100">{conversation?.listingTitle || 'Listing'}</p>
-              {conversation ? (
+              {conversation?.listingId ? (
                 <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 underline dark:text-blue-200">
                   View listing
                 </Link>
-              ) : null}
+              ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
             </div>
 
             {/* Messages Container */}

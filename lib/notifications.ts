@@ -1,0 +1,72 @@
+import { supabase } from './supabase';
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+};
+
+function serializeError(error: unknown) {
+  return JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
+}
+
+export async function createNotificationRecord(data: {
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+}) {
+  const payload = {
+    user_id: data.userId,
+    type: data.type,
+    title: data.title,
+    body: data.body,
+    read: false,
+  };
+
+  const { data: notification, error } = await supabase
+    .from('notifications')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('Notification insert failed:', serializeError(error), payload);
+    return { notification: null, error: error.message };
+  }
+
+  return { notification: notification as AppNotification, error: null };
+}
+
+export async function getUserNotifications(userId: string) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, type, title, body, read, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error('Notification fetch failed:', serializeError(error));
+    return { notifications: [] as AppNotification[], error: error.message };
+  }
+
+  return { notifications: (data || []) as AppNotification[], error: null };
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+
+  if (error) {
+    console.error('Mark notification read failed:', serializeError(error));
+    return { error: error.message };
+  }
+
+  return { error: null };
+}

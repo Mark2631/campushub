@@ -8,7 +8,6 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   const firstImage = Array.isArray(listing.media_urls) ? listing.media_urls[0] : null;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(firstImage) && !imageFailed;
-  const isLaunchListing = listing.sellerName === 'CampusTrader Admin';
 
   return (
     <Link
@@ -35,11 +34,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
             {listing.category} · {listing.condition}
           </span>
-          {isLaunchListing ? (
-            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-              Launch listing
-            </span>
-          ) : listing.business_id ? (
+          {listing.business_id ? (
             <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
               Business
             </span>
@@ -48,13 +43,13 @@ export default function ListingCard({ listing }: { listing: Listing }) {
         <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{listing.title}</h3>
         <p className="mt-2 text-xs text-gray-600 dark:text-zinc-400">{listing.location || 'Campus location'}</p>
         <div className="mt-2 flex items-center gap-2">
-          {isLaunchListing ? (
-            <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-              Admin / Verified
-            </span>
-          ) : listing.badgeType === 'gold' ? (
+          {listing.badgeType === 'gold' ? (
             <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
               Gold tick
+            </span>
+          ) : listing.badgeType === 'admin' ? (
+            <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+              Admin
             </span>
           ) : listing.badgeType === 'blue' ? (
             <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">

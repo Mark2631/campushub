@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { getMockListingById, getMockListings } from './mockData';
 
 export interface Listing {
   id: string;
@@ -20,8 +19,27 @@ export interface Listing {
   updated_at: string;
   sellerName?: string;
   sellerType?: 'student' | 'business';
-  badgeType?: 'none' | 'blue' | 'gold';
+  badgeType?: 'none' | 'blue' | 'gold' | 'admin';
+  sellerSince?: string | null;
 }
+
+type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
+
+type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  badge_type: string | null;
+  role: string | null;
+  created_at: string | null;
+};
+
+type BusinessRow = {
+  id: string;
+  business_name: string;
+  verification_status: string | null;
+  badge_type?: string | null;
+};
 
 function formatUnknownError(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -32,7 +50,65 @@ function logSupabaseError(label: string, error: unknown, extra?: unknown) {
   console.error(label, serialized || error, extra || '');
 }
 
-export async function getListings(limit: number = 20) {
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
+  return Promise.race<T>([
+    promise,
+    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+}
+
+async function enrichListings(rows: ListingRow[]) {
+  if (rows.length === 0) return rows as Listing[];
+
+  const sellerIds = Array.from(new Set(rows.map((row) => row.seller_id).filter(Boolean)));
+  const businessIds = Array.from(new Set(rows.map((row) => row.business_id).filter(Boolean))) as string[];
+
+  const [profilesResponse, businessesResponse] = await Promise.all([
+    sellerIds.length
+      ? supabase
+          .from('profiles')
+          .select('id, full_name, email, badge_type, role, created_at')
+          .in('id', sellerIds)
+      : Promise.resolve({ data: [], error: null }),
+    businessIds.length
+      ? supabase
+          .from('businesses')
+          .select('id, business_name, verification_status, badge_type')
+          .in('id', businessIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (profilesResponse.error) {
+    logSupabaseError('Error enriching listing profiles:', profilesResponse.error);
+  }
+  if (businessesResponse.error) {
+    logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
+  }
+
+  const profilesById = new Map((profilesResponse.data || []).map((profile) => [profile.id, profile as ProfileRow]));
+  const businessesById = new Map((businessesResponse.data || []).map((business) => [business.id, business as BusinessRow]));
+
+  return rows.map((row) => {
+    const profile = profilesById.get(row.seller_id);
+    const business = row.business_id ? businessesById.get(row.business_id) : null;
+    const emailPrefix = profile?.email?.split('@')[0] || null;
+    const badgeType = business?.verification_status === 'verified'
+      ? 'gold'
+      : profile?.role === 'admin'
+        ? 'admin'
+        : (profile?.badge_type as Listing['badgeType']) || 'none';
+
+    return {
+      ...row,
+      sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader seller',
+      sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
+      badgeType: badgeType as Listing['badgeType'],
+      sellerSince: profile?.created_at || null,
+    };
+  });
+}
+
+export async function getListings(limit = 20) {
   try {
     const { data, error } = await supabase
       .from('listings')
@@ -43,15 +119,14 @@ export async function getListings(limit: number = 20) {
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
-      return { listings: getMockListings(limit), error: error.message };
+      return { listings: [] as Listing[], error: error.message };
     }
 
-    const liveListings = (data || []) as Listing[];
-    const mergedListings = liveListings.length > 0 ? [...liveListings, ...getMockListings()].slice(0, limit) : getMockListings(limit);
-    return { listings: mergedListings, error: null };
+    const liveListings = await enrichListings((data || []) as ListingRow[]);
+    return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
-    return { listings: getMockListings(limit), error: formatUnknownError(err) };
+    return { listings: [] as Listing[], error: formatUnknownError(err) };
   }
 }
 
@@ -65,13 +140,13 @@ export async function getListingsByUser(userId: string) {
 
     if (error) {
       logSupabaseError('Error fetching user listings:', error);
-      return { listings: [], error: error.message };
+      return { listings: [] as Listing[], error: error.message };
     }
 
-    return { listings: (data || []) as Listing[], error: null };
+    return { listings: await enrichListings((data || []) as ListingRow[]), error: null };
   } catch (err) {
     console.error('Unexpected error fetching user listings:', err);
-    return { listings: [], error: formatUnknownError(err) };
+    return { listings: [] as Listing[], error: formatUnknownError(err) };
   }
 }
 
@@ -121,7 +196,8 @@ export async function insertListing(
     const { data: newListing, error } = await supabase
       .from('listings')
       .insert(listingToInsert)
-      .select();
+      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .single();
 
     if (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
@@ -129,7 +205,8 @@ export async function insertListing(
       return { listing: null, error: error.message };
     }
 
-    return { listing: (newListing?.[0] || null) as Listing | null, error: null };
+    const [listing] = await enrichListings([newListing as ListingRow]);
+    return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error inserting listing:', err);
     return { listing: null, error: formatUnknownError(err) };
@@ -137,26 +214,126 @@ export async function insertListing(
 }
 
 export async function getListingById(id: string) {
-  const mockListing = getMockListingById(id);
-  if (mockListing) {
-    return { listing: mockListing, error: null };
-  }
-
   try {
     const { data, error } = await supabase
       .from('listings')
       .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       logSupabaseError('Error fetching listing by id:', error);
       return { listing: null, error: error.message };
     }
 
-    return { listing: data as Listing, error: null };
+    if (!data) {
+      return { listing: null, error: null };
+    }
+
+    const [listing] = await enrichListings([data as ListingRow]);
+    return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listing by id:', err);
     return { listing: null, error: formatUnknownError(err) };
+  }
+}
+
+export async function updateListingLifecycleStatus(
+  listingId: string,
+  sellerId: string,
+  status: 'sold' | 'hidden' | 'active'
+) {
+  const { error } = await supabase
+    .from('listings')
+    .update({ status })
+    .eq('id', listingId)
+    .eq('seller_id', sellerId);
+
+  if (error) {
+    logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+export async function updateListing(
+  listingId: string,
+  sellerId: string,
+  data: {
+    title: string;
+    description: string;
+    category: string;
+    price: string | number | null;
+    negotiable: boolean;
+    condition: string;
+    location: string;
+    businessId?: string | null;
+    mediaUrls?: string[];
+    videoUrl?: string | null;
+  }
+) {
+  const price =
+    typeof data.price === 'string'
+      ? data.price.trim() === ''
+        ? null
+        : Number(data.price)
+      : data.price;
+
+  const payload = {
+    title: data.title,
+    description: data.description,
+    category: data.category,
+    price: price == null ? null : Number(price),
+    negotiable: Boolean(data.negotiable),
+    condition: data.condition,
+    location: data.location,
+    business_id: data.businessId || null,
+    media_urls: data.mediaUrls || [],
+    video_url: data.videoUrl || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: updated, error } = await supabase
+    .from('listings')
+    .update(payload)
+    .eq('id', listingId)
+    .eq('seller_id', sellerId)
+    .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+    .single();
+
+  if (error) {
+    logSupabaseError('Error updating listing:', error, payload);
+    return { listing: null, error: error.message };
+  }
+
+  const [listing] = await enrichListings([updated as ListingRow]);
+  return { listing: listing || null, error: null };
+}
+
+export async function uploadListingMedia(bucket: string, userId: string, file: File) {
+  const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+  const path = `${userId}/${Date.now()}-${safeFileName}`;
+
+  try {
+    const uploadResponse = await withTimeout(
+      supabase.storage.from(bucket).upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      }),
+      25000,
+      'Upload timed out. Please try again or post without media.'
+    );
+
+    if (uploadResponse.error) {
+      logSupabaseError('Listing media upload failed:', uploadResponse.error, { path, fileName: file.name });
+      return { publicUrl: null, error: uploadResponse.error.message };
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, error: null };
+  } catch (error) {
+    console.error('Listing media upload failed:', JSON.stringify(error, null, 2));
+    return { publicUrl: null, error: formatUnknownError(error) };
   }
 }
