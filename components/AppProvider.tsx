@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ensureProfile } from '../lib/profiles';
-import { checkIsAdmin } from '../lib/admins';
+import { checkIsAdmin, autoVerifyAdminProfile } from '../lib/admins';
 import { AppNotification, createNotificationRecord, getUserNotifications, markNotificationRead } from '../lib/notifications';
 import { ProfileContext, personalProfileContext, readStoredProfileContext, storeProfileContext } from '../lib/profileContext';
 
@@ -79,6 +79,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Admin sync error:', error);
       }
+
+      // Auto-verify admin profile on login
+      if (nextIsAdmin && userToSync.id) {
+        const { error: verifyError } = await autoVerifyAdminProfile(userToSync.id, userToSync.email);
+        if (verifyError) {
+          console.error('Admin profile auto-verify error:', verifyError);
+        }
+      }
+
       if (isMounted) {
         setIsAdmin(nextIsAdmin);
         setAdminLoading(false);

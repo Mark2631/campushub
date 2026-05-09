@@ -20,11 +20,11 @@ Campus buyers and sellers often rely on scattered chats, status updates, and unv
 
 - Home discovery with search, category chips, and Supabase-powered listing sections.
 - Sell flow with Supabase Auth guard, image/video upload to the public `listing-media` bucket, and Kenyan Shilling pricing.
-- Listing details with media gallery, seller messaging, save placeholder, report form, and safety notice.
+- Listing details with media gallery, seller messaging, reporting, and safety notice.
 - In-app messaging with conversation creation, message sending, and safety warning terms.
 - Profile page with account info, verification request UI, active listings count, and business profile creation.
-- Community tab modeled after WhatsApp Communities with controlled groups and placeholder persistence TODOs.
-- Admin dashboard for manual verification, business approval, listing moderation, report status updates, and user moderation placeholders.
+- Community tab modeled after WhatsApp Communities with controlled groups and responsive prepared-state modals.
+- Admin dashboard for manual verification, business approval, listing moderation, reports, complaints, and user visibility.
 
 ## Core Categories
 
@@ -94,9 +94,11 @@ Required variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Required storage bucket:
+Required storage buckets:
 
 - `listing-media`, public.
+- `profile-media`, public.
+- `verification-media`, public.
 
 ## Deployment Notes
 
@@ -107,5 +109,7 @@ Before deployment:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 3. Add your deployed Vercel URL to the Supabase Auth redirect URLs.
-4. Confirm the public storage bucket exists:
+4. Confirm the public storage buckets exist:
    - `listing-media`
+   - `profile-media`
+   - `verification-media`

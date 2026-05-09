@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { signInWithMagicLink, signInWithPassword, signOut, signUpWithPassword } from '../../lib/auth';
+import { sendPasswordResetEmail, signInWithMagicLink, signInWithPassword, signOut, signUpWithPassword } from '../../lib/auth';
 
 type AuthMode = 'signin' | 'signup';
 type NoticeTone = 'success' | 'error' | 'info';
@@ -50,10 +50,11 @@ function SignInPageContent() {
       ? { tone: 'error', message: 'Magic link returned, but the session could not be completed. Use password sign-in for now.' }
       : null
   );
-  const [googleNotice, setGoogleNotice] = useState<string | null>(null);
   const [signInPending, setSignInPending] = useState(false);
   const [signUpPending, setSignUpPending] = useState(false);
+  const [resetPending, setResetPending] = useState(false);
   const [magicLinkPending, setMagicLinkPending] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showSignUpConfirmPassword, setShowSignUpConfirmPassword] = useState(false);
@@ -68,6 +69,13 @@ function SignInPageContent() {
     confirmPassword: '',
   }));
   const [magicLinkEmail, setMagicLinkEmail] = useState(() => rememberedEmail);
+  const [resetEmail, setResetEmail] = useState(() => rememberedEmail);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(redirectTo);
+    }
+  }, [loading, redirectTo, router, user]);
 
   const persistRememberedEmail = (email: string) => {
     if (typeof window === 'undefined') return;
@@ -82,7 +90,6 @@ function SignInPageContent() {
 
   const resetNotices = () => {
     setNotice(null);
-    setGoogleNotice(null);
   };
 
   const handlePasswordSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -133,7 +140,7 @@ function SignInPageContent() {
     const email = signUpForm.email.trim();
     persistRememberedEmail(email);
 
-    const { data, error } = await signUpWithPassword(email, signUpForm.password, signUpForm.fullName.trim());
+    const { error } = await signUpWithPassword(email, signUpForm.password, signUpForm.fullName.trim());
     setSignUpPending(false);
 
     if (error) {
@@ -142,25 +149,43 @@ function SignInPageContent() {
       return;
     }
 
-    if (data.session) {
-      setNotice({ tone: 'success', message: 'Account created and signed in. Redirecting...' });
-      router.replace('/');
-      router.refresh();
-      return;
-    }
-
     setNotice({
       tone: 'success',
-      message: 'Account created. Check your email if confirmation is required, then sign in.',
+      message: 'Account created successfully. Verify your email to continue.',
     });
     setMode('signin');
     setSignInForm({ email, password: '' });
     setMagicLinkEmail(email);
+    setResetEmail(email);
     setSignUpForm((current) => ({
       ...current,
+      email,
       password: '',
       confirmPassword: '',
     }));
+  };
+
+  const handlePasswordReset = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (resetPending) return;
+
+    resetNotices();
+    setResetPending(true);
+
+    const email = resetEmail.trim();
+    persistRememberedEmail(email);
+
+    const { error } = await sendPasswordResetEmail(email);
+    setResetPending(false);
+
+    if (error) {
+      console.error('Password reset email error:', error);
+      setNotice({ tone: 'error', message: error.message });
+      return;
+    }
+
+    setNotice({ tone: 'success', message: 'Password reset email sent. Check your inbox to continue.' });
+    setSignInForm((current) => ({ ...current, email }));
   };
 
   const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -182,7 +207,7 @@ function SignInPageContent() {
       if (loweredMessage.includes('rate limit') || loweredMessage.includes('email rate limit exceeded')) {
         setNotice({
           tone: 'info',
-          message: 'Magic link is temporarily rate-limited. Use password sign-in instead.',
+          message: 'Magic links are temporarily unavailable. Use password sign-in instead.',
         });
         return;
       }
@@ -231,8 +256,11 @@ function SignInPageContent() {
               Signed In
             </div>
             <h1 className="mt-5 break-words text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">
-              You are already signed in as {session?.user.email ?? user.email ?? user.id}
+              Redirecting to your account...
             </h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Signed in as {session?.user.email ?? user.email ?? user.id}
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/"
@@ -343,15 +371,29 @@ function SignInPageContent() {
                   onChange={(event) => setRememberMe(event.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600"
                 />
-                <span>Remember my email on this device</span>
+                <span>Remember me</span>
               </label>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetOpen((current) => !current);
+                    setResetEmail(signInForm.email);
+                    setNotice(null);
+                  }}
+                  className="text-sm font-semibold text-blue-700 transition hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+                >
+                  Forgot password?
+                </button>
+              </div>
 
               <button
                 type="submit"
                 disabled={signInPending}
                 className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {signInPending ? 'Signing in...' : 'Sign in'}
+                {signInPending ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
           ) : (
@@ -436,10 +478,35 @@ function SignInPageContent() {
             </form>
           )}
 
+          {resetOpen ? (
+            <form className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950" onSubmit={handlePasswordReset}>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Reset password</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">We will send a reset link to your email.</p>
+              </div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Email
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(event) => setResetEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                  required
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={resetPending}
+                className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {resetPending ? 'Sending reset email...' : 'Send reset email'}
+              </button>
+            </form>
+          ) : null}
+
           <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
-            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-              Temporarily unavailable / rate-limited
-            </div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">Other sign-in options</p>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Magic link may be temporarily limited. Password sign-in is recommended.
             </p>
@@ -464,19 +531,6 @@ function SignInPageContent() {
                 {magicLinkPending ? 'Sending magic link...' : 'Send magic link'}
               </button>
             </form>
-          </div>
-
-          <div className="mt-6 border-t border-slate-200 pt-6 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setGoogleNotice('Google sign-in will be enabled later.')}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:hover:border-blue-600"
-            >
-              Continue with Google
-            </button>
-            {googleNotice ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{googleNotice}</p>
-            ) : null}
           </div>
         </section>
       </main>

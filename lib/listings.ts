@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { storageBuckets, uploadPublicFile, withTimeout } from './storage';
 
 export interface Listing {
   id: string;
@@ -50,13 +51,6 @@ function logSupabaseError(label: string, error: unknown, extra?: unknown) {
   console.error(label, serialized || error, extra || '');
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
-  return Promise.race<T>([
-    promise,
-    new Promise<T>((_, reject) => window.setTimeout(() => reject(new Error(message)), ms)),
-  ]);
-}
-
 async function enrichListings(rows: ListingRow[]) {
   if (rows.length === 0) return rows as Listing[];
 
@@ -106,6 +100,18 @@ async function enrichListings(rows: ListingRow[]) {
       sellerSince: profile?.created_at || null,
     };
   });
+}
+
+export function normalizeListingCondition(condition: string, category?: string) {
+  const normalizedCategory = category?.trim().toLowerCase();
+  const normalizedCondition = condition.trim().toLowerCase().replace(/\s+/g, '_');
+
+  if (normalizedCategory === 'services') return 'service';
+  if (normalizedCategory === 'refurbished') return 'refurbished';
+  if (normalizedCondition === 'new') return 'new';
+  if (normalizedCondition === 'refurbished') return 'refurbished';
+  if (normalizedCondition === 'service') return 'service';
+  return 'used';
 }
 
 export async function getListings(limit = 20) {
@@ -186,18 +192,22 @@ export async function insertListing(
       category: data.category,
       price: price == null ? null : Number(price),
       negotiable: Boolean(data.negotiable),
-      condition: data.condition,
+      condition: normalizeListingCondition(data.condition, data.category),
       status: 'active',
       location: data.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
     };
 
-    const { data: newListing, error } = await supabase
-      .from('listings')
-      .insert(listingToInsert)
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-      .single();
+    const { data: newListing, error } = await withTimeout(
+      supabase
+        .from('listings')
+        .insert(listingToInsert)
+        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+        .single(),
+      15000,
+      'Creating listing timed out. Please try again.'
+    );
 
     if (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
@@ -286,7 +296,7 @@ export async function updateListing(
     category: data.category,
     price: price == null ? null : Number(price),
     negotiable: Boolean(data.negotiable),
-    condition: data.condition,
+    condition: normalizeListingCondition(data.condition, data.category),
     location: data.location,
     business_id: data.businessId || null,
     media_urls: data.mediaUrls || [],
@@ -294,13 +304,17 @@ export async function updateListing(
     updated_at: new Date().toISOString(),
   };
 
-  const { data: updated, error } = await supabase
-    .from('listings')
-    .update(payload)
-    .eq('id', listingId)
-    .eq('seller_id', sellerId)
-    .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-    .single();
+  const { data: updated, error } = await withTimeout(
+    supabase
+      .from('listings')
+      .update(payload)
+      .eq('id', listingId)
+      .eq('seller_id', sellerId)
+      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .single(),
+    15000,
+    'Saving listing timed out. Please try again.'
+  );
 
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);
@@ -312,28 +326,16 @@ export async function updateListing(
 }
 
 export async function uploadListingMedia(bucket: string, userId: string, file: File) {
-  const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-  const path = `${userId}/${Date.now()}-${safeFileName}`;
+  void bucket;
+  const { publicUrl, error } = await uploadPublicFile(storageBuckets.listingMedia, userId, file, {
+    timeoutMs: 25000,
+    upsert: false,
+  });
 
-  try {
-    const uploadResponse = await withTimeout(
-      supabase.storage.from(bucket).upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      }),
-      25000,
-      'Upload timed out. Please try again or post without media.'
-    );
-
-    if (uploadResponse.error) {
-      logSupabaseError('Listing media upload failed:', uploadResponse.error, { path, fileName: file.name });
-      return { publicUrl: null, error: uploadResponse.error.message };
-    }
-
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return { publicUrl: data.publicUrl, error: null };
-  } catch (error) {
-    console.error('Listing media upload failed:', JSON.stringify(error, null, 2));
-    return { publicUrl: null, error: formatUnknownError(error) };
+  if (error) {
+    logSupabaseError('Listing media upload failed:', error, { fileName: file.name });
+    return { publicUrl: null, error };
   }
+
+  return { publicUrl, error: null };
 }

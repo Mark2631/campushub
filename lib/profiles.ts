@@ -1,5 +1,6 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { storageBuckets, uploadPublicFile } from './storage';
 
 export interface ProfileRecord {
   id: string;
@@ -93,46 +94,41 @@ export async function getProfileById(userId: string) {
 }
 
 export async function saveProfileAvatar(userId: string, file: File) {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-  const path = `${userId}/${Date.now()}-${safeName}`;
-  const buckets = ['profile-media', 'listing-media'];
+  const { publicUrl, error: uploadError } = await uploadPublicFile(storageBuckets.profileMedia, userId, file, {
+    timeoutMs: 25000,
+    upsert: true,
+  });
 
-  let uploadedUrl: string | null = null;
-  let lastError: string | null = null;
-
-  for (const bucket of buckets) {
-    const { error } = await supabase.storage.from(bucket).upload(path, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
-
-    if (!error) {
-      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-      uploadedUrl = data.publicUrl;
-      break;
-    }
-
-    console.error('Profile avatar upload failed:', serializeError(error), { bucket, path });
-    lastError = error.message;
-  }
-
-  if (!uploadedUrl) {
+  if (uploadError || !publicUrl) {
     return {
       avatarUrl: null,
-      error: lastError || 'Unable to upload profile picture. Check storage policies for profile-media or listing-media.',
+      error: uploadError || 'Unable to upload profile picture. Check storage policies for profile-media.',
     };
   }
 
   const { data, error } = await safeUpsert('profiles', {
     id: userId,
-    avatar_url: uploadedUrl,
+    avatar_url: publicUrl,
   });
 
   if (error) {
     return { avatarUrl: null, error };
   }
 
-  return { avatarUrl: (data as ProfileRecord | null)?.avatar_url || uploadedUrl, error: null };
+  return { avatarUrl: (data as ProfileRecord | null)?.avatar_url || publicUrl, error: null };
+}
+
+export async function uploadVerificationDocument(userId: string, file: File) {
+  const { publicUrl, error } = await uploadPublicFile(storageBuckets.verificationMedia, userId, file, {
+    timeoutMs: 25000,
+    upsert: false,
+  });
+
+  if (error || !publicUrl) {
+    return { publicUrl: null, error: error || 'Unable to upload verification document.' };
+  }
+
+  return { publicUrl, error: null };
 }
 
 export async function createBusinessProfile(userId: string, business: {
@@ -224,6 +220,7 @@ export async function submitVerificationRequest(args: {
   const payload = {
     user_id: args.userId,
     business_id: args.businessId || null,
+    request_type: args.requestType,
     type: args.requestType,
     document_urls: args.documentUrls || [],
     document_name: args.documentName,
@@ -241,8 +238,8 @@ export async function submitVerificationRequest(args: {
     const fallbackPayload = {
       user_id: args.userId,
       business_id: args.businessId || null,
-      type: args.requestType,
       request_type: args.requestType,
+      type: args.requestType,
       document_urls: args.documentUrls || [],
       status: 'pending',
     };

@@ -85,12 +85,11 @@ export default function CommunityPage() {
                   </div>
                   <div className="flex flex-col gap-2 sm:items-end">
                     <button
-                      onClick={() => setGroupMessage('Group interactions will open as the community grows.')}
+                      onClick={() => setGroupMessage('Community interactions are being prepared.')}
                       className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto"
                     >
                       {group.action}
                     </button>
-                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Responsive</span>
                   </div>
                 </div>
               </article>

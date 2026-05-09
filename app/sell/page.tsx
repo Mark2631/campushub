@@ -6,12 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { getListingById, insertListing, updateListing, uploadListingMedia } from '../../lib/listings';
+import { getListingById, insertListing, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
+import { validateUploadFile } from '../../lib/storage';
 
 const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Refurbished', 'Other'];
-const conditions = ['New', 'Like New', 'Good', 'Fair'];
-const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
 const maxVideoSize = 30 * 1024 * 1024;
 
@@ -69,7 +68,7 @@ function SellPageContent() {
         category: listing.category,
         price: listing.price?.toString() || '',
         negotiable: listing.negotiable,
-        condition: listing.condition,
+        condition: normalizeListingCondition(listing.condition, listing.category),
         description: listing.description || '',
         location: listing.location || '',
       });
@@ -87,7 +86,15 @@ function SellPageContent() {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]:
+        name === 'category'
+          ? value
+          : name === 'condition'
+            ? normalizeListingCondition(value, prev.category)
+            : type === 'checkbox'
+              ? checked
+              : value,
+      ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, value) } : {}),
     }));
   };
 
@@ -98,8 +105,9 @@ function SellPageContent() {
       const errors: string[] = [];
 
       Array.from(files).forEach((file) => {
-        if (!imageTypes.includes(file.type)) {
-          errors.push(`${file.name} must be JPG, PNG, or WebP.`);
+        const validationError = validateUploadFile(file, 'image');
+        if (validationError) {
+          errors.push(validationError);
           return;
         }
 
@@ -123,8 +131,9 @@ function SellPageContent() {
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     if (file) {
-      if (!videoTypes.includes(file.type)) {
-        setMessage({ type: 'error', text: `${file.name} must be MP4, WebM, or MOV.` });
+      const validationError = validateUploadFile(file, 'video');
+      if (validationError) {
+        setMessage({ type: 'error', text: validationError });
         return;
       }
 
@@ -176,28 +185,39 @@ function SellPageContent() {
     setExistingVideoUrl(null);
   };
 
+  const validateListingForm = () => {
+    if (!user) return 'Sign in to post a listing.';
+    if (!formData.title.trim()) return 'Title is required.';
+    if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
+    return null;
+  };
+
   const createListing = async (options?: { skipMedia?: boolean }) => {
     if (!user) {
       throw new Error('Sign in to post a listing.');
     }
 
-    setUploadStatus(images.length || videoPreview ? 'Uploading media...' : 'Creating listing...');
-    const mediaUrls: string[] = options?.skipMedia ? [] : [...existingMediaUrls];
-    let videoUrl: string | null = options?.skipMedia ? null : existingVideoUrl;
+    setUploadStatus('Creating listing...');
+    const mediaUrls: string[] = options?.skipMedia ? (editListingId ? [...existingMediaUrls] : []) : [...existingMediaUrls];
+    let videoUrl: string | null = options?.skipMedia ? (editListingId ? existingVideoUrl : null) : existingVideoUrl;
 
     if (!options?.skipMedia) {
-      for (const image of images) {
+      // Upload images
+      for (const [index, image] of images.entries()) {
+        setUploadStatus(`Uploading image ${index + 1} of ${images.length}...`);
         const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, image.file);
         if (error || !publicUrl) {
-          throw new Error(error || 'Image upload failed.');
+          throw new Error(`Image upload failed: ${error || 'Unknown error'}`);
         }
         mediaUrls.push(publicUrl);
       }
 
+      // Upload video if present
       if (videoPreview) {
+        setUploadStatus('Uploading video...');
         const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, videoPreview.file);
         if (error || !publicUrl) {
-          throw new Error(error || 'Video upload failed.');
+          throw new Error(`Video upload failed: ${error || 'Unknown error'}`);
         }
         videoUrl = publicUrl;
       }
@@ -209,7 +229,7 @@ function SellPageContent() {
       category: formData.category,
       price: formData.price,
       negotiable: formData.negotiable,
-      condition: formData.condition,
+      condition: normalizeListingCondition(formData.condition, formData.category),
       description: formData.description,
       location: formData.location,
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
@@ -224,20 +244,14 @@ function SellPageContent() {
     return insertListing(user.id, listingPayload);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const submitListing = async (options?: { skipMedia?: boolean }) => {
     if (isSubmitting) {
       return;
     }
 
-    if (!user) {
-      setMessage({ type: 'error', text: 'Please sign in to post a listing.' });
-      return;
-    }
-
-    if (!formData.title.trim()) {
-      setMessage({ type: 'error', text: 'Title is required.' });
+    const validationError = validateListingForm();
+    if (validationError) {
+      setMessage({ type: 'error', text: validationError });
       return;
     }
 
@@ -247,7 +261,7 @@ function SellPageContent() {
       setCreatedListingId(null);
       setPostWithoutMediaReady(false);
 
-      const { listing, error } = await createListing();
+      const { listing, error } = await createListing(options);
 
       if (error) {
         setMessage({ type: 'error', text: error });
@@ -257,7 +271,7 @@ function SellPageContent() {
       setCreatedListingId(listing?.id || null);
       setMessage({ type: 'success', text: editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.' });
       await pushNotification({
-        type: 'listing',
+        type: editListingId ? 'listing updated' : 'listing posted',
         title: editListingId ? 'Listing updated' : 'Listing posted successfully',
         body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
       });
@@ -271,13 +285,18 @@ function SellPageContent() {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       const text = error instanceof Error ? error.message : String(error);
       setMessage({ type: 'error', text });
-      if ((images.length > 0 || videoPreview) && /upload|policy|row-level|timed out|storage/i.test(text)) {
+      if ((images.length > 0 || videoPreview) && /media upload failed|upload|policy|row-level|timed out|storage/i.test(text)) {
         setPostWithoutMediaReady(true);
       }
     } finally {
       setIsSubmitting(false);
       setUploadStatus('');
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await submitListing();
   };
 
   if (loading) {
@@ -339,39 +358,33 @@ function SellPageContent() {
                 <Link href="/" className="font-semibold underline hover:no-underline">
                   Go to Home
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessage(null);
+                    setCreatedListingId(null);
+                  }}
+                  className="font-semibold underline hover:no-underline"
+                >
+                  Post another
+                </button>
               </div>
             )}
             {message.type === 'error' && postWithoutMediaReady ? (
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      setIsSubmitting(true);
-                      setMessage(null);
-                      const { listing, error } = await createListing({ skipMedia: true });
-                      if (error) {
-                        setMessage({ type: 'error', text: error });
-                        return;
-                      }
-                      setCreatedListingId(listing?.id || null);
-                      setMessage({ type: 'success', text: 'Listing posted successfully.' });
-                      await pushNotification({
-                        type: 'listing',
-                        title: 'Listing posted successfully',
-                        body: `${listing?.title || 'Your listing'} is now live without media.`,
-                      });
-                      resetForm();
-                      window.dispatchEvent(new Event('campustrader:listings-refresh'));
-                      router.refresh();
-                    } catch (fallbackError) {
-                      setMessage({ type: 'error', text: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) });
-                    } finally {
-                      setIsSubmitting(false);
-                      setUploadStatus('');
-                    }
-                  }}
-                  className="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                  onClick={() => submitListing()}
+                  disabled={isSubmitting}
+                  className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Retry upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitListing({ skipMedia: true })}
+                  disabled={isSubmitting}
+                  className="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Post without media
                 </button>
@@ -394,7 +407,7 @@ function SellPageContent() {
             <label className="relative block rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-950 p-8 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 multiple
                 onChange={handleImageUpload}
                 className="absolute inset-0 opacity-0 cursor-pointer"
@@ -402,7 +415,7 @@ function SellPageContent() {
               <div className="mb-3 text-3xl sm:text-4xl">📷</div>
               <p className="font-medium text-gray-900 dark:text-white">Click to upload images</p>
               <p className="text-sm text-gray-600 dark:text-zinc-400">or drag and drop</p>
-              <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">PNG, JPG,WebP up to 10 images</p>
+              <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
             </label>
 
             {/* Image Previews */}
@@ -422,6 +435,18 @@ function SellPageContent() {
                 ))}
               </div>
             )}
+            {images.length > 0 ? (
+              <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+                <p className="mb-2 font-semibold text-gray-900 dark:text-white">Selected images</p>
+                <ul className="space-y-1">
+                  {images.map((image, index) => (
+                    <li key={`${image.file.name}-${image.file.size}-${index}`} className="truncate">
+                      {image.file.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <p className="text-xs text-gray-600 dark:text-zinc-400 mt-2">{images.length}/10 images uploaded</p>
           </div>
 
@@ -432,14 +457,14 @@ function SellPageContent() {
               <div className="relative block rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-950 p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
                 <input
                   type="file"
-                  accept="video/*"
+                  accept="video/mp4,video/webm,video/quicktime"
                   onChange={handleVideoUpload}
                   disabled={!!videoPreview}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               <div className="mb-2 text-2xl sm:text-3xl">🎥</div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{videoPreview ? videoPreview.file.name : 'Click to upload video'}</p>
-                <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM up to 100MB</p>
+                <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 30MB</p>
               </div>
             </label>
 
@@ -533,10 +558,13 @@ function SellPageContent() {
               >
                 {conditions.map((condition) => (
                   <option key={condition} value={condition}>
-                    {condition}
+                    {condition.charAt(0).toUpperCase() + condition.slice(1)}
                   </option>
                 ))}
               </select>
+              {formData.category === 'Services' ? (
+                <p className="text-xs text-gray-500 dark:text-zinc-500">Services automatically use service condition.</p>
+              ) : null}
             </label>
             <label className="space-y-2 text-sm">
               <span className="font-medium text-gray-900 dark:text-white">Location</span>
@@ -596,7 +624,7 @@ function SellPageContent() {
                   <p className="text-sm text-gray-600 dark:text-zinc-400">{formData.location || 'Add a location'}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{formData.category}</span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{formData.condition}</span>
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{normalizeListingCondition(formData.condition, formData.category)}</span>
                     {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">Negotiable</span> : null}
                   </div>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price ? `KSh ${Number(formData.price).toLocaleString()}` : 'Add price'}</p>

@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, sendMessage } from '../../../lib/conversations';
+import { createNotificationRecord } from '../../../lib/notifications';
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 type ConversationDetails = {
@@ -26,6 +27,7 @@ type ConversationDetails = {
 const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery fee', 'call me', 'outside app'];
 
 export default function ConversationPage({ params }: Props) {
+  const { id } = use(params);
   const { user, loading, pushNotification } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,7 +39,7 @@ export default function ConversationPage({ params }: Props) {
   useEffect(() => {
     const load = async () => {
       if (!user) return;
-      const { conversation, error } = await getConversationById(params.id, user.id);
+      const { conversation, error } = await getConversationById(id, user.id);
       if (error || !conversation) {
         setError(error || 'Conversation not found.');
         return;
@@ -47,7 +49,7 @@ export default function ConversationPage({ params }: Props) {
     };
 
     load();
-  }, [user, params.id]);
+  }, [user, id]);
 
   const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,8 +74,15 @@ export default function ConversationPage({ params }: Props) {
 
     setConversation(refreshed.conversation);
     setMessages(refreshed.conversation.messages || []);
+    const recipientId = conversation.buyerId === user.id ? conversation.sellerId : conversation.buyerId;
+    await createNotificationRecord({
+      userId: recipientId,
+      type: 'new message',
+      title: 'New message',
+      body: `New message about ${conversation.listingTitle || 'a listing'}.`,
+    });
     await pushNotification({
-      type: 'message',
+      type: 'new message',
       title: 'Message sent',
       body: 'Your message was sent successfully.',
     });

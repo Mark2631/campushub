@@ -17,6 +17,11 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
   const [busy, setBusy] = useState(false);
 
   const handleClick = async () => {
+    if (!listingId || !sellerId) {
+      setStatus('This listing is unavailable for messaging.');
+      return;
+    }
+
     if (!user) {
       setStatus('Sign in to message sellers.');
       router.push(`/signin?next=${encodeURIComponent(`/listing/${listingId}`)}`);

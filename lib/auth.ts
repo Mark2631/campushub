@@ -26,6 +26,16 @@ export async function signUpWithPassword(email: string, password: string, fullNa
   });
 }
 
+export async function sendPasswordResetEmail(email: string) {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined,
+  });
+}
+
+export async function updatePassword(password: string) {
+  return supabase.auth.updateUser({ password });
+}
+
 export async function getCurrentUser() {
   return supabase.auth.getUser();
 }

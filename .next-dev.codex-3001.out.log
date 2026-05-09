@@ -1,0 +1,31 @@
+
+> campushub@0.1.0 dev
+> next dev -p 3001
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://10.184.13.138:3001
+- Environments: .env.local
+✓ Ready in 962ms
+Creating turbopack project { dir: 'C:\\Users\\san\\Desktop\\campushub', testMode: true }
+
+ GET / 200 in 2.4s (next.js: 633ms, application-code: 1730ms)
+✓ Compiled in 1311ms
+ GET / 200 in 347ms (next.js: 211ms, application-code: 136ms)
+ GET / 200 in 1071ms (next.js: 167ms, application-code: 904ms)
+ GET /profile 200 in 230ms (next.js: 164ms, application-code: 66ms)
+ GET /signin 200 in 290ms (next.js: 192ms, application-code: 99ms)
+ GET / 200 in 216ms (next.js: 10ms, application-code: 206ms)
+ GET / 200 in 151ms (next.js: 12ms, application-code: 140ms)
+ GET /signin 200 in 91ms (next.js: 12ms, application-code: 79ms)
+ GET /profile 200 in 54ms (next.js: 8ms, application-code: 46ms)
+ GET /admin 200 in 172ms (next.js: 130ms, application-code: 42ms)
+ GET / 200 in 49ms (next.js: 7ms, application-code: 42ms)
+ GET /sell 200 in 1223ms (next.js: 1060ms, application-code: 163ms)
+✓ Finished filesystem cache database compaction in 17.2s
+ GET /sell 200 in 82ms (next.js: 7ms, application-code: 75ms)
+ GET / 200 in 39ms (next.js: 5ms, application-code: 34ms)
+ GET /listing/c1070fe4-9cf9-4adb-b4dc-ac4801c86b60 200 in 2.7s (next.js: 1514ms, application-code: 1151ms)
+ GET /listing/c1070fe4-9cf9-4adb-b4dc-ac4801c86b60 200 in 700ms (next.js: 26ms, application-code: 675ms)
+ GET /profile 200 in 53ms (next.js: 7ms, application-code: 46ms)
+ GET /signin 200 in 40ms (next.js: 5ms, application-code: 36ms)

@@ -88,7 +88,7 @@ export default function MessagesPage() {
           </div>
         ) : conversations.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
-            <p className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No conversations yet</p>
+            <p className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No messages yet.</p>
             <p className="mb-2">Your buyer and seller conversations will appear here.</p>
             <p className="mb-6 text-sm">Start a chat from any listing when you are ready to negotiate or ask questions.</p>
             <Link href="/" className="inline-block rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-semibold text-white transition">

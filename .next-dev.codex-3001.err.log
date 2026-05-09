@@ -1,0 +1,220 @@
+[browser] Password sign-in error: AuthApiError: Invalid login credentials
+    at async handlePasswordSignIn (app/signin/page.tsx:105:23)
+  103 |     persistRememberedEmail(email);
+  104 |
+> 105 |     const { error } = await signInWithPassword(email, signInForm.password);
+      |                       ^
+  106 |     setSignInPending(false);
+  107 |
+  108 |     if (error) { (app/signin/page.tsx:109:15)
+[browser] Password sign-in error: AuthApiError: Invalid login credentials
+    at async handlePasswordSignIn (app/signin/page.tsx:105:23)
+  103 |     persistRememberedEmail(email);
+  104 |
+> 105 |     const { error } = await signInWithPassword(email, signInForm.password);
+      |                       ^
+  106 |     setSignInPending(false);
+  107 |
+  108 |     if (error) { (app/signin/page.tsx:109:15)
+[browser] Password sign-in error: AuthApiError: Invalid login credentials
+    at async handlePasswordSignIn (app/signin/page.tsx:105:23)
+  103 |     persistRememberedEmail(email);
+  104 |
+> 105 |     const { error } = await signInWithPassword(email, signInForm.password);
+      |                       ^
+  106 |     setSignInPending(false);
+  107 |
+  108 |     if (error) { (app/signin/page.tsx:109:15)
+[browser] Error fetching businesses by owner_id: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:194:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  192 |
+  193 |   if (error) {
+> 194 |     console.error('Error fetching businesses by owner_id:', serializeError(error));
+      |             ^
+  195 |     const legacyResponse = await supabase
+  196 |       .from('businesses')
+  197 |       .select('id, owner_id, user_id, business_name, category, location, description, ver... (lib/profiles.ts:194:13)
+[browser] Error fetching businesses by owner_id: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:194:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  192 |
+  193 |   if (error) {
+> 194 |     console.error('Error fetching businesses by owner_id:', serializeError(error));
+      |             ^
+  195 |     const legacyResponse = await supabase
+  196 |       .from('businesses')
+  197 |       .select('id, owner_id, user_id, business_name, category, location, description, ver... (lib/profiles.ts:194:13)
+[browser] Error fetching business profiles: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:206:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  204 |
+  205 |   if (error) {
+> 206 |     console.error('Error fetching business profiles:', serializeError(error));
+      |             ^
+  207 |     return { businesses: [] as BusinessRecord[], error: error.message };
+  208 |   }
+  209 | (lib/profiles.ts:206:13)
+[browser] Error fetching business profiles: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:206:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  204 |
+  205 |   if (error) {
+> 206 |     console.error('Error fetching business profiles:', serializeError(error));
+      |             ^
+  207 |     return { businesses: [] as BusinessRecord[], error: error.message };
+  208 |   }
+  209 | (lib/profiles.ts:206:13)
+[browser] businesses error: {
+  code: [32m'42703'[39m,
+  details: [1mnull[22m,
+  hint: [32m'Perhaps you meant to reference the column "businesses.owner_id".'[39m,
+  message: [32m'column businesses.user_id does not exist'[39m
+} 
+    at safeSection (lib/admin.ts:89:15)
+    at async getAdminDashboardData (lib/admin.ts:132:7)
+    at async AdminPage.useEffect.loadInitialDashboard (app/admin/page.tsx:127:20)
+  87 |     const { data, error } = await query();
+  88 |     if (error) {
+> 89 |       console.error(`${label} error:`, error);
+     |               ^
+  90 |       return { data: fallback, error: `Could not load ${label}.` };
+  91 |     }
+  92 | (lib/admin.ts:89:15)
+[browser] businesses error: {
+  code: [32m'42703'[39m,
+  details: [1mnull[22m,
+  hint: [32m'Perhaps you meant to reference the column "businesses.owner_id".'[39m,
+  message: [32m'column businesses.user_id does not exist'[39m
+} 
+    at safeSection (lib/admin.ts:89:15)
+    at async getAdminDashboardData (lib/admin.ts:132:7)
+    at async AdminPage.useEffect.loadInitialDashboard (app/admin/page.tsx:127:20)
+  87 |     const { data, error } = await query();
+  88 |     if (error) {
+> 89 |       console.error(`${label} error:`, error);
+     |               ^
+  90 |       return { data: fallback, error: `Could not load ${label}.` };
+  91 |     }
+  92 | (lib/admin.ts:89:15)
+[browser] verification requests error: {
+  code: [32m'42703'[39m,
+  details: [1mnull[22m,
+  hint: [1mnull[22m,
+  message: [32m'column verification_requests.request_type does not exist'[39m
+} 
+    at safeSection (lib/admin.ts:89:15)
+    at async getAdminDashboardData (lib/admin.ts:132:7)
+    at async AdminPage.useEffect.loadInitialDashboard (app/admin/page.tsx:127:20)
+  87 |     const { data, error } = await query();
+  88 |     if (error) {
+> 89 |       console.error(`${label} error:`, error);
+     |               ^
+  90 |       return { data: fallback, error: `Could not load ${label}.` };
+  91 |     }
+  92 | (lib/admin.ts:89:15)
+[browser] verification requests error: {
+  code: [32m'42703'[39m,
+  details: [1mnull[22m,
+  hint: [1mnull[22m,
+  message: [32m'column verification_requests.request_type does not exist'[39m
+} 
+    at safeSection (lib/admin.ts:89:15)
+    at async getAdminDashboardData (lib/admin.ts:132:7)
+    at async AdminPage.useEffect.loadInitialDashboard (app/admin/page.tsx:127:20)
+  87 |     const { data, error } = await query();
+  88 |     if (error) {
+> 89 |       console.error(`${label} error:`, error);
+     |               ^
+  90 |       return { data: fallback, error: `Could not load ${label}.` };
+  91 |     }
+  92 | (lib/admin.ts:89:15)
+[browser] Error fetching businesses by owner_id: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:194:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  192 |
+  193 |   if (error) {
+> 194 |     console.error('Error fetching businesses by owner_id:', serializeError(error));
+      |             ^
+  195 |     const legacyResponse = await supabase
+  196 |       .from('businesses')
+  197 |       .select('id, owner_id, user_id, business_name, category, location, description, ver... (lib/profiles.ts:194:13)
+[browser] Error fetching businesses by owner_id: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:194:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  192 |
+  193 |   if (error) {
+> 194 |     console.error('Error fetching businesses by owner_id:', serializeError(error));
+      |             ^
+  195 |     const legacyResponse = await supabase
+  196 |       .from('businesses')
+  197 |       .select('id, owner_id, user_id, business_name, category, location, description, ver... (lib/profiles.ts:194:13)
+[browser] Error fetching business profiles: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:206:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  204 |
+  205 |   if (error) {
+> 206 |     console.error('Error fetching business profiles:', serializeError(error));
+      |             ^
+  207 |     return { businesses: [] as BusinessRecord[], error: error.message };
+  208 |   }
+  209 | (lib/profiles.ts:206:13)
+[browser] Error fetching business profiles: {
+  "code": "42703",
+  "details": null,
+  "hint": "Perhaps you meant to reference the column \"businesses.owner_id\".",
+  "message": "column businesses.user_id does not exist"
+} 
+    at getBusinessProfiles (lib/profiles.ts:206:13)
+    at async ProfilePage.useEffect.loadProfile (app/profile/page.tsx:97:104)
+  204 |
+  205 |   if (error) {
+> 206 |     console.error('Error fetching business profiles:', serializeError(error));
+      |             ^
+  207 |     return { businesses: [] as BusinessRecord[], error: error.message };
+  208 |   }
+  209 | (lib/profiles.ts:206:13)
+[browser] Password sign-in error: AuthApiError: Invalid login credentials
+    at async handlePasswordSignIn (app/signin/page.tsx:105:23)
+  103 |     persistRememberedEmail(email);
+  104 |
+> 105 |     const { error } = await signInWithPassword(email, signInForm.password);
+      |                       ^
+  106 |     setSignInPending(false);
+  107 |
+  108 |     if (error) { (app/signin/page.tsx:109:15)

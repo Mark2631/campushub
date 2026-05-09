@@ -8,13 +8,14 @@ import SafetyBanner from '../../../components/SafetyBanner';
 import { getListingById } from '../../../lib/listings';
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export default async function ListingPage({ params }: Props) {
-  const { listing, error } = await getListingById(params.id);
+  const { id } = await params;
+  const { listing, error } = await getListingById(id);
 
   if (error || !listing) {
     return (

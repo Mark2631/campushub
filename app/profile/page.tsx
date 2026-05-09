@@ -16,10 +16,12 @@ import {
   getBusinessProfiles,
   saveProfileAvatar,
   submitVerificationRequest,
+  uploadVerificationDocument,
   upsertProfile,
 } from '../../lib/profiles';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import { createComplaint } from '../../lib/complaints';
+import { validateUploadFile } from '../../lib/storage';
 
 const verificationTypes = [
   { value: 'student', label: 'Student verification' },
@@ -49,9 +51,11 @@ export default function ProfilePage() {
   const [activeListingsCount, setActiveListingsCount] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
   const [verificationType, setVerificationType] = useState(verificationTypes[0].value);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [documentPreview, setDocumentPreview] = useState<string | null>(null);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [documentPreviews, setDocumentPreviews] = useState<string[]>([]);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [verificationSubmitting, setVerificationSubmitting] = useState(false);
+  const [verificationUploadStatus, setVerificationUploadStatus] = useState('');
   const [businessSubmitting, setBusinessSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
@@ -80,6 +84,8 @@ export default function ProfilePage() {
 
   const verificationStatus = profile?.verification_status || 'unverified';
   const statusClass = statusStyles[verificationStatus] || statusStyles.unverified;
+  const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
+  const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
 
   useEffect(() => {
     if (!user) return;
@@ -111,28 +117,59 @@ export default function ProfilePage() {
 
   useEffect(() => {
     return () => {
-      if (documentPreview) {
-        URL.revokeObjectURL(documentPreview);
+      documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+    };
+  }, [documentPreviews]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
       }
     };
-  }, [documentPreview]);
+  }, [avatarPreview]);
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0] ?? null;
-    if (documentPreview) {
-      URL.revokeObjectURL(documentPreview);
+    const selectedFiles = Array.from(event.currentTarget.files || []);
+    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+
+    const maxFiles = verificationType === 'business' ? 2 : 1;
+    const nextFiles = selectedFiles.slice(0, maxFiles);
+    const validationErrors = nextFiles.map((file) => validateUploadFile(file, 'verification-document')).filter(Boolean);
+
+    if (validationErrors.length > 0) {
+      setMessage({ type: 'error', text: validationErrors.join(' ') });
+      setDocumentFiles([]);
+      setDocumentPreviews([]);
+      event.currentTarget.value = '';
+      return;
     }
-    setDocumentFile(file);
-    setDocumentPreview(file ? URL.createObjectURL(file) : null);
+
+    setMessage(null);
+    setDocumentFiles(nextFiles);
+    setDocumentPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
+    event.currentTarget.value = '';
   };
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     if (!file || !user) return;
+
+    const validationError = validateUploadFile(file, 'image');
+    if (validationError) {
+      setMessage({ type: 'error', text: validationError });
+      event.currentTarget.value = '';
+      return;
+    }
+
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    setAvatarPreview(URL.createObjectURL(file));
 
     setAvatarUploading(true);
     setMessage(null);
@@ -147,7 +184,7 @@ export default function ProfilePage() {
 
     setProfile((current) => (current ? { ...current, avatar_url: avatarUrl } : current));
     await pushNotification({
-      type: 'profile',
+      type: 'profile updated',
       title: 'Profile picture updated',
       body: 'Your account photo has been updated.',
     });
@@ -155,34 +192,48 @@ export default function ProfilePage() {
   };
 
   const clearDocumentFile = () => {
-    if (documentPreview) {
-      URL.revokeObjectURL(documentPreview);
-    }
-    setDocumentFile(null);
-    setDocumentPreview(null);
+    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+    setDocumentFiles([]);
+    setDocumentPreviews([]);
   };
 
   const handleVerificationSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!user) return;
-    if (!documentFile) {
+    if (documentFiles.length === 0) {
       setMessage({ type: 'error', text: 'Choose a document before submitting your verification request.' });
       return;
     }
 
     setVerificationSubmitting(true);
+    setVerificationUploadStatus('Uploading verification document...');
     setMessage(null);
 
-    // TODO: Upload verification documents to a private verification-documents bucket when available.
+    const uploadedUrls: string[] = [];
+
+    for (const [index, file] of documentFiles.entries()) {
+      setVerificationUploadStatus(`Uploading verification file ${index + 1} of ${documentFiles.length}...`);
+      const { publicUrl, error } = await uploadVerificationDocument(user.id, file);
+      if (error || !publicUrl) {
+        setVerificationSubmitting(false);
+        setVerificationUploadStatus('');
+        setMessage({ type: 'error', text: `Verification upload failed. ${error || 'Please try again.'}` });
+        return;
+      }
+      uploadedUrls.push(publicUrl);
+    }
+
+    setVerificationUploadStatus('Submitting verification request...');
     const { error } = await submitVerificationRequest({
       userId: user.id,
       requestType: verificationType,
-      documentName: documentFile.name,
-      documentUrls: [],
+      documentName: documentFiles.map((file) => file.name).join(', '),
+      documentUrls: uploadedUrls,
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
     });
     setVerificationSubmitting(false);
+    setVerificationUploadStatus('');
 
     if (error) {
       setMessage({ type: 'error', text: error });
@@ -190,11 +241,11 @@ export default function ProfilePage() {
     }
 
     await pushNotification({
-      type: 'verification',
+      type: 'verification submitted',
       title: 'Verification submitted',
       body: 'Verification submitted for admin review.',
     });
-    setMessage({ type: 'success', text: 'Verification submitted for admin review.' });
+    setMessage({ type: 'success', text: 'Verification submitted successfully.' });
     clearDocumentFile();
     setVerificationType(verificationTypes[0].value);
   };
@@ -235,7 +286,7 @@ export default function ProfilePage() {
       description: '',
     });
     await pushNotification({
-      type: 'business',
+      type: 'business created',
       title: 'Business profile created',
       body: 'Your business profile is ready and waiting for verification.',
     });
@@ -269,7 +320,7 @@ export default function ProfilePage() {
 
     setComplaintForm({ subject: '', message: '' });
     await pushNotification({
-      type: 'complaint',
+      type: 'complaint submitted',
       title: 'Issue reported',
       body: 'Your issue has been submitted for review.',
     });
@@ -291,7 +342,7 @@ export default function ProfilePage() {
     setUserListings((current) => current.map((listing) => (listing.id === listingId ? { ...listing, status } : listing)));
     setActiveListingsCount((current) => Math.max(0, status === 'sold' || status === 'hidden' ? current - 1 : current));
     await pushNotification({
-      type: 'listing',
+      type: status === 'sold' ? 'listing sold' : 'listing hidden',
       title: status === 'sold' ? 'Listing marked as sold' : 'Listing hidden',
       body: status === 'sold' ? 'Listing marked as sold.' : 'Listing removed from the active feed.',
     });
@@ -334,8 +385,8 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4 sm:gap-5">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-3xl font-bold text-white">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    {avatarPreview || profile?.avatar_url ? (
+                      <img src={avatarPreview || profile?.avatar_url || ''} alt="" className="h-full w-full object-cover" />
                     ) : (
                       displayName.charAt(0).toUpperCase()
                     )}
@@ -354,7 +405,7 @@ export default function ProfilePage() {
                     ) : null}
                     <label className="mt-4 inline-flex cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
                       {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
-                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
+                      <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
                     </label>
                   </div>
                 </div>
@@ -410,8 +461,8 @@ export default function ProfilePage() {
             <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
               {[
                 [String(activeListingsCount), 'Active listings'],
-                ['0', 'Sold items'],
-                ['0', 'Reviews'],
+                [String(soldListingsCount), 'Sold listings'],
+                [String(hiddenListingsCount), 'Hidden listings'],
                 [formatStatus(verificationStatus), 'Verification status'],
               ].map(([value, label]) => (
                 <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -478,21 +529,21 @@ export default function ProfilePage() {
                   <label className="relative block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-blue-500">
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                      multiple={verificationType === 'business'}
                       onChange={handleDocumentChange}
                       className="absolute inset-0 cursor-pointer opacity-0"
                     />
                     <p className="font-semibold text-gray-900 dark:text-white">Choose verification document</p>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Images or PDF. Preview stays local for now.</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                      {verificationType === 'business' ? 'Owner ID required. Optional proof can be added as a second file.' : 'Upload the required ID image or PDF.'}
+                    </p>
                   </label>
 
-                  {documentFile && documentPreview && (
+                  {documentFiles.length > 0 && (
                     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{documentFile.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-zinc-500">{Math.ceil(documentFile.size / 1024)} KB</p>
-                        </div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Selected files</p>
                         <button
                           type="button"
                           onClick={clearDocumentFile}
@@ -501,13 +552,23 @@ export default function ProfilePage() {
                           Remove
                         </button>
                       </div>
-                      {documentFile.type.startsWith('image/') ? (
-                        <img src={documentPreview} alt="Selected verification document preview" className="max-h-72 w-full rounded-xl object-contain bg-gray-100 dark:bg-zinc-950" />
-                      ) : documentFile.type === 'application/pdf' ? (
-                        <iframe src={documentPreview} title="Selected verification document preview" className="h-72 w-full rounded-xl bg-gray-100 dark:bg-zinc-950" />
-                      ) : (
-                        <div className="rounded-xl bg-gray-100 p-6 text-center text-sm text-gray-600 dark:bg-zinc-950 dark:text-zinc-400">Preview unavailable for this file type.</div>
-                      )}
+                      <div className="space-y-4">
+                        {documentFiles.map((file, index) => (
+                          <div key={`${file.name}-${file.size}-${index}`} className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
+                            <div className="mb-3 min-w-0">
+                              <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{file.name}</p>
+                              <p className="text-xs text-gray-500 dark:text-zinc-500">{Math.ceil(file.size / 1024)} KB</p>
+                            </div>
+                            {file.type.startsWith('image/') ? (
+                              <img src={documentPreviews[index]} alt="Selected verification document preview" className="max-h-72 w-full rounded-xl object-contain bg-gray-100 dark:bg-zinc-900" />
+                            ) : file.type === 'application/pdf' ? (
+                              <iframe src={documentPreviews[index]} title="Selected verification document preview" className="h-72 w-full rounded-xl bg-gray-100 dark:bg-zinc-900" />
+                            ) : (
+                              <div className="rounded-xl bg-gray-100 p-6 text-center text-sm text-gray-600 dark:bg-zinc-900 dark:text-zinc-400">Preview unavailable for this file type.</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
@@ -516,7 +577,7 @@ export default function ProfilePage() {
                     disabled={verificationSubmitting}
                     className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500"
                   >
-                    {verificationSubmitting ? 'Submitting...' : 'Submit for review'}
+                    {verificationSubmitting ? verificationUploadStatus || 'Submitting...' : 'Submit for review'}
                   </button>
                 </div>
               </form>
@@ -736,7 +797,74 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </section>
-            </div>
+
+                <section id="my-listings" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Manage your active and sold items.</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{activeListingsCount} active</p>
+                      <p className="text-xs text-gray-500 dark:text-zinc-500">{soldListingsCount} sold, {hiddenListingsCount} hidden</p>
+                    </div>
+                  </div>
+
+                  {userListings.length > 0 ? (
+                    <div className="space-y-4">
+                      {userListings.map((listing) => (
+                        <article key={listing.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-gray-900 dark:text-white">{listing.title}</h3>
+                              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                                {listing.price ? `KSh ${listing.price}` : 'No price'} · {listing.location || 'No location'} · {listing.status}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Link
+                                href={`/sell?edit=${listing.id}`}
+                                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                              >
+                                Edit
+                              </Link>
+                              {listing.status === 'active' && (
+                                <>
+                                  <button
+                                    onClick={() => handleListingStatus(listing.id, 'sold')}
+                                    disabled={listingActionId === listing.id}
+                                    className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                                  >
+                                    Mark Sold
+                                  </button>
+                                  <button
+                                    onClick={() => handleListingStatus(listing.id, 'hidden')}
+                                    disabled={listingActionId === listing.id}
+                                    className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                  >
+                                    Hide
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">No listings yet</h3>
+                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Create your first listing to start selling on campus.</p>
+                      <Link
+                        href="/sell"
+                        className="mt-4 inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                      >
+                        Post a Listing
+                      </Link>
+                    </div>
+                  )}
+                </section>
+              </div>
           </>
         ) : (
           <div className="rounded-2xl border-2 border-gray-300 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
