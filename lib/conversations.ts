@@ -8,6 +8,17 @@ export interface Message {
   conversation_id?: string;
 }
 
+type RawMessageRow = {
+  id: string;
+  conversation_id?: string;
+  sender_id?: string;
+  content?: string | null;
+  body?: string | null;
+  text?: string | null;
+  message?: string | null;
+  created_at?: string;
+};
+
 type ConversationRow = {
   id: string;
   listing_id: string | null;
@@ -65,7 +76,7 @@ async function fetchConversationMessages(conversationIds: string[]) {
 
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_id, content, created_at')
+    .select('id, conversation_id, sender_id, content, body, text, message, created_at')
     .in('conversation_id', conversationIds)
     .order('created_at', { ascending: true });
 
@@ -75,9 +86,19 @@ async function fetchConversationMessages(conversationIds: string[]) {
   }
 
   const messagesByConversation = (data || []).reduce<Record<string, Message[]>>((acc, row) => {
-    const conversationId = row.conversation_id as string;
+    const rawRow = row as RawMessageRow;
+    const conversationId = rawRow.conversation_id as string;
     if (!acc[conversationId]) acc[conversationId] = [];
-    acc[conversationId].push(row as Message);
+
+    const message: Message = {
+      id: rawRow.id,
+      conversation_id: rawRow.conversation_id,
+      sender_id: rawRow.sender_id || '',
+      content: rawRow.content ?? rawRow.body ?? rawRow.text ?? rawRow.message ?? '',
+      created_at: rawRow.created_at || new Date().toISOString(),
+    };
+
+    acc[conversationId].push(message);
     return acc;
   }, {});
 
