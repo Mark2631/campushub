@@ -778,7 +778,7 @@ export default function AdminPage() {
                           ))}
                         </select>
                         <button
-                          onClick={() => openModal('report_response', 'Send Response', `Send a response to the reporter?`, report.reporter_id, 'report')}
+                          onClick={() => openModal('report_response', 'Send Response', `Send a response to the reporter?`, report.reporter_id ?? undefined, 'report')}
                           className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
                         >
                           Respond
