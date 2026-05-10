@@ -21,12 +21,12 @@ function getGreeting() {
 
 function ListingSection({ title, listings }: { title: string; listings: Listing[] }) {
   return (
-    <section className="mb-10 sm:mb-12">
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">{title}</h2>
+    <section className="mb-8 sm:mb-10">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <h2 className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">{title}</h2>
       </div>
       {listings.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-6">
           {listings.map((listing) => (
             <ListingCard key={`${title}-${listing.id}`} listing={listing} />
           ))}
@@ -128,13 +128,13 @@ export default function Home() {
 
   const sectionListings = (category: string) => {
     const exact = filteredListings.filter((listing) => listing.category === category);
-    return (exact.length >= 4 ? exact : [...exact, ...filteredListings.filter((listing) => listing.category !== category)]).slice(0, 4);
+    return (exact.length >= 6 ? exact : [...exact, ...filteredListings.filter((listing) => listing.category !== category)]).slice(0, 6);
   };
 
-  const verifiedBusinessListings = filteredListings.filter((listing) => listing.business_id || listing.badgeType === 'gold').slice(0, 4);
+  const verifiedBusinessListings = filteredListings.filter((listing) => listing.business_id || listing.badgeType === 'gold').slice(0, 6);
   const studentEssentialsListings = filteredListings
     .filter((listing) => ['Electronics', 'Books', 'Furniture', 'Other'].includes(listing.category))
-    .slice(0, 8);
+    .slice(0, 12);
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
@@ -142,14 +142,14 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
       <Header />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-32 sm:py-8">
-        <header className="mb-6 sm:mb-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 pb-32 sm:px-4 sm:py-6">
+        <header className="mb-4 sm:mb-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{greeting}</p>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
+          <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
         </header>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 sm:gap-3 sm:px-4 dark:border-zinc-700 dark:bg-zinc-900">
             <span className="text-lg text-gray-400 dark:text-zinc-500">⌕</span>
             <input
@@ -168,7 +168,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-5">
           <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max gap-3 pb-1">
             {['All', ...categories].map((category) => (
@@ -188,7 +188,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mb-10">
+        <div className="mb-6">
           <SafetyBanner />
         </div>
 
@@ -217,7 +217,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <ListingSection title="Recently Posted" listings={filteredListings.slice(0, 8)} />
+                <ListingSection title="Recently Posted" listings={filteredListings.slice(0, 12)} />
                 <ListingSection title="Services Around Campus" listings={sectionListings('Services')} />
                 <ListingSection title="Refurbished Deals" listings={sectionListings('Refurbished')} />
                 <ListingSection title="Student Essentials" listings={studentEssentialsListings} />

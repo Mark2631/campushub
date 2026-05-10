@@ -256,6 +256,13 @@ to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own notifications" on public.notifications;
+create policy "Users can delete own notifications"
+on public.notifications
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
 drop policy if exists "Public can read CampusTrader media" on storage.objects;
 create policy "Public can read CampusTrader media"
 on storage.objects

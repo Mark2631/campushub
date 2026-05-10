@@ -701,7 +701,7 @@ export default function AdminPage() {
                           <button
                             onClick={async () => {
                               setWorkingId(request.id);
-                              const result = await approveVerification(request.id, authUser!.id, request.user_id);
+                              const result = await approveVerification(request.id, authUser!.id, request.user_id, request.business_id);
                               setWorkingId(null);
                               if (result.error) {
                                 setMessage({ type: 'error', text: result.error });
@@ -716,13 +716,23 @@ export default function AdminPage() {
                             Approve
                           </button>
                           <button
-                            onClick={() => openModal('verification_reject', 'Reject Verification', `Reject this verification request?`, request.id, 'verification')}
+                            onClick={() => {
+                              setModalState({ type: 'verification_reject', verificationId: request.id, userId: request.user_id });
+                              setModalTitle('Reject Verification');
+                              setModalMessage('Reject this verification request?');
+                              setModalNotes('');
+                            }}
                             className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
                           >
                             Reject
                           </button>
                           <button
-                            onClick={() => openModal('verification_revoke', 'Revoke Verification', `Revoke verification for this user?`, request.user_id, 'verification')}
+                            onClick={() => {
+                              setModalState({ type: 'verification_revoke', userId: request.user_id });
+                              setModalTitle('Revoke Verification');
+                              setModalMessage('Revoke verification for this user?');
+                              setModalNotes('');
+                            }}
                             className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700"
                           >
                             Revoke

@@ -4,6 +4,7 @@ import { ComplaintRecord, getComplaints, updateComplaintStatus } from './complai
 export interface AdminVerificationRequest {
   id: string;
   user_id: string;
+  business_id?: string | null;
   request_type: string;
   type?: string | null;
   document_name: string | null;
@@ -109,6 +110,16 @@ async function safeCount(label: string, query: () => PromiseLike<{ count: number
   } catch (error) {
     console.error(`${label} count error:`, error);
     return { count: 0, error: `Could not load ${label}.` };
+  }
+}
+
+async function insertOptionalNotification(userId: string, type: string, title: string, body: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .insert({ user_id: userId, type, title, body, read: false });
+
+  if (error) {
+    console.error('Optional notification insert failed:', error);
   }
 }
 
@@ -423,7 +434,7 @@ export async function approveBusiness(businessId: string, adminId: string) {
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase
       .from('businesses')
-      .update({ verification_status: 'verified', badge_type: 'verified_business', status: 'active' })
+      .update({ verification_status: 'verified', badge_type: 'gold', status: 'active' })
       .eq('id', businessId),
     supabase.from('admin_actions').insert({
       admin_id: adminId,
@@ -631,65 +642,96 @@ export async function deleteListingAsAdmin(listingId: string, adminId: string, r
 // VERIFICATION MODERATION
 // ============================================================================
 
-export async function approveVerification(verificationId: string, adminId: string, userId: string, addBadge = true) {
-  const [{ error: verifyError }, { error: profileError }, { error: auditError }] = await Promise.all([
+export async function approveVerification(verificationId: string, adminId: string, userId: string, businessId?: string | null, addBadge = true) {
+  const [{ error: verifyError }, { error: profileError }, businessResult] = await Promise.all([
     supabase
       .from('verification_requests')
       .update({
-        status: 'approved',
+        status: 'verified',
         reviewed_by: adminId,
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', verificationId),
-    supabase.from('profiles').update({ verification_status: 'verified', ...(addBadge && { badge_type: 'verified' }) }).eq('id', userId),
+    supabase.from('profiles').update({ verification_status: 'verified', ...(addBadge && { badge_type: 'blue' }) }).eq('id', userId),
+    businessId
+      ? supabase.from('businesses').update({ verification_status: 'verified', badge_type: 'gold', status: 'active' }).eq('id', businessId)
+      : Promise.resolve({ error: null }),
+  ]);
+
+  if (verifyError || profileError || businessResult.error) {
+    console.error('Error approving verification:', { verifyError, profileError, businessError: businessResult.error });
+    return { error: verifyError?.message || profileError?.message || businessResult.error?.message || 'Failed to approve verification' };
+  }
+
+  await Promise.all([
+    insertOptionalNotification(
+      userId,
+      'verification approved',
+      'Verification approved',
+      'Your verification request was approved.'
+    ),
     supabase.from('admin_actions').insert({
       admin_id: adminId,
       action_type: 'verification_approve',
       target_type: 'verification',
       target_id: verificationId,
+    }).then(({ error }) => {
+      if (error) console.error('Optional admin audit insert failed:', error);
     }),
   ]);
-
-  if (verifyError || profileError || auditError) {
-    console.error('Error approving verification:', { verifyError, profileError, auditError });
-    return { error: verifyError?.message || profileError?.message || auditError?.message || 'Failed to approve verification' };
-  }
 
   return { error: null };
 }
 
 export async function rejectVerification(verificationId: string, adminId: string, userId: string, reason: string) {
-  const [{ error: verifyError }, { error: noticeError }, { error: auditError }] = await Promise.all([
-    supabase
-      .from('verification_requests')
-      .update({
-        status: 'rejected',
-        reviewed_by: adminId,
-        reviewed_at: new Date().toISOString(),
-        admin_note: reason,
-      })
-      .eq('id', verificationId),
-    supabase.from('admin_notices').insert({
-      user_id: userId,
-      admin_id: adminId,
-      notice_type: 'verification_rejected',
-      title: 'Verification Request Rejected',
-      message: `Your verification request was rejected. Reason: ${reason}`,
-      related_id: verificationId,
-    }),
-    supabase.from('admin_actions').insert({
-      admin_id: adminId,
-      action_type: 'verification_reject',
-      target_type: 'verification',
-      target_id: verificationId,
-      reason,
-    }),
-  ]);
+  const { error: verifyError } = await supabase
+    .from('verification_requests')
+    .update({
+      status: 'rejected',
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+      admin_note: reason,
+    })
+    .eq('id', verificationId);
 
-  if (verifyError || noticeError || auditError) {
-    console.error('Error rejecting verification:', { verifyError, noticeError, auditError });
-    return { error: verifyError?.message || noticeError?.message || auditError?.message || 'Failed to reject verification' };
+  if (verifyError) {
+    console.error('Error rejecting verification:', { verifyError });
+    return { error: verifyError.message || 'Failed to reject verification' };
   }
+
+  await Promise.all([
+    insertOptionalNotification(
+      userId,
+      'verification rejected',
+      'Verification rejected',
+      `Your verification request was rejected. Reason: ${reason}`
+    ),
+    supabase
+      .from('admin_notices')
+      .insert({
+        user_id: userId,
+        admin_id: adminId,
+        notice_type: 'verification_rejected',
+        title: 'Verification Request Rejected',
+        message: `Your verification request was rejected. Reason: ${reason}`,
+        related_id: verificationId,
+      })
+      .then(({ error }) => {
+        if (error) console.error('Optional admin notice insert failed:', error);
+      }),
+    supabase
+      .from('admin_actions')
+      .insert({
+        admin_id: adminId,
+        action_type: 'verification_reject',
+        target_type: 'verification',
+        target_id: verificationId,
+        reason,
+      })
+      .then(({ error }) => {
+        if (error) console.error('Optional admin audit insert failed:', error);
+      }),
+  ]);
 
   return { error: null };
 }
@@ -762,6 +804,8 @@ export async function sendReportResponse(reporterId: string, adminId: string, me
     console.error('Error sending report response:', error);
     return { error: error.message || 'Failed to send response' };
   }
+
+  await insertOptionalNotification(reporterId, 'report response', 'Report response', message);
 
   return { error: null };
 }

@@ -106,8 +106,10 @@ export default function ConversationPage({ params }: Props) {
         <Header />
         <main className="flex-1 px-4 py-8">
           <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to view messages</h2>
-            <p className="text-gray-600 dark:text-zinc-400">You must be signed in to read and send messages.</p>
+            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to continue.</h2>
+            <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
+              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
+            </p>
           </div>
         </main>
         <BottomNav />
@@ -147,7 +149,7 @@ export default function ConversationPage({ params }: Props) {
             {/* Messages Container */}
             <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 min-h-96 max-h-96 overflow-y-auto">
               {messages.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-zinc-400 py-8">No messages yet. Send the first message to start the conversation.</p>
+                <p className="text-center text-gray-500 dark:text-zinc-400 py-8">No messages yet.</p>
               ) : (
                 messages.map((message) => (
                   <div

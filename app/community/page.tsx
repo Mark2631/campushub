@@ -26,7 +26,7 @@ const groups: CommunityGroup[] = [
 ];
 
 export default function CommunityPage() {
-  const [groupMessage, setGroupMessage] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<CommunityGroup | null>(null);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white">
@@ -85,8 +85,8 @@ export default function CommunityPage() {
                   </div>
                   <div className="flex flex-col gap-2 sm:items-end">
                     <button
-                      onClick={() => setGroupMessage('Community interactions are being prepared.')}
-                      className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto"
+                      onClick={() => setSelectedGroup(group)}
+                      className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95 sm:w-auto"
                     >
                       {group.action}
                     </button>
@@ -97,11 +97,14 @@ export default function CommunityPage() {
           </div>
         </section>
 
-        {groupMessage ? (
+        {selectedGroup ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
             <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-              <p className="text-base font-semibold text-slate-900 dark:text-white">{groupMessage}</p>
-              <button onClick={() => setGroupMessage(null)} className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white">
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedGroup.name}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                Group spaces are being prepared. For now, use Useful Links and marketplace messages.
+              </p>
+              <button onClick={() => setSelectedGroup(null)} className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95">
                 Close
               </button>
             </div>

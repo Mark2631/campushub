@@ -219,15 +219,14 @@ export async function submitVerificationRequest(args: {
 }) {
   const payload = {
     user_id: args.userId,
-    business_id: args.businessId || null,
-    request_type: args.requestType,
     type: args.requestType,
     document_urls: args.documentUrls || [],
     document_name: args.documentName,
     status: 'pending',
+    ...(args.businessId ? { business_id: args.businessId } : {}),
   };
 
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from('verification_requests')
     .insert(payload)
     .select('*')
@@ -235,28 +234,7 @@ export async function submitVerificationRequest(args: {
 
   if (error) {
     console.error('Error submitting verification request:', serializeError(error), payload);
-    const fallbackPayload = {
-      user_id: args.userId,
-      business_id: args.businessId || null,
-      request_type: args.requestType,
-      type: args.requestType,
-      document_urls: args.documentUrls || [],
-      status: 'pending',
-    };
-
-    const fallbackResponse = await supabase
-      .from('verification_requests')
-      .insert(fallbackPayload)
-      .select('*')
-      .single();
-
-    data = fallbackResponse.data;
-    error = fallbackResponse.error;
-
-    if (error) {
-      console.error('Fallback verification request failed:', serializeError(error), fallbackPayload);
-      return { request: null, error: error.message };
-    }
+    return { request: null, error: error.message };
   }
 
   return { request: data, error: null };

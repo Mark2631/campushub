@@ -13,9 +13,6 @@ type RawMessageRow = {
   conversation_id?: string;
   sender_id?: string;
   content?: string | null;
-  body?: string | null;
-  text?: string | null;
-  message?: string | null;
   created_at?: string;
 };
 
@@ -76,7 +73,7 @@ async function fetchConversationMessages(conversationIds: string[]) {
 
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_id, content, body, text, message, created_at')
+    .select('id, conversation_id, sender_id, content, created_at')
     .in('conversation_id', conversationIds)
     .order('created_at', { ascending: true });
 
@@ -94,7 +91,7 @@ async function fetchConversationMessages(conversationIds: string[]) {
       id: rawRow.id,
       conversation_id: rawRow.conversation_id,
       sender_id: rawRow.sender_id || '',
-      content: rawRow.content ?? rawRow.body ?? rawRow.text ?? rawRow.message ?? '',
+      content: rawRow.content ?? '',
       created_at: rawRow.created_at || new Date().toISOString(),
     };
 

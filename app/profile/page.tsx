@@ -61,6 +61,7 @@ export default function ProfilePage() {
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [listingActionId, setListingActionId] = useState<string | null>(null);
+  const [listingFilter, setListingFilter] = useState<'active' | 'sold' | 'hidden'>('active');
   const [complaintForm, setComplaintForm] = useState({
     subject: '',
     message: '',
@@ -86,6 +87,7 @@ export default function ProfilePage() {
   const statusClass = statusStyles[verificationStatus] || statusStyles.unverified;
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
+  const filteredUserListings = userListings.filter((listing) => listing.status === listingFilter);
 
   useEffect(() => {
     if (!user) return;
@@ -245,7 +247,7 @@ export default function ProfilePage() {
       title: 'Verification submitted',
       body: 'Verification submitted for admin review.',
     });
-    setMessage({ type: 'success', text: 'Verification submitted successfully.' });
+    setMessage({ type: 'success', text: 'Verification submitted successfully. Admin will review your document.' });
     clearDocumentFile();
     setVerificationType(verificationTypes[0].value);
   };
@@ -327,7 +329,7 @@ export default function ProfilePage() {
     setMessage({ type: 'success', text: 'Complaint submitted. Admin will review it.' });
   };
 
-  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden') => {
+  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
     if (!user) return;
     setListingActionId(listingId);
     setMessage(null);
@@ -339,14 +341,17 @@ export default function ProfilePage() {
       return;
     }
 
-    setUserListings((current) => current.map((listing) => (listing.id === listingId ? { ...listing, status } : listing)));
-    setActiveListingsCount((current) => Math.max(0, status === 'sold' || status === 'hidden' ? current - 1 : current));
-    await pushNotification({
-      type: status === 'sold' ? 'listing sold' : 'listing hidden',
-      title: status === 'sold' ? 'Listing marked as sold' : 'Listing hidden',
-      body: status === 'sold' ? 'Listing marked as sold.' : 'Listing removed from the active feed.',
+    setUserListings((current) => {
+      const nextListings = current.map((listing) => (listing.id === listingId ? { ...listing, status } : listing));
+      setActiveListingsCount(nextListings.filter((listing) => listing.status === 'active').length);
+      return nextListings;
     });
-    setMessage({ type: 'success', text: status === 'sold' ? 'Listing marked as sold.' : 'Listing hidden.' });
+    await pushNotification({
+      type: status === 'sold' ? 'listing sold' : status === 'hidden' ? 'listing hidden' : 'listing restored',
+      title: status === 'sold' ? 'Listing marked as sold' : status === 'hidden' ? 'Listing hidden' : 'Listing restored',
+      body: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing removed from the active feed.' : 'Listing restored to the active feed.',
+    });
+    setMessage({ type: 'success', text: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
     window.dispatchEvent(new Event('campustrader:listings-refresh'));
   };
 
@@ -648,11 +653,35 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <section id="my-listings" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">See what you have posted and add a new listing when you are ready.</p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Manage active, sold, and hidden listings.</p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{activeListingsCount} active</p>
+                    <p className="text-xs text-gray-500 dark:text-zinc-500">{soldListingsCount} sold, {hiddenListingsCount} hidden</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-1 dark:border-zinc-800 dark:bg-zinc-950">
+                  {(['active', 'sold', 'hidden'] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setListingFilter(status)}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition ${
+                        listingFilter === status
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 hover:bg-white dark:text-zinc-300 dark:hover:bg-zinc-900'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
                 <div className="mt-4 space-y-4">
-                  {userListings.length > 0 ? (
-                    userListings.map((listing) => (
+                  {filteredUserListings.length > 0 ? (
+                    filteredUserListings.map((listing) => (
                       <article key={listing.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
                         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                           <div>
@@ -673,7 +702,7 @@ export default function ProfilePage() {
                               onClick={() => handleListingStatus(listing.id, 'sold')}
                               className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
                             >
-                              Mark as Sold
+                              Mark Sold
                             </button>
                             <button
                               disabled={listingActionId === listing.id}
@@ -682,14 +711,23 @@ export default function ProfilePage() {
                             >
                               Hide
                             </button>
+                            {listing.status !== 'active' ? (
+                              <button
+                                disabled={listingActionId === listing.id}
+                                onClick={() => handleListingStatus(listing.id, 'active')}
+                                className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+                              >
+                                Restore
+                              </button>
+                            ) : null}
                           </div>
                         </div>
                       </article>
                     ))
                   ) : (
                     <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">{activeListingsCount} active listings</p>
-                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">You have not posted anything yet.</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">No {listingFilter} listings</p>
+                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Listings in this state will appear here.</p>
                     </div>
                   )}
                   <Link href="/sell" className="inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -797,80 +835,13 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </section>
-
-                <section id="my-listings" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Manage your active and sold items.</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{activeListingsCount} active</p>
-                      <p className="text-xs text-gray-500 dark:text-zinc-500">{soldListingsCount} sold, {hiddenListingsCount} hidden</p>
-                    </div>
-                  </div>
-
-                  {userListings.length > 0 ? (
-                    <div className="space-y-4">
-                      {userListings.map((listing) => (
-                        <article key={listing.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-semibold text-gray-900 dark:text-white">{listing.title}</h3>
-                              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                                {listing.price ? `KSh ${listing.price}` : 'No price'} · {listing.location || 'No location'} · {listing.status}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Link
-                                href={`/sell?edit=${listing.id}`}
-                                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                              >
-                                Edit
-                              </Link>
-                              {listing.status === 'active' && (
-                                <>
-                                  <button
-                                    onClick={() => handleListingStatus(listing.id, 'sold')}
-                                    disabled={listingActionId === listing.id}
-                                    className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                                  >
-                                    Mark Sold
-                                  </button>
-                                  <button
-                                    onClick={() => handleListingStatus(listing.id, 'hidden')}
-                                    disabled={listingActionId === listing.id}
-                                    className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                                  >
-                                    Hide
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">No listings yet</h3>
-                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Create your first listing to start selling on campus.</p>
-                      <Link
-                        href="/sell"
-                        className="mt-4 inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                      >
-                        Post a Listing
-                      </Link>
-                    </div>
-                  )}
-                </section>
               </div>
           </>
         ) : (
           <div className="rounded-2xl border-2 border-gray-300 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Welcome to CampusTrader</h2>
+            <h2 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Sign in to continue.</h2>
             <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
-              Browse freely. Sign in to post, message sellers, save items, verify your account, or join groups.
+              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
             </p>
             <Link
               href="/signin"

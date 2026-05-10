@@ -5,6 +5,7 @@ import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
 import ReportButton from '../../../components/ReportButton';
 import SafetyBanner from '../../../components/SafetyBanner';
+import SaveListingButton from '../../../components/SaveListingButton';
 import { getListingById } from '../../../lib/listings';
 
 type Props = {
@@ -168,9 +169,7 @@ export default async function ListingPage({ params }: Props) {
                   ) : (
                     <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                   )}
-                  <button className="w-full rounded-2xl border border-gray-300 bg-white px-5 py-4 text-sm font-semibold text-gray-900 transition hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900">
-                    Save
-                  </button>
+                  <SaveListingButton listingId={listing.id} />
                   <ReportButton targetType="listing" targetId={listing.id} />
                 </div>
               </div>

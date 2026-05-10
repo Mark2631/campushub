@@ -70,3 +70,31 @@ export async function markNotificationRead(notificationId: string) {
 
   return { error: null };
 }
+
+export async function deleteNotificationRecord(notificationId: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('id', notificationId);
+
+  if (error) {
+    console.error('Delete notification failed:', serializeError(error));
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+export async function clearUserNotifications(userId: string) {
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Clear notifications failed:', serializeError(error));
+    return { error: error.message };
+  }
+
+  return { error: null };
+}

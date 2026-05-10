@@ -14,6 +14,8 @@ export default function useUser() {
     unreadNotifications,
     pushNotification,
     markAllNotificationsRead,
+    deleteNotification,
+    clearNotifications,
     profileContext,
     setProfileContext,
   } = useAppContext();
@@ -29,6 +31,8 @@ export default function useUser() {
     unreadNotifications,
     pushNotification,
     markAllNotificationsRead,
+    deleteNotification,
+    clearNotifications,
     profileContext,
     setProfileContext,
   };

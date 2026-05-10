@@ -31,6 +31,7 @@ type ProfileRow = {
   full_name: string | null;
   email: string | null;
   badge_type: string | null;
+  verification_status: string | null;
   role: string | null;
   created_at: string | null;
 };
@@ -61,7 +62,7 @@ async function enrichListings(rows: ListingRow[]) {
     sellerIds.length
       ? supabase
           .from('profiles')
-          .select('id, full_name, email, badge_type, role, created_at')
+          .select('id, full_name, email, badge_type, verification_status, role, created_at')
           .in('id', sellerIds)
       : Promise.resolve({ data: [], error: null }),
     businessIds.length
@@ -90,7 +91,11 @@ async function enrichListings(rows: ListingRow[]) {
       ? 'gold'
       : profile?.role === 'admin'
         ? 'admin'
-        : (profile?.badge_type as Listing['badgeType']) || 'none';
+        : profile?.verification_status === 'verified' || profile?.badge_type === 'verified' || profile?.badge_type === 'blue'
+          ? 'blue'
+          : profile
+            ? 'none'
+            : 'none';
 
     return {
       ...row,

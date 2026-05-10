@@ -112,6 +112,37 @@ to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own notifications" on public.notifications;
+create policy "Users can delete own notifications"
+on public.notifications
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+alter table if exists public.verification_requests enable row level security;
+
+drop policy if exists "Users can create verification requests" on public.verification_requests;
+create policy "Users can create verification requests"
+on public.verification_requests
+for insert
+to authenticated
+with check (user_id = auth.uid());
+
+drop policy if exists "Users can read own verification requests" on public.verification_requests;
+create policy "Users can read own verification requests"
+on public.verification_requests
+for select
+to authenticated
+using (user_id = auth.uid() or (auth.jwt() ->> 'email') = 'mwanginewton107@gmail.com');
+
+drop policy if exists "Admin can manage verification requests" on public.verification_requests;
+create policy "Admin can manage verification requests"
+on public.verification_requests
+for all
+to authenticated
+using ((auth.jwt() ->> 'email') = 'mwanginewton107@gmail.com')
+with check ((auth.jwt() ->> 'email') = 'mwanginewton107@gmail.com');
+
 drop policy if exists "Public can read listing media" on storage.objects;
 drop policy if exists "Public can read CampusTrader media" on storage.objects;
 create policy "Public can read CampusTrader media"

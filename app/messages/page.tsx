@@ -76,7 +76,10 @@ export default function MessagesPage() {
           </div>
         ) : !user ? (
           <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sign in to view your messages</p>
+            <p className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Sign in to continue.</p>
+            <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
+              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
+            </p>
             <Link href="/signin" className="inline-block rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-semibold text-white transition">
               Sign In
             </Link>

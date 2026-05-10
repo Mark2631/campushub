@@ -5,7 +5,14 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { ensureProfile } from '../lib/profiles';
 import { checkIsAdmin, autoVerifyAdminProfile } from '../lib/admins';
-import { AppNotification, createNotificationRecord, getUserNotifications, markNotificationRead } from '../lib/notifications';
+import {
+  AppNotification,
+  clearUserNotifications,
+  createNotificationRecord,
+  deleteNotificationRecord,
+  getUserNotifications,
+  markNotificationRead,
+} from '../lib/notifications';
 import { ProfileContext, personalProfileContext, readStoredProfileContext, storeProfileContext } from '../lib/profileContext';
 
 type Theme = 'dark' | 'light';
@@ -23,6 +30,8 @@ type AppContextValue = {
   unreadNotifications: number;
   pushNotification: (notification: { title: string; body: string; type: string }) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  clearNotifications: () => Promise<void>;
   profileContext: ProfileContext;
   setProfileContext: (context: ProfileContext) => void;
 };
@@ -30,6 +39,7 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | null>(null);
 const syncedProfileIds = new Set<string>();
 const loggedProfileErrors = new Set<string>();
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -220,6 +230,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await Promise.all(unread.map((notification) => markNotificationRead(notification.id)));
   }, [notifications]);
 
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    setNotifications((current) => current.filter((notification) => notification.id !== notificationId));
+    if (uuidPattern.test(notificationId)) {
+      await deleteNotificationRecord(notificationId);
+    }
+  }, []);
+
+  const clearNotifications = useCallback(async () => {
+    setNotifications([]);
+    if (session?.user?.id) {
+      await clearUserNotifications(session.user.id);
+    }
+  }, [session?.user?.id]);
+
   const setProfileContext = (context: ProfileContext) => {
     setProfileContextState(context);
   };
@@ -238,10 +262,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       unreadNotifications: notifications.filter((notification) => !notification.read).length,
       pushNotification,
       markAllNotificationsRead,
+      deleteNotification,
+      clearNotifications,
       profileContext,
       setProfileContext,
     }),
-    [adminLoading, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, theme]
+    [adminLoading, clearNotifications, deleteNotification, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, theme]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

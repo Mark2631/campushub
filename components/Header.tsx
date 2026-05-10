@@ -8,7 +8,16 @@ import Logo from './Logo';
 import SettingsPanel from './SettingsPanel';
 
 export default function Header() {
-  const { user, loading, isAdmin, notifications, unreadNotifications, markAllNotificationsRead } = useUser();
+  const {
+    user,
+    loading,
+    isAdmin,
+    notifications,
+    unreadNotifications,
+    markAllNotificationsRead,
+    deleteNotification,
+    clearNotifications,
+  } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
@@ -51,23 +60,46 @@ export default function Header() {
 
                 {notificationsOpen ? (
                   <div className="fixed right-3 top-16 z-50 w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:absolute sm:right-0 sm:top-14 sm:w-80 dark:border-slate-800 dark:bg-slate-950">
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-2 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
-                      <button
-                        aria-label="Close notifications"
-                        onClick={() => setNotificationsOpen(false)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {notifications.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => void clearNotifications()}
+                            className="rounded-xl px-2 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                          >
+                            Clear all
+                          </button>
+                        ) : null}
+                        <button
+                          aria-label="Close notifications"
+                          onClick={() => setNotificationsOpen(false)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+                        >
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                     <div className="max-h-72 space-y-2 overflow-y-auto">
                       {notifications.length > 0 ? (
                         notifications.map((notification) => (
                           <div key={notification.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
-                            <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
-                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
+                            <div className="flex items-start gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
+                                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
+                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
+                              </div>
+                              <button
+                                type="button"
+                                aria-label="Delete notification"
+                                onClick={() => void deleteNotification(notification.id)}
+                                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                              >
+                                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                              </button>
+                            </div>
                           </div>
                         ))
                       ) : (

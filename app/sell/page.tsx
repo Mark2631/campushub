@@ -320,8 +320,10 @@ function SellPageContent() {
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to post a listing</h2>
-            <p className="text-gray-600 dark:text-zinc-400 mb-6">Sign in to post a listing.</p>
+            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to continue.</h2>
+            <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
+              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
+            </p>
             <Link href="/signin" className="inline-block rounded-2xl bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 px-6 py-3 font-semibold text-white transition">
               Sign In
             </Link>
