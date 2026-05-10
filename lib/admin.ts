@@ -88,13 +88,13 @@ async function safeSection<T>(
     const { data, error } = await query();
     if (error) {
       console.error(`${label} error:`, error);
-      return { data: fallback, error: `Could not load ${label}.` };
+      return { data: fallback, error: `Could not load ${label}: ${error.message}` };
     }
 
     return { data: data ?? fallback, error: null };
   } catch (error) {
     console.error(`${label} error:`, error);
-    return { data: fallback, error: `Could not load ${label}.` };
+    return { data: fallback, error: `Could not load ${label}: ${String(error)}` };
   }
 }
 
@@ -560,7 +560,6 @@ export async function hideListing(listingId: string, adminId: string, reason: st
       .from('listings')
       .update({
         status: 'hidden',
-        hidden_reason: reason,
         hidden_by: adminId,
         hidden_at: new Date().toISOString(),
       })
@@ -591,9 +590,10 @@ export async function restoreListing(listingId: string, adminId: string) {
       .from('listings')
       .update({
         status: 'active',
-        hidden_reason: null,
         hidden_by: null,
         hidden_at: null,
+        deleted_by: null,
+        deleted_at: null,
       })
       .eq('id', listingId),
     supabase.from('admin_actions').insert({
@@ -617,7 +617,14 @@ export async function restoreListing(listingId: string, adminId: string) {
 
 export async function deleteListingAsAdmin(listingId: string, adminId: string, reason: string) {
   const { error } = await Promise.all([
-    supabase.from('listings').delete().eq('id', listingId),
+    supabase
+      .from('listings')
+      .update({
+        status: 'hidden',
+        deleted_by: adminId,
+        deleted_at: new Date().toISOString(),
+      })
+      .eq('id', listingId),
     supabase.from('admin_actions').insert({
       admin_id: adminId,
       action_type: 'listing_delete',

@@ -8,9 +8,26 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 };
 
+const INSTALL_DISMISS_KEY = 'campustrader_install_dismissed';
+const INSTALL_DISMISS_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+function isDismissedRecently() {
+  if (typeof window === 'undefined') return true;
+  const stored = window.localStorage.getItem(INSTALL_DISMISS_KEY);
+  if (!stored) return false;
+  const timestamp = Number(stored);
+  return Number.isFinite(timestamp) && Date.now() - timestamp < INSTALL_DISMISS_TTL;
+}
+
+function recordDismissed() {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+}
+
 export default function PWAInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(true);
+  const [promptedThisSession, setPromptedThisSession] = useState(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -21,15 +38,19 @@ export default function PWAInstallPrompt() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setDismissed(isDismissedRecently());
+
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
+      if (isDismissedRecently() || promptedThisSession) return;
       setInstallEvent(event as BeforeInstallPromptEvent);
-      setDismissed(false);
+      setPromptedThisSession(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
+  }, [promptedThisSession]);
 
   const handleInstall = async () => {
     if (!installEvent) return;
@@ -37,6 +58,13 @@ export default function PWAInstallPrompt() {
     await installEvent.userChoice;
     setInstallEvent(null);
     setDismissed(true);
+    recordDismissed();
+  };
+
+  const handleDismiss = () => {
+    setInstallEvent(null);
+    setDismissed(true);
+    recordDismissed();
   };
 
   if (!installEvent || dismissed) return null;
@@ -61,7 +89,7 @@ export default function PWAInstallPrompt() {
         <button
           type="button"
           aria-label="Dismiss install prompt"
-          onClick={() => setDismissed(true)}
+          onClick={handleDismiss}
           className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
         >
           <X className="h-4 w-4" aria-hidden="true" />

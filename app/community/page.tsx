@@ -102,7 +102,7 @@ export default function CommunityPage() {
             <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
               <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedGroup.name}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Group spaces are being prepared. For now, use Useful Links and marketplace messages.
+                Group chat spaces will open after the first campus rollout. For now, use marketplace messages and Useful Links.
               </p>
               <button onClick={() => setSelectedGroup(null)} className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95">
                 Close
