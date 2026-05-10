@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, X } from 'lucide-react';
 
 type BeforeInstallPromptEvent = Event & {
@@ -26,8 +26,8 @@ function recordDismissed() {
 
 export default function PWAInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(true);
-  const [promptedThisSession, setPromptedThisSession] = useState(false);
+  const [dismissed, setDismissed] = useState(() => isDismissedRecently());
+  const promptedThisSession = useRef(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -39,18 +39,17 @@ export default function PWAInstallPrompt() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setDismissed(isDismissedRecently());
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      if (isDismissedRecently() || promptedThisSession) return;
+      if (isDismissedRecently() || promptedThisSession.current) return;
       setInstallEvent(event as BeforeInstallPromptEvent);
-      setPromptedThisSession(true);
+      promptedThisSession.current = true;
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, [promptedThisSession]);
+  }, []);
 
   const handleInstall = async () => {
     if (!installEvent) return;

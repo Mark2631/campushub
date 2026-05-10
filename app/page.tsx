@@ -8,6 +8,7 @@ import ListingCard from '../components/ListingCard';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
+import { getItemRequests, ItemRequest } from '../lib/itemRequests';
 import { getProfileById } from '../lib/profiles';
 
 const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Refurbished', 'Other'];
@@ -44,11 +45,15 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
 export default function Home() {
   const { user } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [requests, setRequests] = useState<ItemRequest[]>([]);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [error, setError] = useState<string | null>(null);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [showLoadingState, setShowLoadingState] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     minPrice: '',
@@ -60,12 +65,15 @@ export default function Home() {
   });
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setShowLoadingState(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     const loadListings = async () => {
-      if (isMounted) {
-        setLoadingListings(true);
-      }
+      if (isMounted) setLoadingListings(true);
       const { listings: rows, error } = await getListings(60);
       if (!isMounted) return;
       setListings(rows as Listing[]);
@@ -82,6 +90,25 @@ export default function Home() {
     return () => {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRequests = async () => {
+      if (isMounted) setLoadingRequests(true);
+      const { requests: rows, error } = await getItemRequests(6);
+      if (!isMounted) return;
+      setRequests(rows);
+      setRequestsError(error);
+      setLoadingRequests(false);
+    };
+
+    loadRequests();
+
+    return () => {
+      isMounted = false;
     };
   }, []);
 
@@ -122,22 +149,57 @@ export default function Home() {
       const matchesSellerType = filters.sellerType === 'all' || listing.sellerType === filters.sellerType;
       const matchesNegotiable = !filters.negotiableOnly || listing.negotiable;
 
-      return matchesCategory && matchesQuery && matchesMinPrice && matchesMaxPrice && matchesCondition && matchesLocation && matchesSellerType && matchesNegotiable;
+      return (
+        matchesCategory &&
+        matchesQuery &&
+        matchesMinPrice &&
+        matchesMaxPrice &&
+        matchesCondition &&
+        matchesLocation &&
+        matchesSellerType &&
+        matchesNegotiable
+      );
     });
   }, [activeCategory, filters, listings, query]);
 
-  const sectionListings = (category: string) => {
-    const exact = filteredListings.filter((listing) => listing.category === category);
-    return (exact.length >= 6 ? exact : [...exact, ...filteredListings.filter((listing) => listing.category !== category)]).slice(0, 6);
-  };
+  const sectionBuckets = useMemo(() => {
+    const usedIds = new Set<string>();
+    const recent = [...filteredListings].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
+    recent.forEach((listing) => usedIds.add(listing.id));
 
-  const verifiedBusinessListings = filteredListings.filter((listing) => listing.business_id || listing.badgeType === 'gold').slice(0, 6);
-  const studentEssentialsListings = filteredListings
-    .filter((listing) => ['Electronics', 'Books', 'Furniture', 'Other'].includes(listing.category))
-    .slice(0, 12);
+    const services = filteredListings
+      .filter((listing) =>
+        listing.condition === 'service' ||
+        listing.category === 'Services' ||
+        listing.category === 'Food'
+      )
+      .filter((listing) => !usedIds.has(listing.id))
+      .slice(0, 6);
+    services.forEach((listing) => usedIds.add(listing.id));
+
+    const refurbished = filteredListings
+      .filter((listing) => listing.category === 'Refurbished' || listing.condition === 'refurbished')
+      .filter((listing) => !usedIds.has(listing.id))
+      .slice(0, 6);
+    refurbished.forEach((listing) => usedIds.add(listing.id));
+
+    const studentEssentials = filteredListings
+      .filter((listing) => ['Books', 'Furniture', 'Fashion', 'Other'].includes(listing.category))
+      .filter((listing) => !usedIds.has(listing.id))
+      .slice(0, 6);
+    studentEssentials.forEach((listing) => usedIds.add(listing.id));
+
+    const verifiedBusiness = filteredListings
+      .filter((listing) => listing.business_id || listing.badgeType === 'gold')
+      .filter((listing) => !usedIds.has(listing.id))
+      .slice(0, 6);
+
+    return { recent, services, refurbished, studentEssentials, verifiedBusiness };
+  }, [filteredListings]);
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
+  const showRequestsSection = loadingRequests || (!requestsError && requests.length > 0);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
@@ -148,6 +210,40 @@ export default function Home() {
           <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
         </header>
+
+        {showRequestsSection ? (
+          <section className="mb-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Looking for something?</p>
+              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                Open item requests from other students appear here when available.
+              </p>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {loadingRequests ? (
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+                  Loading requests...
+                </div>
+              ) : (
+                requests.map((request) => (
+                  <article key={request.id} className="rounded-2xl border border-gray-200 bg-slate-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{request.title}</p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{request.category} · {request.location || 'Any location'}</p>
+                      </div>
+                      <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                        {request.interested_count ?? 0} interested
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm text-gray-600 dark:text-zinc-400 line-clamp-3">{request.description || 'No description provided.'}</p>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <div className="mb-4">
           <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 sm:gap-3 sm:px-4 dark:border-zinc-700 dark:bg-zinc-900">
@@ -193,9 +289,15 @@ export default function Home() {
         </div>
 
         {loadingListings ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-            Loading listings...
-          </div>
+          showLoadingState ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              Loading listings...
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+              Still loading listings... Please wait or refresh the page.
+            </div>
+          )
         ) : (
           <>
             {error ? (
@@ -217,11 +319,11 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <ListingSection title="Recently Posted" listings={filteredListings.slice(0, 12)} />
-                <ListingSection title="Services Around Campus" listings={sectionListings('Services')} />
-                <ListingSection title="Refurbished Deals" listings={sectionListings('Refurbished')} />
-                <ListingSection title="Student Essentials" listings={studentEssentialsListings} />
-                <ListingSection title="Verified Businesses" listings={verifiedBusinessListings} />
+                <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
+                <ListingSection title="Services Around Campus" listings={sectionBuckets.services} />
+                <ListingSection title="Refurbished Deals" listings={sectionBuckets.refurbished} />
+                <ListingSection title="Student Essentials" listings={sectionBuckets.studentEssentials} />
+                <ListingSection title="Verified Businesses" listings={sectionBuckets.verifiedBusiness} />
               </>
             )}
           </>

@@ -242,7 +242,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (session?.user?.id) {
       await clearUserNotifications(session.user.id);
     }
-  }, [session?.user?.id]);
+  }, [session]);
 
   const setProfileContext = (context: ProfileContext) => {
     setProfileContextState(context);
