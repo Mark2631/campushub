@@ -30,6 +30,8 @@ export async function autoVerifyAdminProfile(userId: string, email: string) {
     .update({
       verification_status: 'verified',
       badge_type: 'admin',
+      role: 'admin',
+      account_status: 'active',
     })
     .eq('id', userId);
 

@@ -15,8 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CampusTrader',
-  description: 'Trusted Campus Marketplace',
+  metadataBase: new URL('https://campus-trader.vercel.app'),
+  title: 'CampusTrader | Trusted Campus Marketplace',
+  description: 'Buy, sell, request items, and connect safely around campus.',
+  keywords: [
+    'CampusTrader',
+    'Campus Trader',
+    'Campus-Trader',
+    'campus marketplace',
+    'student marketplace Kenya',
+    'Meru campus marketplace',
+    'MUST marketplace',
+    'buy and sell campus',
+    'student deals',
+    'campus services',
+  ],
+  alternates: {
+    canonical: '/',
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -34,9 +50,26 @@ export const metadata: Metadata = {
     shortcut: ['/favicon.ico'],
   },
   openGraph: {
-    title: 'CampusTrader',
-    description: 'Trusted Campus Marketplace for campus buying, selling, and services.',
+    title: 'CampusTrader | Trusted Campus Marketplace',
+    description: 'Buy, sell, request items, and connect safely around campus.',
+    url: '/',
     siteName: 'CampusTrader',
+    images: [
+      {
+        url: '/icons/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: 'CampusTrader app icon',
+      },
+    ],
+    locale: 'en_KE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'CampusTrader | Trusted Campus Marketplace',
+    description: 'Buy, sell, request items, and connect safely around campus.',
+    images: ['/icons/icon-512.png'],
   },
 };
 

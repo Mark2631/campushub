@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import useUser from '../hooks/useUser';
+import AuthPromptModal from './AuthPromptModal';
 
 export default function SaveListingButton({ listingId }: { listingId: string }) {
   const { user, loading } = useUser();
@@ -31,18 +31,7 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
         Save
       </button>
       {needsSignIn ? (
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
-          <p className="font-bold">Sign in to continue.</p>
-          <p className="mt-1 text-blue-800 dark:text-blue-200">
-            Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
-          </p>
-          <Link
-            href={`/signin?next=${encodeURIComponent(`/listing/${listingId}`)}`}
-            className="mt-3 inline-block rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
-          >
-            Sign In
-          </Link>
-        </div>
+        <AuthPromptModal open={needsSignIn} next={`/listing/${listingId}`} onClose={() => setNeedsSignIn(false)} />
       ) : null}
       {message ? <p className="text-sm text-gray-600 dark:text-zinc-400">{message}</p> : null}
     </div>

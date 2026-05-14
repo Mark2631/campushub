@@ -4,6 +4,7 @@ export const storageBuckets = {
   listingMedia: 'listing-media',
   profileMedia: 'profile-media',
   verificationMedia: 'verification-media',
+  communityMedia: 'community-media',
 } as const;
 
 export type StorageBucket = (typeof storageBuckets)[keyof typeof storageBuckets];
@@ -21,6 +22,7 @@ type FileKind = 'image' | 'video' | 'verification-document';
 type UploadOptions = {
   timeoutMs?: number;
   upsert?: boolean;
+  path?: string;
 };
 
 export function safeFileName(fileName: string) {
@@ -70,6 +72,40 @@ export function withTimeout<T>(promise: PromiseLike<T>, ms: number, message: str
   ]);
 }
 
+export async function compressImageFile(file: File, maxWidth = 1600) {
+  if (typeof window === 'undefined' || !file.type.startsWith('image/')) return file;
+  if (file.size < 750 * 1024) return file;
+
+  const imageUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not read image for compression.'));
+      img.src = imageUrl;
+    });
+
+    if (image.width <= maxWidth) return file;
+
+    const scale = maxWidth / image.width;
+    const canvas = document.createElement('canvas');
+    canvas.width = maxWidth;
+    canvas.height = Math.round(image.height * scale);
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.82));
+    if (!blob) return file;
+    return new File([blob], file.name, { type: blob.type || file.type, lastModified: Date.now() });
+  } catch (error) {
+    console.error('Image compression failed:', error);
+    return file;
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
 function formatStorageError(error: unknown) {
   if (error instanceof Error) return error.message;
   if (typeof error === 'object' && error && 'message' in error) {
@@ -79,7 +115,7 @@ function formatStorageError(error: unknown) {
 }
 
 export async function uploadPublicFile(bucket: StorageBucket, userId: string, file: File, options: UploadOptions = {}) {
-  const path = getStoragePath(userId, file);
+  const path = options.path || getStoragePath(userId, file);
 
   try {
     const uploadResponse = await withTimeout(

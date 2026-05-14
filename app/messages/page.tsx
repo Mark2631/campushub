@@ -12,6 +12,13 @@ type ConversationSummary = {
   id: string;
   listingTitle: string;
   listingId: string;
+  otherUser: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  };
+  unreadCount: number;
   lastMessage: {
     id: string;
     content: string;
@@ -19,6 +26,19 @@ type ConversationSummary = {
     sender_id: string;
   } | null;
 };
+
+function profileName(profile: ConversationSummary['otherUser']) {
+  return profile.full_name || profile.email?.split('@')[0] || 'CampusTrader user';
+}
+
+function Avatar({ profile }: { profile: ConversationSummary['otherUser'] }) {
+  const name = profileName(profile);
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
+      {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
 
 export default function MessagesPage() {
   const { user, loading } = useUser();
@@ -107,8 +127,13 @@ export default function MessagesPage() {
                   className="block rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 transition hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg dark:hover:shadow-blue-500/10"
                 >
                   <div className="flex items-center justify-between gap-4">
+                    <Avatar profile={conversation.otherUser} />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white truncate">{conversation.listingTitle}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-semibold text-gray-900 dark:text-white">{profileName(conversation.otherUser)}</p>
+                        <span className="text-xs text-gray-400">•</span>
+                        <p className="truncate text-xs text-gray-500 dark:text-zinc-500">{conversation.listingTitle}</p>
+                      </div>
                       <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1 line-clamp-2">
                         {conversation.lastMessage?.content || 'No messages yet'}
                       </p>
@@ -117,9 +142,11 @@ export default function MessagesPage() {
                       <span className="text-xs text-gray-500 dark:text-zinc-500 whitespace-nowrap">
                         {conversation.lastMessage ? new Date(conversation.lastMessage.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
-                      <div className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-300">
-                        {conversation.lastMessage ? '1 unread' : 'New'}
-                      </div>
+                      {conversation.unreadCount > 0 ? (
+                        <div className="min-w-6 rounded-full bg-blue-600 px-2 py-1 text-center text-xs font-semibold text-white">
+                          {conversation.unreadCount}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </Link>

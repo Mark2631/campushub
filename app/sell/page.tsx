@@ -3,16 +3,17 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { getListingById, insertListing, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
-import { validateUploadFile } from '../../lib/storage';
+import { getListingById, insertListing, normalizeCategory, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
+import { compressImageFile, validateUploadFile } from '../../lib/storage';
 
-const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Refurbished', 'Other'];
+const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Business', 'Refurbished', 'Other'];
 const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
-const maxVideoSize = 30 * 1024 * 1024;
+const maxVideoSize = 15 * 1024 * 1024;
 
 type SelectedMedia = {
   file: File;
@@ -22,7 +23,7 @@ type SelectedMedia = {
 function SellPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, pushNotification, profileContext } = useUser();
+  const { user, loading, pushNotification, profileContext, showToast } = useUser();
   const editListingId = searchParams.get('edit');
   const [formData, setFormData] = useState({
     title: '',
@@ -88,13 +89,13 @@ function SellPageContent() {
       ...prev,
       [name]:
         name === 'category'
-          ? value
+          ? normalizeCategory(value)
           : name === 'condition'
             ? normalizeListingCondition(value, prev.category)
             : type === 'checkbox'
               ? checked
               : value,
-      ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, value) } : {}),
+      ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, normalizeCategory(value)) } : {}),
     }));
   };
 
@@ -138,7 +139,8 @@ function SellPageContent() {
       }
 
       if (file.size > maxVideoSize) {
-        setMessage({ type: 'error', text: `${file.name} must be 30MB or smaller.` });
+        setMessage({ type: 'error', text: 'Video is too large. Use a shorter clip under 15MB.' });
+        showToast({ type: 'error', message: 'Video is too large. Use a shorter clip under 15MB.' });
         return;
       }
 
@@ -202,14 +204,27 @@ function SellPageContent() {
     let videoUrl: string | null = options?.skipMedia ? (editListingId ? existingVideoUrl : null) : existingVideoUrl;
 
     if (!options?.skipMedia) {
-      // Upload images
-      for (const [index, image] of images.entries()) {
-        setUploadStatus(`Uploading image ${index + 1} of ${images.length}...`);
-        const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, image.file);
-        if (error || !publicUrl) {
-          throw new Error(`Image upload failed: ${error || 'Unknown error'}`);
-        }
-        mediaUrls.push(publicUrl);
+      if (images.length > 0) {
+        let completedUploads = 0;
+        setUploadStatus(`Uploading 1 of ${images.length}...`);
+        const slowTimer = window.setTimeout(() => {
+          showToast({ type: 'warning', message: 'Upload is taking longer than expected. Keep this page open.' });
+        }, 20000);
+        const uploads = await Promise.all(
+          images.map(async (image) => {
+            const compressed = await compressImageFile(image.file, 1600);
+            const { publicUrl, error } = await uploadListingMedia('listing-media', user.id, compressed);
+            completedUploads += 1;
+            setUploadStatus(`Uploading ${Math.min(completedUploads + 1, images.length)} of ${images.length}...`);
+            if (error || !publicUrl) {
+              throw new Error(`Image upload failed: ${error || 'Unknown error'}`);
+            }
+            return publicUrl;
+          })
+        ).finally(() => {
+          window.clearTimeout(slowTimer);
+        });
+        mediaUrls.push(...uploads);
       }
 
       // Upload video if present
@@ -265,11 +280,13 @@ function SellPageContent() {
 
       if (error) {
         setMessage({ type: 'error', text: error });
+        showToast({ type: 'error', message: error });
         return;
       }
 
       setCreatedListingId(listing?.id || null);
       setMessage({ type: 'success', text: editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.' });
+      showToast({ type: 'success', message: editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.' });
       await pushNotification({
         type: editListingId ? 'listing updated' : 'listing posted',
         title: editListingId ? 'Listing updated' : 'Listing posted successfully',
@@ -285,6 +302,7 @@ function SellPageContent() {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       const text = error instanceof Error ? error.message : String(error);
       setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
       if ((images.length > 0 || videoPreview) && /media upload failed|upload|policy|row-level|timed out|storage/i.test(text)) {
         setPostWithoutMediaReady(true);
       }
@@ -320,14 +338,12 @@ function SellPageContent() {
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to continue.</h2>
-            <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
-              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
+            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
+            <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
+              Create a free account and you can post immediately.
             </p>
-            <Link href="/signin" className="inline-block rounded-2xl bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 px-6 py-3 font-semibold text-white transition">
-              Sign In
-            </Link>
           </div>
+          <AuthPromptModal open next="/sell" onClose={() => router.push('/')} />
         </main>
         <BottomNav />
       </div>

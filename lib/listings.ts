@@ -108,7 +108,7 @@ async function enrichListings(rows: ListingRow[]) {
 }
 
 export function normalizeListingCondition(condition: string, category?: string) {
-  const normalizedCategory = category?.trim().toLowerCase();
+  const normalizedCategory = normalizeCategory(category || '').toLowerCase();
   const normalizedCondition = condition.trim().toLowerCase().replace(/\s+/g, '_');
 
   if (normalizedCategory === 'services') return 'service';
@@ -119,13 +119,49 @@ export function normalizeListingCondition(condition: string, category?: string) 
   return 'used';
 }
 
-export async function getListings(limit = 20) {
+export function normalizeCategory(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (['service', 'services', 'campus services', 'skill', 'skills'].includes(normalized)) return 'Services';
+  if (['electronic', 'electronics', 'gadget', 'gadgets'].includes(normalized)) return 'Electronics';
+  if (['book', 'books', 'notes', 'study'].includes(normalized)) return 'Books';
+  if (['fashion', 'clothes', 'clothing', 'cloth designs'].includes(normalized)) return 'Fashion';
+  if (['furniture', 'room items'].includes(normalized)) return 'Furniture';
+  if (['food', 'meals', 'snacks'].includes(normalized)) return 'Food';
+  if (['business', 'business offers'].includes(normalized)) return 'Business';
+  if (['refurbished', 'refurb'].includes(normalized)) return 'Refurbished';
+  if (['other', 'others'].includes(normalized)) return 'Other';
+  return value ? value.trim().replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Other';
+}
+
+function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
+  return {
+    id: row.id || '',
+    user_id: row.user_id || row.seller_id || '',
+    business_id: row.business_id || null,
+    seller_id: row.seller_id || row.user_id || '',
+    title: row.title || '',
+    description: row.description ?? null,
+    category: normalizeCategory(row.category || 'Other'),
+    price: row.price ?? null,
+    negotiable: Boolean(row.negotiable),
+    condition: row.condition || 'used',
+    status: row.status || 'active',
+    location: row.location ?? null,
+    media_urls: Array.isArray(row.media_urls) ? row.media_urls : [],
+    video_url: row.video_url ?? null,
+    created_at: row.created_at || new Date().toISOString(),
+    updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+  };
+}
+
+export async function getListings(limit = 20, offset = 0) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
       .limit(limit);
 
     if (error) {
@@ -133,7 +169,7 @@ export async function getListings(limit = 20) {
       return { listings: [] as Listing[], error: error.message };
     }
 
-    const liveListings = await enrichListings((data || []) as ListingRow[]);
+    const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
@@ -194,7 +230,7 @@ export async function insertListing(
       business_id: data.businessId || null,
       title: data.title,
       description: data.description,
-      category: data.category,
+      category: normalizeCategory(data.category),
       price: price == null ? null : Number(price),
       negotiable: Boolean(data.negotiable),
       condition: normalizeListingCondition(data.condition, data.category),
@@ -298,7 +334,7 @@ export async function updateListing(
   const payload = {
     title: data.title,
     description: data.description,
-    category: data.category,
+    category: normalizeCategory(data.category),
     price: price == null ? null : Number(price),
     negotiable: Boolean(data.negotiable),
     condition: normalizeListingCondition(data.condition, data.category),

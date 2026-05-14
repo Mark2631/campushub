@@ -15,17 +15,18 @@ import {
   createBusinessProfile,
   getBusinessProfiles,
   saveProfileAvatar,
+  saveProfilePhone,
   submitVerificationRequest,
   uploadVerificationDocument,
   upsertProfile,
 } from '../../lib/profiles';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import { createComplaint } from '../../lib/complaints';
-import { validateUploadFile } from '../../lib/storage';
+import { compressImageFile, validateUploadFile } from '../../lib/storage';
 
 const verificationTypes = [
-  { value: 'student', label: 'Student verification' },
-  { value: 'national_id', label: 'National ID verification' },
+  { value: 'student', label: 'Student ID' },
+  { value: 'national_id', label: 'National ID' },
   { value: 'business', label: 'Business verification' },
 ];
 
@@ -38,12 +39,12 @@ const statusStyles: Record<string, string> = {
 };
 
 function formatStatus(status?: string | null) {
-  if (!status) return 'Unverified';
+  if (!status || status === 'unverified') return 'Not verified yet';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export default function ProfilePage() {
-  const { user, loading, isAdmin, pushNotification, profileContext, setProfileContext } = useUser();
+  const { user, loading, isAdmin, pushNotification, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
@@ -60,6 +61,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
   const [listingActionId, setListingActionId] = useState<string | null>(null);
   const [listingFilter, setListingFilter] = useState<'active' | 'sold' | 'hidden'>('active');
   const [complaintForm, setComplaintForm] = useState({
@@ -104,6 +106,7 @@ export default function ProfilePage() {
 
       if (!isMounted) return;
       setProfile(syncedProfile);
+      setPhoneInput(syncedProfile?.phone_number || '');
       setBusinesses(userBusinesses);
       setUserListings(userListings);
       setActiveListingsCount(userListings.filter((listing) => listing.status === 'active').length);
@@ -175,15 +178,18 @@ export default function ProfilePage() {
 
     setAvatarUploading(true);
     setMessage(null);
-    const { avatarUrl, error } = await saveProfileAvatar(user.id, file);
+    const compressed = await compressImageFile(file, 1600);
+    const { avatarUrl, error } = await saveProfileAvatar(user.id, compressed);
     setAvatarUploading(false);
     event.currentTarget.value = '';
 
     if (error) {
       setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
       return;
     }
 
+    setAvatarPreview(null);
     setProfile((current) => (current ? { ...current, avatar_url: avatarUrl } : current));
     await pushNotification({
       type: 'profile updated',
@@ -191,6 +197,20 @@ export default function ProfilePage() {
       body: 'Your account photo has been updated.',
     });
     setMessage({ type: 'success', text: 'Profile picture updated.' });
+    showToast({ type: 'success', message: 'Profile photo uploaded.' });
+  };
+
+  const handlePhoneSave = async () => {
+    if (!user) return;
+    const { phoneNumber, error } = await saveProfilePhone(user.id, phoneInput);
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
+      return;
+    }
+    setPhoneInput(phoneNumber || '');
+    setProfile((current) => (current ? { ...current, phone_number: phoneNumber } : current));
+    showToast({ type: 'success', message: 'WhatsApp number saved.' });
   };
 
   const clearDocumentFile = () => {
@@ -216,11 +236,13 @@ export default function ProfilePage() {
 
     for (const [index, file] of documentFiles.entries()) {
       setVerificationUploadStatus(`Uploading verification file ${index + 1} of ${documentFiles.length}...`);
-      const { publicUrl, error } = await uploadVerificationDocument(user.id, file);
+      const uploadFile = file.type.startsWith('image/') ? await compressImageFile(file, 1600) : file;
+      const { publicUrl, error } = await uploadVerificationDocument(user.id, uploadFile);
       if (error || !publicUrl) {
         setVerificationSubmitting(false);
         setVerificationUploadStatus('');
         setMessage({ type: 'error', text: `Verification upload failed. ${error || 'Please try again.'}` });
+        showToast({ type: 'error', message: `Verification upload failed. ${error || 'Please try again.'}` });
         return;
       }
       uploadedUrls.push(publicUrl);
@@ -239,15 +261,17 @@ export default function ProfilePage() {
 
     if (error) {
       setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
       return;
     }
 
     await pushNotification({
       type: 'verification submitted',
       title: 'Verification submitted',
-      body: 'Verification submitted for admin review.',
+      body: 'Verification submitted. Admin will review your document.',
     });
-    setMessage({ type: 'success', text: 'Verification submitted successfully. Admin will review your document.' });
+    setMessage({ type: 'success', text: 'Verification submitted. Admin will review your document.' });
+    showToast({ type: 'success', message: 'Verification submitted. Admin will review your document.' });
     clearDocumentFile();
     setVerificationType(verificationTypes[0].value);
   };
@@ -293,6 +317,7 @@ export default function ProfilePage() {
       body: 'Your business profile is ready and waiting for verification.',
     });
     setMessage({ type: 'success', text: 'Business profile created.' });
+    showToast({ type: 'success', message: 'Business created.' });
   };
 
   const handleComplaintSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -317,6 +342,7 @@ export default function ProfilePage() {
 
     if (error) {
       setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
       return;
     }
 
@@ -327,6 +353,7 @@ export default function ProfilePage() {
       body: 'Your issue has been submitted for review.',
     });
     setMessage({ type: 'success', text: 'Complaint submitted. Admin will review it.' });
+    showToast({ type: 'success', message: 'Report submitted.' });
   };
 
   const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
@@ -338,6 +365,7 @@ export default function ProfilePage() {
 
     if (error) {
       setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
       return;
     }
 
@@ -352,6 +380,7 @@ export default function ProfilePage() {
       body: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing removed from the active feed.' : 'Listing restored to the active feed.',
     });
     setMessage({ type: 'success', text: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
+    showToast({ type: 'success', message: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
     window.dispatchEvent(new Event('campustrader:listings-refresh'));
   };
 
@@ -412,6 +441,22 @@ export default function ProfilePage() {
                       {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
                       <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
                     </label>
+                    <div className="mt-4 flex max-w-sm flex-col gap-2 sm:flex-row">
+                      <input
+                        value={phoneInput}
+                        onChange={(event) => setPhoneInput(event.target.value)}
+                        placeholder="WhatsApp: 07XXXXXXXX"
+                        className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-xs text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePhoneSave}
+                        className="rounded-2xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                      >
+                        Save WhatsApp
+                      </button>
+                    </div>
+                    <p className="mt-2 max-w-sm text-xs text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                   </div>
                 </div>
                 <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 xl:flex">
@@ -495,8 +540,8 @@ export default function ProfilePage() {
             <section id="verification" className="mb-8 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6 dark:border-blue-950/80 dark:bg-zinc-900">
               <div className="mb-5 flex flex-col gap-2">
                 <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Verification</p>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Verify account</h2>
-                <p className="text-sm text-gray-600 dark:text-zinc-400">Verification is reviewed manually by admin.</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Not verified yet</h2>
+                <p className="text-sm text-gray-600 dark:text-zinc-400">Verification helps buyers and sellers trust you. It is not required to use CampusTrader.</p>
                 <p className="text-xs text-gray-500 dark:text-zinc-500">
                   {verificationType === 'student'
                     ? 'Student verification: upload school ID or admission/student card.'

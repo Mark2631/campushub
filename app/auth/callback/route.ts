@@ -7,9 +7,12 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const providerError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
 
   if (!code) {
-    return NextResponse.redirect(new URL('/signin?error=auth_callback_failed', request.url));
+    const redirectUrl = new URL('/signin', request.url);
+    redirectUrl.searchParams.set('error', providerError || 'Auth callback did not include a session code.');
+    return NextResponse.redirect(redirectUrl);
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -24,7 +27,9 @@ export async function GET(request: NextRequest) {
 
   if (error || !data.session) {
     console.error('Auth callback exchange error:', error);
-    return NextResponse.redirect(new URL('/signin?error=auth_callback_failed', request.url));
+    const redirectUrl = new URL('/signin', request.url);
+    redirectUrl.searchParams.set('error', error?.message || 'Auth callback did not return a session.');
+    return NextResponse.redirect(redirectUrl);
   }
 
   const redirectUrl = new URL('/', request.url);

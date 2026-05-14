@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function ReportButton({ targetType, targetId, label = 'Report' }: Props) {
-  const { user, pushNotification } = useUser();
+  const { user, pushNotification, showToast } = useUser();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(reportReasons[0]);
   const [details, setDetails] = useState('');
@@ -23,6 +23,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
 
     if (!user) {
       setMessage('Please sign in to submit a report.');
+      showToast({ type: 'warning', message: 'Please sign in to submit a report.' });
       return;
     }
 
@@ -39,6 +40,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
 
     if (error) {
       setMessage(error);
+      showToast({ type: 'error', message: error });
       return;
     }
 
@@ -48,6 +50,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
       body: `Your ${targetType} report has been sent for review.`,
     });
     setMessage('Report submitted for admin review.');
+    showToast({ type: 'success', message: 'Report submitted.' });
     setDetails('');
     window.setTimeout(() => setOpen(false), 900);
   };

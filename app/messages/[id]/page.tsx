@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
+import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, sendMessage } from '../../../lib/conversations';
 import { createNotificationRecord } from '../../../lib/notifications';
@@ -22,13 +23,20 @@ type ConversationDetails = {
   messages: Message[];
   buyerId: string;
   sellerId: string;
+  otherUser: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    avatar_url: string | null;
+    phone_number?: string | null;
+  };
 };
 
 const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery fee', 'call me', 'outside app'];
 
 export default function ConversationPage({ params }: Props) {
   const { id } = use(params);
-  const { user, loading, pushNotification } = useUser();
+  const { user, loading, showToast } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -51,40 +59,54 @@ export default function ConversationPage({ params }: Props) {
     load();
   }, [user, id]);
 
+  const otherName = conversation?.otherUser.full_name || conversation?.otherUser.email?.split('@')[0] || 'CampusTrader user';
+
+  const retryMessage = async (failedMessage: Message) => {
+    if (!user || !conversation) return;
+    setMessages((current) => current.map((message) => message.id === failedMessage.id ? { ...message, status: 'sending' } : message));
+    const { message, error } = await sendMessage(conversation.id, user.id, failedMessage.content);
+    if (error || !message) {
+      setMessages((current) => current.map((item) => item.id === failedMessage.id ? { ...item, status: 'failed' } : item));
+      setError(error || 'Message failed to send.');
+      showToast({ type: 'error', message: error || 'Message failed to send.' });
+      return;
+    }
+    setMessages((current) => current.map((item) => item.id === failedMessage.id ? message : item));
+  };
+
   const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!messageText.trim() || !user || !conversation) return;
-    setSending(true);
-    const { error } = await sendMessage(conversation.id, user.id, messageText.trim());
-
-    if (error) {
-      setSending(false);
-      setError(error);
-      return;
-    }
-
+    const content = messageText.trim();
+    const optimisticId = `local-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      conversation_id: conversation.id,
+      sender_id: user.id,
+      content,
+      created_at: new Date().toISOString(),
+      status: 'sending',
+    };
+    setMessages((current) => [...current, optimisticMessage]);
     setMessageText('');
-    const refreshed = await getConversationById(conversation.id, user.id);
+    setSending(true);
+    const { message, error } = await sendMessage(conversation.id, user.id, content);
     setSending(false);
 
-    if (refreshed.error || !refreshed.conversation) {
-      setError(refreshed.error || 'Message sent, but the conversation could not reload.');
+    if (error || !message) {
+      setMessages((current) => current.map((item) => item.id === optimisticId ? { ...item, status: 'failed' } : item));
+      setError(error || 'Message failed to send.');
+      showToast({ type: 'error', message: error || 'Message failed to send.' });
       return;
     }
 
-    setConversation(refreshed.conversation);
-    setMessages(refreshed.conversation.messages || []);
+    setMessages((current) => current.map((item) => item.id === optimisticId ? message : item));
     const recipientId = conversation.buyerId === user.id ? conversation.sellerId : conversation.buyerId;
     await createNotificationRecord({
       userId: recipientId,
       type: 'new message',
       title: 'New message',
       body: `New message about ${conversation.listingTitle || 'a listing'}.`,
-    });
-    await pushNotification({
-      type: 'new message',
-      title: 'Message sent',
-      body: 'Your message was sent successfully.',
     });
   };
 
@@ -126,7 +148,15 @@ export default function ConversationPage({ params }: Props) {
           <Link href="/messages" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold mb-4">
             ← Back to Messages
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Chat</h1>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
+              {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
+              <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
+            </div>
+          </div>
         </header>
 
         {error ? (
@@ -136,14 +166,19 @@ export default function ConversationPage({ params }: Props) {
         ) : (
           <div className="space-y-6">
             {/* Listing Reference Card */}
-            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 p-5">
-              <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">About this listing</p>
-              <p className="mt-2 text-lg font-bold text-blue-900 dark:text-blue-100">{conversation?.listingTitle || 'Listing'}</p>
+            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-blue-50 p-4 dark:bg-blue-900/20">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Meet in public. Do not pay before inspection.</p>
               {conversation?.listingId ? (
                 <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 underline dark:text-blue-200">
                   View listing
                 </Link>
               ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
+              {conversation?.otherUser.id ? (
+                <div className="mt-3">
+                  <WhatsAppButton userId={conversation.otherUser.id} />
+                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                </div>
+              ) : null}
             </div>
 
             {/* Messages Container */}
@@ -151,25 +186,41 @@ export default function ConversationPage({ params }: Props) {
               {messages.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-zinc-400 py-8">No messages yet.</p>
               ) : (
-                messages.map((message) => (
+                messages.map((message, index) => {
+                  const previous = messages[index - 1];
+                  const startsGroup = !previous || previous.sender_id !== message.sender_id;
+                  const isOwn = message.sender_id === user.id;
+                  return (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
+                    className={`flex gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
                   >
+                    {!isOwn && startsGroup ? (
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                        {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+                      </div>
+                    ) : !isOwn ? <div className="w-7" /> : null}
                     <div
                       className={`max-w-xs rounded-2xl px-4 py-3 ${
-                        message.sender_id === user.id
+                        isOwn
                           ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
                           : 'bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white'
                       }`}
                     >
+                      {!isOwn && startsGroup ? <p className="mb-1 text-[11px] font-semibold text-gray-500 dark:text-zinc-400">{otherName}</p> : null}
                       <p className="text-sm">{message.content}</p>
-                      <p className={`mt-2 text-xs ${message.sender_id === user.id ? 'text-blue-100' : 'text-gray-500 dark:text-zinc-500'}`}>
+                      <p className={`mt-2 text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-zinc-500'}`}>
                         {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        {message.status === 'sending' ? ' · sending' : message.status === 'failed' ? ' · failed' : ''}
                       </p>
+                      {message.status === 'failed' ? (
+                        <button type="button" onClick={() => retryMessage(message)} className="mt-2 text-xs font-bold underline">
+                          Retry
+                        </button>
+                      ) : null}
                     </div>
                   </div>
-                ))
+                );})
               )}
             </div>
 

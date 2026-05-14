@@ -27,10 +27,12 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
         <h2 className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">{title}</h2>
       </div>
       {listings.length > 0 ? (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 xl:grid-cols-6">
-          {listings.map((listing) => (
-            <ListingCard key={`${title}-${listing.id}`} listing={listing} />
-          ))}
+        <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+          <div className="grid auto-cols-[minmax(140px,48vw)] grid-flow-col gap-2.5 pb-2 sm:auto-cols-[180px] lg:grid-flow-row lg:grid-cols-5 xl:grid-cols-6">
+            {listings.map((listing) => (
+              <ListingCard key={`${title}-${listing.id}`} listing={listing} />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
@@ -39,6 +41,23 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
         </div>
       )}
     </section>
+  );
+}
+
+function ListingSkeletons() {
+  return (
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <div key={index} className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="aspect-square animate-pulse bg-gray-200 dark:bg-zinc-800" />
+          <div className="space-y-2 p-3">
+            <div className="h-3 w-5/6 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
+            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -52,9 +71,11 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [requestsError, setRequestsError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreListings, setHasMoreListings] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
-  const [showLoadingState, setShowLoadingState] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -65,21 +86,31 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowLoadingState(false), 1200);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
     let isMounted = true;
 
     const loadListings = async () => {
       if (isMounted) setLoadingListings(true);
-      const { listings: rows, error } = await getListings(60);
+      const { listings: rows, error } = await getListings(20);
       if (!isMounted) return;
       setListings(rows as Listing[]);
+      window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(rows));
+      setHasMoreListings(rows.length === 20);
       setError(error);
       setLoadingListings(false);
     };
+
+    const cached = window.sessionStorage.getItem('campustrader-home-listings');
+    if (cached) {
+      try {
+        const cachedListings = JSON.parse(cached) as Listing[];
+        if (cachedListings.length) {
+          setListings(cachedListings);
+          setLoadingListings(false);
+        }
+      } catch {
+        window.sessionStorage.removeItem('campustrader-home-listings');
+      }
+    }
 
     loadListings();
     const refreshListings = () => {
@@ -91,6 +122,11 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setShowWelcome(new URLSearchParams(window.location.search).get('welcome') === '1');
   }, []);
 
   useEffect(() => {
@@ -211,6 +247,29 @@ export default function Home() {
           <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
         </header>
 
+        {showWelcome ? (
+          <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
+            Welcome to CampusTrader.
+          </div>
+        ) : null}
+
+        <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { href: '/sell', label: 'Sell' },
+            { href: '/requests', label: 'Requests / Looking For' },
+            { href: '/messages', label: 'Messages' },
+            { href: '/profile', label: 'Verify later / Earn badge' },
+          ].map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="rounded-2xl border border-gray-200 bg-white px-3 py-3 text-center text-sm font-bold text-gray-900 shadow-sm transition hover:border-blue-300 hover:text-blue-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:hover:border-blue-600"
+            >
+              {action.label}
+            </Link>
+          ))}
+        </div>
+
         {showRequestsSection ? (
           <section className="mb-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <div>
@@ -289,15 +348,7 @@ export default function Home() {
         </div>
 
         {loadingListings ? (
-          showLoadingState ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              Loading listings...
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              Still loading listings... Please wait or refresh the page.
-            </div>
-          )
+          <ListingSkeletons />
         ) : (
           <>
             {error ? (
@@ -320,10 +371,36 @@ export default function Home() {
             ) : (
               <>
                 <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
-                <ListingSection title="Services Around Campus" listings={sectionBuckets.services} />
+                <ListingSection title="Electronics" listings={filteredListings.filter((listing) => listing.category === 'Electronics').slice(0, 8)} />
+                <ListingSection title="Services" listings={sectionBuckets.services} />
+                <ListingSection title="Fashion" listings={filteredListings.filter((listing) => listing.category === 'Fashion').slice(0, 8)} />
+                <ListingSection title="Books" listings={filteredListings.filter((listing) => listing.category === 'Books').slice(0, 8)} />
                 <ListingSection title="Refurbished Deals" listings={sectionBuckets.refurbished} />
-                <ListingSection title="Student Essentials" listings={sectionBuckets.studentEssentials} />
-                <ListingSection title="Verified Businesses" listings={sectionBuckets.verifiedBusiness} />
+                <ListingSection title="Food" listings={filteredListings.filter((listing) => listing.category === 'Food').slice(0, 8)} />
+                <ListingSection title="Business" listings={filteredListings.filter((listing) => listing.category === 'Business').slice(0, 8)} />
+                {hasMoreListings ? (
+                  <div className="mb-10 flex justify-center">
+                    <button
+                      type="button"
+                      disabled={loadingMore}
+                      onClick={async () => {
+                        setLoadingMore(true);
+                        const { listings: rows, error } = await getListings(20, listings.length);
+                        setLoadingMore(false);
+                        setError(error);
+                        setHasMoreListings(rows.length === 20);
+                        setListings((current) => {
+                          const nextListings = [...current, ...(rows as Listing[])];
+                          window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
+                          return nextListings;
+                        });
+                      }}
+                      className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-600"
+                    >
+                      {loadingMore ? 'Loading...' : 'Load more'}
+                    </button>
+                  </div>
+                ) : null}
               </>
             )}
           </>

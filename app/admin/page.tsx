@@ -137,7 +137,7 @@ interface ModalState {
 }
 
 export default function AdminPage() {
-  const { loading: userLoading, isAdmin, adminLoading, user: authUser } = useUser();
+  const { loading: userLoading, isAdmin, adminLoading, user: authUser, showToast } = useUser();
   const [dashboard, setDashboard] = useState<AdminDashboardData>(emptyDashboard);
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -188,10 +188,12 @@ export default function AdminPage() {
 
     if (error) {
       setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
       return;
     }
 
     setMessage({ type: 'success', text: successText });
+    showToast({ type: 'success', message: successText });
     await loadDashboard();
   };
 
@@ -318,13 +320,16 @@ export default function AdminPage() {
 
       if (error) {
         setMessage({ type: 'error', text: error });
+        showToast({ type: 'error', message: error });
       } else {
         setMessage({ type: 'success', text: 'Action completed successfully.' });
+        showToast({ type: 'success', message: 'Action completed successfully.' });
         await loadDashboard();
       }
     } catch (err) {
       console.error('Error in confirmAction:', err);
       setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+      showToast({ type: 'error', message: 'An unexpected error occurred.' });
     }
   };
 
@@ -705,8 +710,10 @@ export default function AdminPage() {
                               setWorkingId(null);
                               if (result.error) {
                                 setMessage({ type: 'error', text: result.error });
+                                showToast({ type: 'error', message: result.error });
                               } else {
                                 setMessage({ type: 'success', text: 'Verification approved.' });
+                                showToast({ type: 'success', message: 'Verification approved.' });
                                 await loadDashboard();
                               }
                             }}

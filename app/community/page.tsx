@@ -1,33 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
+import { defaultCommunityGroups } from '../../lib/community';
 import { communityLinks } from '../../lib/communityLinks';
 
-type CommunityGroup = {
-  id: string;
-  name: string;
-  description: string;
-  members: number;
-  action: 'Open' | 'Join';
-};
-
-const groups: CommunityGroup[] = [
-  { id: 'deals-discounts', name: 'Deals & Discounts', description: 'Quick price drops, bundles, and useful student offers.', members: 842, action: 'Open' },
-  { id: 'services-network', name: 'Services Network', description: 'Repairs, typing, laundry, tutoring, and trusted referrals.', members: 604, action: 'Join' },
-  { id: 'lost-found', name: 'Lost & Found', description: 'Find missing items and arrange safe returns around campus.', members: 391, action: 'Open' },
-  { id: 'course-groups', name: 'Course Groups', description: 'Study help, revision links, and class support.', members: 390, action: 'Join' },
-  { id: 'school-updates', name: 'School Updates', description: 'Venue changes, notices, and campus announcements.', members: 722, action: 'Open' },
-  { id: 'events', name: 'Events', description: 'Club events, student meetups, and useful activities.', members: 468, action: 'Join' },
-  { id: 'business-offers', name: 'Business Offers', description: 'Nearby sellers and repeat campus businesses in one place.', members: 254, action: 'Join' },
-  { id: 'useful-links', name: 'Useful Links', description: 'Fast access to portals, school pages, and study tools.', members: 188, action: 'Open' },
-];
-
 export default function CommunityPage() {
-  const [selectedGroup, setSelectedGroup] = useState<CommunityGroup | null>(null);
-
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-white">
       <Header />
@@ -36,22 +16,34 @@ export default function CommunityPage() {
         <header className="mb-8">
           <Logo />
           <h1 className="mt-4 text-2xl font-bold sm:mt-5 sm:text-3xl">Community</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Useful campus spaces without turning this into a noisy social feed.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Open campus groups and useful links.</p>
         </header>
 
-        <section className="mb-8 rounded-[2rem] border border-amber-200 bg-amber-50 p-5 sm:p-6 dark:border-amber-900/50 dark:bg-amber-900/15">
-          <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100">Official Notices</h2>
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-white p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-slate-950 dark:text-amber-100">
-            CampusTrader notices and safety updates will appear here.
+        <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold">Working Groups</h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">Text + images</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {defaultCommunityGroups.map((group) => (
+              <Link
+                key={group.id}
+                href={`/community/${group.id}`}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-700"
+              >
+                <h3 className="font-bold text-slate-950 dark:text-white">{group.name}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{group.description}</p>
+                <span className="mt-4 inline-flex rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+                  Open chat
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 
-        <section className="mb-8 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-bold">Useful Campus Links</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">Easy to expand later</span>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-lg font-bold">Useful Campus Links</h2>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {communityLinks.map((link) => (
               <a
                 key={link.label}
@@ -66,50 +58,6 @@ export default function CommunityPage() {
             ))}
           </div>
         </section>
-
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-bold">Essential Groups</h2>
-            <span className="text-sm text-slate-500 dark:text-slate-400">{groups.length} groups</span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {groups.map((group) => (
-              <article key={group.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-slate-950 dark:text-white">{group.name}</h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{group.description}</p>
-                    <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-500">
-                      {group.members.toLocaleString()} members
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    <button
-                      onClick={() => setSelectedGroup(group)}
-                      className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95 sm:w-auto"
-                    >
-                      {group.action}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {selectedGroup ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-            <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
-              <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedGroup.name}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Group chat spaces will open after the first campus rollout. For now, use marketplace messages and Useful Links.
-              </p>
-              <button onClick={() => setSelectedGroup(null)} className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 active:scale-95">
-                Close
-              </button>
-            </div>
-          </div>
-        ) : null}
       </main>
 
       <BottomNav />

@@ -234,12 +234,12 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function setUserVerificationStatus(request: AdminVerificationRequest, status: 'verified' | 'rejected') {
-  const requestStatus = status === 'verified' ? 'approved' : 'rejected';
+  const requestStatus = status === 'verified' ? 'verified' : 'rejected';
 
   const [{ error: profileError }, { error: requestError }] = await Promise.all([
     supabase
       .from('profiles')
-      .update({ verification_status: status })
+      .update(status === 'verified' ? { verification_status: status, badge_type: 'blue' } : { verification_status: status })
       .eq('id', request.user_id),
     supabase
       .from('verification_requests')
@@ -258,7 +258,7 @@ export async function setUserVerificationStatus(request: AdminVerificationReques
 export async function setBusinessVerificationStatus(businessId: string, status: 'verified' | 'rejected') {
   const { error } = await supabase
     .from('businesses')
-    .update({ verification_status: status })
+    .update(status === 'verified' ? { verification_status: status, badge_type: 'gold' } : { verification_status: status })
     .eq('id', businessId);
 
   if (error) console.error('Error updating business verification:', error);

@@ -32,8 +32,15 @@ type AppContextValue = {
   markAllNotificationsRead: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   clearNotifications: () => Promise<void>;
+  showToast: (toast: { type?: 'success' | 'error' | 'warning' | 'info'; message: string }) => void;
   profileContext: ProfileContext;
   setProfileContext: (context: ProfileContext) => void;
+};
+
+type Toast = {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -51,6 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return window.localStorage.getItem('campustrader-theme') === 'light' ? 'light' : 'dark';
   });
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [profileContext, setProfileContextState] = useState<ProfileContext>(() => {
     if (typeof window === 'undefined') return personalProfileContext;
     return readStoredProfileContext();
@@ -244,6 +252,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session]);
 
+  const showToast = useCallback((toast: { type?: Toast['type']; message: string }) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setToasts((current) => [...current, { id, type: toast.type || 'info', message: toast.message }].slice(-4));
+    window.setTimeout(() => {
+      setToasts((current) => current.filter((item) => item.id !== id));
+    }, 4500);
+  }, []);
+
   const setProfileContext = (context: ProfileContext) => {
     setProfileContextState(context);
   };
@@ -264,13 +280,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       markAllNotificationsRead,
       deleteNotification,
       clearNotifications,
+      showToast,
       profileContext,
       setProfileContext,
     }),
-    [adminLoading, clearNotifications, deleteNotification, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, theme]
+    [adminLoading, clearNotifications, deleteNotification, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, showToast, theme]
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+      <div className="fixed inset-x-3 bottom-24 z-[80] space-y-2 sm:bottom-auto sm:left-auto sm:right-4 sm:top-4 sm:w-96">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${
+              toast.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100'
+                : toast.type === 'error'
+                  ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-100'
+                  : toast.type === 'warning'
+                    ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                    : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100'
+            }`}
+          >
+            {toast.message}
+          </div>
+        ))}
+      </div>
+    </AppContext.Provider>
+  );
 }
 
 export function useAppContext() {

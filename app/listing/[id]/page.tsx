@@ -6,6 +6,7 @@ import MessageSellerButton from '../../../components/MessageSellerButton';
 import ReportButton from '../../../components/ReportButton';
 import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
+import WhatsAppButton from '../../../components/WhatsAppButton';
 import { getListingById } from '../../../lib/listings';
 
 type Props = {
@@ -167,7 +168,11 @@ export default async function ListingPage({ params }: Props) {
                       Sold
                     </button>
                   ) : (
-                    <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
+                    <>
+                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
+                      <WhatsAppButton userId={listing.seller_id} />
+                      <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                    </>
                   )}
                   <SaveListingButton listingId={listing.id} />
                   <ReportButton targetType="listing" targetId={listing.id} />

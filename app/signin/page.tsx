@@ -1,23 +1,18 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { sendPasswordResetEmail, signInWithMagicLink, signInWithPassword, signOut, signUpWithPassword } from '../../lib/auth';
+import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
+import { ensureProfile } from '../../lib/profiles';
 
-type AuthMode = 'signin' | 'signup';
-type NoticeTone = 'success' | 'error' | 'info';
-
-type Notice = {
-  tone: NoticeTone;
-  message: string;
-};
+type AuthMode = 'signup' | 'signin';
+type Notice = { tone: 'success' | 'error' | 'info'; message: string };
 
 const rememberedEmailKey = 'campustrader-remembered-email';
 
-function loadRememberedEmail() {
+function rememberedEmail() {
   if (typeof window === 'undefined') return '';
   return window.localStorage.getItem(rememberedEmailKey) ?? '';
 }
@@ -25,303 +20,212 @@ function loadRememberedEmail() {
 function NoticeBanner({ notice }: { notice: Notice | null }) {
   if (!notice) return null;
 
-  const toneClasses =
+  const classes =
     notice.tone === 'success'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200'
       : notice.tone === 'info'
         ? 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200'
         : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200';
 
-  return <div className={`rounded-2xl border px-4 py-3 text-sm ${toneClasses}`}>{notice.message}</div>;
+  return <div className={`rounded-2xl border px-4 py-3 text-sm ${classes}`}>{notice.message}</div>;
+}
+
+function appendWelcome(path: string) {
+  if (path !== '/') return path;
+  return '/?welcome=1';
 }
 
 function SignInPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, session, loading } = useUser();
-  const redirectTo = searchParams.get('next') || '/';
+  const { user, loading, refreshSession, showToast } = useUser();
+  const next = searchParams.get('next') || '/';
   const callbackError = searchParams.get('error');
-
-  const rememberedEmail = useMemo(() => loadRememberedEmail(), []);
-  const [mode, setMode] = useState<AuthMode>('signin');
-  const [rememberMe, setRememberMe] = useState(true);
+  const requestedMode = searchParams.get('mode');
+  const initialEmail = useMemo(() => rememberedEmail(), []);
+  const [mode, setMode] = useState<AuthMode>(requestedMode === 'signin' ? 'signin' : 'signup');
   const [notice, setNotice] = useState<Notice | null>(
-    callbackError === 'auth_callback_failed'
-      ? { tone: 'error', message: 'Magic link returned, but the session could not be completed. Use password sign-in for now.' }
+    callbackError
+      ? { tone: 'error', message: callbackError }
       : null
   );
-  const [signInPending, setSignInPending] = useState(false);
-  const [signUpPending, setSignUpPending] = useState(false);
+  const [signupPending, setSignupPending] = useState(false);
+  const [signinPending, setSigninPending] = useState(false);
   const [resetPending, setResetPending] = useState(false);
-  const [magicLinkPending, setMagicLinkPending] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
-  const [showSignInPassword, setShowSignInPassword] = useState(false);
-  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
-  const [showSignUpConfirmPassword, setShowSignUpConfirmPassword] = useState(false);
-  const [signInForm, setSignInForm] = useState(() => ({
-    email: rememberedEmail,
-    password: '',
-  }));
-  const [signUpForm, setSignUpForm] = useState(() => ({
+  const [signupForm, setSignupForm] = useState({
     fullName: '',
-    email: rememberedEmail,
+    email: initialEmail,
     password: '',
     confirmPassword: '',
-  }));
-  const [magicLinkEmail, setMagicLinkEmail] = useState(() => rememberedEmail);
-  const [resetEmail, setResetEmail] = useState(() => rememberedEmail);
+  });
+  const [signinForm, setSigninForm] = useState({
+    email: initialEmail,
+    password: '',
+  });
+  const [resetEmail, setResetEmail] = useState(initialEmail);
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(redirectTo);
+      router.replace('/');
     }
-  }, [loading, redirectTo, router, user]);
+  }, [loading, router, user]);
 
-  const persistRememberedEmail = (email: string) => {
-    if (typeof window === 'undefined') return;
-
-    if (rememberMe && email) {
+  const persistEmail = (email: string) => {
+    if (typeof window !== 'undefined' && email) {
       window.localStorage.setItem(rememberedEmailKey, email);
-      return;
     }
-
-    window.localStorage.removeItem(rememberedEmailKey);
   };
 
-  const resetNotices = () => {
-    setNotice(null);
-  };
-
-  const handlePasswordSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (signInPending) return;
-
-    resetNotices();
-    setSignInPending(true);
-
-    const email = signInForm.email.trim();
-    persistRememberedEmail(email);
-
-    const { error } = await signInWithPassword(email, signInForm.password);
-    setSignInPending(false);
-
-    if (error) {
-      console.error('Password sign-in error:', error);
-      if (error.message.toLowerCase().includes('invalid login credentials')) {
-        setNotice({
-          tone: 'error',
-          message: 'Invalid login credentials. If you just created this account, confirm the email first, then sign in again.',
-        });
-        return;
-      }
-
-      setNotice({ tone: 'error', message: error.message });
-      return;
-    }
-
-    setNotice({ tone: 'success', message: 'Signed in successfully. Redirecting...' });
-    setSignInForm((current) => ({ ...current, password: '' }));
-    router.replace(redirectTo);
+  const completeAuth = async (message: string, destination = next) => {
+    await refreshSession();
+    setNotice({ tone: 'success', message });
+    router.replace(message === 'Welcome to CampusTrader.' ? appendWelcome(destination) : destination);
     router.refresh();
   };
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (signUpPending) return;
+    if (signupPending) return;
 
-    resetNotices();
+    setNotice(null);
+    const email = signupForm.email.trim();
+    const fullName = signupForm.fullName.trim();
 
-    if (signUpForm.password !== signUpForm.confirmPassword) {
+    if (signupForm.password !== signupForm.confirmPassword) {
+      showToast({ type: 'error', message: 'Passwords do not match.' });
       setNotice({ tone: 'error', message: 'Passwords do not match.' });
       return;
     }
 
-    setSignUpPending(true);
-    const email = signUpForm.email.trim();
-    persistRememberedEmail(email);
+    setSignupPending(true);
+    persistEmail(email);
 
-    const { error } = await signUpWithPassword(email, signUpForm.password, signUpForm.fullName.trim());
-    setSignUpPending(false);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName);
 
-    if (error) {
-      console.error('Password sign-up error:', error);
-      setNotice({ tone: 'error', message: error.message });
+    if (signup.error) {
+      setSignupPending(false);
+      showToast({ type: 'error', message: signup.error.message });
+      setNotice({ tone: 'error', message: signup.error.message });
       return;
     }
 
-    setNotice({
-      tone: 'success',
-      message: 'Account created successfully. Verify your email to continue.',
-    });
-    setMode('signin');
-    setSignInForm({ email, password: '' });
-    setMagicLinkEmail(email);
-    setResetEmail(email);
-    setSignUpForm((current) => ({
-      ...current,
-      email,
-      password: '',
-      confirmPassword: '',
-    }));
+    if (signup.data.session) {
+      await ensureProfile(signup.data.session.user);
+      setSignupPending(false);
+      showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
+      await completeAuth('Welcome to CampusTrader.');
+      return;
+    }
+
+    const signin = await signInWithPassword(email, signupForm.password);
+    setSignupPending(false);
+
+    if (signin.error || !signin.data.session) {
+      showToast({ type: 'error', message: signin.error?.message || 'Account created, but sign-in did not complete. Try signing in with your password.' });
+      setNotice({
+        tone: 'error',
+        message: signin.error?.message || 'Account created, but sign-in did not complete. Try signing in with your password.',
+      });
+      setMode('signin');
+      setSigninForm({ email, password: '' });
+      return;
+    }
+
+    await ensureProfile(signin.data.session.user);
+    showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
+    await completeAuth('Welcome to CampusTrader.');
   };
 
-  const handlePasswordReset = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (signinPending) return;
+
+    setNotice(null);
+    setSigninPending(true);
+    const email = signinForm.email.trim();
+    persistEmail(email);
+
+    const { data, error } = await signInWithPassword(email, signinForm.password);
+    setSigninPending(false);
+
+    if (error || !data.session) {
+      showToast({ type: 'error', message: error?.message || 'Unable to sign in. Review your email and password.' });
+      setNotice({ tone: 'error', message: error?.message || 'Unable to sign in. Review your email and password.' });
+      return;
+    }
+
+    await ensureProfile(data.session.user);
+    showToast({ type: 'success', message: 'Signed in successfully.' });
+    await completeAuth('Signed in successfully.', next);
+  };
+
+  const handleGoogle = async () => {
+    setNotice(null);
+    const message = 'Google sign-in is coming soon. Use email and password for now.';
+    showToast({ type: 'info', message });
+    setNotice({ tone: 'info', message });
+  };
+
+  const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (resetPending) return;
 
-    resetNotices();
+    setNotice(null);
     setResetPending(true);
-
     const email = resetEmail.trim();
-    persistRememberedEmail(email);
-
+    persistEmail(email);
     const { error } = await sendPasswordResetEmail(email);
     setResetPending(false);
 
     if (error) {
-      console.error('Password reset email error:', error);
+      showToast({ type: 'error', message: error.message });
       setNotice({ tone: 'error', message: error.message });
       return;
     }
 
-    setNotice({ tone: 'success', message: 'Password reset email sent. Check your inbox to continue.' });
-    setSignInForm((current) => ({ ...current, email }));
+    setNotice({ tone: 'success', message: 'Password reset email sent.' });
+    showToast({ type: 'success', message: 'Password reset email sent.' });
   };
 
-  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (magicLinkPending) return;
-
-    resetNotices();
-    setMagicLinkPending(true);
-
-    const email = magicLinkEmail.trim();
-    persistRememberedEmail(email);
-
-    const { error } = await signInWithMagicLink(email);
-    setMagicLinkPending(false);
-
-    if (error) {
-      console.error('Magic link sign-in error:', error);
-      const loweredMessage = error.message.toLowerCase();
-      if (loweredMessage.includes('rate limit') || loweredMessage.includes('email rate limit exceeded')) {
-        setNotice({
-          tone: 'info',
-          message: 'Magic links are temporarily unavailable. Use password sign-in instead.',
-        });
-        return;
-      }
-
-      setNotice({ tone: 'error', message: error.message });
-      return;
-    }
-
-    setNotice({ tone: 'success', message: 'Magic link sent. Check your email to continue signing in.' });
-  };
-
-  const handleSignOut = async () => {
-    resetNotices();
-    const { error } = await signOut();
-
-    if (error) {
-      console.error('Sign out error:', error);
-      setNotice({ tone: 'error', message: error.message });
-      return;
-    }
-
-    router.refresh();
-  };
-
-  if (loading) {
+  if (loading || user) {
     return (
-      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
         <Header />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-8 sm:py-12">
-          <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-10">
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="h-7 w-44 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
-            <div className="mt-4 h-4 w-80 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+            <div className="mt-4 h-4 w-72 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
           </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (user) {
-    return (
-      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24">
-        <Header />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-8 sm:py-12">
-          <section className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
-              Signed In
-            </div>
-            <h1 className="mt-5 break-words text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">
-              Redirecting to your account...
-            </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Signed in as {session?.user.email ?? user.email ?? user.id}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/"
-                className="rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600"
-              >
-                Go to Home
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:hover:border-blue-600"
-              >
-                Sign out
-              </button>
-            </div>
-            <div className="mt-6">
-              <NoticeBanner notice={notice} />
-            </div>
-          </section>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
       <Header />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-8 sm:py-14">
-        <section className="w-full rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-          <div className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200">
-            Optional Account
-          </div>
-          <h1 className="mt-5 text-2xl font-black text-slate-950 sm:text-4xl dark:text-white">
-            Welcome to CampusTrader
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Browse freely. Sign in when you want to post, message, save, verify, or join groups.
-          </p>
-
-          <div className="mt-8 grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-950">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-8 sm:py-12">
+        <section className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Create your free account</p>
+              <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-4xl dark:text-white">
+                {mode === 'signup' ? 'Welcome to CampusTrader' : 'Sign in to CampusTrader'}
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                Browse freely. Verify later to earn a trusted badge.
+              </p>
+            </div>
             <button
               type="button"
-              onClick={() => setMode('signin')}
-              className={`rounded-2xl px-3 py-2 text-center text-sm font-semibold transition ${
-                mode === 'signin'
-                  ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-900 dark:text-white'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
+              onClick={() => {
+                setMode(mode === 'signup' ? 'signin' : 'signup');
+                setNotice(null);
+              }}
+              className="shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-blue-600"
             >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('signup')}
-              className={`rounded-2xl px-3 py-2 text-center text-sm font-semibold transition ${
-                mode === 'signup'
-                  ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-900 dark:text-white'
-                  : 'text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              Create Account
+              {mode === 'signup' ? 'Already have an account? Sign in' : 'Create account'}
             </button>
           </div>
 
@@ -329,57 +233,102 @@ function SignInPageContent() {
             <NoticeBanner notice={notice} />
           </div>
 
-          {mode === 'signin' ? (
-            <form className="mt-6 space-y-4" onSubmit={handlePasswordSignIn}>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950">G</span>
+            <span>Continue with Google</span>
+            <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase text-slate-950">Coming soon</span>
+          </button>
+
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">or use email</span>
+            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          </div>
+
+          {mode === 'signup' ? (
+            <form className="space-y-4" onSubmit={handleCreateAccount}>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Full name
+                <input
+                  type="text"
+                  value={signupForm.fullName}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, fullName: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
+                />
+              </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email
                 <input
                   type="email"
-                  value={signInForm.email}
-                  onChange={(event) => setSignInForm((current) => ({ ...current, email: event.target.value }))}
-                  placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  value={signupForm.email}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, email: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   required
                 />
               </label>
-
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Password
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Password
                   <input
-                    type={showSignInPassword ? 'text' : 'password'}
-                    value={signInForm.password}
-                    onChange={(event) => setSignInForm((current) => ({ ...current, password: event.target.value }))}
-                    placeholder="Enter your password"
-                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    type="password"
+                    value={signupForm.password}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowSignInPassword((current) => !current)}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 sm:w-auto dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
-                  >
-                    {showSignInPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                </label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Confirm password
+                  <input
+                    type="password"
+                    value={signupForm.confirmPassword}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    required
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                disabled={signupPending}
+                className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+              >
+                {signupPending ? 'Creating account...' : 'Create account'}
+              </button>
+            </form>
+          ) : (
+            <form className="space-y-4" onSubmit={handleSignIn}>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Email
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(event) => setRememberMe(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                  type="email"
+                  value={signinForm.email}
+                  onChange={(event) => setSigninForm((current) => ({ ...current, email: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
                 />
-                <span>Remember me</span>
               </label>
-
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Password
+                <input
+                  type="password"
+                  value={signinForm.password}
+                  onChange={(event) => setSigninForm((current) => ({ ...current, password: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
+                />
+              </label>
               <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => {
                     setResetOpen((current) => !current);
-                    setResetEmail(signInForm.email);
+                    setResetEmail(signinForm.email);
                     setNotice(null);
                   }}
                   className="text-sm font-semibold text-blue-700 transition hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
@@ -387,151 +336,38 @@ function SignInPageContent() {
                   Forgot password?
                 </button>
               </div>
-
               <button
                 type="submit"
-                disabled={signInPending}
-                className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={signinPending}
+                className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
               >
-                {signInPending ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-          ) : (
-            <form className="mt-6 space-y-4" onSubmit={handleCreateAccount}>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Full name
-                <input
-                  type="text"
-                  value={signUpForm.fullName}
-                  onChange={(event) => setSignUpForm((current) => ({ ...current, fullName: event.target.value }))}
-                  placeholder="Your full name"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  required
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Email
-                <input
-                  type="email"
-                  value={signUpForm.email}
-                  onChange={(event) => setSignUpForm((current) => ({ ...current, email: event.target.value }))}
-                  placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  required
-                />
-              </label>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Password
-                    <div className="mt-2 flex flex-col gap-2">
-                      <input
-                        type={showSignUpPassword ? 'text' : 'password'}
-                        value={signUpForm.password}
-                        onChange={(event) => setSignUpForm((current) => ({ ...current, password: event.target.value }))}
-                        placeholder="Create a password"
-                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpPassword((current) => !current)}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
-                      >
-                        {showSignUpPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </label>
-
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Confirm password
-                    <div className="mt-2 flex flex-col gap-2">
-                      <input
-                        type={showSignUpConfirmPassword ? 'text' : 'password'}
-                        value={signUpForm.confirmPassword}
-                        onChange={(event) =>
-                          setSignUpForm((current) => ({ ...current, confirmPassword: event.target.value }))
-                        }
-                        placeholder="Confirm password"
-                        className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpConfirmPassword((current) => !current)}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
-                      >
-                        {showSignUpConfirmPassword ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </label>
-                </div>
-
-              <button
-                type="submit"
-                disabled={signUpPending}
-                className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {signUpPending ? 'Creating account...' : 'Create account'}
+                {signinPending ? 'Signing in...' : 'Sign in'}
               </button>
             </form>
           )}
 
           {resetOpen ? (
-            <form className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950" onSubmit={handlePasswordReset}>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Reset password</p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">We will send a reset link to your email.</p>
-              </div>
+            <form className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950" onSubmit={handleReset}>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Reset password</p>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email
                 <input
                   type="email"
                   value={resetEmail}
                   onChange={(event) => setResetEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                   required
                 />
               </label>
               <button
                 type="submit"
                 disabled={resetPending}
-                className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
               >
                 {resetPending ? 'Sending reset email...' : 'Send reset email'}
               </button>
             </form>
           ) : null}
-
-          <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">Other sign-in options</p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Magic link may be temporarily limited. Password sign-in is recommended.
-            </p>
-            <form className="mt-4 space-y-4" onSubmit={handleMagicLink}>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Email for magic link
-                <input
-                  type="email"
-                  value={magicLinkEmail}
-                  onChange={(event) => setMagicLinkEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-                  required
-                />
-              </label>
-
-              <button
-                type="submit"
-                disabled={magicLinkPending}
-                className="w-full rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200 dark:hover:border-blue-800 dark:hover:bg-blue-950/60"
-              >
-                {magicLinkPending ? 'Sending magic link...' : 'Send magic link'}
-              </button>
-            </form>
-          </div>
         </section>
       </main>
     </div>
@@ -540,19 +376,7 @@ function SignInPageContent() {
 
 export default function SignInPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24">
-          <Header />
-          <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-12">
-            <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="h-7 w-44 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
-              <div className="mt-4 h-4 w-80 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
-            </div>
-          </main>
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
       <SignInPageContent />
     </Suspense>
   );

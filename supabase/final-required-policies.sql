@@ -57,12 +57,18 @@ alter table if exists public.verification_requests add column if not exists revi
 alter table if exists public.complaints add column if not exists email text;
 alter table if exists public.complaints add column if not exists status text default 'open';
 
+alter table if exists public.profiles add column if not exists verification_status text default 'unverified';
+alter table if exists public.profiles add column if not exists badge_type text default null;
+alter table if exists public.profiles add column if not exists account_status text not null default 'active';
+alter table if exists public.profiles add column if not exists phone_number text;
+
 alter table if exists public.businesses add column if not exists owner_id uuid references auth.users(id);
 alter table if exists public.businesses add column if not exists user_id uuid references auth.users(id);
 alter table if exists public.businesses add column if not exists badge_type text default 'none';
 alter table if exists public.businesses add column if not exists verification_status text default 'unverified';
 
 alter table if exists public.listings enable row level security;
+alter table if exists public.profiles enable row level security;
 alter table if exists public.admins enable row level security;
 alter table if exists public.complaints enable row level security;
 alter table if exists public.verification_requests enable row level security;
@@ -74,6 +80,28 @@ on public.listings
 for select
 to anon, authenticated
 using (status = 'active');
+
+drop policy if exists "Users can read public profiles" on public.profiles;
+create policy "Users can read public profiles"
+on public.profiles
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Users can insert own profile" on public.profiles;
+create policy "Users can insert own profile"
+on public.profiles
+for insert
+to authenticated
+with check (id = auth.uid());
+
+drop policy if exists "Users can update own profile" on public.profiles;
+create policy "Users can update own profile"
+on public.profiles
+for update
+to authenticated
+using (id = auth.uid() or (auth.jwt() ->> 'email') = 'mwanginewton107@gmail.com')
+with check (id = auth.uid() or (auth.jwt() ->> 'email') = 'mwanginewton107@gmail.com');
 
 drop policy if exists "Authenticated users can insert own listings" on public.listings;
 create policy "Authenticated users can insert own listings"
@@ -231,7 +259,8 @@ insert into storage.buckets (id, name, public)
 values
   ('listing-media', 'listing-media', true),
   ('profile-media', 'profile-media', true),
-  ('verification-media', 'verification-media', true)
+  ('verification-media', 'verification-media', true),
+  ('community-media', 'community-media', true)
 on conflict (id) do update set public = true;
 
 drop policy if exists "Users can read own notifications" on public.notifications;
@@ -268,7 +297,7 @@ create policy "Public can read CampusTrader media"
 on storage.objects
 for select
 to public
-using (bucket_id in ('listing-media', 'profile-media', 'verification-media'));
+using (bucket_id in ('listing-media', 'profile-media', 'verification-media', 'community-media'));
 
 drop policy if exists "Authenticated users can upload CampusTrader media" on storage.objects;
 create policy "Authenticated users can upload CampusTrader media"
@@ -276,7 +305,7 @@ on storage.objects
 for insert
 to authenticated
 with check (
-  bucket_id in ('listing-media', 'profile-media', 'verification-media')
+  bucket_id in ('listing-media', 'profile-media', 'verification-media', 'community-media')
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
@@ -286,11 +315,11 @@ on storage.objects
 for update
 to authenticated
 using (
-  bucket_id in ('listing-media', 'profile-media', 'verification-media')
+  bucket_id in ('listing-media', 'profile-media', 'verification-media', 'community-media')
   and (storage.foldername(name))[1] = auth.uid()::text
 )
 with check (
-  bucket_id in ('listing-media', 'profile-media', 'verification-media')
+  bucket_id in ('listing-media', 'profile-media', 'verification-media', 'community-media')
   and (storage.foldername(name))[1] = auth.uid()::text
 );
 
@@ -300,6 +329,6 @@ on storage.objects
 for delete
 to authenticated
 using (
-  bucket_id in ('listing-media', 'profile-media', 'verification-media')
+  bucket_id in ('listing-media', 'profile-media', 'verification-media', 'community-media')
   and (storage.foldername(name))[1] = auth.uid()::text
 );

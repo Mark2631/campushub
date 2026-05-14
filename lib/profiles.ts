@@ -1,6 +1,6 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import { storageBuckets, uploadPublicFile } from './storage';
+import { safeFileName, storageBuckets, uploadPublicFile } from './storage';
 
 export interface ProfileRecord {
   id: string;
@@ -10,6 +10,8 @@ export interface ProfileRecord {
   verification_status?: string | null;
   badge_type?: string | null;
   role?: string | null;
+  account_status?: string | null;
+  phone_number?: string | null;
   created_at?: string;
 }
 
@@ -60,15 +62,23 @@ export async function ensureProfile(user: User) {
   const fullName =
     user.user_metadata?.full_name || user.user_metadata?.fullName || user.user_metadata?.name || '';
   const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar || null;
+  const existing = await getProfileById(user.id);
+  const current = existing.profile;
+  const isAdmin = user.email?.toLowerCase() === 'mwanginewton107@gmail.com' || current?.role === 'admin' || current?.badge_type === 'admin';
+  const accountStatus = current?.account_status && ['suspended', 'banned'].includes(current.account_status)
+    ? current.account_status
+    : current?.account_status || 'active';
 
   const { data, error } = await safeUpsert('profiles', {
     id: user.id,
     email: user.email || null,
-    full_name: fullName,
-    avatar_url: avatarUrl,
-    verification_status: 'unverified',
-    badge_type: 'none',
-    role: 'user',
+    full_name: current?.full_name || fullName,
+    avatar_url: current?.avatar_url || avatarUrl,
+    verification_status: isAdmin ? 'verified' : current?.verification_status || 'unverified',
+    badge_type: isAdmin ? 'admin' : current?.badge_type || null,
+    account_status: accountStatus,
+    role: isAdmin ? 'admin' : current?.role || 'user',
+    phone_number: current?.phone_number || null,
   });
 
   return { profile: (data || null) as ProfileRecord | null, error };
@@ -94,15 +104,17 @@ export async function getProfileById(userId: string) {
 }
 
 export async function saveProfileAvatar(userId: string, file: File) {
+  const path = `${userId}/avatar-${Date.now()}-${safeFileName(file.name)}`;
   const { publicUrl, error: uploadError } = await uploadPublicFile(storageBuckets.profileMedia, userId, file, {
     timeoutMs: 25000,
     upsert: true,
+    path,
   });
 
   if (uploadError || !publicUrl) {
     return {
       avatarUrl: null,
-      error: uploadError || 'Unable to upload profile picture. Check storage policies for profile-media.',
+      error: `Profile picture upload failed. ${uploadError || 'Check storage policies for profile-media.'}`,
     };
   }
 
@@ -112,10 +124,48 @@ export async function saveProfileAvatar(userId: string, file: File) {
   });
 
   if (error) {
-    return { avatarUrl: null, error };
+    return { avatarUrl: null, error: `Profile picture saved to storage, but profiles.avatar_url update failed. ${error}` };
   }
 
-  return { avatarUrl: (data as ProfileRecord | null)?.avatar_url || publicUrl, error: null };
+  const confirmed = await getProfileById(userId);
+  const confirmedUrl = confirmed.profile?.avatar_url;
+
+  if (confirmed.error || confirmedUrl !== publicUrl) {
+    return {
+      avatarUrl: publicUrl,
+      error: confirmed.error
+        ? `Profile picture uploaded, but confirmation fetch failed. ${confirmed.error}`
+        : 'Profile picture uploaded, but avatar_url confirmation did not match.',
+    };
+  }
+
+  return { avatarUrl: confirmedUrl || (data as ProfileRecord | null)?.avatar_url || publicUrl, error: null };
+}
+
+export function normalizeKenyanPhone(value: string) {
+  const cleaned = value.trim().replace(/\s+/g, '');
+  if (/^07\d{8}$/.test(cleaned) || /^01\d{8}$/.test(cleaned)) return `254${cleaned.slice(1)}`;
+  if (/^\+254[71]\d{8}$/.test(cleaned)) return cleaned.slice(1);
+  if (/^254[71]\d{8}$/.test(cleaned)) return cleaned;
+  return null;
+}
+
+export async function saveProfilePhone(userId: string, phoneNumber: string) {
+  const normalized = normalizeKenyanPhone(phoneNumber);
+  if (!normalized) {
+    return { phoneNumber: null, error: 'Enter a valid Kenyan WhatsApp number: 07XXXXXXXX, 01XXXXXXXX, +2547XXXXXXXX, or +2541XXXXXXXX.' };
+  }
+
+  const { data, error } = await safeUpsert('profiles', {
+    id: userId,
+    phone_number: normalized,
+  });
+
+  if (error) {
+    return { phoneNumber: null, error: `WhatsApp number could not be saved. ${error}` };
+  }
+
+  return { phoneNumber: (data as ProfileRecord | null)?.phone_number || normalized, error: null };
 }
 
 export async function uploadVerificationDocument(userId: string, file: File) {

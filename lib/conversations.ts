@@ -6,6 +6,15 @@ export interface Message {
   created_at: string;
   sender_id: string;
   conversation_id?: string;
+  status?: 'sending' | 'sent' | 'failed';
+}
+
+export interface ConversationUser {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  phone_number?: string | null;
 }
 
 type RawMessageRow = {
@@ -13,7 +22,6 @@ type RawMessageRow = {
   conversation_id?: string;
   sender_id?: string;
   content?: string | null;
-  body?: string | null;
   created_at?: string;
 };
 
@@ -28,6 +36,8 @@ type ListingTitleRow = {
   id: string;
   title: string;
 };
+
+type ProfileRow = ConversationUser;
 
 function serializeError(error: unknown) {
   return JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
@@ -74,7 +84,7 @@ async function fetchConversationMessages(conversationIds: string[]) {
 
   const { data, error } = await supabase
     .from('messages')
-    .select('id, conversation_id, sender_id, content, body, created_at')
+    .select('id, conversation_id, sender_id, content, created_at')
     .in('conversation_id', conversationIds)
     .order('created_at', { ascending: true });
 
@@ -92,8 +102,9 @@ async function fetchConversationMessages(conversationIds: string[]) {
       id: rawRow.id,
       conversation_id: rawRow.conversation_id,
       sender_id: rawRow.sender_id || '',
-      content: rawRow.content ?? rawRow.body ?? '',
+      content: rawRow.content ?? '',
       created_at: rawRow.created_at || new Date().toISOString(),
+      status: 'sent',
     };
 
     acc[conversationId].push(message);
@@ -101,6 +112,28 @@ async function fetchConversationMessages(conversationIds: string[]) {
   }, {});
 
   return { messagesByConversation, error: null };
+}
+
+async function fetchProfiles(userIds: string[]) {
+  if (userIds.length === 0) return { profiles: {} as Record<string, ConversationUser>, error: null };
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, avatar_url, phone_number')
+    .in('id', userIds);
+
+  if (error) {
+    console.error('Error fetching conversation profiles:', serializeError(error));
+    return { profiles: {} as Record<string, ConversationUser>, error: error.message };
+  }
+
+  const profiles = (data || []).reduce<Record<string, ConversationUser>>((acc, row) => {
+    const profile = row as ProfileRow;
+    acc[profile.id] = profile;
+    return acc;
+  }, {});
+
+  return { profiles, error: null };
 }
 
 async function fetchListingTitles(listingIds: string[]) {
@@ -144,23 +177,34 @@ export async function getUserConversations(userId: string) {
 
   const conversationIds = rows.map((row) => row.id);
   const listingIds = rows.map((row) => row.listing_id).filter(Boolean) as string[];
+  const otherUserIds = rows.map((row) => (row.buyer_id === userId ? row.seller_id : row.buyer_id)).filter(Boolean);
 
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }] = await Promise.all([
+  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages(conversationIds),
     fetchListingTitles(Array.from(new Set(listingIds))),
+    fetchProfiles(Array.from(new Set(otherUserIds))),
   ]);
 
-  const derivedError = messagesError || titlesError;
+  const derivedError = messagesError || titlesError || profilesError;
 
   const conversations = rows.map((conversation) => {
     const messages = messagesByConversation[conversation.id] || [];
     const lastMessage = messages[messages.length - 1] || null;
+    const otherUserId = conversation.buyer_id === userId ? conversation.seller_id : conversation.buyer_id;
+    const otherUser = profiles[otherUserId] || {
+      id: otherUserId,
+      full_name: null,
+      email: null,
+      avatar_url: null,
+    };
 
     return {
       id: conversation.id,
       listingTitle: conversation.listing_id ? titles[conversation.listing_id] || 'Listing unavailable' : 'General conversation',
       lastMessage,
       listingId: conversation.listing_id || '',
+      otherUser,
+      unreadCount: lastMessage && lastMessage.sender_id !== userId ? 1 : 0,
     };
   });
 
@@ -187,12 +231,14 @@ export async function getConversationById(conversationId: string, userId: string
     return { conversation: null, error: 'Not authorized.' };
   }
 
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }] = await Promise.all([
+  const otherUserId = data.buyer_id === userId ? data.seller_id : data.buyer_id;
+  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages([data.id]),
     fetchListingTitles(data.listing_id ? [data.listing_id] : []),
+    fetchProfiles([otherUserId]),
   ]);
 
-  const derivedError = messagesError || titlesError;
+  const derivedError = messagesError || titlesError || profilesError;
 
   return {
     conversation: {
@@ -202,6 +248,12 @@ export async function getConversationById(conversationId: string, userId: string
       messages: messagesByConversation[data.id] || [],
       buyerId: data.buyer_id,
       sellerId: data.seller_id,
+      otherUser: profiles[otherUserId] || {
+        id: otherUserId,
+        full_name: null,
+        email: null,
+        avatar_url: null,
+      },
     },
     error: derivedError,
   };
