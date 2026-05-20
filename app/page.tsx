@@ -36,8 +36,8 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
         </div>
       ) : (
         <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-          <p className="font-semibold text-gray-900 dark:text-white">No listings here yet</p>
-          <p className="mt-1 text-sm">Check back soon or post the first item in this category.</p>
+          <p className="font-semibold text-gray-900 dark:text-white">No listings yet in {title}.</p>
+          <p className="mt-1 text-sm">Post the first {title.toLowerCase().replace('recently posted', 'listing')}.</p>
         </div>
       )}
     </section>

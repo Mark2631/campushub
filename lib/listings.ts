@@ -130,10 +130,11 @@ export function normalizeCategory(value: string) {
   if (['business', 'business offers'].includes(normalized)) return 'Business';
   if (['refurbished', 'refurb'].includes(normalized)) return 'Refurbished';
   if (['other', 'others'].includes(normalized)) return 'Other';
-  return value ? value.trim().replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Other';
+  return 'Other';
 }
 
 function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
+  const category = normalizeCategory(row.category || 'Other');
   return {
     id: row.id || '',
     user_id: row.user_id || row.seller_id || '',
@@ -141,10 +142,10 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     seller_id: row.seller_id || row.user_id || '',
     title: row.title || '',
     description: row.description ?? null,
-    category: normalizeCategory(row.category || 'Other'),
+    category,
     price: row.price ?? null,
     negotiable: Boolean(row.negotiable),
-    condition: row.condition || 'used',
+    condition: normalizeListingCondition(row.condition || 'used', category),
     status: row.status || 'active',
     location: row.location ?? null,
     media_urls: Array.isArray(row.media_urls) ? row.media_urls : [],
@@ -190,7 +191,7 @@ export async function getListingsByUser(userId: string) {
       return { listings: [] as Listing[], error: error.message };
     }
 
-    return { listings: await enrichListings((data || []) as ListingRow[]), error: null };
+    return { listings: await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
   } catch (err) {
     console.error('Unexpected error fetching user listings:', err);
     return { listings: [] as Listing[], error: formatUnknownError(err) };

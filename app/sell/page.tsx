@@ -122,6 +122,7 @@ function SellPageContent() {
 
       if (errors.length > 0) {
         setMessage({ type: 'error', text: errors.join(' ') });
+        showToast({ type: 'error', message: errors.join(' ') });
       }
 
       setImages((prev) => [...prev, ...validImages].slice(0, 10));
@@ -135,6 +136,7 @@ function SellPageContent() {
       const validationError = validateUploadFile(file, 'video');
       if (validationError) {
         setMessage({ type: 'error', text: validationError });
+        showToast({ type: 'error', message: validationError });
         return;
       }
 
@@ -267,6 +269,7 @@ function SellPageContent() {
     const validationError = validateListingForm();
     if (validationError) {
       setMessage({ type: 'error', text: validationError });
+      showToast({ type: 'error', message: validationError });
       return;
     }
 
