@@ -17,7 +17,7 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
     }
 
     setNeedsSignIn(false);
-    setMessage('Saved items are being prepared. This listing is still available from your browser history.');
+    setMessage('Saved items are coming soon. You can revisit this listing from your browser history.');
   };
 
   return (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useUser from '../hooks/useUser';
 import { findOrCreateConversation } from '../lib/conversations';
+import { isValidUuid } from '../lib/validation';
 import AuthPromptModal from './AuthPromptModal';
 
 type Props = {
@@ -19,7 +20,7 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
   const [busy, setBusy] = useState(false);
 
   const handleClick = async () => {
-    if (!listingId || !sellerId) {
+    if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
       setStatus('This listing is unavailable for messaging.');
       return;
     }
@@ -40,7 +41,8 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
     setBusy(false);
 
     if (error || !conversation) {
-      setStatus(error || 'Unable to open conversation. Please try again.');
+      if (error) console.error('Conversation open failed:', error);
+      setStatus('Unable to open conversation. Please try again.');
       return;
     }
 

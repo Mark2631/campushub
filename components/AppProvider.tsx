@@ -48,6 +48,24 @@ const syncedProfileIds = new Set<string>();
 const loggedProfileErrors = new Set<string>();
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+async function withAuthTimeout<T>(promise: PromiseLike<T>, fallback: T, label: string) {
+  let timer: number | undefined;
+
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<T>((resolve) => {
+        timer = window.setTimeout(() => {
+          console.error(`${label} timed out.`);
+          resolve(fallback);
+        }, 3000);
+      }),
+    ]);
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,7 +171,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await withAuthTimeout(
+        supabase.auth.getSession(),
+        { data: { session: null }, error: null },
+        'Auth session check'
+      );
       if (!isMounted) return;
 
       if (error) {
@@ -186,7 +208,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSession = async () => {
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await withAuthTimeout(
+      supabase.auth.getSession(),
+      { data: { session: null }, error: null },
+      'Auth session refresh'
+    );
     if (error) {
       console.error('Auth session refresh error:', error);
     }

@@ -16,22 +16,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://campus-trader.vercel.app'),
-  title: 'CampusTrader | Trusted Campus Marketplace',
-  description: 'Buy, sell, request items, and connect safely around campus.',
+  title: 'CampusTrader | Campus Marketplace for Students',
+  description: 'Buy, sell, request items, find services, and message students around campus safely.',
   keywords: [
     'CampusTrader',
     'Campus Trader',
-    'Campus-Trader',
     'campus marketplace',
     'student marketplace Kenya',
     'Meru campus marketplace',
     'MUST marketplace',
     'buy and sell campus',
+    'student services',
     'student deals',
-    'campus services',
   ],
   alternates: {
-    canonical: '/',
+    canonical: 'https://campus-trader.vercel.app',
   },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
@@ -39,20 +38,10 @@ export const metadata: Metadata = {
     title: 'CampusTrader',
     statusBarStyle: 'default',
   },
-  icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-    shortcut: ['/favicon.ico'],
-  },
   openGraph: {
-    title: 'CampusTrader | Trusted Campus Marketplace',
-    description: 'Buy, sell, request items, and connect safely around campus.',
-    url: '/',
+    title: 'CampusTrader | Campus Marketplace for Students',
+    description: 'Buy, sell, request items, find services, and message students around campus safely.',
+    url: 'https://campus-trader.vercel.app',
     siteName: 'CampusTrader',
     images: [
       {
@@ -67,9 +56,19 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'CampusTrader | Trusted Campus Marketplace',
-    description: 'Buy, sell, request items, and connect safely around campus.',
+    title: 'CampusTrader | Campus Marketplace for Students',
+    description: 'Buy, sell, request items, find services, and message students around campus safely.',
     images: ['/icons/icon-512.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.ico'],
   },
 };
 

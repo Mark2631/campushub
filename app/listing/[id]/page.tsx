@@ -8,6 +8,7 @@ import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import { getListingById } from '../../../lib/listings';
+import { isValidUuid } from '../../../lib/validation';
 
 type Props = {
   params: Promise<{
@@ -17,7 +18,9 @@ type Props = {
 
 export default async function ListingPage({ params }: Props) {
   const { id } = await params;
-  const { listing, error } = await getListingById(id);
+  const { listing, error } = isValidUuid(id)
+    ? await getListingById(id)
+    : { listing: null, error: null };
 
   if (error || !listing) {
     return (
@@ -26,7 +29,7 @@ export default async function ListingPage({ params }: Props) {
         <main className="flex-1 px-4 py-20 text-center">
           <div className="mx-auto max-w-md rounded-2xl border-2 border-gray-300 bg-white p-10 dark:border-zinc-800 dark:bg-zinc-900">
             <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Listing not found</h1>
-            <p className="text-gray-600 dark:text-zinc-400">{error || 'No listings yet. Be the first to post.'}</p>
+            <p className="text-gray-600 dark:text-zinc-400">This listing is unavailable.</p>
             <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
               Post listing
             </Link>

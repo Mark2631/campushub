@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { ComplaintRecord, getComplaints, updateComplaintStatus } from './complaints';
+import { isValidUuid } from './validation';
 
 export interface AdminVerificationRequest {
   id: string;
@@ -88,7 +89,7 @@ async function safeSection<T>(
     const { data, error } = await query();
     if (error) {
       console.error(`${label} error:`, error);
-      return { data: fallback, error: `Could not load ${label}: ${error.message}` };
+      return { data: fallback, error: `Could not load ${label}.` };
     }
 
     return { data: data ?? fallback, error: null };
@@ -114,6 +115,8 @@ async function safeCount(label: string, query: () => PromiseLike<{ count: number
 }
 
 async function insertOptionalNotification(userId: string, type: string, title: string, body: string) {
+  if (!isValidUuid(userId)) return;
+
   const { error } = await supabase
     .from('notifications')
     .insert({ user_id: userId, type, title, body, read: false });
@@ -121,6 +124,14 @@ async function insertOptionalNotification(userId: string, type: string, title: s
   if (error) {
     console.error('Optional notification insert failed:', error);
   }
+}
+
+function idsAreValid(...ids: Array<string | null | undefined>) {
+  return ids.every((id) => !id || isValidUuid(id));
+}
+
+function invalidAdminAction() {
+  return { error: 'Something went wrong. Try again.' };
 }
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
@@ -234,6 +245,8 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export async function setUserVerificationStatus(request: AdminVerificationRequest, status: 'verified' | 'rejected') {
+  if (!idsAreValid(request.id, request.user_id)) return invalidAdminAction();
+
   const requestStatus = status === 'verified' ? 'verified' : 'rejected';
 
   const [{ error: profileError }, { error: requestError }] = await Promise.all([
@@ -249,50 +262,58 @@ export async function setUserVerificationStatus(request: AdminVerificationReques
 
   if (profileError || requestError) {
     console.error('Error updating user verification:', { profileError, requestError, request });
-    return { error: profileError?.message || requestError?.message || 'Unable to update verification.' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function setBusinessVerificationStatus(businessId: string, status: 'verified' | 'rejected') {
+  if (!isValidUuid(businessId)) return invalidAdminAction();
+
   const { error } = await supabase
     .from('businesses')
     .update(status === 'verified' ? { verification_status: status, badge_type: 'gold' } : { verification_status: status })
     .eq('id', businessId);
 
   if (error) console.error('Error updating business verification:', error);
-  return { error: error?.message || null };
+  return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 export async function updateListingStatus(listingId: string, status: 'hidden' | 'reported') {
+  if (!isValidUuid(listingId)) return invalidAdminAction();
+
   const { error } = await supabase
     .from('listings')
     .update({ status })
     .eq('id', listingId);
 
   if (error) console.error('Error updating listing status:', error);
-  return { error: error?.message || null };
+  return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 export async function deleteListing(listingId: string) {
+  if (!isValidUuid(listingId)) return invalidAdminAction();
+
   const { error } = await supabase
     .from('listings')
     .delete()
     .eq('id', listingId);
 
   if (error) console.error('Error deleting listing:', error);
-  return { error: error?.message || null };
+  return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 export async function updateReportStatus(reportId: string, status: 'pending' | 'reviewed' | 'resolved') {
+  if (!isValidUuid(reportId)) return invalidAdminAction();
+
   const { error } = await supabase
     .from('reports')
     .update({ status })
     .eq('id', reportId);
 
   if (error) console.error('Error updating report status:', error);
-  return { error: error?.message || null };
+  return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 // ============================================================================
@@ -306,6 +327,10 @@ export interface AdminUserDetail extends AdminUser {
 }
 
 export async function getUserDetails(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { user: null, error: 'Something went wrong. Try again.' };
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email, full_name, verification_status, badge_type, role, account_status, admin_warnings_count, last_admin_warning, created_at')
@@ -314,13 +339,15 @@ export async function getUserDetails(userId: string) {
 
   if (error) {
     console.error('Error fetching user details:', error);
-    return { user: null, error: error.message };
+    return { user: null, error: 'Something went wrong. Try again.' };
   }
 
   return { user: (data || null) as AdminUserDetail | null, error: null };
 }
 
 export async function suspendUser(userId: string, adminId: string, reason: string) {
+  if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'suspended' }).eq('id', userId),
     supabase.from('admin_actions').insert({
@@ -334,13 +361,15 @@ export async function suspendUser(userId: string, adminId: string, reason: strin
 
   if (profileError || auditError) {
     console.error('Error suspending user:', { profileError, auditError });
-    return { error: profileError?.message || auditError?.message || 'Failed to suspend user' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function unblockUser(userId: string, adminId: string, reason: string) {
+  if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId),
     supabase.from('admin_actions').insert({
@@ -354,13 +383,15 @@ export async function unblockUser(userId: string, adminId: string, reason: strin
 
   if (profileError || auditError) {
     console.error('Error unblocking user:', { profileError, auditError });
-    return { error: profileError?.message || auditError?.message || 'Failed to unblock user' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function banUser(userId: string, adminId: string, reason: string) {
+  if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'banned' }).eq('id', userId),
     supabase.from('admin_actions').insert({
@@ -374,13 +405,15 @@ export async function banUser(userId: string, adminId: string, reason: string) {
 
   if (profileError || auditError) {
     console.error('Error banning user:', { profileError, auditError });
-    return { error: profileError?.message || auditError?.message || 'Failed to ban user' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function warnUser(userId: string, adminId: string, title: string, message: string) {
+  if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+
   const now = new Date().toISOString();
   const [{ error: profileError }, { error: noticeError }] = await Promise.all([
     supabase
@@ -401,7 +434,7 @@ export async function warnUser(userId: string, adminId: string, title: string, m
 
   if (profileError || noticeError) {
     console.error('Error warning user:', { profileError, noticeError });
-    return { error: profileError?.message || noticeError?.message || 'Failed to warn user' };
+    return invalidAdminAction();
   }
 
   return { error: null };
@@ -416,6 +449,10 @@ export interface AdminBusinessDetail extends AdminBusiness {
 }
 
 export async function getBusinessDetails(businessId: string) {
+  if (!isValidUuid(businessId)) {
+    return { business: null, error: 'Something went wrong. Try again.' };
+  }
+
   const { data, error } = await supabase
     .from('businesses')
     .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, status, created_at')
@@ -424,13 +461,15 @@ export async function getBusinessDetails(businessId: string) {
 
   if (error) {
     console.error('Error fetching business details:', error);
-    return { business: null, error: error.message };
+    return { business: null, error: 'Something went wrong. Try again.' };
   }
 
   return { business: (data || null) as AdminBusinessDetail | null, error: null };
 }
 
 export async function approveBusiness(businessId: string, adminId: string) {
+  if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase
       .from('businesses')
@@ -446,13 +485,15 @@ export async function approveBusiness(businessId: string, adminId: string) {
 
   if (bizError || auditError) {
     console.error('Error approving business:', { bizError, auditError });
-    return { error: bizError?.message || auditError?.message || 'Failed to approve business' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function rejectBusiness(businessId: string, adminId: string, reason: string) {
+  if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+
   const business = await getBusinessDetails(businessId);
 
   const [{ error: bizError }, { error: noticeError }, { error: auditError }] = await Promise.all([
@@ -481,13 +522,15 @@ export async function rejectBusiness(businessId: string, adminId: string, reason
 
   if (bizError || noticeError || auditError) {
     console.error('Error rejecting business:', { bizError, noticeError, auditError });
-    return { error: bizError?.message || noticeError?.message || auditError?.message || 'Failed to reject business' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function revokeBusiness(businessId: string, adminId: string, reason: string) {
+  if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase
       .from('businesses')
@@ -504,13 +547,15 @@ export async function revokeBusiness(businessId: string, adminId: string, reason
 
   if (bizError || auditError) {
     console.error('Error revoking business:', { bizError, auditError });
-    return { error: bizError?.message || auditError?.message || 'Failed to revoke business' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function suspendBusiness(businessId: string, adminId: string, reason: string) {
+  if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase.from('businesses').update({ status: 'suspended' }).eq('id', businessId),
     supabase.from('admin_actions').insert({
@@ -524,13 +569,15 @@ export async function suspendBusiness(businessId: string, adminId: string, reaso
 
   if (bizError || auditError) {
     console.error('Error suspending business:', { bizError, auditError });
-    return { error: bizError?.message || auditError?.message || 'Failed to suspend business' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function terminateBusiness(businessId: string, adminId: string, reason: string) {
+  if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase.from('businesses').update({ status: 'terminated' }).eq('id', businessId),
     supabase.from('admin_actions').insert({
@@ -544,7 +591,7 @@ export async function terminateBusiness(businessId: string, adminId: string, rea
 
   if (bizError || auditError) {
     console.error('Error terminating business:', { bizError, auditError });
-    return { error: bizError?.message || auditError?.message || 'Failed to terminate business' };
+    return invalidAdminAction();
   }
 
   return { error: null };
@@ -555,6 +602,8 @@ export async function terminateBusiness(businessId: string, adminId: string, rea
 // ============================================================================
 
 export async function hideListing(listingId: string, adminId: string, reason: string) {
+  if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+
   const { error } = await Promise.all([
     supabase
       .from('listings')
@@ -578,13 +627,15 @@ export async function hideListing(listingId: string, adminId: string, reason: st
 
   if (error) {
     console.error('Error hiding listing:', error);
-    return { error: error.message || 'Failed to hide listing' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function restoreListing(listingId: string, adminId: string) {
+  if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+
   const { error } = await Promise.all([
     supabase
       .from('listings')
@@ -609,13 +660,15 @@ export async function restoreListing(listingId: string, adminId: string) {
 
   if (error) {
     console.error('Error restoring listing:', error);
-    return { error: error.message || 'Failed to restore listing' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function deleteListingAsAdmin(listingId: string, adminId: string, reason: string) {
+  if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+
   const { error } = await Promise.all([
     supabase
       .from('listings')
@@ -639,7 +692,7 @@ export async function deleteListingAsAdmin(listingId: string, adminId: string, r
 
   if (error) {
     console.error('Error deleting listing:', error);
-    return { error: error.message || 'Failed to delete listing' };
+    return invalidAdminAction();
   }
 
   return { error: null };
@@ -650,6 +703,8 @@ export async function deleteListingAsAdmin(listingId: string, adminId: string, r
 // ============================================================================
 
 export async function approveVerification(verificationId: string, adminId: string, userId: string, businessId?: string | null, addBadge = true) {
+  if (!idsAreValid(verificationId, adminId, userId, businessId)) return invalidAdminAction();
+
   const [{ error: verifyError }, { error: profileError }, businessResult] = await Promise.all([
     supabase
       .from('verification_requests')
@@ -667,7 +722,7 @@ export async function approveVerification(verificationId: string, adminId: strin
 
   if (verifyError || profileError || businessResult.error) {
     console.error('Error approving verification:', { verifyError, profileError, businessError: businessResult.error });
-    return { error: verifyError?.message || profileError?.message || businessResult.error?.message || 'Failed to approve verification' };
+    return invalidAdminAction();
   }
 
   await Promise.all([
@@ -691,6 +746,8 @@ export async function approveVerification(verificationId: string, adminId: strin
 }
 
 export async function rejectVerification(verificationId: string, adminId: string, userId: string, reason: string) {
+  if (!idsAreValid(verificationId, adminId, userId)) return invalidAdminAction();
+
   const { error: verifyError } = await supabase
     .from('verification_requests')
     .update({
@@ -703,7 +760,7 @@ export async function rejectVerification(verificationId: string, adminId: string
 
   if (verifyError) {
     console.error('Error rejecting verification:', { verifyError });
-    return { error: verifyError.message || 'Failed to reject verification' };
+    return invalidAdminAction();
   }
 
   await Promise.all([
@@ -744,6 +801,8 @@ export async function rejectVerification(verificationId: string, adminId: string
 }
 
 export async function revokeVerification(userId: string, adminId: string, reason: string) {
+  if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ verification_status: 'unverified', badge_type: 'none' }).eq('id', userId),
     supabase.from('admin_actions').insert({
@@ -757,7 +816,7 @@ export async function revokeVerification(userId: string, adminId: string, reason
 
   if (profileError || auditError) {
     console.error('Error revoking verification:', { profileError, auditError });
-    return { error: profileError?.message || auditError?.message || 'Failed to revoke verification' };
+    return invalidAdminAction();
   }
 
   return { error: null };
@@ -768,6 +827,8 @@ export async function revokeVerification(userId: string, adminId: string, reason
 // ============================================================================
 
 export async function resolveReport(reportId: string, adminId: string, resolution: string, action?: string) {
+  if (!idsAreValid(reportId, adminId)) return invalidAdminAction();
+
   const { error } = await Promise.all([
     supabase
       .from('reports')
@@ -792,13 +853,15 @@ export async function resolveReport(reportId: string, adminId: string, resolutio
 
   if (error) {
     console.error('Error resolving report:', error);
-    return { error: error.message || 'Failed to resolve report' };
+    return invalidAdminAction();
   }
 
   return { error: null };
 }
 
 export async function sendReportResponse(reporterId: string, adminId: string, message: string) {
+  if (!idsAreValid(reporterId, adminId)) return invalidAdminAction();
+
   const { error } = await supabase.from('admin_notices').insert({
     user_id: reporterId,
     admin_id: adminId,
@@ -809,7 +872,7 @@ export async function sendReportResponse(reporterId: string, adminId: string, me
 
   if (error) {
     console.error('Error sending report response:', error);
-    return { error: error.message || 'Failed to send response' };
+    return invalidAdminAction();
   }
 
   await insertOptionalNotification(reporterId, 'report response', 'Report response', message);
@@ -828,6 +891,8 @@ export async function logAdminAction(
   targetId: string,
   reason?: string
 ) {
+  if (!idsAreValid(adminId, targetId)) return invalidAdminAction();
+
   const { error } = await supabase.from('admin_actions').insert({
     admin_id: adminId,
     action_type: actionType,
@@ -840,10 +905,14 @@ export async function logAdminAction(
     console.error('Error logging admin action:', error);
   }
 
-  return { error: error?.message || null };
+  return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 export async function getAllAdminActions(adminId?: string, limit = 100) {
+  if (adminId && !isValidUuid(adminId)) {
+    return { actions: [], error: null };
+  }
+
   let query = supabase
     .from('admin_actions')
     .select('id, admin_id, action_type, target_type, target_id, reason, created_at')
@@ -858,7 +927,7 @@ export async function getAllAdminActions(adminId?: string, limit = 100) {
 
   if (error) {
     console.error('Error fetching admin actions:', error);
-    return { actions: [], error: error.message };
+    return { actions: [], error: 'Something went wrong. Try again.' };
   }
 
   return { actions: data || [], error: null };

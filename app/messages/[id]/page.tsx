@@ -9,6 +9,7 @@ import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, sendMessage } from '../../../lib/conversations';
 import { createNotificationRecord } from '../../../lib/notifications';
+import { isValidUuid } from '../../../lib/validation';
 
 type Props = {
   params: Promise<{
@@ -47,9 +48,15 @@ export default function ConversationPage({ params }: Props) {
   useEffect(() => {
     const load = async () => {
       if (!user) return;
+      if (!isValidUuid(id)) {
+        setError('Conversation not found.');
+        return;
+      }
+
       const { conversation, error } = await getConversationById(id, user.id);
       if (error || !conversation) {
-        setError(error || 'Conversation not found.');
+        if (error) console.error('Conversation load failed:', error);
+        setError('Conversation not found.');
         return;
       }
       setConversation(conversation);
@@ -64,11 +71,16 @@ export default function ConversationPage({ params }: Props) {
   const retryMessage = async (failedMessage: Message) => {
     if (!user || !conversation) return;
     setMessages((current) => current.map((message) => message.id === failedMessage.id ? { ...message, status: 'sending' } : message));
+    const slowTimer = window.setTimeout(() => {
+      showToast({ type: 'warning', message: 'Message is taking longer than expected. Keep this page open.' });
+    }, 15000);
     const { message, error } = await sendMessage(conversation.id, user.id, failedMessage.content);
+    window.clearTimeout(slowTimer);
     if (error || !message) {
       setMessages((current) => current.map((item) => item.id === failedMessage.id ? { ...item, status: 'failed' } : item));
-      setError(error || 'Message failed to send.');
-      showToast({ type: 'error', message: error || 'Message failed to send.' });
+      if (error) console.error('Message retry failed:', error);
+      setError('Message failed to send.');
+      showToast({ type: 'error', message: 'Message failed to send.' });
       return;
     }
     setMessages((current) => current.map((item) => item.id === failedMessage.id ? message : item));
@@ -90,13 +102,18 @@ export default function ConversationPage({ params }: Props) {
     setMessages((current) => [...current, optimisticMessage]);
     setMessageText('');
     setSending(true);
+    const slowTimer = window.setTimeout(() => {
+      showToast({ type: 'warning', message: 'Message is taking longer than expected. Keep this page open.' });
+    }, 15000);
     const { message, error } = await sendMessage(conversation.id, user.id, content);
+    window.clearTimeout(slowTimer);
     setSending(false);
 
     if (error || !message) {
       setMessages((current) => current.map((item) => item.id === optimisticId ? { ...item, status: 'failed' } : item));
-      setError(error || 'Message failed to send.');
-      showToast({ type: 'error', message: error || 'Message failed to send.' });
+      if (error) console.error('Message send failed:', error);
+      setError('Message failed to send.');
+      showToast({ type: 'error', message: 'Message failed to send.' });
       return;
     }
 
@@ -161,7 +178,8 @@ export default function ConversationPage({ params }: Props) {
 
         {error ? (
           <div className="rounded-2xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-6 text-red-700 dark:text-red-200">
-            <p className="font-semibold">{error}</p>
+            <p className="font-semibold">Unable to load this conversation.</p>
+            <p className="text-sm mt-1">The conversation might not exist or you do not have access.</p>
           </div>
         ) : (
           <div className="space-y-6">

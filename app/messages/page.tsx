@@ -106,8 +106,8 @@ export default function MessagesPage() {
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-8 text-red-700 dark:text-red-200">
-            <p className="font-semibold">Error loading conversations</p>
-            <p className="text-sm mt-1">{error}</p>
+            <p className="font-semibold">Unable to load conversations.</p>
+            <p className="text-sm mt-1">Try refreshing the page.</p>
           </div>
         ) : conversations.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">

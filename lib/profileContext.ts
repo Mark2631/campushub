@@ -1,3 +1,5 @@
+import { isValidUuid } from './validation';
+
 export type ProfileContext =
   | {
       mode: 'personal';
@@ -25,7 +27,7 @@ export function readStoredProfileContext(): ProfileContext {
     const raw = window.localStorage.getItem(storageKey);
     if (!raw) return personalProfileContext;
     const parsed = JSON.parse(raw) as ProfileContext;
-    if (parsed.mode === 'business' && parsed.businessId && parsed.businessName) {
+    if (parsed.mode === 'business' && isValidUuid(parsed.businessId) && parsed.businessName) {
       return parsed;
     }
   } catch (error) {

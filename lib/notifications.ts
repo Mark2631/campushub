@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { isValidUuid } from './validation';
 
 export type AppNotification = {
   id: string;
@@ -19,6 +20,10 @@ export async function createNotificationRecord(data: {
   title: string;
   body: string;
 }) {
+  if (!isValidUuid(data.userId)) {
+    return { notification: null, error: null };
+  }
+
   const payload = {
     user_id: data.userId,
     type: data.type,
@@ -42,6 +47,10 @@ export async function createNotificationRecord(data: {
 }
 
 export async function getUserNotifications(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { notifications: [] as AppNotification[], error: null };
+  }
+
   const { data, error } = await supabase
     .from('notifications')
     .select('id, type, title, body, read, created_at')
@@ -58,6 +67,10 @@ export async function getUserNotifications(userId: string) {
 }
 
 export async function markNotificationRead(notificationId: string) {
+  if (!isValidUuid(notificationId)) {
+    return { error: null };
+  }
+
   const { error } = await supabase
     .from('notifications')
     .update({ read: true })
@@ -72,6 +85,10 @@ export async function markNotificationRead(notificationId: string) {
 }
 
 export async function deleteNotificationRecord(notificationId: string) {
+  if (!isValidUuid(notificationId)) {
+    return { error: null };
+  }
+
   const { error } = await supabase
     .from('notifications')
     .delete()
@@ -86,6 +103,10 @@ export async function deleteNotificationRecord(notificationId: string) {
 }
 
 export async function clearUserNotifications(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { error: null };
+  }
+
   const { error } = await supabase
     .from('notifications')
     .delete()

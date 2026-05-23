@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 import { storageBuckets, uploadPublicFile, withTimeout } from './storage';
+import { normalizeCategory as normalizeSharedCategory } from './categories';
+import { isValidUuid } from './validation';
 
 export interface Listing {
   id: string;
@@ -120,17 +122,7 @@ export function normalizeListingCondition(condition: string, category?: string) 
 }
 
 export function normalizeCategory(value: string) {
-  const normalized = value.trim().toLowerCase();
-  if (['service', 'services', 'campus services', 'skill', 'skills'].includes(normalized)) return 'Services';
-  if (['electronic', 'electronics', 'gadget', 'gadgets'].includes(normalized)) return 'Electronics';
-  if (['book', 'books', 'notes', 'study'].includes(normalized)) return 'Books';
-  if (['fashion', 'clothes', 'clothing', 'cloth designs'].includes(normalized)) return 'Fashion';
-  if (['furniture', 'room items'].includes(normalized)) return 'Furniture';
-  if (['food', 'meals', 'snacks'].includes(normalized)) return 'Food';
-  if (['business', 'business offers'].includes(normalized)) return 'Business';
-  if (['refurbished', 'refurb'].includes(normalized)) return 'Refurbished';
-  if (['other', 'others'].includes(normalized)) return 'Other';
-  return 'Other';
+  return normalizeSharedCategory(value);
 }
 
 function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
@@ -178,7 +170,33 @@ export async function getListings(limit = 20, offset = 0) {
   }
 }
 
+export async function getServiceListings(limit = 12) {
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .eq('status', 'active')
+      .or('condition.eq.service,category.eq.Services,category.eq.services,category.eq.Service')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      logSupabaseError('Error fetching service listings:', error);
+      return { listings: [] as Listing[], error: null };
+    }
+
+    return { listings: await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
+  } catch (err) {
+    console.error('Unexpected error fetching service listings:', err);
+    return { listings: [] as Listing[], error: null };
+  }
+}
+
 export async function getListingsByUser(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { listings: [] as Listing[], error: null };
+  }
+
   try {
     const { data, error } = await supabase
       .from('listings')
@@ -213,6 +231,10 @@ export async function insertListing(
     videoUrl?: string | null;
   }
 ) {
+  if (!isValidUuid(userId)) {
+    return { listing: null, error: 'Sign in to post a listing.' };
+  }
+
   try {
     const price =
       typeof data.price === 'string'
@@ -228,7 +250,7 @@ export async function insertListing(
     const listingToInsert = {
       user_id: userId,
       seller_id: userId,
-      business_id: data.businessId || null,
+      business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
       title: data.title,
       description: data.description,
       category: normalizeCategory(data.category),
@@ -266,6 +288,10 @@ export async function insertListing(
 }
 
 export async function getListingById(id: string) {
+  if (!isValidUuid(id)) {
+    return { listing: null, error: null };
+  }
+
   try {
     const { data, error } = await supabase
       .from('listings')
@@ -295,6 +321,10 @@ export async function updateListingLifecycleStatus(
   sellerId: string,
   status: 'sold' | 'hidden' | 'active'
 ) {
+  if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
+    return { error: 'Listing not found.' };
+  }
+
   const { error } = await supabase
     .from('listings')
     .update({ status })
@@ -325,6 +355,10 @@ export async function updateListing(
     videoUrl?: string | null;
   }
 ) {
+  if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
+    return { listing: null, error: 'Listing not found.' };
+  }
+
   const price =
     typeof data.price === 'string'
       ? data.price.trim() === ''
@@ -340,7 +374,7 @@ export async function updateListing(
     negotiable: Boolean(data.negotiable),
     condition: normalizeListingCondition(data.condition, data.category),
     location: data.location,
-    business_id: data.businessId || null,
+    business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
     updated_at: new Date().toISOString(),

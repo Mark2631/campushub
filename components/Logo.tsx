@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Store } from 'lucide-react';
 
 type LogoProps = {
   compact?: boolean;
@@ -8,11 +9,9 @@ type LogoProps = {
 export default function Logo({ compact = false, href = '/' }: LogoProps) {
   const content = (
     <span className="flex items-center gap-3">
-      <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-sm font-black text-white shadow-lg shadow-blue-500/20">
-        <span className="absolute left-2 top-2 h-2 w-2 rounded-full bg-white/80" />
-        <span className="absolute bottom-2 right-2 h-2 w-2 rounded-full bg-white/80" />
-        <span className="absolute h-5 w-5 rounded-full border border-white/40" />
-        <span>CT</span>
+      <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-blue-500/20 ring-1 ring-white/10 dark:bg-white dark:text-slate-950">
+        <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-emerald-400 ring-2 ring-white dark:ring-slate-950" />
+        <Store className="h-5 w-5" aria-hidden="true" />
       </span>
       {!compact ? (
         <span className="flex min-w-0 flex-col">

@@ -27,12 +27,16 @@ function NoticeBanner({ notice }: { notice: Notice | null }) {
         ? 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200'
         : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200';
 
-  return <div className={`rounded-2xl border px-4 py-3 text-sm ${classes}`}>{notice.message}</div>;
+  return <div className={`rounded-2xl border px-4 py-3 text-sm break-words ${classes}`}>{notice.message}</div>;
 }
 
 function appendWelcome(path: string) {
   if (path !== '/') return path;
   return '/?welcome=1';
+}
+
+function friendlyAuthMessage(fallback: string) {
+  return fallback;
 }
 
 function SignInPageContent() {
@@ -46,7 +50,7 @@ function SignInPageContent() {
   const [mode, setMode] = useState<AuthMode>(requestedMode === 'signin' ? 'signin' : 'signup');
   const [notice, setNotice] = useState<Notice | null>(
     callbackError
-      ? { tone: 'error', message: callbackError }
+      ? { tone: 'error', message: 'Something went wrong. Try again.' }
       : null
   );
   const [signupPending, setSignupPending] = useState(false);
@@ -105,8 +109,10 @@ function SignInPageContent() {
 
     if (signup.error) {
       setSignupPending(false);
-      showToast({ type: 'error', message: signup.error.message });
-      setNotice({ tone: 'error', message: signup.error.message });
+      console.error('Signup failed:', signup.error);
+      const message = friendlyAuthMessage('Unable to create account. Check your details and try again.');
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
       return;
     }
 
@@ -122,10 +128,12 @@ function SignInPageContent() {
     setSignupPending(false);
 
     if (signin.error || !signin.data.session) {
-      showToast({ type: 'error', message: signin.error?.message || 'Account created, but sign-in did not complete. Try signing in with your password.' });
+      if (signin.error) console.error('Post-signup sign-in failed:', signin.error);
+      const message = friendlyAuthMessage('Account created, but sign-in did not complete. Try signing in with your password.');
+      showToast({ type: 'error', message });
       setNotice({
         tone: 'error',
-        message: signin.error?.message || 'Account created, but sign-in did not complete. Try signing in with your password.',
+        message,
       });
       setMode('signin');
       setSigninForm({ email, password: '' });
@@ -150,8 +158,10 @@ function SignInPageContent() {
     setSigninPending(false);
 
     if (error || !data.session) {
-      showToast({ type: 'error', message: error?.message || 'Unable to sign in. Review your email and password.' });
-      setNotice({ tone: 'error', message: error?.message || 'Unable to sign in. Review your email and password.' });
+      if (error) console.error('Sign-in failed:', error);
+      const message = friendlyAuthMessage('Unable to sign in. Review your email and password.');
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
       return;
     }
 
@@ -179,8 +189,10 @@ function SignInPageContent() {
     setResetPending(false);
 
     if (error) {
-      showToast({ type: 'error', message: error.message });
-      setNotice({ tone: 'error', message: error.message });
+      console.error('Password reset failed:', error);
+      const message = friendlyAuthMessage('Something went wrong. Try again.');
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
       return;
     }
 
@@ -188,7 +200,7 @@ function SignInPageContent() {
     showToast({ type: 'success', message: 'Password reset email sent.' });
   };
 
-  if (loading || user) {
+  if (user) {
     return (
       <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
         <Header />
@@ -205,16 +217,17 @@ function SignInPageContent() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
       <Header />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-8 sm:py-12">
-        <section className="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Create your free account</p>
-              <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-4xl dark:text-white">
-                {mode === 'signup' ? 'Welcome to CampusTrader' : 'Sign in to CampusTrader'}
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-8 sm:py-12">
+        <section className="w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">
+                {mode === 'signup' ? 'Join CampusTrader' : 'Sign in'}
               </h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Browse freely. Verify later to earn a trusted badge.
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                {mode === 'signup'
+                  ? 'Buy, sell, and message students around campus.'
+                  : 'Welcome back.'}
               </p>
             </div>
             <button
@@ -223,27 +236,26 @@ function SignInPageContent() {
                 setMode(mode === 'signup' ? 'signin' : 'signup');
                 setNotice(null);
               }}
-              className="shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-blue-600"
+              className="shrink-0 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-blue-600 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-blue-300"
             >
-              {mode === 'signup' ? 'Already have an account? Sign in' : 'Create account'}
+              {mode === 'signup' ? 'Sign in' : 'Create account'}
             </button>
           </div>
 
-          <div className="mt-6">
-            <NoticeBanner notice={notice} />
-          </div>
+          <NoticeBanner notice={notice} />
 
           <button
             type="button"
             onClick={handleGoogle}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+            aria-disabled="true"
+            className="mt-6 flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
           >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950">G</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950 dark:bg-slate-950 dark:text-white">G</span>
             <span>Continue with Google</span>
             <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase text-slate-950">Coming soon</span>
           </button>
 
-          <div className="my-6 flex items-center gap-3">
+          <div className="my-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">or use email</span>
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
@@ -271,28 +283,26 @@ function SignInPageContent() {
                   required
                 />
               </label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Password
-                  <input
-                    type="password"
-                    value={signupForm.password}
-                    onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    required
-                  />
-                </label>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Confirm password
-                  <input
-                    type="password"
-                    value={signupForm.confirmPassword}
-                    onChange={(event) => setSignupForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    required
-                  />
-                </label>
-              </div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Password
+                <input
+                  type="password"
+                  value={signupForm.password}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
+                />
+              </label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Confirm password
+                <input
+                  type="password"
+                  value={signupForm.confirmPassword}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
+                />
+              </label>
               <button
                 type="submit"
                 disabled={signupPending}
@@ -323,19 +333,17 @@ function SignInPageContent() {
                   required
                 />
               </label>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResetOpen((current) => !current);
-                    setResetEmail(signinForm.email);
-                    setNotice(null);
-                  }}
-                  className="text-sm font-semibold text-blue-700 transition hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-                >
-                  Forgot password?
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setResetOpen((current) => !current);
+                  setResetEmail(signinForm.email);
+                  setNotice(null);
+                }}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-slate-700"
+              >
+                Forgot password?
+              </button>
               <button
                 type="submit"
                 disabled={signinPending}

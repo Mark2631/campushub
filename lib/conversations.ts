@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { withTimeout } from './storage';
+import { isValidUuid } from './validation';
 
 export interface Message {
   id: string;
@@ -48,6 +50,10 @@ export async function findOrCreateConversation(
   buyerId: string,
   sellerId: string
 ) {
+  if (!isValidUuid(listingId) || !isValidUuid(buyerId) || !isValidUuid(sellerId)) {
+    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
+  }
+
   const { data: existing, error: fetchError } = await supabase
     .from('conversations')
     .select('id')
@@ -58,7 +64,7 @@ export async function findOrCreateConversation(
 
   if (fetchError) {
     console.error('Error fetching conversation:', serializeError(fetchError));
-    return { conversation: null, error: fetchError.message };
+    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
   }
 
   if (existing) {
@@ -73,19 +79,20 @@ export async function findOrCreateConversation(
 
   if (insertError) {
     console.error('Error creating conversation:', serializeError(insertError));
-    return { conversation: null, error: insertError.message };
+    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
   }
 
   return { conversation: inserted, error: null };
 }
 
 async function fetchConversationMessages(conversationIds: string[]) {
-  if (conversationIds.length === 0) return { messagesByConversation: {} as Record<string, Message[]>, error: null };
+  const validConversationIds = conversationIds.filter(isValidUuid);
+  if (validConversationIds.length === 0) return { messagesByConversation: {} as Record<string, Message[]>, error: null };
 
   const { data, error } = await supabase
     .from('messages')
     .select('id, conversation_id, sender_id, content, created_at')
-    .in('conversation_id', conversationIds)
+    .in('conversation_id', validConversationIds)
     .order('created_at', { ascending: true });
 
   if (error) {
@@ -115,12 +122,13 @@ async function fetchConversationMessages(conversationIds: string[]) {
 }
 
 async function fetchProfiles(userIds: string[]) {
-  if (userIds.length === 0) return { profiles: {} as Record<string, ConversationUser>, error: null };
+  const validUserIds = userIds.filter(isValidUuid);
+  if (validUserIds.length === 0) return { profiles: {} as Record<string, ConversationUser>, error: null };
 
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, email, avatar_url, phone_number')
-    .in('id', userIds);
+    .in('id', validUserIds);
 
   if (error) {
     console.error('Error fetching conversation profiles:', serializeError(error));
@@ -137,12 +145,13 @@ async function fetchProfiles(userIds: string[]) {
 }
 
 async function fetchListingTitles(listingIds: string[]) {
-  if (listingIds.length === 0) return { titles: {} as Record<string, string>, error: null };
+  const validListingIds = listingIds.filter(isValidUuid);
+  if (validListingIds.length === 0) return { titles: {} as Record<string, string>, error: null };
 
   const { data, error } = await supabase
     .from('listings')
     .select('id, title')
-    .in('id', listingIds);
+    .in('id', validListingIds);
 
   if (error) {
     console.error('Error fetching listing titles:', serializeError(error));
@@ -159,6 +168,10 @@ async function fetchListingTitles(listingIds: string[]) {
 }
 
 export async function getUserConversations(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { conversations: [], error: null };
+  }
+
   const { data, error } = await supabase
     .from('conversations')
     .select('id, listing_id, buyer_id, seller_id')
@@ -212,6 +225,10 @@ export async function getUserConversations(userId: string) {
 }
 
 export async function getConversationById(conversationId: string, userId: string) {
+  if (!isValidUuid(conversationId) || !isValidUuid(userId)) {
+    return { conversation: null, error: 'Conversation not found.' };
+  }
+
   const { data, error } = await supabase
     .from('conversations')
     .select('id, listing_id, buyer_id, seller_id')
@@ -260,16 +277,29 @@ export async function getConversationById(conversationId: string, userId: string
 }
 
 export async function sendMessage(conversationId: string, senderId: string, content: string) {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({ conversation_id: conversationId, sender_id: senderId, content })
-    .select('id, conversation_id, sender_id, content, created_at')
-    .single();
-
-  if (error) {
-    console.error('Error sending message:', serializeError(error));
-    return { message: null, error: error.message };
+  if (!isValidUuid(conversationId) || !isValidUuid(senderId)) {
+    return { message: null, error: 'Message failed to send.' };
   }
 
-  return { message: data as Message, error: null };
+  try {
+    const { data, error } = await withTimeout(
+      supabase
+        .from('messages')
+        .insert({ conversation_id: conversationId, sender_id: senderId, content })
+        .select('id, conversation_id, sender_id, content, created_at')
+        .single(),
+      15000,
+      'Message send timed out.'
+    );
+
+    if (error) {
+      console.error('Error sending message:', serializeError(error));
+      return { message: null, error: 'Message failed to send.' };
+    }
+
+    return { message: data as Message, error: null };
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return { message: null, error: 'Message failed to send.' };
+  }
 }

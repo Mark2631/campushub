@@ -14,6 +14,7 @@ import {
   uploadCommunityImage,
 } from '../../../lib/community';
 import { validateUploadFile } from '../../../lib/storage';
+import { isValidUuid } from '../../../lib/validation';
 
 type Props = {
   params: Promise<{ groupId: string }>;
@@ -26,6 +27,7 @@ function senderName(message: CommunityMessage) {
 export default function CommunityGroupPage({ params }: Props) {
   const { groupId } = use(params);
   const group = getDefaultCommunityGroup(groupId);
+  const groupChatReady = Boolean(group && isValidUuid(groupId));
   const { user, loading } = useUser();
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [messageText, setMessageText] = useState('');
@@ -36,6 +38,8 @@ export default function CommunityGroupPage({ params }: Props) {
   const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
+    if (!groupChatReady) return;
+
     let mounted = true;
     const load = async () => {
       const { messages, error } = await getCommunityMessages(groupId);
@@ -47,7 +51,7 @@ export default function CommunityGroupPage({ params }: Props) {
     return () => {
       mounted = false;
     };
-  }, [groupId]);
+  }, [groupChatReady, groupId]);
 
   useEffect(() => {
     return () => {
@@ -83,6 +87,10 @@ export default function CommunityGroupPage({ params }: Props) {
       return;
     }
     if (!messageText.trim() && !mediaFile) return;
+    if (!groupChatReady) {
+      setError('Group chat is opening soon. Use marketplace messages for now.');
+      return;
+    }
 
     const localId = `local-${Date.now()}`;
     const localMessage: CommunityMessage = {
@@ -115,18 +123,24 @@ export default function CommunityGroupPage({ params }: Props) {
       if (upload.error || !upload.publicUrl) {
         setSending(false);
         setMessages((current) => current.map((message) => message.id === localId ? { ...message, status: 'failed' } : message));
-        setError(upload.error || 'Community image upload failed.');
+        if (upload.error) console.error('Community image upload failed:', upload.error);
+        setError('Message failed to send.');
         return;
       }
       mediaUrls = [upload.publicUrl];
     }
 
+    const slowTimer = window.setTimeout(() => {
+      setError('Message is taking longer than expected. Keep this page open.');
+    }, 15000);
     const result = await sendCommunityMessage(groupId, user.id, content, mediaUrls);
+    window.clearTimeout(slowTimer);
     setSending(false);
 
     if (result.error || !result.message) {
       setMessages((current) => current.map((message) => message.id === localId ? { ...message, status: 'failed' } : message));
-      setError(result.error || 'Community message failed to send.');
+      if (result.error) console.error('Community message failed:', result.error);
+      setError('Message failed to send.');
       return;
     }
 
@@ -140,6 +154,31 @@ export default function CommunityGroupPage({ params }: Props) {
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
           <p className="text-lg font-bold">Group not found.</p>
           <Link href="/community" className="mt-4 inline-block text-blue-600 underline">Back to Community</Link>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (!groupChatReady) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        <Header />
+        <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-10">
+          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+            <h1 className="text-2xl font-bold">{group.name}</h1>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 dark:text-slate-400">
+              Group chat is opening soon. Use marketplace messages for now.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link href="/community" className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+                Back to Community
+              </Link>
+              <Link href="/messages" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                Open messages
+              </Link>
+            </div>
+          </div>
         </main>
         <BottomNav />
       </div>
@@ -160,7 +199,7 @@ export default function CommunityGroupPage({ params }: Props) {
 
         {error ? (
           <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-            {error}
+            Unable to load this group. Try again or check back later.
           </div>
         ) : null}
 

@@ -37,7 +37,8 @@ export default function ResetPasswordPage() {
     setPending(false);
 
     if (error) {
-      setNotice({ type: 'error', text: error.message });
+      console.error('Password update failed:', error);
+      setNotice({ type: 'error', text: 'Something went wrong. Try again.' });
       return;
     }
 

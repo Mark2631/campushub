@@ -1,10 +1,12 @@
 import { supabase } from './supabase';
 import { safeFileName, storageBuckets, uploadPublicFile } from './storage';
+import { isValidUuid } from './validation';
 
 export type CommunityGroup = {
   id: string;
   name: string;
   description: string;
+  available?: boolean;
 };
 
 export type CommunityMessage = {
@@ -24,9 +26,9 @@ export type CommunityMessage = {
 };
 
 export const defaultCommunityGroups: CommunityGroup[] = [
-  { id: 'campus-deals', name: 'Campus Deals', description: 'Share quick deals, discounts, and useful marketplace finds.' },
-  { id: 'lost-found', name: 'Lost & Found', description: 'Post lost items, found items, and arrange safe returns.' },
-  { id: 'services-network', name: 'Services Network', description: 'Repairs, tutoring, design, laundry, and student services.' },
+  { id: 'campus-deals', name: 'Campus Deals', description: 'Share quick deals, discounts, and useful marketplace finds.', available: true },
+  { id: 'lost-found', name: 'Lost & Found', description: 'Post lost items, found items, and arrange safe returns.', available: true },
+  { id: 'services-network', name: 'Services Network', description: 'Repairs, tutoring, design, laundry, and student services.', available: false },
 ];
 
 function serializeError(error: unknown) {
@@ -38,6 +40,10 @@ export function getDefaultCommunityGroup(groupId: string) {
 }
 
 export async function getCommunityMessages(communityId: string) {
+  if (!isValidUuid(communityId)) {
+    return { messages: [] as CommunityMessage[], error: null };
+  }
+
   const { data, error } = await supabase
     .from('community_messages')
     .select('id, community_id, sender_id, content, media_urls, created_at')
@@ -47,7 +53,7 @@ export async function getCommunityMessages(communityId: string) {
 
   if (error) {
     console.error('Community messages fetch failed:', serializeError(error));
-    return { messages: [] as CommunityMessage[], error: error.message };
+    return { messages: [] as CommunityMessage[], error: 'Something went wrong. Try again.' };
   }
 
   const messages = (data || []) as CommunityMessage[];
@@ -74,6 +80,10 @@ export async function getCommunityMessages(communityId: string) {
 }
 
 export async function sendCommunityMessage(communityId: string, senderId: string, content: string, mediaUrls: string[] = []) {
+  if (!isValidUuid(communityId) || !isValidUuid(senderId)) {
+    return { message: null, error: 'This feature is coming soon.' };
+  }
+
   const { data, error } = await supabase
     .from('community_messages')
     .insert({
@@ -87,13 +97,17 @@ export async function sendCommunityMessage(communityId: string, senderId: string
 
   if (error) {
     console.error('Community message insert failed:', serializeError(error));
-    return { message: null, error: error.message };
+    return { message: null, error: 'Message failed to send.' };
   }
 
   return { message: { ...(data as CommunityMessage), media_urls: (data as CommunityMessage).media_urls || [], status: 'sent' as const }, error: null };
 }
 
 export async function uploadCommunityImage(communityId: string, userId: string, file: File) {
+  if (!isValidUuid(communityId) || !isValidUuid(userId)) {
+    return { publicUrl: null, error: 'This feature is coming soon.' };
+  }
+
   if (file.size > 5 * 1024 * 1024) {
     return { publicUrl: null, error: `${file.name} is larger than 5MB.` };
   }

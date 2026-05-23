@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { isValidUuid } from './validation';
 
 export const reportReasons = [
   'Scam or fraud',
@@ -16,6 +17,10 @@ export async function createReport(data: {
   reason: string;
   details: string;
 }) {
+  if (!isValidUuid(data.reporterId) || !isValidUuid(data.targetId)) {
+    return { report: null, error: 'Something went wrong. Try again.' };
+  }
+
   const reportToInsert = {
     reporter_id: data.reporterId,
     target_type: data.targetType,
@@ -33,7 +38,7 @@ export async function createReport(data: {
 
   if (error) {
     console.error('Error creating report:', error, { reportToInsert });
-    return { report: null, error: error.message };
+    return { report: null, error: 'Something went wrong. Try again.' };
   }
 
   return { report, error: null };

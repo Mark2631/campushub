@@ -184,8 +184,9 @@ export default function ProfilePage() {
     event.currentTarget.value = '';
 
     if (error) {
-      setMessage({ type: 'error', text: error });
-      showToast({ type: 'error', message: error });
+      console.error('Profile avatar update failed:', error);
+      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
       return;
     }
 
@@ -241,8 +242,9 @@ export default function ProfilePage() {
       if (error || !publicUrl) {
         setVerificationSubmitting(false);
         setVerificationUploadStatus('');
-        setMessage({ type: 'error', text: `Verification upload failed. ${error || 'Please try again.'}` });
-        showToast({ type: 'error', message: `Verification upload failed. ${error || 'Please try again.'}` });
+        if (error) console.error('Verification upload failed:', error);
+        setMessage({ type: 'error', text: 'Verification upload failed. Try again.' });
+        showToast({ type: 'error', message: 'Verification upload failed. Try again.' });
         return;
       }
       uploadedUrls.push(publicUrl);
@@ -260,8 +262,9 @@ export default function ProfilePage() {
     setVerificationUploadStatus('');
 
     if (error) {
-      setMessage({ type: 'error', text: error });
-      showToast({ type: 'error', message: error });
+      console.error('Verification request failed:', error);
+      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
       return;
     }
 
@@ -297,7 +300,8 @@ export default function ProfilePage() {
     setBusinessSubmitting(false);
 
     if (error) {
-      setMessage({ type: 'error', text: error });
+      console.error('Business profile creation failed:', error);
+      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
       return;
     }
 
@@ -341,8 +345,9 @@ export default function ProfilePage() {
     setComplaintSubmitting(false);
 
     if (error) {
-      setMessage({ type: 'error', text: error });
-      showToast({ type: 'error', message: error });
+      console.error('Complaint submit failed:', error);
+      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
       return;
     }
 
@@ -364,8 +369,9 @@ export default function ProfilePage() {
     setListingActionId(null);
 
     if (error) {
-      setMessage({ type: 'error', text: error });
-      showToast({ type: 'error', message: error });
+      console.error('Listing status update failed:', error);
+      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
       return;
     }
 

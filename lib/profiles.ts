@@ -1,6 +1,7 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { safeFileName, storageBuckets, uploadPublicFile } from './storage';
+import { isValidUuid } from './validation';
 
 export interface ProfileRecord {
   id: string;
@@ -51,7 +52,7 @@ async function safeUpsert(table: string, payload: Record<string, unknown>, onCon
     console.error(`${table} upsert error:`, serializeError(error), { workingPayload });
 
     if (!missingColumn || !(missingColumn in workingPayload) || Object.keys(workingPayload).length <= 1) {
-      return { data: null, error: error.message };
+      return { data: null, error: 'Something went wrong. Try again.' };
     }
 
     delete workingPayload[missingColumn];
@@ -89,6 +90,10 @@ export async function upsertProfile(user: User) {
 }
 
 export async function getProfileById(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { profile: null, error: null };
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -97,13 +102,17 @@ export async function getProfileById(userId: string) {
 
   if (error) {
     console.error('Error fetching profile:', serializeError(error));
-    return { profile: null, error: error.message };
+    return { profile: null, error: 'Something went wrong. Try again.' };
   }
 
   return { profile: (data || null) as ProfileRecord | null, error: null };
 }
 
 export async function saveProfileAvatar(userId: string, file: File) {
+  if (!isValidUuid(userId)) {
+    return { avatarUrl: null, error: 'Something went wrong. Try again.' };
+  }
+
   const path = `${userId}/avatar-${Date.now()}-${safeFileName(file.name)}`;
   const { publicUrl, error: uploadError } = await uploadPublicFile(storageBuckets.profileMedia, userId, file, {
     timeoutMs: 25000,
@@ -114,7 +123,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
   if (uploadError || !publicUrl) {
     return {
       avatarUrl: null,
-      error: `Profile picture upload failed. ${uploadError || 'Check storage policies for profile-media.'}`,
+      error: 'Profile picture upload failed. Try again.',
     };
   }
 
@@ -124,7 +133,8 @@ export async function saveProfileAvatar(userId: string, file: File) {
   });
 
   if (error) {
-    return { avatarUrl: null, error: `Profile picture saved to storage, but profiles.avatar_url update failed. ${error}` };
+    console.error('Profile avatar save failed:', error);
+    return { avatarUrl: null, error: 'Something went wrong. Try again.' };
   }
 
   const confirmed = await getProfileById(userId);
@@ -133,9 +143,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
   if (confirmed.error || confirmedUrl !== publicUrl) {
     return {
       avatarUrl: publicUrl,
-      error: confirmed.error
-        ? `Profile picture uploaded, but confirmation fetch failed. ${confirmed.error}`
-        : 'Profile picture uploaded, but avatar_url confirmation did not match.',
+      error: 'Something went wrong. Try again.',
     };
   }
 
@@ -151,6 +159,10 @@ export function normalizeKenyanPhone(value: string) {
 }
 
 export async function saveProfilePhone(userId: string, phoneNumber: string) {
+  if (!isValidUuid(userId)) {
+    return { phoneNumber: null, error: 'Something went wrong. Try again.' };
+  }
+
   const normalized = normalizeKenyanPhone(phoneNumber);
   if (!normalized) {
     return { phoneNumber: null, error: 'Enter a valid Kenyan WhatsApp number: 07XXXXXXXX, 01XXXXXXXX, +2547XXXXXXXX, or +2541XXXXXXXX.' };
@@ -162,13 +174,18 @@ export async function saveProfilePhone(userId: string, phoneNumber: string) {
   });
 
   if (error) {
-    return { phoneNumber: null, error: `WhatsApp number could not be saved. ${error}` };
+    console.error('WhatsApp number save failed:', error);
+    return { phoneNumber: null, error: 'Something went wrong. Try again.' };
   }
 
   return { phoneNumber: (data as ProfileRecord | null)?.phone_number || normalized, error: null };
 }
 
 export async function uploadVerificationDocument(userId: string, file: File) {
+  if (!isValidUuid(userId)) {
+    return { publicUrl: null, error: 'Something went wrong. Try again.' };
+  }
+
   const { publicUrl, error } = await uploadPublicFile(storageBuckets.verificationMedia, userId, file, {
     timeoutMs: 25000,
     upsert: false,
@@ -187,6 +204,10 @@ export async function createBusinessProfile(userId: string, business: {
   location: string;
   description: string;
 }) {
+  if (!isValidUuid(userId)) {
+    return { business: null, error: 'Something went wrong. Try again.' };
+  }
+
   const modernPayload = {
     owner_id: userId,
     business_name: business.business_name,
@@ -226,7 +247,7 @@ export async function createBusinessProfile(userId: string, business: {
 
     if (error) {
       console.error('Error creating legacy business profile:', serializeError(error), legacyPayload);
-      return { business: null, error: error.message };
+      return { business: null, error: 'Something went wrong. Try again.' };
     }
   }
 
@@ -234,6 +255,10 @@ export async function createBusinessProfile(userId: string, business: {
 }
 
 export async function getBusinessProfiles(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { businesses: [] as BusinessRecord[], error: null };
+  }
+
   let { data, error } = await supabase
     .from('businesses')
     .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, created_at')
@@ -254,7 +279,7 @@ export async function getBusinessProfiles(userId: string) {
 
   if (error) {
     console.error('Error fetching business profiles:', serializeError(error));
-    return { businesses: [] as BusinessRecord[], error: error.message };
+    return { businesses: [] as BusinessRecord[], error: 'Something went wrong. Try again.' };
   }
 
   return { businesses: (data || []) as BusinessRecord[], error: null };
@@ -267,6 +292,10 @@ export async function submitVerificationRequest(args: {
   documentUrls?: string[];
   businessId?: string | null;
 }) {
+  if (!isValidUuid(args.userId) || (args.businessId && !isValidUuid(args.businessId))) {
+    return { request: null, error: 'Something went wrong. Try again.' };
+  }
+
   const payload = {
     user_id: args.userId,
     type: args.requestType,
@@ -284,7 +313,7 @@ export async function submitVerificationRequest(args: {
 
   if (error) {
     console.error('Error submitting verification request:', serializeError(error), payload);
-    return { request: null, error: error.message };
+    return { request: null, error: 'Something went wrong. Try again.' };
   }
 
   return { request: data, error: null };

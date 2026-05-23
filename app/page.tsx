@@ -7,11 +7,35 @@ import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
-import { getListings, Listing } from '../lib/listings';
-import { getItemRequests, ItemRequest } from '../lib/itemRequests';
+import { getListings, getServiceListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
+import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
-const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Refurbished', 'Other'];
+const categories = STANDARD_CATEGORIES;
+const listingsPageSize = 60;
+const categorySections = [
+  { title: 'Electronics', category: 'Electronics' },
+  { title: 'Services', category: 'Services' },
+  { title: 'Fashion', category: 'Fashion' },
+  { title: 'Books', category: 'Books' },
+  { title: 'Refurbished Deals', category: 'Refurbished' },
+  { title: 'Food', category: 'Food' },
+  { title: 'Business', category: 'Business' },
+  { title: 'Other', category: 'Other' },
+] as const;
+
+function readCachedHomeListings() {
+  if (typeof window === 'undefined') return [] as Listing[];
+
+  try {
+    const cached = window.sessionStorage.getItem('campustrader-home-listings');
+    if (!cached) return [] as Listing[];
+    return JSON.parse(cached) as Listing[];
+  } catch {
+    window.sessionStorage.removeItem('campustrader-home-listings');
+    return [] as Listing[];
+  }
+}
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -63,19 +87,22 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user } = useUser();
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [requests, setRequests] = useState<ItemRequest[]>([]);
+  const [cachedListings] = useState(readCachedHomeListings);
+  const [listings, setListings] = useState<Listing[]>(cachedListings);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [error, setError] = useState<string | null>(null);
-  const [requestsError, setRequestsError] = useState<string | null>(null);
-  const [loadingListings, setLoadingListings] = useState(true);
+  const [loadingListings, setLoadingListings] = useState(cachedListings.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreListings, setHasMoreListings] = useState(true);
-  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [listingOffset, setListingOffset] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [showWelcome] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('welcome') === '1';
+  });
+  const [currentTime] = useState(() => Date.now());
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -90,27 +117,24 @@ export default function Home() {
 
     const loadListings = async () => {
       if (isMounted) setLoadingListings(true);
-      const { listings: rows, error } = await getListings(20);
+      const [{ listings: rows, error }, { listings: serviceRows }] = await Promise.all([
+        getListings(listingsPageSize),
+        getServiceListings(12),
+      ]);
       if (!isMounted) return;
-      setListings(rows as Listing[]);
-      window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(rows));
-      setHasMoreListings(rows.length === 20);
+      const mergedRows = [...(rows as Listing[])];
+      serviceRows.forEach((listing) => {
+        if (!mergedRows.some((item) => item.id === listing.id)) {
+          mergedRows.push(listing);
+        }
+      });
+      setListings(mergedRows);
+      window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(mergedRows));
+      setListingOffset(rows.length);
+      setHasMoreListings(rows.length === listingsPageSize);
       setError(error);
       setLoadingListings(false);
     };
-
-    const cached = window.sessionStorage.getItem('campustrader-home-listings');
-    if (cached) {
-      try {
-        const cachedListings = JSON.parse(cached) as Listing[];
-        if (cachedListings.length) {
-          setListings(cachedListings);
-          setLoadingListings(false);
-        }
-      } catch {
-        window.sessionStorage.removeItem('campustrader-home-listings');
-      }
-    }
 
     loadListings();
     const refreshListings = () => {
@@ -125,28 +149,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setShowWelcome(new URLSearchParams(window.location.search).get('welcome') === '1');
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadRequests = async () => {
-      if (isMounted) setLoadingRequests(true);
-      const { requests: rows, error } = await getItemRequests(6);
-      if (!isMounted) return;
-      setRequests(rows);
-      setRequestsError(error);
-      setLoadingRequests(false);
-    };
-
-    loadRequests();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    logCategoryStats(listings);
+  }, [listings]);
 
   useEffect(() => {
     if (!user) return;
@@ -169,12 +173,15 @@ export default function Home() {
 
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return listings.filter((listing) => {
-      const matchesCategory = activeCategory === 'All' || listing.category === activeCategory;
+    const activeListings = listings.filter((listing) => String(listing.status ?? 'active').toLowerCase() === 'active');
+
+    return activeListings.filter((listing) => {
+      const normalizedCategory = normalizeCategory(listing.category);
+      const matchesCategory = activeCategory === 'All' || listingBelongsToCategory(listing, activeCategory);
       const matchesQuery =
         !normalizedQuery ||
         listing.title.toLowerCase().includes(normalizedQuery) ||
-        listing.category.toLowerCase().includes(normalizedQuery) ||
+        normalizedCategory.toLowerCase().includes(normalizedQuery) ||
         listing.description?.toLowerCase().includes(normalizedQuery) ||
         listing.location?.toLowerCase().includes(normalizedQuery);
       const numericPrice = typeof listing.price === 'number' ? listing.price : null;
@@ -199,43 +206,38 @@ export default function Home() {
   }, [activeCategory, filters, listings, query]);
 
   const sectionBuckets = useMemo(() => {
-    const usedIds = new Set<string>();
-    const recent = [...filteredListings].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
-    recent.forEach((listing) => usedIds.add(listing.id));
+    const twoDaysAgo = currentTime - 2 * 24 * 60 * 60 * 1000;
+
+    const recent = [...filteredListings]
+      .filter((listing) => {
+        const createdAt = new Date(listing.created_at).getTime();
+        return Number.isFinite(createdAt) && createdAt >= twoDaysAgo;
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 12);
 
     const services = filteredListings
-      .filter((listing) =>
-        listing.condition === 'service' ||
-        listing.category === 'Services' ||
-        listing.category === 'Food'
-      )
-      .filter((listing) => !usedIds.has(listing.id))
-      .slice(0, 6);
-    services.forEach((listing) => usedIds.add(listing.id));
+      .filter((listing) => listingBelongsToCategory(listing, 'Services'))
+      .slice(0, 8);
 
     const refurbished = filteredListings
-      .filter((listing) => listing.category === 'Refurbished' || listing.condition === 'refurbished')
-      .filter((listing) => !usedIds.has(listing.id))
-      .slice(0, 6);
-    refurbished.forEach((listing) => usedIds.add(listing.id));
+      .filter((listing) => listingBelongsToCategory(listing, 'Refurbished'))
+      .slice(0, 8);
 
-    const studentEssentials = filteredListings
-      .filter((listing) => ['Books', 'Furniture', 'Fashion', 'Other'].includes(listing.category))
-      .filter((listing) => !usedIds.has(listing.id))
-      .slice(0, 6);
-    studentEssentials.forEach((listing) => usedIds.add(listing.id));
-
-    const verifiedBusiness = filteredListings
-      .filter((listing) => listing.business_id || listing.badgeType === 'gold')
-      .filter((listing) => !usedIds.has(listing.id))
-      .slice(0, 6);
-
-    return { recent, services, refurbished, studentEssentials, verifiedBusiness };
-  }, [filteredListings]);
+    return { recent, services, refurbished };
+  }, [currentTime, filteredListings]);
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
-  const showRequestsSection = loadingRequests || (!requestsError && requests.length > 0);
+  const visibleCategorySections = activeCategory === 'All'
+    ? categorySections
+    : categorySections.filter((section) => section.category === activeCategory);
+
+  const listingsForCategorySection = (category: string) => {
+    if (category === 'Services') return sectionBuckets.services;
+    if (category === 'Refurbished') return sectionBuckets.refurbished;
+    return filteredListings.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 8);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
@@ -251,57 +253,6 @@ export default function Home() {
           <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
             Welcome to CampusTrader.
           </div>
-        ) : null}
-
-        <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            { href: '/sell', label: 'Sell' },
-            { href: '/requests', label: 'Requests / Looking For' },
-            { href: '/messages', label: 'Messages' },
-            { href: '/profile', label: 'Verify later / Earn badge' },
-          ].map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className="rounded-2xl border border-gray-200 bg-white px-3 py-3 text-center text-sm font-bold text-gray-900 shadow-sm transition hover:border-blue-300 hover:text-blue-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:hover:border-blue-600"
-            >
-              {action.label}
-            </Link>
-          ))}
-        </div>
-
-        {showRequestsSection ? (
-          <section className="mb-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Looking for something?</p>
-              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                Open item requests from other students appear here when available.
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {loadingRequests ? (
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-                  Loading requests...
-                </div>
-              ) : (
-                requests.map((request) => (
-                  <article key={request.id} className="rounded-2xl border border-gray-200 bg-slate-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{request.title}</p>
-                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{request.category} · {request.location || 'Any location'}</p>
-                      </div>
-                      <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-                        {request.interested_count ?? 0} interested
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-gray-600 dark:text-zinc-400 line-clamp-3">{request.description || 'No description provided.'}</p>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
         ) : null}
 
         <div className="mb-4">
@@ -353,8 +304,8 @@ export default function Home() {
           <>
             {error ? (
               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                <p className="font-semibold">Live listings are having trouble right now</p>
-                <p className="mt-1 text-sm">{error}</p>
+                <p className="font-semibold">Something went wrong loading listings.</p>
+                <p className="mt-1 text-sm">Try refreshing the page.</p>
               </div>
             ) : null}
             {filteredListings.length === 0 ? (
@@ -370,14 +321,23 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
-                <ListingSection title="Electronics" listings={filteredListings.filter((listing) => listing.category === 'Electronics').slice(0, 8)} />
-                <ListingSection title="Services" listings={sectionBuckets.services} />
-                <ListingSection title="Fashion" listings={filteredListings.filter((listing) => listing.category === 'Fashion').slice(0, 8)} />
-                <ListingSection title="Books" listings={filteredListings.filter((listing) => listing.category === 'Books').slice(0, 8)} />
-                <ListingSection title="Refurbished Deals" listings={sectionBuckets.refurbished} />
-                <ListingSection title="Food" listings={filteredListings.filter((listing) => listing.category === 'Food').slice(0, 8)} />
-                <ListingSection title="Business" listings={filteredListings.filter((listing) => listing.category === 'Business').slice(0, 8)} />
+                {sectionBuckets.recent.length > 0 ? (
+                  <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
+                ) : (
+                  <section className="mb-8 sm:mb-10">
+                    <h2 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl dark:text-white">Recently Posted</h2>
+                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+                      <p className="font-semibold text-gray-900 dark:text-white">No fresh listings from the last 2 days.</p>
+                    </div>
+                  </section>
+                )}
+                {visibleCategorySections.map((section) => (
+                  <ListingSection
+                    key={section.category}
+                    title={section.title}
+                    listings={listingsForCategorySection(section.category)}
+                  />
+                ))}
                 {hasMoreListings ? (
                   <div className="mb-10 flex justify-center">
                     <button
@@ -385,12 +345,18 @@ export default function Home() {
                       disabled={loadingMore}
                       onClick={async () => {
                         setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(20, listings.length);
+                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset);
                         setLoadingMore(false);
                         setError(error);
-                        setHasMoreListings(rows.length === 20);
+                        setListingOffset((current) => current + rows.length);
+                        setHasMoreListings(rows.length === listingsPageSize);
                         setListings((current) => {
-                          const nextListings = [...current, ...(rows as Listing[])];
+                          const nextListings = [...current];
+                          (rows as Listing[]).forEach((listing) => {
+                            if (!nextListings.some((item) => item.id === listing.id)) {
+                              nextListings.push(listing);
+                            }
+                          });
                           window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
                           return nextListings;
                         });

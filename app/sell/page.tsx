@@ -9,6 +9,7 @@ import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { getListingById, insertListing, normalizeCategory, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
+import { isValidUuid } from '../../lib/validation';
 
 const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Business', 'Refurbished', 'Other'];
 const conditions = ['new', 'used', 'refurbished', 'service'];
@@ -50,6 +51,11 @@ function SellPageContent() {
   useEffect(() => {
     const loadEditListing = async () => {
       if (!editListingId || !user) return;
+      if (!isValidUuid(editListingId)) {
+        setMessage({ type: 'error', text: 'Listing not found.' });
+        return;
+      }
+
       setLoadingEdit(true);
       const { listing, error } = await getListingById(editListingId);
       setLoadingEdit(false);
@@ -273,17 +279,25 @@ function SellPageContent() {
       return;
     }
 
+    let slowSubmitTimer: number | undefined;
+
     try {
       setIsSubmitting(true);
       setMessage(null);
       setCreatedListingId(null);
       setPostWithoutMediaReady(false);
+      showToast({ type: 'info', message: editListingId ? 'Saving your listing...' : 'Posting your listing...' });
+      slowSubmitTimer = window.setTimeout(() => {
+        showToast({ type: 'warning', message: 'Upload is taking longer than expected. Keep this page open.' });
+      }, 15000);
 
       const { listing, error } = await createListing(options);
 
       if (error) {
-        setMessage({ type: 'error', text: error });
-        showToast({ type: 'error', message: error });
+        console.error('Listing save failed:', error);
+        const text = 'Something went wrong. Try again.';
+        setMessage({ type: 'error', text });
+        showToast({ type: 'error', message: text });
         return;
       }
 
@@ -304,12 +318,18 @@ function SellPageContent() {
     } catch (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       const text = error instanceof Error ? error.message : String(error);
-      setMessage({ type: 'error', text });
-      showToast({ type: 'error', message: text });
       if ((images.length > 0 || videoPreview) && /media upload failed|upload|policy|row-level|timed out|storage/i.test(text)) {
+        const userText = 'Media upload failed. You can retry or post without media.';
+        setMessage({ type: 'error', text: userText });
+        showToast({ type: 'error', message: userText });
         setPostWithoutMediaReady(true);
+      } else {
+        const userText = 'Something went wrong. Try again.';
+        setMessage({ type: 'error', text: userText });
+        showToast({ type: 'error', message: userText });
       }
     } finally {
+      if (slowSubmitTimer) window.clearTimeout(slowSubmitTimer);
       setIsSubmitting(false);
       setUploadStatus('');
     }
@@ -664,6 +684,9 @@ function SellPageContent() {
           >
             {isSubmitting ? uploadStatus || 'Posting...' : 'Post Listing'}
           </button>
+          {isSubmitting && uploadStatus ? (
+            <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>
+          ) : null}
         </form>
       </main>
 
