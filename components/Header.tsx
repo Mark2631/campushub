@@ -26,7 +26,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0 flex-1 sm:flex-none">
             <div className="sm:hidden">
@@ -59,7 +59,7 @@ export default function Header() {
                 </button>
 
                 {notificationsOpen ? (
-                  <div className="fixed right-3 top-16 z-50 w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:absolute sm:right-0 sm:top-14 sm:w-80 dark:border-slate-800 dark:bg-slate-950">
+                  <div className="fixed right-3 top-16 z-[60] w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:absolute sm:right-0 sm:top-14 sm:w-80 dark:border-slate-800 dark:bg-slate-950">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
                       <div className="flex items-center gap-1">
@@ -144,6 +144,7 @@ export default function Header() {
           </div>
         </div>
       </header>
+      <div aria-hidden="true" className="h-[65px] sm:h-[73px]" />
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>

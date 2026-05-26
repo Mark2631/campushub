@@ -3,11 +3,14 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ClipboardList, ImagePlus, UserRound, Video } from 'lucide-react';
 import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
+import { createItemRequest, getItemRequestById } from '../../lib/itemRequests';
 import { getListingById, insertListing, normalizeCategory, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
+import { getProfileById, type ProfileRecord } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 import { isValidUuid } from '../../lib/validation';
 
@@ -26,6 +29,8 @@ function SellPageContent() {
   const searchParams = useSearchParams();
   const { user, loading, pushNotification, profileContext, showToast } = useUser();
   const editListingId = searchParams.get('edit');
+  const requestMode = searchParams.get('mode') === 'request';
+  const sourceRequestId = searchParams.get('request');
   const [formData, setFormData] = useState({
     title: '',
     category: categories[0],
@@ -45,8 +50,35 @@ function SellPageContent() {
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([]);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<ProfileRecord | null>(null);
+  const [sellerDetailsLoading, setSellerDetailsLoading] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    title: '',
+    category: categories[0],
+    minPrice: '',
+    maxPrice: '',
+    location: '',
+    description: '',
+  });
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [requestMessage, setRequestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [requestPrefillMessage, setRequestPrefillMessage] = useState<string | null>(null);
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
+  const activeSellerProfile = sellerProfile?.id === user?.id ? sellerProfile : null;
+  const invalidSourceRequest = Boolean(sourceRequestId && !isValidUuid(sourceRequestId));
+  const visibleRequestPrefillMessage = invalidSourceRequest ? 'That request is unavailable.' : requestPrefillMessage;
+  const sellerDisplayName =
+    profileContext.mode === 'business'
+      ? profileContext.businessName || 'Business profile'
+      : activeSellerProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Personal profile';
+  const sellerLabel = profileContext.mode === 'business' ? 'Business seller' : 'Student seller';
+  const sellerBadge =
+    activeSellerProfile?.role === 'admin'
+      ? 'Admin'
+      : activeSellerProfile?.verification_status === 'verified' || activeSellerProfile?.badge_type === 'verified' || activeSellerProfile?.badge_type === 'blue'
+        ? 'Verified'
+        : 'Unverified';
 
   useEffect(() => {
     const loadEditListing = async () => {
@@ -61,7 +93,8 @@ function SellPageContent() {
       setLoadingEdit(false);
 
       if (error) {
-        setMessage({ type: 'error', text: error });
+        console.error('Edit listing load failed:', error);
+        setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
         return;
       }
 
@@ -87,6 +120,74 @@ function SellPageContent() {
     void loadEditListing();
   }, [editListingId, user]);
 
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadSellerDetails = async () => {
+      setSellerDetailsLoading(true);
+      const { profile, error } = await getProfileById(user.id);
+      if (!isMounted) return;
+      if (error) {
+        console.error('Seller details load failed:', error);
+      }
+      setSellerProfile(profile);
+      setSellerDetailsLoading(false);
+    };
+
+    void loadSellerDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!sourceRequestId) return;
+
+    if (!isValidUuid(sourceRequestId)) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadSourceRequest = async () => {
+      const { request, error } = await getItemRequestById(sourceRequestId);
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Request prefill failed:', error);
+        setRequestPrefillMessage('Something went wrong. Try again.');
+        return;
+      }
+
+      if (!request) {
+        setRequestPrefillMessage('That request is unavailable.');
+        return;
+      }
+
+      const nextCategory = normalizeCategory(request.category);
+      setFormData((current) => ({
+        ...current,
+        title: current.title || request.title,
+        category: nextCategory,
+        condition: normalizeListingCondition(current.condition, nextCategory),
+        description: current.description || [request.title, request.description].filter(Boolean).join('\n\n'),
+        location: current.location || request.location || '',
+      }));
+      setRequestPrefillMessage('Request details copied into your listing form.');
+    };
+
+    void loadSourceRequest();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sourceRequestId]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -103,6 +204,65 @@ function SellPageContent() {
               : value,
       ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, normalizeCategory(value)) } : {}),
     }));
+  };
+
+  const handleRequestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setRequestForm((current) => ({
+      ...current,
+      [name]: name === 'category' ? normalizeCategory(value) : value,
+    }));
+  };
+
+  const handleRequestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!user) {
+      const text = 'Sign in to request an item.';
+      setRequestMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
+      return;
+    }
+
+    if (requestSubmitting) return;
+
+    try {
+      setRequestSubmitting(true);
+      setRequestMessage(null);
+      showToast({ type: 'info', message: 'Posting your request...' });
+      const { request, error } = await createItemRequest(user.id, requestForm);
+
+      if (error || !request) {
+        const text = error || 'Something went wrong. Try again.';
+        setRequestMessage({ type: 'error', text });
+        showToast({ type: 'error', message: text });
+        return;
+      }
+
+      setRequestMessage({ type: 'success', text: 'Request posted. Sellers can now reply fast.' });
+      showToast({ type: 'success', message: 'Request posted.' });
+      await pushNotification({
+        type: 'item request',
+        title: 'Request posted',
+        body: `${request.title} is now visible on Home.`,
+      });
+      setRequestForm({
+        title: '',
+        category: categories[0],
+        minPrice: '',
+        maxPrice: '',
+        location: '',
+        description: '',
+      });
+      window.dispatchEvent(new Event('campustrader:requests-refresh'));
+    } catch (error) {
+      console.error('Item request submit failed:', error);
+      const text = 'Something went wrong. Try again.';
+      setRequestMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
+    } finally {
+      setRequestSubmitting(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,6 +545,175 @@ function SellPageContent() {
           </p>
         </header>
         {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
+        {visibleRequestPrefillMessage ? (
+          <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200">
+            {visibleRequestPrefillMessage}
+          </div>
+        ) : null}
+
+        <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                <UserRound className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="truncate text-lg font-bold text-gray-900 dark:text-white">Seller details</h2>
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    {sellerBadge}
+                  </span>
+                </div>
+                <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
+                  {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{sellerLabel}</p>
+                {user.email ? <p className="mt-1 truncate text-sm text-gray-600 dark:text-zinc-400">{user.email}</p> : null}
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-gray-600 dark:text-zinc-400">
+                  <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-zinc-800">
+                    Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
+                  </span>
+                  {activeSellerProfile?.phone_number ? (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                      WhatsApp ready
+                    </span>
+                  ) : (
+                    <Link href="/profile" className="rounded-full bg-amber-100 px-3 py-1 text-amber-700 transition hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200">
+                      Add WhatsApp
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+                <ClipboardList className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Need something?</h2>
+                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-zinc-400">
+                  Post a no-photo request and sellers will see it on Home.
+                </p>
+                <a href="#request-item" className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                  Request item
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <form
+          id="request-item"
+          onSubmit={handleRequestSubmit}
+          className={`mb-6 space-y-4 rounded-2xl border bg-white p-5 dark:bg-zinc-900 ${
+            requestMode
+              ? 'border-emerald-400 ring-2 ring-emerald-500/20 dark:border-emerald-700'
+              : 'border-gray-200 dark:border-zinc-800'
+          }`}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">No photo needed</p>
+              <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">Request an item or service</h2>
+            </div>
+            <p className="text-sm font-semibold text-gray-500 dark:text-zinc-400">Shows on Home</p>
+          </div>
+
+          {requestMessage ? (
+            <div className={`rounded-2xl border p-3 text-sm font-semibold ${requestMessage.type === 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/40 dark:text-green-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200'}`}>
+              {requestMessage.text}
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-white">What do you need?</span>
+              <input
+                type="text"
+                name="title"
+                value={requestForm.title}
+                onChange={handleRequestChange}
+                placeholder="e.g., Used laptop charger"
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+                required
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-white">Category</span>
+              <select
+                name="category"
+                value={requestForm.category}
+                onChange={handleRequestChange}
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
+              >
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-white">Min budget</span>
+              <input
+                type="number"
+                name="minPrice"
+                value={requestForm.minPrice}
+                onChange={handleRequestChange}
+                placeholder="KSh"
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-white">Max budget</span>
+              <input
+                type="number"
+                name="maxPrice"
+                value={requestForm.maxPrice}
+                onChange={handleRequestChange}
+                placeholder="KSh"
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="font-medium text-gray-900 dark:text-white">Location</span>
+              <input
+                type="text"
+                name="location"
+                value={requestForm.location}
+                onChange={handleRequestChange}
+                placeholder="Campus area"
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+              />
+            </label>
+          </div>
+
+          <label className="space-y-2 text-sm">
+            <span className="font-medium text-gray-900 dark:text-white">Details</span>
+            <textarea
+              name="description"
+              value={requestForm.description}
+              onChange={handleRequestChange}
+              rows={3}
+              placeholder="Add size, model, deadline, or service details."
+              className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={requestSubmitting}
+            className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {requestSubmitting ? 'Posting request...' : 'Post request'}
+          </button>
+        </form>
 
         {message && (
           <div className={`mb-6 rounded-2xl border p-4 ${message.type === 'success' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
@@ -453,7 +782,7 @@ function SellPageContent() {
                 onChange={handleImageUpload}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <div className="mb-3 text-3xl sm:text-4xl">📷</div>
+              <ImagePlus className="mx-auto mb-3 h-8 w-8 text-blue-600 dark:text-blue-300 sm:h-10 sm:w-10" aria-hidden="true" />
               <p className="font-medium text-gray-900 dark:text-white">Click to upload images</p>
               <p className="text-sm text-gray-600 dark:text-zinc-400">or drag and drop</p>
               <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
@@ -503,9 +832,9 @@ function SellPageContent() {
                   disabled={!!videoPreview}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
-              <div className="mb-2 text-2xl sm:text-3xl">🎥</div>
+              <Video className="mx-auto mb-2 h-7 w-7 text-blue-600 dark:text-blue-300 sm:h-8 sm:w-8" aria-hidden="true" />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{videoPreview ? videoPreview.file.name : 'Click to upload video'}</p>
-                <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 30MB</p>
+                <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 15MB</p>
               </div>
             </label>
 
@@ -670,6 +999,10 @@ function SellPageContent() {
                   </div>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price ? `KSh ${Number(formData.price).toLocaleString()}` : 'Add price'}</p>
                   <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
+                  <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
+                    <p className="text-xs font-black uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{sellerDisplayName}</p>
+                  </div>
                 </div>
               </div>
             ) : (

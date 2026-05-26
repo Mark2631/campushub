@@ -67,8 +67,8 @@ export default function MessagesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
-      {/* Fixed Safety Banner */}
-      <div className="sticky top-[57px] z-30 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg dark:from-blue-700 dark:to-blue-800 sm:top-[65px]">
+      <Header />
+      <div className="sticky top-[65px] z-30 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg dark:from-blue-700 dark:to-blue-800 sm:top-[73px]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:py-3">
           <span className="text-base sm:text-lg">🛡️</span>
           <div className="flex-1 min-w-0">
@@ -78,7 +78,6 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      <Header />
       <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
         <header className="mb-8 mt-2">
           <h1 className="text-3xl font-bold">Messages</h1>

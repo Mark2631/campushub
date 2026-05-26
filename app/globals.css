@@ -24,6 +24,12 @@ body {
   font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 ::selection {
   background: #2563eb;
   color: white;
