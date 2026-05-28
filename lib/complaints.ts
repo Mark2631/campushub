@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { GENERIC_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid } from './validation';
 
 export interface ComplaintRecord {
   id: string;
@@ -16,11 +17,18 @@ export async function createComplaint(data: {
   subject: string;
   message: string;
 }) {
+  const subject = cleanText(data.subject, 120);
+  const message = cleanMultilineText(data.message, 1200);
+
+  if (!subject || !message) {
+    return { complaint: null, error: 'Subject and message are required.' };
+  }
+
   const complaintToInsert = {
-    user_id: data.userId,
-    email: data.email,
-    subject: data.subject,
-    message: data.message,
+    user_id: data.userId && isValidUuid(data.userId) ? data.userId : null,
+    email: cleanText(data.email, 180),
+    subject,
+    message,
     status: 'open',
   };
 
@@ -32,7 +40,7 @@ export async function createComplaint(data: {
 
   if (error) {
     console.error('Error creating complaint:', error, { complaintToInsert });
-    return { complaint: null, error: error.message };
+    return { complaint: null, error: GENERIC_ERROR };
   }
 
   return { complaint: complaint as ComplaintRecord, error: null };
@@ -46,13 +54,17 @@ export async function getComplaints() {
 
   if (error) {
     console.error('Error fetching complaints:', error);
-    return { complaints: [], error: error.message };
+    return { complaints: [], error: GENERIC_ERROR };
   }
 
   return { complaints: (data || []) as ComplaintRecord[], error: null };
 }
 
 export async function updateComplaintStatus(complaintId: string, status: 'open' | 'reviewed' | 'resolved') {
+  if (!isValidUuid(complaintId) || !isAllowedValue(status, ['open', 'reviewed', 'resolved'] as const)) {
+    return { error: GENERIC_ERROR };
+  }
+
   const { error } = await supabase
     .from('complaints')
     .update({ status })
@@ -62,5 +74,5 @@ export async function updateComplaintStatus(complaintId: string, status: 'open' 
     console.error('Error updating complaint status:', error);
   }
 
-  return { error: error?.message || null };
+  return { error: error ? GENERIC_ERROR : null };
 }

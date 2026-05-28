@@ -1,17 +1,22 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Heart, ImagePlus, Pin, Send, Video } from 'lucide-react';
+import AuthPromptModal from '../../../components/AuthPromptModal';
 import BottomNav from '../../../components/BottomNav';
 import Header from '../../../components/Header';
-import AuthPromptModal from '../../../components/AuthPromptModal';
 import useUser from '../../../hooks/useUser';
 import {
-  CommunityMessage,
-  getCommunityMessages,
-  getDefaultCommunityGroup,
-  sendCommunityMessage,
-  uploadCommunityImage,
+  Community,
+  CommunityPost,
+  addCommunityComment,
+  createCommunityPost,
+  followCommunity,
+  getCommunityById,
+  getCommunityPosts,
+  reactToCommunityPost,
+  uploadCommunityMedia,
 } from '../../../lib/community';
 import { validateUploadFile } from '../../../lib/storage';
 import { isValidUuid } from '../../../lib/validation';
@@ -20,165 +25,350 @@ type Props = {
   params: Promise<{ groupId: string }>;
 };
 
-function senderName(message: CommunityMessage) {
-  return message.sender?.full_name || message.sender?.email?.split('@')[0] || 'CampusTrader user';
+type SelectedMedia = {
+  file: File;
+  previewUrl: string;
+  publicUrl?: string;
+};
+
+function profileName(profile?: { full_name: string | null; email: string | null } | null) {
+  return profile?.full_name || profile?.email?.split('@')[0] || 'CampusTrader';
+}
+
+function Avatar({ name, src }: { name: string; src?: string | null }) {
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-black text-white">
+      {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+function PostMedia({ post }: { post: CommunityPost }) {
+  if (!post.media_urls?.length) return null;
+
+  if (post.media_type === 'video') {
+    return (
+      <div className="mt-4 space-y-3">
+        {post.media_urls.map((url) => (
+          <video key={url} src={url} controls className="max-h-96 w-full rounded-2xl bg-black" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {post.media_urls.map((url) => (
+        <img key={url} src={url} alt="" className="max-h-96 w-full rounded-2xl object-cover" />
+      ))}
+    </div>
+  );
 }
 
 export default function CommunityGroupPage({ params }: Props) {
   const { groupId } = use(params);
-  const group = getDefaultCommunityGroup(groupId);
-  const groupChatReady = Boolean(group && isValidUuid(groupId));
-  const { user, loading } = useUser();
-  const [messages, setMessages] = useState<CommunityMessage[]>([]);
-  const [messageText, setMessageText] = useState('');
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const { user, isAdmin, loading, showToast } = useUser();
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [authOpen, setAuthOpen] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [postContent, setPostContent] = useState('');
+  const [postPinned, setPostPinned] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia[]>([]);
+  const [publishing, setPublishing] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+
+  const pinnedPost = useMemo(() => posts.find((post) => post.is_pinned) || null, [posts]);
+  const feedPosts = useMemo(() => posts.filter((post) => post.id !== pinnedPost?.id), [pinnedPost?.id, posts]);
 
   useEffect(() => {
-    if (!groupChatReady) return;
+    if (!isValidUuid(groupId)) {
+      setFetching(false);
+      return;
+    }
 
     let mounted = true;
     const load = async () => {
-      const { messages, error } = await getCommunityMessages(groupId);
+      setFetching(true);
+      const [{ community }, { posts, error }] = await Promise.all([
+        getCommunityById(groupId, user?.id),
+        getCommunityPosts(groupId, user?.id),
+      ]);
+
       if (!mounted) return;
-      setMessages(messages);
-      setError(error);
+      setCommunity(community);
+      setPosts(posts);
+      if (error) setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
+      setFetching(false);
     };
-    load();
+
+    void load();
     return () => {
       mounted = false;
     };
-  }, [groupChatReady, groupId]);
+  }, [groupId, user?.id]);
 
   useEffect(() => {
     return () => {
-      if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+      selectedMedia.forEach((media) => URL.revokeObjectURL(media.previewUrl));
     };
-  }, [mediaPreview]);
+  }, [selectedMedia]);
 
-  const handleMediaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0];
-    event.currentTarget.value = '';
-    if (!file) return;
-
-    const validationError = validateUploadFile(file, 'image');
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError(`${file.name} is larger than 5MB.`);
-      return;
-    }
-
-    if (mediaPreview) URL.revokeObjectURL(mediaPreview);
-    setMediaFile(file);
-    setMediaPreview(URL.createObjectURL(file));
-    setError(null);
-  };
-
-  const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const requireAuth = () => {
     if (!user) {
       setAuthOpen(true);
-      return;
-    }
-    if (!messageText.trim() && !mediaFile) return;
-    if (!groupChatReady) {
-      setError('Group chat is opening soon. Use marketplace messages for now.');
-      return;
+      return false;
     }
 
-    const localId = `local-${Date.now()}`;
-    const localMessage: CommunityMessage = {
-      id: localId,
-      community_id: groupId,
-      sender_id: user.id,
-      content: messageText.trim(),
-      media_urls: mediaPreview ? [mediaPreview] : [],
+    return true;
+  };
+
+  const handleFollow = async () => {
+    if (!community || !requireAuth() || !user) return;
+    const { error } = await followCommunity(community.id, user.id);
+    if (error) {
+      console.error('Community follow failed:', error);
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
+      return;
+    }
+    setCommunity((current) => current ? { ...current, isFollowed: true, memberCount: (current.memberCount || 0) + 1 } : current);
+    showToast({ type: 'success', message: 'Community followed.' });
+  };
+
+  const handleReact = async (postId: string) => {
+    if (!requireAuth() || !user) return;
+
+    setPosts((current) =>
+      current.map((post) =>
+        post.id === postId
+          ? { ...post, viewerReacted: true, reactionCount: (post.reactionCount || 0) + (post.viewerReacted ? 0 : 1) }
+          : post
+      )
+    );
+
+    const { error } = await reactToCommunityPost(postId, user.id);
+    if (error) {
+      console.error('Community reaction failed:', error);
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
+    }
+  };
+
+  const handleComment = async (postId: string) => {
+    if (!requireAuth() || !user) return;
+    const content = commentInputs[postId]?.trim();
+    if (!content) return;
+
+    const localComment = {
+      id: `local-${Date.now()}`,
+      post_id: postId,
+      user_id: user.id,
+      content,
+      parent_id: null,
+      status: 'active',
       created_at: new Date().toISOString(),
-      sender: {
+      user: {
         id: user.id,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
         email: user.email || null,
         avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.avatar || null,
       },
-      status: 'sending',
     };
 
-    const content = messageText.trim();
-    const file = mediaFile;
-    setMessages((current) => [...current, localMessage]);
-    setMessageText('');
-    setMediaFile(null);
-    setMediaPreview(null);
-    setSending(true);
+    setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: [...(post.comments || []), localComment] } : post));
+    setCommentInputs((current) => ({ ...current, [postId]: '' }));
 
-    let mediaUrls: string[] = [];
-    if (file) {
-      const upload = await uploadCommunityImage(groupId, user.id, file);
-      if (upload.error || !upload.publicUrl) {
-        setSending(false);
-        setMessages((current) => current.map((message) => message.id === localId ? { ...message, status: 'failed' } : message));
-        if (upload.error) console.error('Community image upload failed:', upload.error);
-        setError('Message failed to send.');
-        return;
-      }
-      mediaUrls = [upload.publicUrl];
-    }
-
-    const slowTimer = window.setTimeout(() => {
-      setError('Message is taking longer than expected. Keep this page open.');
-    }, 15000);
-    const result = await sendCommunityMessage(groupId, user.id, content, mediaUrls);
-    window.clearTimeout(slowTimer);
-    setSending(false);
-
-    if (result.error || !result.message) {
-      setMessages((current) => current.map((message) => message.id === localId ? { ...message, status: 'failed' } : message));
-      if (result.error) console.error('Community message failed:', result.error);
-      setError('Message failed to send.');
+    const { comment, error } = await addCommunityComment(postId, user.id, content);
+    if (error || !comment) {
+      console.error('Community comment failed:', error);
+      setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: (post.comments || []).filter((item) => item.id !== localComment.id) } : post));
+      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
       return;
     }
 
-    setMessages((current) => current.map((message) => message.id === localId ? { ...result.message, sender: localMessage.sender } : message));
+    setPosts((current) =>
+      current.map((post) =>
+        post.id === postId
+          ? { ...post, comments: (post.comments || []).map((item) => item.id === localComment.id ? comment : item) }
+          : post
+      )
+    );
   };
 
-  if (!group) {
+  const handleMediaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files || []);
+    event.currentTarget.value = '';
+    const next: SelectedMedia[] = [];
+    const errors: string[] = [];
+
+    files.slice(0, 4).forEach((file) => {
+      const kind: 'video' | 'image' = file.type.startsWith('video/') ? 'video' : 'image';
+      const validationError = validateUploadFile(file, kind, kind === 'video' ? 20 * 1024 * 1024 : 5 * 1024 * 1024);
+      if (validationError) {
+        errors.push(validationError);
+        return;
+      }
+      next.push({ file, previewUrl: URL.createObjectURL(file) });
+    });
+
+    if (errors.length > 0) {
+      setMessage({ type: 'error', text: errors.join(' ') });
+    }
+    setSelectedMedia((current) => [...current, ...next].slice(0, 4));
+  };
+
+  const clearComposer = () => {
+    selectedMedia.forEach((media) => URL.revokeObjectURL(media.previewUrl));
+    setSelectedMedia([]);
+    setPostContent('');
+    setPostPinned(false);
+    setUploadStatus('');
+  };
+
+  const handlePublish = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!community || !user || !isAdmin || publishing) return;
+
+    setPublishing(true);
+    setMessage(null);
+    const mediaUrls: string[] = [];
+
+    for (const [index, media] of selectedMedia.entries()) {
+      setUploadStatus(`Uploading ${index + 1} of ${selectedMedia.length}...`);
+      const { publicUrl, error } = await uploadCommunityMedia(community.id, user.id, media.file);
+      if (error || !publicUrl) {
+        if (error) console.error('Community media upload failed:', error);
+        setPublishing(false);
+        setUploadStatus('');
+        setMessage({ type: 'error', text: 'Upload failed. Please retry.' });
+        return;
+      }
+      mediaUrls.push(publicUrl);
+    }
+
+    setUploadStatus('Publishing...');
+    const { post, error } = await createCommunityPost({
+      communityId: community.id,
+      authorId: user.id,
+      authorEmail: user.email,
+      content: postContent,
+      mediaUrls,
+      isPinned: postPinned,
+    });
+    setPublishing(false);
+
+    if (error || !post) {
+      console.error('Community post publish failed:', error);
+      setMessage({ type: 'error', text: error || 'Something went wrong. Try again.' });
+      setUploadStatus('');
+      return;
+    }
+
+    setPosts((current) => [{ ...post, author: { id: user.id, full_name: user.user_metadata?.full_name || user.user_metadata?.name || null, email: user.email || null, avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.avatar || null }, comments: [], reactionCount: 0, viewerReacted: false }, ...current]);
+    setMessage({ type: 'success', text: 'Post published.' });
+    clearComposer();
+  };
+
+  const renderPost = (post: CommunityPost) => {
+    const name = profileName(post.author);
+    return (
+      <article key={post.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex gap-3">
+          <Avatar name={name} src={post.author?.avatar_url} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-bold text-slate-950 dark:text-white">{name}</p>
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Admin only</span>
+              {post.is_pinned ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                  <Pin className="h-3 w-3" aria-hidden="true" />
+                  Pinned
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {new Date(post.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+        </div>
+
+        {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-slate-200">{post.content}</p> : null}
+        <PostMedia post={post} />
+
+        <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => handleReact(post.id)}
+            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+              post.viewerReacted
+                ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-200'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            <Heart className="h-4 w-4" aria-hidden="true" />
+            {post.reactionCount || 0}
+          </button>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{post.comments?.length || 0} comments</span>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {(post.comments || []).slice(-3).map((comment) => {
+            const commentName = profileName(comment.user);
+            return (
+              <div key={comment.id} className="flex gap-2">
+                <Avatar name={commentName} src={comment.user?.avatar_url} />
+                <div className="min-w-0 rounded-2xl bg-slate-100 px-3 py-2 dark:bg-slate-800">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{commentName}</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{comment.content}</p>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="flex gap-2">
+            <input
+              value={commentInputs[post.id] || ''}
+              onChange={(event) => setCommentInputs((current) => ({ ...current, [post.id]: event.target.value }))}
+              onFocus={() => {
+                if (!user) setAuthOpen(true);
+              }}
+              placeholder={user ? 'Write a reply...' : 'Sign in to reply'}
+              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
+            />
+            <button
+              type="button"
+              aria-label="Send reply"
+              onClick={() => handleComment(post.id)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white transition hover:bg-blue-700"
+            >
+              <Send className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  if (fetching || loading) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         <Header />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-          <p className="text-lg font-bold">Group not found.</p>
-          <Link href="/community" className="mt-4 inline-block text-blue-600 underline">Back to Community</Link>
+        <main className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-4 py-10">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-slate-800" />
         </main>
         <BottomNav />
       </div>
     );
   }
 
-  if (!groupChatReady) {
+  if (!community) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         <Header />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-10">
-          <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-            <h1 className="text-2xl font-bold">{group.name}</h1>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 dark:text-slate-400">
-              Group chat is opening soon. Use marketplace messages for now.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link href="/community" className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
-                Back to Community
-              </Link>
-              <Link href="/messages" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                Open messages
-              </Link>
-            </div>
-          </div>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+          <p className="text-lg font-bold">Group not found.</p>
+          <Link href="/community" className="mt-4 inline-block text-sm font-semibold text-blue-600 underline dark:text-blue-300">Back to Community</Link>
         </main>
         <BottomNav />
       </div>
@@ -188,78 +378,105 @@ export default function CommunityGroupPage({ params }: Props) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <Header />
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-5 pb-28">
-        <header className="mb-4 flex items-center gap-3">
-          <Link href="/community" className="text-sm font-semibold text-blue-600 dark:text-blue-300">Back</Link>
-          <div>
-            <h1 className="text-2xl font-bold">{group.name}</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{group.description}</p>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 pb-28">
+        <Link href="/community" className="mb-4 inline-flex text-sm font-semibold text-blue-600 dark:text-blue-300">Back to Community</Link>
+
+        <header className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="h-28 bg-gradient-to-br from-blue-600 via-emerald-500 to-slate-900">
+            {community.cover_url ? <img src={community.cover_url} alt="" className="h-full w-full object-cover" /> : null}
+          </div>
+          <div className="p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold">{community.name}</h1>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  {community.memberCount || 0} followers · {community.postCount || posts.length} posts · MUST
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleFollow}
+                disabled={community.isFollowed}
+                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+              >
+                {community.isFollowed ? 'Following' : 'Follow'}
+              </button>
+            </div>
           </div>
         </header>
 
-        {error ? (
-          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-            Unable to load this group. Try again or check back later.
+        {message ? (
+          <div className={`mb-4 rounded-2xl border p-3 text-sm font-semibold ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
+            {message.text}
           </div>
         ) : null}
 
-        <section className="min-h-[28rem] flex-1 space-y-3 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          {messages.length === 0 ? (
-            <p className="py-16 text-center text-sm text-slate-500 dark:text-slate-400">No messages yet. Start the conversation.</p>
-          ) : (
-            messages.map((message) => {
-              const own = message.sender_id === user?.id;
-              const name = senderName(message);
-              return (
-                <div key={message.id} className={`flex gap-2 ${own ? 'justify-end' : 'justify-start'}`}>
-                  {!own ? (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-bold text-white">
-                      {message.sender?.avatar_url ? <img src={message.sender.avatar_url} alt="" className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
-                    </div>
-                  ) : null}
-                  <div className={`max-w-[78%] rounded-2xl px-4 py-3 ${own ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white'}`}>
-                    {!own ? <p className="mb-1 text-xs font-bold text-slate-500 dark:text-slate-400">{name}</p> : null}
-                    {message.media_urls?.map((url) => (
-                      <img key={url} src={url} alt="" className="mb-2 max-h-64 rounded-xl object-cover" />
-                    ))}
-                    {message.content ? <p className="text-sm">{message.content}</p> : null}
-                    <p className={`mt-2 text-[11px] ${own ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
-                      {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      {message.status === 'sending' ? ' · sending' : message.status === 'failed' ? ' · failed' : ''}
-                    </p>
+        {isAdmin ? (
+          <form onSubmit={handlePublish} className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Admin post composer</p>
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <input type="checkbox" checked={postPinned} onChange={(event) => setPostPinned(event.target.checked)} />
+                Pin post
+              </label>
+            </div>
+            <textarea
+              value={postContent}
+              onChange={(event) => setPostContent(event.target.value)}
+              rows={4}
+              placeholder="Share an official update..."
+              className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
+            />
+            {selectedMedia.length > 0 ? (
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {selectedMedia.map((media, index) => (
+                  <div key={`${media.file.name}-${index}`} className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                    {media.file.type.startsWith('video/') ? (
+                      <video src={media.previewUrl} className="h-24 w-full object-cover" />
+                    ) : (
+                      <img src={media.previewUrl} alt="" className="h-24 w-full object-cover" />
+                    )}
                   </div>
-                </div>
-              );
-            })
-          )}
-        </section>
-
-        <form onSubmit={handleSend} className="mt-4 rounded-3xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-          {mediaPreview ? (
-            <div className="mb-3 flex items-center gap-3">
-              <img src={mediaPreview} alt="" className="h-16 w-16 rounded-xl object-cover" />
-              <button type="button" onClick={() => { if (mediaPreview) URL.revokeObjectURL(mediaPreview); setMediaPreview(null); setMediaFile(null); }} className="text-sm font-semibold text-red-600">
-                Remove image
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                <span>Media</span>
+                <input type="file" multiple accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={handleMediaChange} className="hidden" />
+              </label>
+              <button type="button" onClick={clearComposer} className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                Clear
+              </button>
+              <button type="submit" disabled={publishing} className="ml-auto inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+                <Video className="h-4 w-4" aria-hidden="true" />
+                {publishing ? uploadStatus || 'Publishing...' : 'Publish'}
               </button>
             </div>
-          ) : null}
-          <div className="flex items-end gap-2">
-            <label className="cursor-pointer rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">
-              Image
-              <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleMediaChange} className="hidden" />
-            </label>
-            <textarea
-              value={messageText}
-              onChange={(event) => setMessageText(event.target.value)}
-              rows={1}
-              placeholder={user ? 'Write a message...' : 'Sign in to send'}
-              className="min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
-            />
-            <button type="submit" disabled={loading || sending || (!messageText.trim() && !mediaFile)} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white disabled:opacity-50">
-              Send
-            </button>
-          </div>
-        </form>
+          </form>
+        ) : null}
+
+        {pinnedPost ? (
+          <section className="mb-5">
+            <h2 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">Pinned post</h2>
+            {renderPost(pinnedPost)}
+          </section>
+        ) : null}
+
+        <section className="space-y-4">
+          {feedPosts.length > 0 ? (
+            feedPosts.map(renderPost)
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+              No posts yet.
+            </div>
+          )}
+        </section>
       </main>
       <AuthPromptModal open={authOpen} next={`/community/${groupId}`} onClose={() => setAuthOpen(false)} />
       <BottomNav />

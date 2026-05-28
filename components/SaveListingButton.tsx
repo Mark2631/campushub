@@ -17,7 +17,11 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
     }
 
     setNeedsSignIn(false);
-    setMessage('Saved items are coming soon. You can revisit this listing from your browser history.');
+    const key = 'campustrader-saved-listings';
+    const saved = JSON.parse(window.localStorage.getItem(key) || '[]') as string[];
+    const next = Array.from(new Set([listingId, ...saved])).slice(0, 50);
+    window.localStorage.setItem(key, JSON.stringify(next));
+    setMessage('Saved.');
   };
 
   return (

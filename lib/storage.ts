@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { UPLOAD_ERROR, isValidUuid } from './validation';
 
 export const storageBuckets = {
   listingMedia: 'listing-media',
@@ -23,6 +24,12 @@ type UploadOptions = {
   timeoutMs?: number;
   upsert?: boolean;
   path?: string;
+};
+
+const maxSizes: Record<FileKind, number> = {
+  image: 5 * 1024 * 1024,
+  video: 20 * 1024 * 1024,
+  'verification-document': 8 * 1024 * 1024,
 };
 
 export function safeFileName(fileName: string) {
@@ -50,7 +57,7 @@ function allowedForKind(kind: FileKind) {
   return { extensions: documentExtensions, mimeTypes: documentMimeTypes, label: 'JPG, JPEG, PNG, WebP, or PDF' };
 }
 
-export function validateUploadFile(file: File, kind: FileKind) {
+export function validateUploadFile(file: File, kind: FileKind, maxSize = maxSizes[kind]) {
   const allowed = allowedForKind(kind);
   const extension = fileExtension(file);
   const hasAllowedExtension = allowed.extensions.includes(extension);
@@ -58,6 +65,11 @@ export function validateUploadFile(file: File, kind: FileKind) {
 
   if (!hasAllowedExtension || !hasAllowedMimeType) {
     return `${file.name} must be ${allowed.label}.`;
+  }
+
+  if (file.size > maxSize) {
+    const sizeMb = Math.floor(maxSize / (1024 * 1024));
+    return `${file.name} must be ${sizeMb}MB or smaller.`;
   }
 
   return null;
@@ -115,6 +127,10 @@ function formatStorageError(error: unknown) {
 }
 
 export async function uploadPublicFile(bucket: StorageBucket, userId: string, file: File, options: UploadOptions = {}) {
+  if (!isValidUuid(userId)) {
+    return { publicUrl: null, path: '', error: UPLOAD_ERROR };
+  }
+
   const path = options.path || getStoragePath(userId, file);
 
   try {
@@ -129,13 +145,14 @@ export async function uploadPublicFile(bucket: StorageBucket, userId: string, fi
 
     if (uploadResponse.error) {
       console.error('Storage upload failed:', uploadResponse.error, { bucket, path, fileName: file.name });
-      return { publicUrl: null, path, error: uploadResponse.error.message };
+      return { publicUrl: null, path, error: UPLOAD_ERROR };
     }
 
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return { publicUrl: data.publicUrl, path, error: null };
   } catch (error) {
     console.error('Storage upload failed:', error, { bucket, path, fileName: file.name });
-    return { publicUrl: null, path, error: formatStorageError(error) };
+    void formatStorageError(error);
+    return { publicUrl: null, path, error: UPLOAD_ERROR };
   }
 }

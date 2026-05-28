@@ -1,7 +1,15 @@
 import { supabase } from './supabase';
 import { normalizeCategory } from './categories';
 import { withTimeout } from './storage';
-import { isValidUuid } from './validation';
+import {
+  DEFAULT_CAMPUS,
+  GENERIC_ERROR,
+  cleanMultilineText,
+  cleanText,
+  isMissingColumnError,
+  isValidUuid,
+  parseOptionalNumber,
+} from './validation';
 
 export interface ItemRequest {
   id: string;
@@ -14,6 +22,7 @@ export interface ItemRequest {
   location: string | null;
   interested_count: number;
   status: string;
+  campus?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,19 +31,8 @@ function serializeError(error: unknown) {
   return JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
 }
 
-function formatUnknownError(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
 function parseOptionalPrice(value?: string | number | null) {
-  if (value == null) return null;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : NaN;
+  return parseOptionalNumber(value);
 }
 
 export async function getItemRequests(limit = 10) {
@@ -48,13 +46,13 @@ export async function getItemRequests(limit = 10) {
 
     if (error) {
       console.error('Error fetching item requests:', serializeError(error));
-      return { requests: [] as ItemRequest[], error: 'Something went wrong. Try again.' };
+      return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
     }
 
     return { requests: (data || []) as ItemRequest[], error: null };
   } catch (err) {
     console.error('Unexpected error fetching item requests:', err);
-    return { requests: [] as ItemRequest[], error: 'Something went wrong. Try again.' };
+    return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
   }
 }
 
@@ -73,13 +71,13 @@ export async function getItemRequestById(id: string) {
 
     if (error) {
       console.error('Error fetching item request:', serializeError(error));
-      return { request: null as ItemRequest | null, error: 'Something went wrong. Try again.' };
+      return { request: null as ItemRequest | null, error: GENERIC_ERROR };
     }
 
     return { request: (data || null) as ItemRequest | null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching item request:', err);
-    return { request: null as ItemRequest | null, error: 'Something went wrong. Try again.' };
+    return { request: null as ItemRequest | null, error: GENERIC_ERROR };
   }
 }
 
@@ -98,9 +96,9 @@ export async function createItemRequest(
     return { request: null as ItemRequest | null, error: 'Sign in to request an item.' };
   }
 
-  const title = data.title.trim();
+  const title = cleanText(data.title, 120);
   if (!title) {
-    return { request: null as ItemRequest | null, error: 'Request title is required.' };
+    return { request: null as ItemRequest | null, error: 'Tell sellers what you are looking for.' };
   }
 
   const minPrice = parseOptionalPrice(data.minPrice);
@@ -117,17 +115,18 @@ export async function createItemRequest(
   const payload = {
     user_id: userId,
     title,
-    description: data.description?.trim() || null,
+    description: cleanMultilineText(data.description || '', 1000) || null,
     category: normalizeCategory(data.category),
     min_price: minPrice,
     max_price: maxPrice,
-    location: data.location?.trim() || null,
+    location: cleanText(data.location, 120) || null,
     interested_count: 0,
     status: 'open',
+    campus: DEFAULT_CAMPUS,
   };
 
   try {
-    const { data: request, error } = await withTimeout(
+    let { data: request, error } = await withTimeout(
       supabase
         .from('item_requests')
         .insert(payload)
@@ -137,14 +136,28 @@ export async function createItemRequest(
       'Request creation timed out. Please try again.'
     );
 
+    if (error && isMissingColumnError(error, 'item_requests', 'campus')) {
+      const { campus, ...legacyPayload } = payload;
+      void campus;
+      ({ data: request, error } = await withTimeout(
+        supabase
+          .from('item_requests')
+          .insert(legacyPayload)
+          .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at')
+          .single(),
+        12000,
+        'Request creation timed out. Please try again.'
+      ));
+    }
+
     if (error) {
       console.error('Error creating item request:', serializeError(error), payload);
-      return { request: null as ItemRequest | null, error: 'Something went wrong. Try again.' };
+      return { request: null as ItemRequest | null, error: GENERIC_ERROR };
     }
 
     return { request: request as ItemRequest, error: null };
   } catch (err) {
-    console.error('Unexpected error creating item request:', formatUnknownError(err));
-    return { request: null as ItemRequest | null, error: 'Something went wrong. Try again.' };
+    console.error('Unexpected error creating item request:', err);
+    return { request: null as ItemRequest | null, error: GENERIC_ERROR };
   }
 }

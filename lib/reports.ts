@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { isValidUuid } from './validation';
+import { GENERIC_ERROR, cleanMultilineText, isAllowedValue, isValidUuid } from './validation';
 
 export const reportReasons = [
   'Scam or fraud',
@@ -17,16 +17,19 @@ export async function createReport(data: {
   reason: string;
   details: string;
 }) {
-  if (!isValidUuid(data.reporterId) || !isValidUuid(data.targetId)) {
-    return { report: null, error: 'Something went wrong. Try again.' };
+  if (!isValidUuid(data.reporterId) || !isValidUuid(data.targetId) || !isAllowedValue(data.targetType, ['listing', 'message', 'user', 'business'] as const)) {
+    return { report: null, error: GENERIC_ERROR };
   }
+
+  const reason = reportReasons.includes(data.reason) ? data.reason : 'Other';
+  const details = cleanMultilineText(data.details, 1000);
 
   const reportToInsert = {
     reporter_id: data.reporterId,
     target_type: data.targetType,
     target_id: data.targetId,
-    reason: data.reason,
-    details: data.details,
+    reason,
+    details,
     status: 'pending',
   };
 
@@ -38,7 +41,7 @@ export async function createReport(data: {
 
   if (error) {
     console.error('Error creating report:', error, { reportToInsert });
-    return { report: null, error: 'Something went wrong. Try again.' };
+    return { report: null, error: GENERIC_ERROR };
   }
 
   return { report, error: null };

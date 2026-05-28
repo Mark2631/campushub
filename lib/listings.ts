@@ -1,7 +1,18 @@
 import { supabase } from './supabase';
 import { storageBuckets, uploadPublicFile, withTimeout } from './storage';
 import { normalizeCategory as normalizeSharedCategory } from './categories';
-import { isValidUuid } from './validation';
+import {
+  DEFAULT_CAMPUS,
+  GENERIC_ERROR,
+  UPLOAD_ERROR,
+  allowedListingConditions,
+  cleanMultilineText,
+  cleanText,
+  isAllowedValue,
+  isMissingColumnError,
+  isValidUuid,
+  parseOptionalNumber,
+} from './validation';
 
 export interface Listing {
   id: string;
@@ -18,6 +29,7 @@ export interface Listing {
   location: string | null;
   media_urls: string[];
   video_url: string | null;
+  campus?: string | null;
   created_at: string;
   updated_at: string;
   sellerName?: string;
@@ -44,10 +56,6 @@ type BusinessRow = {
   verification_status: string | null;
   badge_type?: string | null;
 };
-
-function formatUnknownError(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function logSupabaseError(label: string, error: unknown, extra?: unknown) {
   const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
@@ -142,6 +150,7 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     location: row.location ?? null,
     media_urls: Array.isArray(row.media_urls) ? row.media_urls : [],
     video_url: row.video_url ?? null,
+    campus: row.campus || DEFAULT_CAMPUS,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || row.created_at || new Date().toISOString(),
   };
@@ -159,14 +168,14 @@ export async function getListings(limit = 20, offset = 0) {
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
-      return { listings: [] as Listing[], error: error.message };
+      return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
     const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
-    return { listings: [] as Listing[], error: formatUnknownError(err) };
+    return { listings: [] as Listing[], error: GENERIC_ERROR };
   }
 }
 
@@ -206,14 +215,44 @@ export async function getListingsByUser(userId: string) {
 
     if (error) {
       logSupabaseError('Error fetching user listings:', error);
-      return { listings: [] as Listing[], error: error.message };
+      return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
     return { listings: await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
   } catch (err) {
     console.error('Unexpected error fetching user listings:', err);
-    return { listings: [] as Listing[], error: formatUnknownError(err) };
+    return { listings: [] as Listing[], error: GENERIC_ERROR };
   }
+}
+
+function validateListingInput(data: {
+  title: string;
+  category: string;
+  price: string | number | null;
+  condition: string;
+  description: string;
+  location: string;
+}) {
+  const title = cleanText(data.title, 120);
+  const category = normalizeCategory(data.category);
+  const condition = normalizeListingCondition(data.condition, category);
+  const price = parseOptionalNumber(data.price);
+
+  if (!title) return { error: 'Title is required.' as const };
+  if (!isAllowedValue(condition, allowedListingConditions)) return { error: GENERIC_ERROR };
+  if (Number.isNaN(price) || (price != null && price < 0)) return { error: 'Price must be a valid number.' as const };
+
+  return {
+    error: null,
+    value: {
+      title,
+      category,
+      condition,
+      price,
+      description: cleanMultilineText(data.description, 1400),
+      location: cleanText(data.location, 120),
+    },
+  };
 }
 
 export async function insertListing(
@@ -236,54 +275,65 @@ export async function insertListing(
   }
 
   try {
-    const price =
-      typeof data.price === 'string'
-        ? data.price.trim() === ''
-          ? null
-          : Number(data.price)
-        : data.price;
-
-    if (typeof price === 'number' && Number.isNaN(price)) {
-      return { listing: null, error: 'Price must be a valid number.' };
+    const validated = validateListingInput(data);
+    if (validated.error || !validated.value) {
+      return { listing: null, error: validated.error || GENERIC_ERROR };
     }
 
     const listingToInsert = {
       user_id: userId,
       seller_id: userId,
       business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
-      title: data.title,
-      description: data.description,
-      category: normalizeCategory(data.category),
-      price: price == null ? null : Number(price),
+      title: validated.value.title,
+      description: validated.value.description,
+      category: validated.value.category,
+      price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
-      condition: normalizeListingCondition(data.condition, data.category),
+      condition: validated.value.condition,
       status: 'active',
-      location: data.location,
+      location: validated.value.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
+      campus: DEFAULT_CAMPUS,
     };
 
-    const { data: newListing, error } = await withTimeout(
-      supabase
+    let insertQuery = supabase
         .from('listings')
         .insert(listingToInsert)
         .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-        .single(),
+        .single();
+
+    let { data: newListing, error } = await withTimeout(
+      insertQuery,
       15000,
       'Creating listing timed out. Please try again.'
     );
 
+    if (error && isMissingColumnError(error, 'listings', 'campus')) {
+      const { campus, ...legacyPayload } = listingToInsert;
+      void campus;
+      ({ data: newListing, error } = await withTimeout(
+        supabase
+          .from('listings')
+          .insert(legacyPayload)
+          .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+          .single(),
+        15000,
+        'Creating listing timed out. Please try again.'
+      ));
+    }
+
     if (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       logSupabaseError('Error inserting listing:', error, { listingToInsert });
-      return { listing: null, error: error.message };
+      return { listing: null, error: GENERIC_ERROR };
     }
 
     const [listing] = await enrichListings([newListing as ListingRow]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error inserting listing:', err);
-    return { listing: null, error: formatUnknownError(err) };
+    return { listing: null, error: GENERIC_ERROR };
   }
 }
 
@@ -301,7 +351,7 @@ export async function getListingById(id: string) {
 
     if (error) {
       logSupabaseError('Error fetching listing by id:', error);
-      return { listing: null, error: error.message };
+      return { listing: null, error: GENERIC_ERROR };
     }
 
     if (!data) {
@@ -312,7 +362,7 @@ export async function getListingById(id: string) {
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listing by id:', err);
-    return { listing: null, error: formatUnknownError(err) };
+    return { listing: null, error: GENERIC_ERROR };
   }
 }
 
@@ -325,6 +375,10 @@ export async function updateListingLifecycleStatus(
     return { error: 'Listing not found.' };
   }
 
+  if (!isAllowedValue(status, ['sold', 'hidden', 'active'] as const)) {
+    return { error: GENERIC_ERROR };
+  }
+
   const { error } = await supabase
     .from('listings')
     .update({ status })
@@ -333,7 +387,7 @@ export async function updateListingLifecycleStatus(
 
   if (error) {
     logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
-    return { error: error.message };
+    return { error: GENERIC_ERROR };
   }
 
   return { error: null };
@@ -359,28 +413,27 @@ export async function updateListing(
     return { listing: null, error: 'Listing not found.' };
   }
 
-  const price =
-    typeof data.price === 'string'
-      ? data.price.trim() === ''
-        ? null
-        : Number(data.price)
-      : data.price;
+  const validated = validateListingInput(data);
+  if (validated.error || !validated.value) {
+    return { listing: null, error: validated.error || GENERIC_ERROR };
+  }
 
   const payload = {
-    title: data.title,
-    description: data.description,
-    category: normalizeCategory(data.category),
-    price: price == null ? null : Number(price),
+    title: validated.value.title,
+    description: validated.value.description,
+    category: validated.value.category,
+    price: validated.value.price == null ? null : Number(validated.value.price),
     negotiable: Boolean(data.negotiable),
-    condition: normalizeListingCondition(data.condition, data.category),
-    location: data.location,
+    condition: validated.value.condition,
+    location: validated.value.location,
     business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
+    campus: DEFAULT_CAMPUS,
     updated_at: new Date().toISOString(),
   };
 
-  const { data: updated, error } = await withTimeout(
+  let { data: updated, error } = await withTimeout(
     supabase
       .from('listings')
       .update(payload)
@@ -392,9 +445,25 @@ export async function updateListing(
     'Saving listing timed out. Please try again.'
   );
 
+  if (error && isMissingColumnError(error, 'listings', 'campus')) {
+    const { campus, ...legacyPayload } = payload;
+    void campus;
+    ({ data: updated, error } = await withTimeout(
+      supabase
+        .from('listings')
+        .update(legacyPayload)
+        .eq('id', listingId)
+        .eq('seller_id', sellerId)
+        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+        .single(),
+      15000,
+      'Saving listing timed out. Please try again.'
+    ));
+  }
+
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);
-    return { listing: null, error: error.message };
+    return { listing: null, error: GENERIC_ERROR };
   }
 
   const [listing] = await enrichListings([updated as ListingRow]);
@@ -403,6 +472,14 @@ export async function updateListing(
 
 export async function uploadListingMedia(bucket: string, userId: string, file: File) {
   void bucket;
+  const kind = file.type.startsWith('video/') ? 'video' : 'image';
+  if (kind === 'image' && file.size > 5 * 1024 * 1024) {
+    return { publicUrl: null, error: UPLOAD_ERROR };
+  }
+  if (kind === 'video' && file.size > 20 * 1024 * 1024) {
+    return { publicUrl: null, error: UPLOAD_ERROR };
+  }
+
   const { publicUrl, error } = await uploadPublicFile(storageBuckets.listingMedia, userId, file, {
     timeoutMs: 25000,
     upsert: false,

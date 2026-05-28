@@ -2,72 +2,85 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
 import ReportButton from '../../components/ReportButton';
-import { signOut } from '../../lib/auth';
-import useUser from '../../hooks/useUser';
 import useTheme from '../../hooks/useTheme';
+import useUser from '../../hooks/useUser';
+import { signOut } from '../../lib/auth';
+import { createComplaint } from '../../lib/complaints';
+import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import {
   BusinessRecord,
   ProfileRecord,
+  VerificationRequestRecord,
   createBusinessProfile,
   getBusinessProfiles,
+  getLatestVerificationRequest,
+  getProfileById,
   saveProfileAvatar,
   saveProfilePhone,
   submitVerificationRequest,
   uploadVerificationDocument,
   upsertProfile,
 } from '../../lib/profiles';
-import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
-import { createComplaint } from '../../lib/complaints';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 
 const verificationTypes = [
   { value: 'student', label: 'Student ID' },
   { value: 'national_id', label: 'National ID' },
   { value: 'business', label: 'Business verification' },
-];
+] as const;
 
 const businessCategories = ['Campus Services', 'Food', 'Electronics', 'Fashion', 'Books', 'Repairs', 'Other'];
 
-const statusStyles: Record<string, string> = {
-  verified: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200',
-  pending: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200',
-  unverified: 'border-gray-200 bg-gray-50 text-gray-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300',
-};
-
-function formatStatus(status?: string | null) {
-  if (!status || status === 'unverified') return 'Not verified yet';
+function statusLabel(status?: string | null) {
+  if (!status || status === 'unverified') return 'Not verified';
+  if (status === 'verified') return 'Verified seller';
+  if (status === 'pending') return 'Verification under review';
+  if (status === 'rejected') return 'Verification rejected';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function statusClass(status?: string | null) {
+  if (status === 'verified') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200';
+  if (status === 'pending') return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200';
+  if (status === 'rejected') return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200';
+  return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
+}
+
+function listingEmptyText(filter: 'active' | 'sold' | 'hidden') {
+  if (filter === 'active') return 'No active listings';
+  if (filter === 'sold') return 'No sold listings';
+  return 'No hidden listings';
+}
+
 export default function ProfilePage() {
-  const { user, loading, isAdmin, pushNotification, profileContext, setProfileContext, showToast } = useUser();
+  const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
+  const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
-  const [activeListingsCount, setActiveListingsCount] = useState(0);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [verificationType, setVerificationType] = useState(verificationTypes[0].value);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [verificationFormOpen, setVerificationFormOpen] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [listingFilter, setListingFilter] = useState<'active' | 'sold' | 'hidden'>('active');
+  const [listingActionId, setListingActionId] = useState<string | null>(null);
+  const [verificationType, setVerificationType] = useState<(typeof verificationTypes)[number]['value']>('student');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [documentPreviews, setDocumentPreviews] = useState<string[]>([]);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [verificationSubmitting, setVerificationSubmitting] = useState(false);
   const [verificationUploadStatus, setVerificationUploadStatus] = useState('');
   const [businessSubmitting, setBusinessSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [complaintSubmitting, setComplaintSubmitting] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-  const [phoneInput, setPhoneInput] = useState('');
-  const [listingActionId, setListingActionId] = useState<string | null>(null);
-  const [listingFilter, setListingFilter] = useState<'active' | 'sold' | 'hidden'>('active');
-  const [complaintForm, setComplaintForm] = useState({
-    subject: '',
-    message: '',
-  });
+  const [complaintForm, setComplaintForm] = useState({ subject: '', message: '' });
   const [businessForm, setBusinessForm] = useState({
     business_name: '',
     category: businessCategories[0],
@@ -76,49 +89,42 @@ export default function ProfilePage() {
   });
 
   const displayName = useMemo(() => {
-    return (
-      profile?.full_name ||
-      user?.user_metadata?.full_name ||
-      user?.user_metadata?.name ||
-      user?.email?.split('@')[0] ||
-      'CampusTrader user'
-    );
+    return profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'CampusTrader user';
   }, [profile, user]);
 
-  const verificationStatus = profile?.verification_status || 'unverified';
-  const statusClass = statusStyles[verificationStatus] || statusStyles.unverified;
+  const verificationStatus = profile?.verification_status || verificationRequest?.status || 'unverified';
+  const activeListingsCount = userListings.filter((listing) => listing.status === 'active').length;
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
-  const filteredUserListings = userListings.filter((listing) => listing.status === listingFilter);
+  const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    setProfileLoading(true);
+    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }] = await Promise.all([
+      upsertProfile(user),
+      getBusinessProfiles(user.id),
+      getListingsByUser(user.id),
+      getLatestVerificationRequest(user.id),
+    ]);
+
+    setProfile(syncedProfile);
+    setPhoneInput(syncedProfile?.phone_number || '');
+    setBusinesses(userBusinesses);
+    setUserListings(listings);
+    setVerificationRequest(request);
+    setProfileLoading(false);
+  };
 
   useEffect(() => {
-    if (!user) return;
-
-    let isMounted = true;
-
-    const loadProfile = async () => {
-      setProfileLoading(true);
-      const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings: userListings }] = await Promise.all([
-        upsertProfile(user),
-        getBusinessProfiles(user.id),
-        getListingsByUser(user.id),
-      ]);
-
-      if (!isMounted) return;
-      setProfile(syncedProfile);
-      setPhoneInput(syncedProfile?.phone_number || '');
-      setBusinesses(userBusinesses);
-      setUserListings(userListings);
-      setActiveListingsCount(userListings.filter((listing) => listing.status === 'active').length);
-      setProfileLoading(false);
-    };
-
-    loadProfile();
-
-    return () => {
-      isMounted = false;
-    };
+    void loadProfile();
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
 
   useEffect(() => {
     return () => {
@@ -126,239 +132,57 @@ export default function ProfilePage() {
     };
   }, [documentPreviews]);
 
-  useEffect(() => {
-    return () => {
-      if (avatarPreview) {
-        URL.revokeObjectURL(avatarPreview);
-      }
-    };
-  }, [avatarPreview]);
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.currentTarget.files || []);
-    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
-
-    const maxFiles = verificationType === 'business' ? 2 : 1;
-    const nextFiles = selectedFiles.slice(0, maxFiles);
-    const validationErrors = nextFiles.map((file) => validateUploadFile(file, 'verification-document')).filter(Boolean);
-
-    if (validationErrors.length > 0) {
-      setMessage({ type: 'error', text: validationErrors.join(' ') });
-      setDocumentFiles([]);
-      setDocumentPreviews([]);
-      event.currentTarget.value = '';
-      return;
-    }
-
-    setMessage(null);
-    setDocumentFiles(nextFiles);
-    setDocumentPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
-    event.currentTarget.value = '';
+  const setCleanError = (text = 'Something went wrong. Try again.') => {
+    setMessage({ type: 'error', text });
+    showToast({ type: 'error', message: text });
   };
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
     if (!file || !user) return;
 
-    const validationError = validateUploadFile(file, 'image');
+    const validationError = validateUploadFile(file, 'image', 5 * 1024 * 1024);
     if (validationError) {
-      setMessage({ type: 'error', text: validationError });
-      event.currentTarget.value = '';
+      setCleanError(validationError);
       return;
     }
 
-    if (avatarPreview) {
-      URL.revokeObjectURL(avatarPreview);
-    }
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     setAvatarPreview(URL.createObjectURL(file));
-
     setAvatarUploading(true);
     setMessage(null);
+
     const compressed = await compressImageFile(file, 1600);
     const { avatarUrl, error } = await saveProfileAvatar(user.id, compressed);
     setAvatarUploading(false);
-    event.currentTarget.value = '';
 
-    if (error) {
+    if (error || !avatarUrl) {
       console.error('Profile avatar update failed:', error);
-      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
-      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
+      setCleanError(error || 'Upload failed. Please retry.');
       return;
     }
 
     setAvatarPreview(null);
-    setProfile((current) => (current ? { ...current, avatar_url: avatarUrl } : current));
-    await pushNotification({
-      type: 'profile updated',
-      title: 'Profile picture updated',
-      body: 'Your account photo has been updated.',
-    });
-    setMessage({ type: 'success', text: 'Profile picture updated.' });
-    showToast({ type: 'success', message: 'Profile photo uploaded.' });
+    setProfile((current) => current ? { ...current, avatar_url: avatarUrl } : current);
+    const { profile: refreshedProfile } = await getProfileById(user.id);
+    if (refreshedProfile) setProfile(refreshedProfile);
+    setMessage({ type: 'success', text: 'Profile photo updated.' });
+    showToast({ type: 'success', message: 'Profile photo updated.' });
   };
 
   const handlePhoneSave = async () => {
     if (!user) return;
     const { phoneNumber, error } = await saveProfilePhone(user.id, phoneInput);
     if (error) {
-      setMessage({ type: 'error', text: error });
-      showToast({ type: 'error', message: error });
+      console.error('WhatsApp save failed:', error);
+      setCleanError(error);
       return;
     }
     setPhoneInput(phoneNumber || '');
-    setProfile((current) => (current ? { ...current, phone_number: phoneNumber } : current));
+    setProfile((current) => current ? { ...current, phone_number: phoneNumber } : current);
+    setMessage({ type: 'success', text: 'WhatsApp number saved.' });
     showToast({ type: 'success', message: 'WhatsApp number saved.' });
-  };
-
-  const clearDocumentFile = () => {
-    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
-    setDocumentFiles([]);
-    setDocumentPreviews([]);
-  };
-
-  const handleVerificationSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!user) return;
-    if (documentFiles.length === 0) {
-      setMessage({ type: 'error', text: 'Choose a document before submitting your verification request.' });
-      return;
-    }
-
-    setVerificationSubmitting(true);
-    setVerificationUploadStatus('Uploading verification document...');
-    setMessage(null);
-
-    const uploadedUrls: string[] = [];
-
-    for (const [index, file] of documentFiles.entries()) {
-      setVerificationUploadStatus(`Uploading verification file ${index + 1} of ${documentFiles.length}...`);
-      const uploadFile = file.type.startsWith('image/') ? await compressImageFile(file, 1600) : file;
-      const { publicUrl, error } = await uploadVerificationDocument(user.id, uploadFile);
-      if (error || !publicUrl) {
-        setVerificationSubmitting(false);
-        setVerificationUploadStatus('');
-        if (error) console.error('Verification upload failed:', error);
-        setMessage({ type: 'error', text: 'Verification upload failed. Try again.' });
-        showToast({ type: 'error', message: 'Verification upload failed. Try again.' });
-        return;
-      }
-      uploadedUrls.push(publicUrl);
-    }
-
-    setVerificationUploadStatus('Submitting verification request...');
-    const { error } = await submitVerificationRequest({
-      userId: user.id,
-      requestType: verificationType,
-      documentName: documentFiles.map((file) => file.name).join(', '),
-      documentUrls: uploadedUrls,
-      businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
-    });
-    setVerificationSubmitting(false);
-    setVerificationUploadStatus('');
-
-    if (error) {
-      console.error('Verification request failed:', error);
-      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
-      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
-      return;
-    }
-
-    await pushNotification({
-      type: 'verification submitted',
-      title: 'Verification submitted',
-      body: 'Verification submitted. Admin will review your document.',
-    });
-    setMessage({ type: 'success', text: 'Verification submitted. Admin will review your document.' });
-    showToast({ type: 'success', message: 'Verification submitted. Admin will review your document.' });
-    clearDocumentFile();
-    setVerificationType(verificationTypes[0].value);
-  };
-
-  const handleBusinessChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    setBusinessForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleBusinessSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!user) return;
-    if (!businessForm.business_name.trim() || !businessForm.location.trim()) {
-      setMessage({ type: 'error', text: 'Business name and location are required.' });
-      return;
-    }
-
-    setBusinessSubmitting(true);
-    setMessage(null);
-
-    const { business, error } = await createBusinessProfile(user.id, businessForm);
-    setBusinessSubmitting(false);
-
-    if (error) {
-      console.error('Business profile creation failed:', error);
-      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
-      return;
-    }
-
-    if (business) {
-      setBusinesses((prev) => [business, ...prev]);
-    }
-
-    setBusinessForm({
-      business_name: '',
-      category: businessCategories[0],
-      location: '',
-      description: '',
-    });
-    await pushNotification({
-      type: 'business created',
-      title: 'Business profile created',
-      body: 'Your business profile is ready and waiting for verification.',
-    });
-    setMessage({ type: 'success', text: 'Business profile created.' });
-    showToast({ type: 'success', message: 'Business created.' });
-  };
-
-  const handleComplaintSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!complaintForm.subject.trim() || !complaintForm.message.trim()) {
-      setMessage({ type: 'error', text: 'Complaint subject and message are required.' });
-      return;
-    }
-
-    setComplaintSubmitting(true);
-    setMessage(null);
-
-    const { error } = await createComplaint({
-      userId: user?.id || null,
-      email: user?.email || '',
-      subject: complaintForm.subject,
-      message: complaintForm.message,
-    });
-
-    setComplaintSubmitting(false);
-
-    if (error) {
-      console.error('Complaint submit failed:', error);
-      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
-      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
-      return;
-    }
-
-    setComplaintForm({ subject: '', message: '' });
-    await pushNotification({
-      type: 'complaint submitted',
-      title: 'Issue reported',
-      body: 'Your issue has been submitted for review.',
-    });
-    setMessage({ type: 'success', text: 'Complaint submitted. Admin will review it.' });
-    showToast({ type: 'success', message: 'Report submitted.' });
   };
 
   const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
@@ -370,61 +194,169 @@ export default function ProfilePage() {
 
     if (error) {
       console.error('Listing status update failed:', error);
-      setMessage({ type: 'error', text: 'Something went wrong. Try again.' });
-      showToast({ type: 'error', message: 'Something went wrong. Try again.' });
+      setCleanError();
       return;
     }
 
-    setUserListings((current) => {
-      const nextListings = current.map((listing) => (listing.id === listingId ? { ...listing, status } : listing));
-      setActiveListingsCount(nextListings.filter((listing) => listing.status === 'active').length);
-      return nextListings;
-    });
-    await pushNotification({
-      type: status === 'sold' ? 'listing sold' : status === 'hidden' ? 'listing hidden' : 'listing restored',
-      title: status === 'sold' ? 'Listing marked as sold' : status === 'hidden' ? 'Listing hidden' : 'Listing restored',
-      body: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing removed from the active feed.' : 'Listing restored to the active feed.',
-    });
-    setMessage({ type: 'success', text: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
-    showToast({ type: 'success', message: status === 'sold' ? 'Listing marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
+    setUserListings((current) => current.map((listing) => listing.id === listingId ? { ...listing, status } : listing));
     window.dispatchEvent(new Event('campustrader:listings-refresh'));
+    showToast({ type: 'success', message: status === 'sold' ? 'Marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
+  };
+
+  const handleBusinessSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user) return;
+
+    setBusinessSubmitting(true);
+    setMessage(null);
+    const { business, error } = await createBusinessProfile(user.id, businessForm);
+    setBusinessSubmitting(false);
+
+    if (error || !business) {
+      console.error('Business profile creation failed:', error);
+      setCleanError(error || undefined);
+      return;
+    }
+
+    setBusinesses((current) => [business, ...current]);
+    setBusinessForm({ business_name: '', category: businessCategories[0], location: '', description: '' });
+    setMessage({ type: 'success', text: 'Business profile created.' });
+    showToast({ type: 'success', message: 'Business profile created.' });
+  };
+
+  const handleComplaintSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!complaintForm.subject.trim() || !complaintForm.message.trim()) {
+      setCleanError('Subject and message are required.');
+      return;
+    }
+
+    setComplaintSubmitting(true);
+    const { error } = await createComplaint({
+      userId: user?.id || null,
+      email: user?.email || '',
+      subject: complaintForm.subject,
+      message: complaintForm.message,
+    });
+    setComplaintSubmitting(false);
+
+    if (error) {
+      console.error('Issue report failed:', error);
+      setCleanError();
+      return;
+    }
+
+    setComplaintForm({ subject: '', message: '' });
+    setMessage({ type: 'success', text: 'Issue submitted.' });
+    showToast({ type: 'success', message: 'Issue submitted.' });
+  };
+
+  const clearDocumentFile = () => {
+    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+    setDocumentFiles([]);
+    setDocumentPreviews([]);
+  };
+
+  const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.currentTarget.files || []);
+    event.currentTarget.value = '';
+    documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+
+    const maxFiles = verificationType === 'business' ? 2 : 1;
+    const nextFiles = selectedFiles.slice(0, maxFiles);
+    const validationErrors = nextFiles.map((file) => validateUploadFile(file, 'verification-document', 8 * 1024 * 1024)).filter(Boolean);
+
+    if (validationErrors.length > 0) {
+      setCleanError(validationErrors.join(' '));
+      setDocumentFiles([]);
+      setDocumentPreviews([]);
+      return;
+    }
+
+    setDocumentFiles(nextFiles);
+    setDocumentPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
+  };
+
+  const handleVerificationSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user) return;
+
+    if (documentFiles.length === 0) {
+      setCleanError('Choose a document before submitting.');
+      return;
+    }
+
+    setVerificationSubmitting(true);
+    setVerificationUploadStatus('Uploading document...');
+    setMessage(null);
+    const uploadedUrls: string[] = [];
+
+    for (const [index, file] of documentFiles.entries()) {
+      setVerificationUploadStatus(`Uploading ${index + 1} of ${documentFiles.length}...`);
+      const uploadFile = file.type.startsWith('image/') ? await compressImageFile(file, 1600) : file;
+      const { publicUrl, error } = await uploadVerificationDocument(user.id, uploadFile);
+      if (error || !publicUrl) {
+        console.error('Verification upload failed:', error);
+        setVerificationSubmitting(false);
+        setVerificationUploadStatus('');
+        setCleanError('Upload failed. Please retry.');
+        return;
+      }
+      uploadedUrls.push(publicUrl);
+    }
+
+    setVerificationUploadStatus('Submitting...');
+    const { request, error } = await submitVerificationRequest({
+      userId: user.id,
+      requestType: verificationType,
+      documentName: documentFiles.map((file) => file.name).join(', '),
+      documentUrls: uploadedUrls,
+      businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
+    });
+    setVerificationSubmitting(false);
+    setVerificationUploadStatus('');
+
+    if (error) {
+      console.error('Verification request failed:', error);
+      setCleanError();
+      return;
+    }
+
+    setVerificationRequest(request as VerificationRequestRecord);
+    setProfile((current) => current ? { ...current, verification_status: 'pending' } : current);
+    clearDocumentFile();
+    setVerificationFormOpen(false);
+    setMessage({ type: 'success', text: 'Verification submitted.' });
+    showToast({ type: 'success', message: 'Verification submitted.' });
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+    <div className="flex min-h-screen flex-col bg-slate-50 pb-24 text-slate-900 dark:bg-slate-950 dark:text-white">
       <Header />
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">
-        <header className="mb-8">
-          <div className="mb-4">
-            <Logo />
-          </div>
-          <h1 className="text-2xl font-bold sm:text-3xl">Profile</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Manage your campus marketplace account.</p>
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
+        <header className="mb-6">
+          <Logo />
+          <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
         </header>
 
         {loading || profileLoading ? (
-          <div className="space-y-6">
-            <div className="h-44 rounded-2xl bg-gray-200 dark:bg-zinc-800 animate-pulse" />
-            <div className="h-64 rounded-2xl bg-gray-200 dark:bg-zinc-800 animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-40 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-900" />
+            <div className="h-64 animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-900" />
           </div>
         ) : user ? (
           <>
-            {message && (
-              <div
-                className={`mb-6 rounded-2xl border p-4 ${
-                  message.type === 'success'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200'
-                    : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200'
-                }`}
-              >
-                <p className="font-medium">{message.text}</p>
+            {message ? (
+              <div className={`mb-5 rounded-2xl border p-4 text-sm font-semibold ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
+                {message.text}
               </div>
-            )}
+            ) : null}
 
-            <section id="my-account" className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center gap-4 sm:gap-5">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-3xl font-bold text-white">
+            <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-2xl font-black text-white ring-4 ring-slate-100 dark:ring-slate-800">
                     {avatarPreview || profile?.avatar_url ? (
                       <img src={avatarPreview || profile?.avatar_url || ''} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -432,477 +364,258 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-500 dark:text-zinc-500">My Account</p>
-                    <h2 className="mt-1 truncate text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">{displayName}</h2>
-                    <p className="mt-2 truncate text-sm text-gray-600 dark:text-zinc-400">{profile?.email || user.email}</p>
-                    <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusClass}`}>
-                      {formatStatus(verificationStatus)}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="truncate text-xl font-bold sm:text-2xl">{displayName}</h2>
+                      <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(verificationStatus)}`}>
+                        {statusLabel(verificationStatus)}
+                      </span>
+                      {isAdmin ? (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin</span>
+                      ) : null}
                     </div>
-                    {isAdmin ? (
-                      <div className="ml-2 mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
-                        Admin badge
-                      </div>
-                    ) : null}
-                    <label className="mt-4 inline-flex cursor-pointer rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
-                      {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
-                      <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
-                    </label>
-                    <div className="mt-4 flex max-w-sm flex-col gap-2 sm:flex-row">
-                      <input
-                        value={phoneInput}
-                        onChange={(event) => setPhoneInput(event.target.value)}
-                        placeholder="WhatsApp: 07XXXXXXXX"
-                        className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-2 text-xs text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={handlePhoneSave}
-                        className="rounded-2xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
-                      >
-                        Save WhatsApp
-                      </button>
-                    </div>
-                    <p className="mt-2 max-w-sm text-xs text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                    <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">{profile?.email || user.email}</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">MUST campus</p>
                   </div>
                 </div>
-                <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 xl:flex">
-                  <Link
-                    href="#my-listings"
-                    className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    My Listings
-                  </Link>
-                  <Link
-                    href="#verification"
-                    className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    Apply for Verification
-                  </Link>
-                  <Link
-                    href="#business-profiles"
-                    className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    Create Business Profile
-                  </Link>
-                  <Link
-                    href="#help-settings"
-                    className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    Help / Report Issue
-                  </Link>
-                  {isAdmin ? (
-                    <Link
-                      href="/admin"
-                      className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
-                    >
-                      Admin Panel
-                    </Link>
-                  ) : null}
-                  <button
-                    onClick={toggleTheme}
-                    className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  >
-                    {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(false); }} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    <UserRound className="h-4 w-4" aria-hidden="true" />
+                    Edit profile
                   </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950"
-                  >
-                    Sign Out
+                  <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    <Settings className="h-4 w-4" aria-hidden="true" />
+                    Settings
                   </button>
                 </div>
               </div>
-            </section>
 
-            <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-              {[
-                [String(activeListingsCount), 'Active listings'],
-                [String(soldListingsCount), 'Sold listings'],
-                [String(hiddenListingsCount), 'Hidden listings'],
-                [formatStatus(verificationStatus), 'Verification status'],
-              ].map(([value, label]) => (
-                <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">{label}</p>
-                </div>
-              ))}
-            </section>
-
-            <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-              {[
-                profile?.avatar_url ? null : 'Add photo',
-                profile?.full_name ? null : 'Add name',
-                verificationStatus === 'verified' ? null : 'Apply for verification',
-              ]
-                .filter(Boolean)
-                .map((prompt) => (
-                  <div key={prompt} className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-                    <p className="font-semibold">{prompt}</p>
-                    <p className="mt-1">Complete this to build buyer trust.</p>
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                {[
+                  ['Active', activeListingsCount],
+                  ['Sold', soldListingsCount],
+                  ['Hidden', hiddenListingsCount],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-950">
+                    <p className="text-xl font-black">{value}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
                   </div>
-              ))}
-            </section>
-
-            <section id="verification" className="mb-8 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6 dark:border-blue-950/80 dark:bg-zinc-900">
-              <div className="mb-5 flex flex-col gap-2">
-                <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Verification</p>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Not verified yet</h2>
-                <p className="text-sm text-gray-600 dark:text-zinc-400">Verification helps buyers and sellers trust you. It is not required to use CampusTrader.</p>
-                <p className="text-xs text-gray-500 dark:text-zinc-500">
-                  {verificationType === 'student'
-                    ? 'Student verification: upload school ID or admission/student card.'
-                    : verificationType === 'national_id'
-                      ? 'National ID verification: upload the front side of your national ID. Optional back side later.'
-                      : 'Business verification: upload owner ID plus business proof if available.'}
-                </p>
+                ))}
               </div>
 
-              <form onSubmit={handleVerificationSubmit} className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
-                <div className="space-y-3">
-                  {verificationTypes.map((type) => (
-                    <label
-                      key={type.value}
-                      className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-                        verificationType === type.value
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200'
-                          : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300'
-                      }`}
-                    >
-                      <span>{type.label}</span>
-                      <input
-                        type="radio"
-                        name="verification_type"
-                        value={type.value}
-                        checked={verificationType === type.value}
-                        onChange={(event) => setVerificationType(event.target.value)}
-                        className="h-4 w-4 accent-blue-600"
-                      />
-                    </label>
-                  ))}
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
+                Rating and reviews will appear here after more completed trades.
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                {verificationStatus === 'verified' ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-200">
+                    <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                    Verified seller
+                  </div>
+                ) : verificationStatus === 'pending' ? (
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">Verification under review</p>
+                ) : verificationStatus === 'rejected' ? (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-200">Verification rejected</p>
+                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="text-sm font-bold text-blue-600 dark:text-blue-300">View verification</button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Verify to earn a trusted badge</p>
+                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">My Listings</h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, sold, and hidden listings.</p>
                 </div>
+                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
+              </div>
 
-                <div className="space-y-4">
-                  <label className="relative block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center transition hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:border-blue-500">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
-                      multiple={verificationType === 'business'}
-                      onChange={handleDocumentChange}
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                    />
-                    <p className="font-semibold text-gray-900 dark:text-white">Choose verification document</p>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                      {verificationType === 'business' ? 'Owner ID required. Optional proof can be added as a second file.' : 'Upload the required ID image or PDF.'}
-                    </p>
-                  </label>
-
-                  {documentFiles.length > 0 && (
-                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                      <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Selected files</p>
-                        <button
-                          type="button"
-                          onClick={clearDocumentFile}
-                          className="rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      <div className="space-y-4">
-                        {documentFiles.map((file, index) => (
-                          <div key={`${file.name}-${file.size}-${index}`} className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-                            <div className="mb-3 min-w-0">
-                              <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{file.name}</p>
-                              <p className="text-xs text-gray-500 dark:text-zinc-500">{Math.ceil(file.size / 1024)} KB</p>
-                            </div>
-                            {file.type.startsWith('image/') ? (
-                              <img src={documentPreviews[index]} alt="Selected verification document preview" className="max-h-72 w-full rounded-xl object-contain bg-gray-100 dark:bg-zinc-900" />
-                            ) : file.type === 'application/pdf' ? (
-                              <iframe src={documentPreviews[index]} title="Selected verification document preview" className="h-72 w-full rounded-xl bg-gray-100 dark:bg-zinc-900" />
-                            ) : (
-                              <div className="rounded-xl bg-gray-100 p-6 text-center text-sm text-gray-600 dark:bg-zinc-900 dark:text-zinc-400">Preview unavailable for this file type.</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={verificationSubmitting}
-                    className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500"
-                  >
-                    {verificationSubmitting ? verificationUploadStatus || 'Submitting...' : 'Submit for review'}
+              <div className="mb-4 grid grid-cols-3 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+                {(['active', 'sold', 'hidden'] as const).map((status) => (
+                  <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                    {status}
                   </button>
-                </div>
-              </form>
-            </section>
+                ))}
+              </div>
 
-            <section id="help-settings" className="mb-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Help & Settings</h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Change theme, sign out, or report an issue if something is not working.</p>
-              </div>
-              <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Current profile</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })}
-                    className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'}`}
-                  >
-                    Personal
-                  </button>
-                  {businesses.map((business) => (
-                    <button
-                      key={business.id}
-                      onClick={() => setProfileContext({ mode: 'business', businessId: business.id, businessName: business.business_name })}
-                      className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'business' && profileContext.businessId === business.id ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200'}`}
-                    >
-                      {business.business_name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4 flex flex-wrap gap-3">
-                <button
-                  onClick={toggleTheme}
-                  className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                >
-                  {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
-                </button>
-                {isAdmin ? (
-                  <Link
-                    href="/admin"
-                    className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
-                  >
-                    Admin Panel
-                  </Link>
-                ) : null}
-              </div>
-              <form onSubmit={handleComplaintSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.4fr_auto]">
-                <input
-                  value={complaintForm.subject}
-                  onChange={(event) => setComplaintForm((prev) => ({ ...prev, subject: event.target.value }))}
-                  placeholder="Subject"
-                  className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
-                />
-                <input
-                  value={complaintForm.message}
-                  onChange={(event) => setComplaintForm((prev) => ({ ...prev, message: event.target.value }))}
-                  placeholder="What happened?"
-                  className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
-                />
-                <button
-                  disabled={complaintSubmitting}
-                  className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-500"
-                >
-                  {complaintSubmitting ? 'Sending...' : 'Submit'}
-                </button>
-              </form>
-            </section>
-
-            <div className="space-y-4">
-              <section id="my-listings" className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Listings</h2>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Manage active, sold, and hidden listings.</p>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{activeListingsCount} active</p>
-                    <p className="text-xs text-gray-500 dark:text-zinc-500">{soldListingsCount} sold, {hiddenListingsCount} hidden</p>
-                  </div>
-                </div>
-                <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-1 dark:border-zinc-800 dark:bg-zinc-950">
-                  {(['active', 'sold', 'hidden'] as const).map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => setListingFilter(status)}
-                      className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition ${
-                        listingFilter === status
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-700 hover:bg-white dark:text-zinc-300 dark:hover:bg-zinc-900'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-4">
-                  {filteredUserListings.length > 0 ? (
-                    filteredUserListings.map((listing) => (
-                      <article key={listing.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-950">
-                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">{listing.title}</p>
-                            <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-                              {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'No location'} · {formatStatus(listing.status)}
-                            </p>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                            <Link href={`/listing/${listing.id}`} className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-                              View
-                            </Link>
-                            <Link href={`/sell?edit=${listing.id}`} className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-center text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-                              Edit
-                            </Link>
-                            <button
-                              disabled={listing.status === 'sold' || listingActionId === listing.id}
-                              onClick={() => handleListingStatus(listing.id, 'sold')}
-                              className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
-                            >
-                              Mark Sold
-                            </button>
-                            <button
-                              disabled={listingActionId === listing.id}
-                              onClick={() => handleListingStatus(listing.id, 'hidden')}
-                              className="rounded-2xl bg-gray-700 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
-                            >
-                              Hide
-                            </button>
-                            {listing.status !== 'active' ? (
-                              <button
-                                disabled={listingActionId === listing.id}
-                                onClick={() => handleListingStatus(listing.id, 'active')}
-                                className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
-                              >
-                                Restore
-                              </button>
-                            ) : null}
-                          </div>
+              <div className="space-y-3">
+                {filteredListings.length > 0 ? (
+                  filteredListings.map((listing) => (
+                    <article key={listing.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate font-bold">{listing.title}</p>
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                            {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
+                          </p>
                         </div>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-950">
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">No {listingFilter} listings</p>
-                      <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Listings in this state will appear here.</p>
-                    </div>
-                  )}
-                  <Link href="/sell" className="inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                    Post Listing
-                  </Link>
-                </div>
-              </section>
-
-              <section id="business-profiles" className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-                  <form onSubmit={handleBusinessSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Business Profiles</h3>
-                      <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Verification is reviewed manually by admin.</p>
-                    </div>
-                    <label className="space-y-2 text-sm">
-                      <span className="font-medium text-gray-900 dark:text-white">Business name</span>
-                      <input
-                        name="business_name"
-                        value={businessForm.business_name}
-                        onChange={handleBusinessChange}
-                        className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-                        placeholder="e.g., MUST Tech Repairs"
-                        required
-                      />
-                    </label>
-                    <label className="space-y-2 text-sm">
-                      <span className="font-medium text-gray-900 dark:text-white">Category</span>
-                      <select
-                        name="category"
-                        value={businessForm.category}
-                        onChange={handleBusinessChange}
-                        className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
-                      >
-                        {businessCategories.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="space-y-2 text-sm">
-                      <span className="font-medium text-gray-900 dark:text-white">Location</span>
-                      <input
-                        name="location"
-                        value={businessForm.location}
-                        onChange={handleBusinessChange}
-                        className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-                        placeholder="Campus area or building"
-                        required
-                      />
-                    </label>
-                    <label className="space-y-2 text-sm">
-                      <span className="font-medium text-gray-900 dark:text-white">Description</span>
-                      <textarea
-                        name="description"
-                        value={businessForm.description}
-                        onChange={handleBusinessChange}
-                        rows={4}
-                        className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-                        placeholder="Tell buyers what the business offers on campus."
-                      />
-                    </label>
-                    <button
-                      type="submit"
-                      disabled={businessSubmitting}
-                      className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500"
-                    >
-                      {businessSubmitting ? 'Creating...' : 'Create Business Profile'}
-                    </button>
-                  </form>
-
-                  <div className="space-y-4">
-                    {businesses.length > 0 ? (
-                      businesses.map((business) => {
-                        const businessStatusClass =
-                          business.verification_status === 'verified'
-                            ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
-                            : statusStyles[business.verification_status] || statusStyles.unverified;
-
-                        return (
-                          <article key={business.id} className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{business.business_name}</h3>
-                                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{business.category} in {business.location}</p>
-                              </div>
-                              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${businessStatusClass}`}>
-                                {business.verification_status === 'verified' ? 'Gold tick business' : formatStatus(business.verification_status)}
-                              </span>
-                            </div>
-                            {business.description && (
-                              <p className="mt-4 text-sm leading-6 text-gray-600 dark:text-zinc-400">{business.description}</p>
-                            )}
-                            <div className="mt-4 max-w-xs">
-                              <ReportButton targetType="business" targetId={business.id} label="Report business" />
-                            </div>
-                          </article>
-                        );
-                      })
-                    ) : (
-                      <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center dark:border-zinc-700 dark:bg-zinc-900">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">No business profiles yet</h3>
-                        <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-zinc-400">Create one for campus services, shops, or repeat selling.</p>
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                          <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
+                          {listing.status !== 'sold' ? (
+                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Sold</button>
+                          ) : null}
+                          {listing.status !== 'hidden' ? (
+                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Hide</button>
+                          ) : (
+                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Restore</button>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+                    <p className="font-bold">{listingEmptyText(listingFilter)}</p>
                   </div>
-                </section>
+                )}
               </div>
+            </section>
           </>
         ) : (
-          <div className="rounded-2xl border-2 border-gray-300 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Sign in to continue.</h2>
-            <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
-              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
-            </p>
-            <Link
-              href="/signin"
-              className="inline-block rounded-2xl bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              Sign In to Your Account
-            </Link>
+          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-2xl font-bold">Sign in to continue.</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">Create an account to post, message, verify, and manage listings.</p>
+            <Link href="/signin" className="mt-5 inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Sign in</Link>
           </div>
         )}
       </main>
+
+      {settingsOpen && user ? (
+        <div id="settings" className="fixed inset-0 z-50 bg-slate-950/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8" onClick={() => setSettingsOpen(false)}>
+          <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">Settings</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Account, verification, business profile, and support.</p>
+              </div>
+              <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Account</h3>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <label className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                    {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
+                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
+                  </label>
+                  <button type="button" onClick={toggleTheme} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                    {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+                  </button>
+                  {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">WhatsApp</h3>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+                  <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Save</button>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-bold">Verification</h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{statusLabel(verificationStatus)}</p>
+                    {verificationRequest?.admin_note ? <p className="mt-2 text-sm text-red-600 dark:text-red-300">{verificationRequest.admin_note}</p> : null}
+                  </div>
+                  {verificationStatus !== 'verified' && verificationStatus !== 'pending' ? (
+                    <button type="button" onClick={() => setVerificationFormOpen((current) => !current)} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+                      {verificationFormOpen ? 'Hide form' : 'Apply'}
+                    </button>
+                  ) : verificationStatus === 'pending' ? (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">Under review</span>
+                  ) : null}
+                </div>
+
+                {verificationFormOpen && verificationStatus !== 'verified' && verificationStatus !== 'pending' ? (
+                  <form onSubmit={handleVerificationSubmit} className="mt-4 space-y-4">
+                    <select value={verificationType} onChange={(event) => setVerificationType(event.target.value as (typeof verificationTypes)[number]['value'])} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
+                      {verificationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    </select>
+                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                    {documentFiles.length > 0 ? (
+                      <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        {documentFiles.map((file) => <p key={`${file.name}-${file.size}`} className="truncate">{file.name}</p>)}
+                      </div>
+                    ) : null}
+                    <button type="submit" disabled={verificationSubmitting} className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                      {verificationSubmitting ? verificationUploadStatus || 'Submitting...' : 'Submit for review'}
+                    </button>
+                  </form>
+                ) : null}
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Selling Profile</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>Personal</button>
+                  {businesses.map((business) => (
+                    <button key={business.id} type="button" onClick={() => setProfileContext({ mode: 'business', businessId: business.id, businessName: business.business_name })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.businessId === business.id ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>{business.business_name}</button>
+                  ))}
+                </div>
+
+                <form onSubmit={handleBusinessSubmit} className="mt-4 grid gap-3">
+                  <input name="business_name" value={businessForm.business_name} onChange={(event) => setBusinessForm((current) => ({ ...current, business_name: event.target.value }))} placeholder="Business name" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select name="category" value={businessForm.category} onChange={(event) => setBusinessForm((current) => ({ ...current, category: event.target.value }))} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
+                      {businessCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                    </select>
+                    <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  </div>
+                  <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} placeholder="Description" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <button type="submit" disabled={businessSubmitting} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{businessSubmitting ? 'Creating...' : 'Create business profile'}</button>
+                </form>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Help</h3>
+                <form onSubmit={handleComplaintSubmit} className="mt-3 grid gap-3">
+                  <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <button type="submit" disabled={complaintSubmitting} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{complaintSubmitting ? 'Sending...' : 'Report issue'}</button>
+                </form>
+              </section>
+
+              {businesses.length > 0 ? (
+                <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                  <h3 className="font-bold">Business Profiles</h3>
+                  <div className="mt-3 space-y-3">
+                    {businesses.map((business) => (
+                      <article key={business.id} className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="font-bold">{business.business_name}</p>
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{business.category} · {business.location} · {statusLabel(business.verification_status)}</p>
+                          </div>
+                          <ReportButton targetType="business" targetId={business.id} label="Report" />
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <button type="button" onClick={async () => { await signOut(); setSettingsOpen(false); }} className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-semibold text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <BottomNav />
     </div>

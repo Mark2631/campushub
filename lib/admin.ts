@@ -131,7 +131,34 @@ function idsAreValid(...ids: Array<string | null | undefined>) {
 }
 
 function invalidAdminAction() {
-  return { error: 'Something went wrong. Try again.' };
+  return { error: 'You do not have permission to do that.' };
+}
+
+async function assertCurrentUserIsAdmin(expectedAdminId?: string) {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const currentUser = authData.user;
+
+  if (authError || !currentUser?.id || !currentUser.email) {
+    if (authError) console.error('Admin auth check failed:', authError);
+    return false;
+  }
+
+  if (expectedAdminId && currentUser.id !== expectedAdminId) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('email', currentUser.email.toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    console.error('Admin table check failed:', error);
+    return false;
+  }
+
+  return Boolean(data);
 }
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
@@ -246,6 +273,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
 export async function setUserVerificationStatus(request: AdminVerificationRequest, status: 'verified' | 'rejected') {
   if (!idsAreValid(request.id, request.user_id)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
 
   const requestStatus = status === 'verified' ? 'verified' : 'rejected';
 
@@ -270,6 +298,7 @@ export async function setUserVerificationStatus(request: AdminVerificationReques
 
 export async function setBusinessVerificationStatus(businessId: string, status: 'verified' | 'rejected') {
   if (!isValidUuid(businessId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
 
   const { error } = await supabase
     .from('businesses')
@@ -282,6 +311,7 @@ export async function setBusinessVerificationStatus(businessId: string, status: 
 
 export async function updateListingStatus(listingId: string, status: 'hidden' | 'reported') {
   if (!isValidUuid(listingId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
 
   const { error } = await supabase
     .from('listings')
@@ -294,18 +324,20 @@ export async function updateListingStatus(listingId: string, status: 'hidden' | 
 
 export async function deleteListing(listingId: string) {
   if (!isValidUuid(listingId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
 
   const { error } = await supabase
     .from('listings')
-    .delete()
+    .update({ status: 'hidden' })
     .eq('id', listingId);
 
-  if (error) console.error('Error deleting listing:', error);
+  if (error) console.error('Error hiding listing:', error);
   return { error: error ? 'Something went wrong. Try again.' : null };
 }
 
 export async function updateReportStatus(reportId: string, status: 'pending' | 'reviewed' | 'resolved') {
   if (!isValidUuid(reportId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
 
   const { error } = await supabase
     .from('reports')
@@ -347,6 +379,7 @@ export async function getUserDetails(userId: string) {
 
 export async function suspendUser(userId: string, adminId: string, reason: string) {
   if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'suspended' }).eq('id', userId),
@@ -369,6 +402,7 @@ export async function suspendUser(userId: string, adminId: string, reason: strin
 
 export async function unblockUser(userId: string, adminId: string, reason: string) {
   if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId),
@@ -391,6 +425,7 @@ export async function unblockUser(userId: string, adminId: string, reason: strin
 
 export async function banUser(userId: string, adminId: string, reason: string) {
   if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ account_status: 'banned' }).eq('id', userId),
@@ -413,6 +448,7 @@ export async function banUser(userId: string, adminId: string, reason: string) {
 
 export async function warnUser(userId: string, adminId: string, title: string, message: string) {
   if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const now = new Date().toISOString();
   const [{ error: profileError }, { error: noticeError }] = await Promise.all([
@@ -469,6 +505,7 @@ export async function getBusinessDetails(businessId: string) {
 
 export async function approveBusiness(businessId: string, adminId: string) {
   if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase
@@ -493,6 +530,7 @@ export async function approveBusiness(businessId: string, adminId: string) {
 
 export async function rejectBusiness(businessId: string, adminId: string, reason: string) {
   if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const business = await getBusinessDetails(businessId);
 
@@ -530,6 +568,7 @@ export async function rejectBusiness(businessId: string, adminId: string, reason
 
 export async function revokeBusiness(businessId: string, adminId: string, reason: string) {
   if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase
@@ -555,6 +594,7 @@ export async function revokeBusiness(businessId: string, adminId: string, reason
 
 export async function suspendBusiness(businessId: string, adminId: string, reason: string) {
   if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase.from('businesses').update({ status: 'suspended' }).eq('id', businessId),
@@ -577,6 +617,7 @@ export async function suspendBusiness(businessId: string, adminId: string, reaso
 
 export async function terminateBusiness(businessId: string, adminId: string, reason: string) {
   if (!idsAreValid(businessId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: bizError }, { error: auditError }] = await Promise.all([
     supabase.from('businesses').update({ status: 'terminated' }).eq('id', businessId),
@@ -603,6 +644,7 @@ export async function terminateBusiness(businessId: string, adminId: string, rea
 
 export async function hideListing(listingId: string, adminId: string, reason: string) {
   if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await Promise.all([
     supabase
@@ -635,6 +677,7 @@ export async function hideListing(listingId: string, adminId: string, reason: st
 
 export async function restoreListing(listingId: string, adminId: string) {
   if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await Promise.all([
     supabase
@@ -668,6 +711,7 @@ export async function restoreListing(listingId: string, adminId: string) {
 
 export async function deleteListingAsAdmin(listingId: string, adminId: string, reason: string) {
   if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await Promise.all([
     supabase
@@ -704,6 +748,7 @@ export async function deleteListingAsAdmin(listingId: string, adminId: string, r
 
 export async function approveVerification(verificationId: string, adminId: string, userId: string, businessId?: string | null, addBadge = true) {
   if (!idsAreValid(verificationId, adminId, userId, businessId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: verifyError }, { error: profileError }, businessResult] = await Promise.all([
     supabase
@@ -747,6 +792,7 @@ export async function approveVerification(verificationId: string, adminId: strin
 
 export async function rejectVerification(verificationId: string, adminId: string, userId: string, reason: string) {
   if (!idsAreValid(verificationId, adminId, userId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error: verifyError } = await supabase
     .from('verification_requests')
@@ -802,6 +848,7 @@ export async function rejectVerification(verificationId: string, adminId: string
 
 export async function revokeVerification(userId: string, adminId: string, reason: string) {
   if (!idsAreValid(userId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const [{ error: profileError }, { error: auditError }] = await Promise.all([
     supabase.from('profiles').update({ verification_status: 'unverified', badge_type: 'none' }).eq('id', userId),
@@ -828,6 +875,7 @@ export async function revokeVerification(userId: string, adminId: string, reason
 
 export async function resolveReport(reportId: string, adminId: string, resolution: string, action?: string) {
   if (!idsAreValid(reportId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await Promise.all([
     supabase
@@ -861,6 +909,7 @@ export async function resolveReport(reportId: string, adminId: string, resolutio
 
 export async function sendReportResponse(reporterId: string, adminId: string, message: string) {
   if (!idsAreValid(reporterId, adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await supabase.from('admin_notices').insert({
     user_id: reporterId,
@@ -892,6 +941,7 @@ export async function logAdminAction(
   reason?: string
 ) {
   if (!idsAreValid(adminId, targetId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
   const { error } = await supabase.from('admin_actions').insert({
     admin_id: adminId,

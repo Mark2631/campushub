@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
+import { sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
 import { ensureProfile } from '../../lib/profiles';
 
 type AuthMode = 'signup' | 'signin';
@@ -172,9 +172,13 @@ function SignInPageContent() {
 
   const handleGoogle = async () => {
     setNotice(null);
-    const message = 'Google sign-in is coming soon. Use email and password for now.';
-    showToast({ type: 'info', message });
-    setNotice({ tone: 'info', message });
+    const { error } = await signInWithGoogle();
+    if (error) {
+      console.error('Google sign-in failed:', error);
+      const message = 'Something went wrong. Try again.';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
+    }
   };
 
   const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {

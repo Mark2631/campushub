@@ -18,6 +18,7 @@ const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Ser
 const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
 const maxVideoSize = 15 * 1024 * 1024;
+type SellTab = 'sell' | 'requests' | 'guide';
 
 type SelectedMedia = {
   file: File;
@@ -63,6 +64,7 @@ function SellPageContent() {
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [requestMessage, setRequestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [requestPrefillMessage, setRequestPrefillMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<SellTab>(requestMode ? 'requests' : 'sell');
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
   const activeSellerProfile = sellerProfile?.id === user?.id ? sellerProfile : null;
@@ -79,6 +81,10 @@ function SellPageContent() {
       : activeSellerProfile?.verification_status === 'verified' || activeSellerProfile?.badge_type === 'verified' || activeSellerProfile?.badge_type === 'blue'
         ? 'Verified'
         : 'Unverified';
+
+  useEffect(() => {
+    if (requestMode) setActiveTab('requests');
+  }, [requestMode]);
 
   useEffect(() => {
     const loadEditListing = async () => {
@@ -244,7 +250,7 @@ function SellPageContent() {
       await pushNotification({
         type: 'item request',
         title: 'Request posted',
-        body: `${request.title} is now visible on Home.`,
+        body: `${request.title} is now visible in Requests.`,
       });
       setRequestForm({
         title: '',
@@ -537,13 +543,32 @@ function SellPageContent() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
       <Header />
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell an item or service'}</h1>
-          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post an item, service, food offer, or refurbished product.</p>
-          <p className="mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
-            Posting as: {profileContext.mode === 'business' ? profileContext.businessName : 'Personal profile'}
-          </p>
+        <header className="mb-5">
+          <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
+          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post items, services, or campus requests for MUST students.</p>
         </header>
+
+        <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          {[
+            ['sell', 'Sell an item/service'],
+            ['requests', 'Requests'],
+            ['guide', 'My selling guide'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setActiveTab(value as SellTab)}
+              className={`min-h-11 rounded-xl px-2 py-2 text-xs font-bold transition sm:text-sm ${
+                activeTab === value
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
         {visibleRequestPrefillMessage ? (
           <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200">
@@ -551,171 +576,109 @@ function SellPageContent() {
           </div>
         ) : null}
 
-        <section className="mb-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        {activeTab === 'sell' ? (
+          <section className="mb-5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
                 <UserRound className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-lg font-bold text-gray-900 dark:text-white">Seller details</h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                    Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
+                  </span>
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
                     {sellerBadge}
-                  </span>
-                </div>
-                <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
-                  {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
-                </p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{sellerLabel}</p>
-                {user.email ? <p className="mt-1 truncate text-sm text-gray-600 dark:text-zinc-400">{user.email}</p> : null}
-                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-gray-600 dark:text-zinc-400">
-                  <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-zinc-800">
-                    Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
                   {activeSellerProfile?.phone_number ? (
                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                       WhatsApp ready
                     </span>
-                  ) : (
-                    <Link href="/profile" className="rounded-full bg-amber-100 px-3 py-1 text-amber-700 transition hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-200">
-                      Add WhatsApp
-                    </Link>
-                  )}
+                  ) : null}
                 </div>
+                <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
+                  {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{sellerLabel}</p>
               </div>
             </div>
-          </div>
+          </section>
+        ) : null}
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+        {activeTab === 'requests' ? (
+          <form id="request-item" onSubmit={handleRequestSubmit} className="mb-6 space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white">
                 <ClipboardList className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Need something?</h2>
-                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-zinc-400">
-                  Post a no-photo request and sellers will see it on Home.
-                </p>
-                <a href="#request-item" className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                  Request item
-                </a>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Post request</h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Tell campus sellers what you are looking for.</p>
               </div>
             </div>
-          </div>
-        </section>
 
-        <form
-          id="request-item"
-          onSubmit={handleRequestSubmit}
-          className={`mb-6 space-y-4 rounded-2xl border bg-white p-5 dark:bg-zinc-900 ${
-            requestMode
-              ? 'border-emerald-400 ring-2 ring-emerald-500/20 dark:border-emerald-700'
-              : 'border-gray-200 dark:border-zinc-800'
-          }`}
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-300">No photo needed</p>
-              <h2 className="mt-1 text-xl font-bold text-gray-900 dark:text-white">Request an item or service</h2>
+            {requestMessage ? (
+              <div className={`rounded-2xl border p-3 text-sm font-semibold ${requestMessage.type === 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/40 dark:text-green-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200'}`}>
+                {requestMessage.text}
+              </div>
+            ) : null}
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">What are you looking for?</span>
+                <input type="text" name="title" value={requestForm.title} onChange={handleRequestChange} placeholder="e.g., Laptop charger" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" required />
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">Category</span>
+                <select name="category" value={requestForm.category} onChange={handleRequestChange} className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
+                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+              </label>
             </div>
-            <p className="text-sm font-semibold text-gray-500 dark:text-zinc-400">Shows on Home</p>
-          </div>
 
-          {requestMessage ? (
-            <div className={`rounded-2xl border p-3 text-sm font-semibold ${requestMessage.type === 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/40 dark:text-green-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200'}`}>
-              {requestMessage.text}
+            <div className="grid gap-4 lg:grid-cols-3">
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">Min price</span>
+                <input type="number" name="minPrice" value={requestForm.minPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">Max price</span>
+                <input type="number" name="maxPrice" value={requestForm.maxPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="font-medium text-gray-900 dark:text-white">Location</span>
+                <input type="text" name="location" value={requestForm.location} onChange={handleRequestChange} placeholder="Campus area" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+              </label>
             </div>
-          ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">What do you need?</span>
-              <input
-                type="text"
-                name="title"
-                value={requestForm.title}
-                onChange={handleRequestChange}
-                placeholder="e.g., Used laptop charger"
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-                required
-              />
+              <span className="font-medium text-gray-900 dark:text-white">Description</span>
+              <textarea name="description" value={requestForm.description} onChange={handleRequestChange} rows={3} placeholder="Add size, model, deadline, or service details." className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
             </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Category</span>
-              <select
-                name="category"
-                value={requestForm.category}
-                onChange={handleRequestChange}
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Min budget</span>
-              <input
-                type="number"
-                name="minPrice"
-                value={requestForm.minPrice}
-                onChange={handleRequestChange}
-                placeholder="KSh"
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-              />
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Max budget</span>
-              <input
-                type="number"
-                name="maxPrice"
-                value={requestForm.maxPrice}
-                onChange={handleRequestChange}
-                placeholder="KSh"
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-              />
-            </label>
-            <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Location</span>
-              <input
-                type="text"
-                name="location"
-                value={requestForm.location}
-                onChange={handleRequestChange}
-                placeholder="Campus area"
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-              />
-            </label>
-          </div>
+            <button type="submit" disabled={requestSubmitting} className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
+              {requestSubmitting ? 'Posting request...' : 'Post request'}
+            </button>
+          </form>
+        ) : null}
 
-          <label className="space-y-2 text-sm">
-            <span className="font-medium text-gray-900 dark:text-white">Details</span>
-            <textarea
-              name="description"
-              value={requestForm.description}
-              onChange={handleRequestChange}
-              rows={3}
-              placeholder="Add size, model, deadline, or service details."
-              className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-            />
-          </label>
+        {activeTab === 'guide' ? (
+          <section className="mb-6 space-y-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            {[
+              ['Meet safely', 'Meet inside campus or a public nearby place.'],
+              ['Inspect first', 'Let buyers check the item before any payment.'],
+              ['Keep proof', 'Use clear photos, honest condition, and chat records.'],
+              ['Use fair pricing', 'Price services and used items clearly.'],
+            ].map(([summary, detail]) => (
+              <details key={summary} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+                <summary className="cursor-pointer text-sm font-bold text-gray-900 dark:text-white">{summary}</summary>
+                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-zinc-400">{detail}</p>
+              </details>
+            ))}
+          </section>
+        ) : null}
 
-          <button
-            type="submit"
-            disabled={requestSubmitting}
-            className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-          >
-            {requestSubmitting ? 'Posting request...' : 'Post request'}
-          </button>
-        </form>
-
-        {message && (
+        {activeTab === 'sell' && message && (
           <div className={`mb-6 rounded-2xl border p-4 ${message.type === 'success' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
             <p className="font-medium">{message.text}</p>
             {message.type === 'success' && (
@@ -763,6 +726,7 @@ function SellPageContent() {
           </div>
         )}
 
+        {activeTab === 'sell' ? (
         <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8">
           <div className="flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">1</div>
@@ -1021,6 +985,7 @@ function SellPageContent() {
             <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>
           ) : null}
         </form>
+        ) : null}
       </main>
 
       <BottomNav />

@@ -1,7 +1,7 @@
 {
   "name": "CampusTrader",
   "short_name": "CampusTrader",
-  "description": "Trusted Campus Marketplace",
+  "description": "MUST campus marketplace for students and nearby businesses",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,13 +9,13 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/campustrader-icon-192-v2.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/campustrader-icon-512-v2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

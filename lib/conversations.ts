@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { withTimeout } from './storage';
-import { isValidUuid } from './validation';
+import { GENERIC_ERROR, PERMISSION_ERROR, cleanMultilineText, isValidUuid } from './validation';
 
 export interface Message {
   id: string;
@@ -64,7 +64,7 @@ export async function findOrCreateConversation(
 
   if (fetchError) {
     console.error('Error fetching conversation:', serializeError(fetchError));
-    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
+    return { conversation: null, error: GENERIC_ERROR };
   }
 
   if (existing) {
@@ -79,7 +79,7 @@ export async function findOrCreateConversation(
 
   if (insertError) {
     console.error('Error creating conversation:', serializeError(insertError));
-    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
+    return { conversation: null, error: GENERIC_ERROR };
   }
 
   return { conversation: inserted, error: null };
@@ -97,7 +97,7 @@ async function fetchConversationMessages(conversationIds: string[]) {
 
   if (error) {
     console.error('Error fetching conversation messages:', serializeError(error));
-    return { messagesByConversation: {} as Record<string, Message[]>, error: error.message };
+    return { messagesByConversation: {} as Record<string, Message[]>, error: GENERIC_ERROR };
   }
 
   const messagesByConversation = (data || []).reduce<Record<string, Message[]>>((acc, row) => {
@@ -132,7 +132,7 @@ async function fetchProfiles(userIds: string[]) {
 
   if (error) {
     console.error('Error fetching conversation profiles:', serializeError(error));
-    return { profiles: {} as Record<string, ConversationUser>, error: error.message };
+    return { profiles: {} as Record<string, ConversationUser>, error: GENERIC_ERROR };
   }
 
   const profiles = (data || []).reduce<Record<string, ConversationUser>>((acc, row) => {
@@ -155,7 +155,7 @@ async function fetchListingTitles(listingIds: string[]) {
 
   if (error) {
     console.error('Error fetching listing titles:', serializeError(error));
-    return { titles: {} as Record<string, string>, error: error.message };
+    return { titles: {} as Record<string, string>, error: GENERIC_ERROR };
   }
 
   const titles = (data || []).reduce<Record<string, string>>((acc, row) => {
@@ -180,7 +180,7 @@ export async function getUserConversations(userId: string) {
 
   if (error) {
     console.error('Error fetching conversations:', serializeError(error));
-    return { conversations: [], error: error.message };
+    return { conversations: [], error: GENERIC_ERROR };
   }
 
   const rows = (data || []) as ConversationRow[];
@@ -237,7 +237,7 @@ export async function getConversationById(conversationId: string, userId: string
 
   if (error) {
     console.error('Error fetching conversation by id:', serializeError(error));
-    return { conversation: null, error: error.message };
+    return { conversation: null, error: GENERIC_ERROR };
   }
 
   if (!data) {
@@ -245,7 +245,7 @@ export async function getConversationById(conversationId: string, userId: string
   }
 
   if (data.buyer_id !== userId && data.seller_id !== userId) {
-    return { conversation: null, error: 'Not authorized.' };
+    return { conversation: null, error: PERMISSION_ERROR };
   }
 
   const otherUserId = data.buyer_id === userId ? data.seller_id : data.buyer_id;
@@ -281,11 +281,31 @@ export async function sendMessage(conversationId: string, senderId: string, cont
     return { message: null, error: 'Message failed to send.' };
   }
 
+  const cleanContent = cleanMultilineText(content, 1200);
+  if (!cleanContent) {
+    return { message: null, error: 'Message failed to send.' };
+  }
+
   try {
+    const { data: conversation, error: conversationError } = await supabase
+      .from('conversations')
+      .select('id, buyer_id, seller_id')
+      .eq('id', conversationId)
+      .maybeSingle();
+
+    if (conversationError || !conversation) {
+      if (conversationError) console.error('Message conversation check failed:', serializeError(conversationError));
+      return { message: null, error: 'Message failed to send.' };
+    }
+
+    if (conversation.buyer_id !== senderId && conversation.seller_id !== senderId) {
+      return { message: null, error: PERMISSION_ERROR };
+    }
+
     const { data, error } = await withTimeout(
       supabase
         .from('messages')
-        .insert({ conversation_id: conversationId, sender_id: senderId, content })
+        .insert({ conversation_id: conversationId, sender_id: senderId, content: cleanContent })
         .select('id, conversation_id, sender_id, content, created_at')
         .single(),
       15000,

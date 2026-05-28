@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { isValidUuid } from './validation';
+import { GENERIC_ERROR, isValidUuid } from './validation';
 
 export type AppNotification = {
   id: string;
@@ -40,7 +40,7 @@ export async function createNotificationRecord(data: {
 
   if (error) {
     console.error('Notification insert failed:', serializeError(error), payload);
-    return { notification: null, error: error.message };
+    return { notification: null, error: GENERIC_ERROR };
   }
 
   return { notification: notification as AppNotification, error: null };
@@ -60,7 +60,7 @@ export async function getUserNotifications(userId: string) {
 
   if (error) {
     console.error('Notification fetch failed:', serializeError(error));
-    return { notifications: [] as AppNotification[], error: error.message };
+    return { notifications: [] as AppNotification[], error: GENERIC_ERROR };
   }
 
   return { notifications: (data || []) as AppNotification[], error: null };
@@ -78,7 +78,7 @@ export async function markNotificationRead(notificationId: string) {
 
   if (error) {
     console.error('Mark notification read failed:', serializeError(error));
-    return { error: error.message };
+    return { error: GENERIC_ERROR };
   }
 
   return { error: null };
@@ -91,12 +91,12 @@ export async function deleteNotificationRecord(notificationId: string) {
 
   const { error } = await supabase
     .from('notifications')
-    .delete()
+    .update({ read: true })
     .eq('id', notificationId);
 
   if (error) {
-    console.error('Delete notification failed:', serializeError(error));
-    return { error: error.message };
+    console.error('Notification archive failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
   }
 
   return { error: null };
@@ -109,12 +109,12 @@ export async function clearUserNotifications(userId: string) {
 
   const { error } = await supabase
     .from('notifications')
-    .delete()
+    .update({ read: true })
     .eq('user_id', userId);
 
   if (error) {
     console.error('Clear notifications failed:', serializeError(error));
-    return { error: error.message };
+    return { error: GENERIC_ERROR };
   }
 
   return { error: null };

@@ -6,6 +6,18 @@ import Header from '../../components/Header';
 import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
 import {
+  Community,
+  CommunityPost,
+  createCommunity,
+  createCommunityPost,
+  getCommunities,
+  getCommunityPosts,
+  updateCommunityPostPin,
+  updateCommunityPostStatus,
+  updateCommunityStatus,
+  uploadCommunityMedia,
+} from '../../lib/community';
+import {
   AdminDashboardData,
   getAdminDashboardData,
   updateReportStatus,
@@ -142,11 +154,18 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'verifications' | 'reports' | 'audit'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'verifications' | 'reports' | 'communities' | 'audit'>('overview');
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const [modalNotes, setModalNotes] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState('');
+  const [communityWorking, setCommunityWorking] = useState(false);
+  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements' });
+  const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
+  const [communityMedia, setCommunityMedia] = useState<File[]>([]);
 
   const usersById = useMemo(() => {
     return new Map(dashboard.users.map((user) => [user.id, user]));
@@ -156,10 +175,17 @@ export default function AdminPage() {
     if (!isAdmin) return;
 
     setLoadingDashboard(true);
-    const data = await getAdminDashboardData();
+    const [data, communityData] = await Promise.all([
+      getAdminDashboardData(),
+      getCommunities(authUser?.id),
+    ]);
     setDashboard(data);
+    setCommunities(communityData.communities);
+    if (!selectedCommunityId && communityData.communities[0]) {
+      setSelectedCommunityId(communityData.communities[0].id);
+    }
     setLoadingDashboard(false);
-  }, [isAdmin]);
+  }, [authUser?.id, isAdmin, selectedCommunityId]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -167,9 +193,16 @@ export default function AdminPage() {
     let isMounted = true;
 
     const loadInitialDashboard = async () => {
-      const data = await getAdminDashboardData();
+      const [data, communityData] = await Promise.all([
+        getAdminDashboardData(),
+        getCommunities(authUser?.id),
+      ]);
       if (isMounted) {
         setDashboard(data);
+        setCommunities(communityData.communities);
+        if (communityData.communities[0]) {
+          setSelectedCommunityId((current) => current || communityData.communities[0].id);
+        }
       }
     };
 
@@ -178,7 +211,24 @@ export default function AdminPage() {
     return () => {
       isMounted = false;
     };
-  }, [isAdmin]);
+  }, [authUser?.id, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin || !selectedCommunityId) return;
+
+    let mounted = true;
+    const loadPosts = async () => {
+      const { posts, error } = await getCommunityPosts(selectedCommunityId, authUser?.id);
+      if (!mounted) return;
+      if (error) console.error('Admin community posts load failed:', error);
+      setCommunityPosts(posts);
+    };
+
+    void loadPosts();
+    return () => {
+      mounted = false;
+    };
+  }, [authUser?.id, isAdmin, selectedCommunityId]);
 
   const runAction = async (id: string, action: () => Promise<{ error: string | null }>, successText: string) => {
     setWorkingId(id);
@@ -333,6 +383,98 @@ export default function AdminPage() {
     }
   };
 
+  const handleCommunityCreate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!authUser?.id) return;
+
+    setCommunityWorking(true);
+    const { community, error } = await createCommunity({
+      adminId: authUser.id,
+      adminEmail: authUser.email,
+      name: communityForm.name,
+      description: communityForm.description,
+      category: communityForm.category,
+    });
+    setCommunityWorking(false);
+
+    if (error || !community) {
+      console.error('Community create failed:', error);
+      setMessage({ type: 'error', text: error || 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: error || 'Something went wrong. Try again.' });
+      return;
+    }
+
+    setCommunities((current) => [community, ...current]);
+    setSelectedCommunityId(community.id);
+    setCommunityForm({ name: '', description: '', category: 'Announcements' });
+    setMessage({ type: 'success', text: 'Community created.' });
+    showToast({ type: 'success', message: 'Community created.' });
+  };
+
+  const handleCommunityPostCreate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!authUser?.id || !selectedCommunityId) return;
+
+    setCommunityWorking(true);
+    const mediaUrls: string[] = [];
+
+    for (const file of communityMedia) {
+      const { publicUrl, error } = await uploadCommunityMedia(selectedCommunityId, authUser.id, file);
+      if (error || !publicUrl) {
+        console.error('Community media upload failed:', error);
+        setCommunityWorking(false);
+        setMessage({ type: 'error', text: 'Upload failed. Please retry.' });
+        showToast({ type: 'error', message: 'Upload failed. Please retry.' });
+        return;
+      }
+      mediaUrls.push(publicUrl);
+    }
+
+    const { post, error } = await createCommunityPost({
+      communityId: selectedCommunityId,
+      authorId: authUser.id,
+      authorEmail: authUser.email,
+      content: communityPostForm.content,
+      mediaUrls,
+      isPinned: communityPostForm.isPinned,
+    });
+    setCommunityWorking(false);
+
+    if (error || !post) {
+      console.error('Community post create failed:', error);
+      setMessage({ type: 'error', text: error || 'Something went wrong. Try again.' });
+      showToast({ type: 'error', message: error || 'Something went wrong. Try again.' });
+      return;
+    }
+
+    setCommunityPosts((current) => [post, ...current]);
+    setCommunityPostForm({ content: '', isPinned: false });
+    setCommunityMedia([]);
+    setMessage({ type: 'success', text: 'Community post published.' });
+    showToast({ type: 'success', message: 'Community post published.' });
+  };
+
+  const runCommunityAction = async (action: () => Promise<{ error: string | null }>, successText: string) => {
+    setCommunityWorking(true);
+    const { error } = await action();
+    setCommunityWorking(false);
+
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
+      return;
+    }
+
+    setMessage({ type: 'success', text: successText });
+    showToast({ type: 'success', message: successText });
+    const [{ communities }, { posts }] = await Promise.all([
+      getCommunities(authUser?.id),
+      selectedCommunityId ? getCommunityPosts(selectedCommunityId, authUser?.id) : Promise.resolve({ posts: [] as CommunityPost[], error: null }),
+    ]);
+    setCommunities(communities);
+    setCommunityPosts(posts);
+  };
+
   if (userLoading || adminLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-black pb-24 text-white">
@@ -407,7 +549,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-zinc-800 pb-0">
-          {(['overview', 'users', 'businesses', 'listings', 'verifications', 'reports', 'audit'] as const).map((t) => (
+          {(['overview', 'users', 'businesses', 'listings', 'verifications', 'reports', 'communities', 'audit'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -655,10 +797,10 @@ export default function AdminPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => openModal('listing_delete', 'Delete Listing', `Permanently delete "${listing.title}"?`, listing.id, 'listing')}
+                          onClick={() => openModal('listing_delete', 'Hide Listing', `Hide "${listing.title}" from the marketplace?`, listing.id, 'listing')}
                           className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
                         >
-                          Delete
+                          Remove
                         </button>
                       </div>
                     </div>
@@ -795,7 +937,12 @@ export default function AdminPage() {
                           ))}
                         </select>
                         <button
-                          onClick={() => openModal('report_response', 'Send Response', `Send a response to the reporter?`, report.reporter_id ?? undefined, 'report')}
+                          onClick={() => {
+                            setModalState({ type: 'report_response', reporterId: report.reporter_id ?? undefined });
+                            setModalTitle('Send Response');
+                            setModalMessage('Send a response to the reporter?');
+                            setModalNotes('');
+                          }}
                           className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
                         >
                           Respond
@@ -807,6 +954,176 @@ export default function AdminPage() {
               ) : (
                 <EmptyState text="No reports found." />
               )}
+            </div>
+          </section>
+        )}
+
+        {/* Communities Tab */}
+        {tab === 'communities' && (
+          <section className="space-y-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Communities</h2>
+                <p className="mt-1 text-sm text-zinc-400">Official MUST groups, posts, pins, and moderation.</p>
+              </div>
+              <select
+                value={selectedCommunityId}
+                onChange={(event) => setSelectedCommunityId(event.target.value)}
+                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+              >
+                {communities.map((community) => (
+                  <option key={community.id} value={community.id}>
+                    {community.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="space-y-6">
+                <form onSubmit={handleCommunityCreate} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+                  <h3 className="font-bold text-white">Create official community</h3>
+                  <input
+                    value={communityForm.name}
+                    onChange={(event) => setCommunityForm((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="Community name"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                  <input
+                    value={communityForm.category}
+                    onChange={(event) => setCommunityForm((current) => ({ ...current, category: event.target.value }))}
+                    placeholder="Category"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                  <textarea
+                    value={communityForm.description}
+                    onChange={(event) => setCommunityForm((current) => ({ ...current, description: event.target.value }))}
+                    rows={3}
+                    placeholder="Description"
+                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                  <button disabled={communityWorking} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+                    {communityWorking ? 'Saving...' : 'Create community'}
+                  </button>
+                </form>
+
+                <div className="space-y-3">
+                  {communities.map((community) => (
+                    <article key={community.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-white">{community.name}</p>
+                          <p className="mt-1 text-sm text-zinc-500">{community.category} · {community.memberCount || 0} followers</p>
+                        </div>
+                        <StatusPill status={community.status} />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedCommunityId(community.id);
+                          }}
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-blue-500"
+                        >
+                          Manage
+                        </button>
+                        <button
+                          disabled={communityWorking}
+                          onClick={() => runCommunityAction(
+                            () => updateCommunityStatus(community.id, authUser!.id, authUser!.email, community.status === 'active' ? 'archived' : 'active'),
+                            community.status === 'active' ? 'Community archived.' : 'Community restored.'
+                          )}
+                          className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                        >
+                          {community.status === 'active' ? 'Archive' : 'Restore'}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <form onSubmit={handleCommunityPostCreate} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+                  <h3 className="font-bold text-white">Publish community post</h3>
+                  <textarea
+                    value={communityPostForm.content}
+                    onChange={(event) => setCommunityPostForm((current) => ({ ...current, content: event.target.value }))}
+                    rows={4}
+                    placeholder="Official post content"
+                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <label className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-100">
+                      Upload media
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                        onChange={(event) => setCommunityMedia(Array.from(event.currentTarget.files || []).slice(0, 4))}
+                        className="hidden"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={communityPostForm.isPinned}
+                        onChange={(event) => setCommunityPostForm((current) => ({ ...current, isPinned: event.target.checked }))}
+                      />
+                      Pin post
+                    </label>
+                  </div>
+                  {communityMedia.length > 0 ? (
+                    <p className="text-xs text-zinc-500">{communityMedia.length} media file(s) selected</p>
+                  ) : null}
+                  <button disabled={communityWorking || !selectedCommunityId} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+                    {communityWorking ? 'Publishing...' : 'Publish post'}
+                  </button>
+                </form>
+
+                <div className="space-y-3">
+                  {communityPosts.length > 0 ? (
+                    communityPosts.map((post) => (
+                      <article key={post.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {post.is_pinned ? <StatusPill status="pinned" /> : null}
+                              <StatusPill status={post.status} />
+                              <span className="text-xs text-zinc-500">{formatDate(post.created_at)}</span>
+                            </div>
+                            <p className="mt-3 line-clamp-3 text-sm leading-6 text-zinc-300">{post.content || 'Media post'}</p>
+                            <p className="mt-2 text-xs text-zinc-600">{post.comments?.length || 0} comments · {post.reactionCount || 0} reactions</p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              disabled={communityWorking}
+                              onClick={() => runCommunityAction(
+                                () => updateCommunityPostPin(post.id, authUser!.id, authUser!.email, !post.is_pinned),
+                                post.is_pinned ? 'Post unpinned.' : 'Post pinned.'
+                              )}
+                              className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                            >
+                              {post.is_pinned ? 'Unpin' : 'Pin'}
+                            </button>
+                            <button
+                              disabled={communityWorking}
+                              onClick={() => runCommunityAction(
+                                () => updateCommunityPostStatus(post.id, authUser!.id, authUser!.email, post.status === 'active' ? 'hidden' : 'active'),
+                                post.status === 'active' ? 'Post hidden.' : 'Post restored.'
+                              )}
+                              className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                            >
+                              {post.status === 'active' ? 'Hide' : 'Restore'}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <EmptyState text="No posts found for this community." />
+                  )}
+                </div>
+              </div>
             </div>
           </section>
         )}

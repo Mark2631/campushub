@@ -10,10 +10,10 @@ export async function checkIsAdmin(email: string) {
 
   if (error) {
     console.error('Error checking admin access:', error);
-    return { isAdmin: normalizedEmail === 'mwanginewton107@gmail.com', error: error.message };
+    return { isAdmin: false, error: 'Something went wrong. Try again.' };
   }
 
-  return { isAdmin: Boolean(data) || normalizedEmail === 'mwanginewton107@gmail.com', error: null };
+  return { isAdmin: Boolean(data), error: null };
 }
 
 export async function autoVerifyAdminProfile(userId: string, email: string) {
@@ -37,7 +37,7 @@ export async function autoVerifyAdminProfile(userId: string, email: string) {
 
   if (error) {
     console.error('Error auto-verifying admin profile:', error);
-    return { error: error.message };
+    return { error: 'Something went wrong. Try again.' };
   }
 
   return { error: null };

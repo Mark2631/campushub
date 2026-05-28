@@ -1,7 +1,7 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import { safeFileName, storageBuckets, uploadPublicFile } from './storage';
-import { isValidUuid } from './validation';
+import { safeFileName, storageBuckets, uploadPublicFile, validateUploadFile } from './storage';
+import { DEFAULT_CAMPUS, GENERIC_ERROR, UPLOAD_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid } from './validation';
 
 export interface ProfileRecord {
   id: string;
@@ -13,6 +13,7 @@ export interface ProfileRecord {
   role?: string | null;
   account_status?: string | null;
   phone_number?: string | null;
+  campus?: string | null;
   created_at?: string;
 }
 
@@ -26,6 +27,19 @@ export interface BusinessRecord {
   description: string;
   verification_status: string;
   badge_type?: string | null;
+  created_at?: string;
+}
+
+export interface VerificationRequestRecord {
+  id: string;
+  user_id: string;
+  business_id?: string | null;
+  request_type?: string | null;
+  type?: string | null;
+  document_name: string | null;
+  document_urls?: string[] | null;
+  admin_note?: string | null;
+  status: string;
   created_at?: string;
 }
 
@@ -52,7 +66,7 @@ async function safeUpsert(table: string, payload: Record<string, unknown>, onCon
     console.error(`${table} upsert error:`, serializeError(error), { workingPayload });
 
     if (!missingColumn || !(missingColumn in workingPayload) || Object.keys(workingPayload).length <= 1) {
-      return { data: null, error: 'Something went wrong. Try again.' };
+      return { data: null, error: GENERIC_ERROR };
     }
 
     delete workingPayload[missingColumn];
@@ -80,6 +94,7 @@ export async function ensureProfile(user: User) {
     account_status: accountStatus,
     role: isAdmin ? 'admin' : current?.role || 'user',
     phone_number: current?.phone_number || null,
+    campus: current?.campus || DEFAULT_CAMPUS,
   });
 
   return { profile: (data || null) as ProfileRecord | null, error };
@@ -102,7 +117,7 @@ export async function getProfileById(userId: string) {
 
   if (error) {
     console.error('Error fetching profile:', serializeError(error));
-    return { profile: null, error: 'Something went wrong. Try again.' };
+    return { profile: null, error: GENERIC_ERROR };
   }
 
   return { profile: (data || null) as ProfileRecord | null, error: null };
@@ -110,7 +125,12 @@ export async function getProfileById(userId: string) {
 
 export async function saveProfileAvatar(userId: string, file: File) {
   if (!isValidUuid(userId)) {
-    return { avatarUrl: null, error: 'Something went wrong. Try again.' };
+    return { avatarUrl: null, error: GENERIC_ERROR };
+  }
+
+  const validationError = validateUploadFile(file, 'image', 5 * 1024 * 1024);
+  if (validationError) {
+    return { avatarUrl: null, error: validationError };
   }
 
   const path = `${userId}/avatar-${Date.now()}-${safeFileName(file.name)}`;
@@ -123,7 +143,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
   if (uploadError || !publicUrl) {
     return {
       avatarUrl: null,
-      error: 'Profile picture upload failed. Try again.',
+      error: UPLOAD_ERROR,
     };
   }
 
@@ -134,7 +154,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
 
   if (error) {
     console.error('Profile avatar save failed:', error);
-    return { avatarUrl: null, error: 'Something went wrong. Try again.' };
+    return { avatarUrl: null, error: GENERIC_ERROR };
   }
 
   const confirmed = await getProfileById(userId);
@@ -143,7 +163,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
   if (confirmed.error || confirmedUrl !== publicUrl) {
     return {
       avatarUrl: publicUrl,
-      error: 'Something went wrong. Try again.',
+      error: GENERIC_ERROR,
     };
   }
 
@@ -160,7 +180,7 @@ export function normalizeKenyanPhone(value: string) {
 
 export async function saveProfilePhone(userId: string, phoneNumber: string) {
   if (!isValidUuid(userId)) {
-    return { phoneNumber: null, error: 'Something went wrong. Try again.' };
+    return { phoneNumber: null, error: GENERIC_ERROR };
   }
 
   const normalized = normalizeKenyanPhone(phoneNumber);
@@ -175,7 +195,7 @@ export async function saveProfilePhone(userId: string, phoneNumber: string) {
 
   if (error) {
     console.error('WhatsApp number save failed:', error);
-    return { phoneNumber: null, error: 'Something went wrong. Try again.' };
+    return { phoneNumber: null, error: GENERIC_ERROR };
   }
 
   return { phoneNumber: (data as ProfileRecord | null)?.phone_number || normalized, error: null };
@@ -183,7 +203,12 @@ export async function saveProfilePhone(userId: string, phoneNumber: string) {
 
 export async function uploadVerificationDocument(userId: string, file: File) {
   if (!isValidUuid(userId)) {
-    return { publicUrl: null, error: 'Something went wrong. Try again.' };
+    return { publicUrl: null, error: GENERIC_ERROR };
+  }
+
+  const validationError = validateUploadFile(file, 'verification-document', 8 * 1024 * 1024);
+  if (validationError) {
+    return { publicUrl: null, error: validationError };
   }
 
   const { publicUrl, error } = await uploadPublicFile(storageBuckets.verificationMedia, userId, file, {
@@ -192,7 +217,7 @@ export async function uploadVerificationDocument(userId: string, file: File) {
   });
 
   if (error || !publicUrl) {
-    return { publicUrl: null, error: error || 'Unable to upload verification document.' };
+    return { publicUrl: null, error: UPLOAD_ERROR };
   }
 
   return { publicUrl, error: null };
@@ -205,15 +230,24 @@ export async function createBusinessProfile(userId: string, business: {
   description: string;
 }) {
   if (!isValidUuid(userId)) {
-    return { business: null, error: 'Something went wrong. Try again.' };
+    return { business: null, error: GENERIC_ERROR };
+  }
+
+  const businessName = cleanText(business.business_name, 120);
+  const category = cleanText(business.category, 80);
+  const location = cleanText(business.location, 120);
+  const description = cleanMultilineText(business.description, 1000);
+
+  if (!businessName || !location) {
+    return { business: null, error: 'Business name and location are required.' };
   }
 
   const modernPayload = {
     owner_id: userId,
-    business_name: business.business_name,
-    category: business.category,
-    location: business.location,
-    description: business.description,
+    business_name: businessName,
+    category,
+    location,
+    description,
     verification_status: 'unverified',
     badge_type: 'none',
   };
@@ -228,10 +262,10 @@ export async function createBusinessProfile(userId: string, business: {
     console.error('Error creating business profile with owner_id:', serializeError(error), modernPayload);
     const legacyPayload = {
       user_id: userId,
-      business_name: business.business_name,
-      category: business.category,
-      location: business.location,
-      description: business.description,
+      business_name: businessName,
+      category,
+      location,
+      description,
       verification_status: 'unverified',
       badge_type: 'none',
     };
@@ -247,7 +281,7 @@ export async function createBusinessProfile(userId: string, business: {
 
     if (error) {
       console.error('Error creating legacy business profile:', serializeError(error), legacyPayload);
-      return { business: null, error: 'Something went wrong. Try again.' };
+      return { business: null, error: GENERIC_ERROR };
     }
   }
 
@@ -279,7 +313,7 @@ export async function getBusinessProfiles(userId: string) {
 
   if (error) {
     console.error('Error fetching business profiles:', serializeError(error));
-    return { businesses: [] as BusinessRecord[], error: 'Something went wrong. Try again.' };
+    return { businesses: [] as BusinessRecord[], error: GENERIC_ERROR };
   }
 
   return { businesses: (data || []) as BusinessRecord[], error: null };
@@ -293,7 +327,24 @@ export async function submitVerificationRequest(args: {
   businessId?: string | null;
 }) {
   if (!isValidUuid(args.userId) || (args.businessId && !isValidUuid(args.businessId))) {
-    return { request: null, error: 'Something went wrong. Try again.' };
+    return { request: null, error: GENERIC_ERROR };
+  }
+
+  if (!isAllowedValue(args.requestType, ['student', 'national_id', 'business'] as const)) {
+    return { request: null, error: GENERIC_ERROR };
+  }
+
+  if (args.businessId) {
+    const { data: business, error: businessError } = await supabase
+      .from('businesses')
+      .select('id, owner_id, user_id')
+      .eq('id', args.businessId)
+      .maybeSingle();
+
+    if (businessError || !business || (business.owner_id !== args.userId && business.user_id !== args.userId)) {
+      if (businessError) console.error('Business ownership check failed:', serializeError(businessError));
+      return { request: null, error: GENERIC_ERROR };
+    }
   }
 
   const payload = {
@@ -313,8 +364,37 @@ export async function submitVerificationRequest(args: {
 
   if (error) {
     console.error('Error submitting verification request:', serializeError(error), payload);
-    return { request: null, error: 'Something went wrong. Try again.' };
+    return { request: null, error: GENERIC_ERROR };
   }
 
+  await supabase
+    .from('profiles')
+    .update({ verification_status: 'pending' })
+    .eq('id', args.userId)
+    .then(({ error }) => {
+      if (error) console.error('Verification profile status update failed:', serializeError(error));
+    });
+
   return { request: data, error: null };
+}
+
+export async function getLatestVerificationRequest(userId: string) {
+  if (!isValidUuid(userId)) {
+    return { request: null as VerificationRequestRecord | null, error: null };
+  }
+
+  const { data, error } = await supabase
+    .from('verification_requests')
+    .select('id, user_id, business_id, type, request_type, document_name, document_urls, admin_note, status, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching latest verification request:', serializeError(error));
+    return { request: null as VerificationRequestRecord | null, error: GENERIC_ERROR };
+  }
+
+  return { request: (data || null) as VerificationRequestRecord | null, error: null };
 }

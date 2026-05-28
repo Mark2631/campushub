@@ -1,18 +1,18 @@
-<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="ct-bg" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2563EB"/>
-      <stop offset="0.55" stop-color="#0EA5E9"/>
-      <stop offset="1" stop-color="#10B981"/>
-    </linearGradient>
-    <linearGradient id="ct-stroke" x1="52" y1="48" x2="202" y2="208" gradientUnits="userSpaceOnUse">
-      <stop stop-color="white" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="white" stop-opacity="0.35"/>
+    <linearGradient id="bg" x1="80" y1="40" x2="440" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="0.45" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#020617"/>
     </linearGradient>
   </defs>
-  <rect x="20" y="20" width="216" height="216" rx="56" fill="url(#ct-bg)"/>
-  <rect x="31" y="31" width="194" height="194" rx="45" stroke="url(#ct-stroke)" stroke-width="2"/>
-  <path d="M76 126C76 93.9675 101.968 68 134 68H167V89H134C113.565 89 97 105.565 97 126C97 146.435 113.565 163 134 163H167V184H134C101.968 184 76 158.033 76 126Z" fill="white"/>
-  <path d="M179 82L153 106H168V150C168 160.493 159.493 169 149 169H120V190H149C171.091 190 189 172.091 189 150V106H204L179 82Z" fill="white" fill-opacity="0.92"/>
-  <circle cx="189" cy="82" r="7" fill="white" fill-opacity="0.9"/>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M120 156c0-24 20-44 44-44h184c24 0 44 20 44 44v32h-48v-22c0-6-5-11-11-11H179c-6 0-11 5-11 11v22h-48v-32Z" fill="#fff" opacity=".96"/>
+  <path d="M96 192h320c16 0 29 13 29 29v160c0 28-23 51-51 51H118c-28 0-51-23-51-51V221c0-16 13-29 29-29Z" fill="#fff"/>
+  <path d="M67 248h378v44H67z" fill="#dbeafe"/>
+  <path d="M168 192h176v56c0 16-13 29-29 29H197c-16 0-29-13-29-29v-56Z" fill="#1d4ed8"/>
+  <path d="M256 300 144 254l112-46 112 46-112 46Z" fill="#0f172a"/>
+  <path d="M177 284v46c0 19 35 39 79 39s79-20 79-39v-46l-79 32-79-32Z" fill="#0f172a"/>
+  <path d="M365 263v54" stroke="#0f172a" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="365" cy="336" r="17" fill="#0f172a"/>
 </svg>
