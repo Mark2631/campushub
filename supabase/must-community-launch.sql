@@ -44,11 +44,16 @@ create table if not exists public.communities (
   category text not null,
   cover_url text,
   is_official boolean not null default true,
+  posting_mode text not null default 'everyone' check (posting_mode in ('everyone', 'admin_only')),
   status text not null default 'active' check (status in ('active', 'archived', 'hidden')),
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table if exists public.communities
+  add column if not exists posting_mode text not null default 'everyone'
+  check (posting_mode in ('everyone', 'admin_only'));
 
 create table if not exists public.community_members (
   id uuid primary key default gen_random_uuid(),
@@ -106,33 +111,39 @@ $$;
 
 grant execute on function public.is_admin() to anon, authenticated;
 
-drop policy if exists "Admin can view all actions" on public.admin_actions;
-create policy "Admin can view all actions"
-on public.admin_actions
-for select
-to authenticated
-using (public.is_admin());
+do $$
+begin
+  if to_regclass('public.admin_actions') is not null then
+    drop policy if exists "Admin can view all actions" on public.admin_actions;
+    create policy "Admin can view all actions"
+    on public.admin_actions
+    for select
+    to authenticated
+    using (public.is_admin());
 
-drop policy if exists "Admins can insert admin actions" on public.admin_actions;
-create policy "Admins can insert admin actions"
-on public.admin_actions
-for insert
-to authenticated
-with check (public.is_admin() and admin_id = auth.uid());
+    drop policy if exists "Admins can insert admin actions" on public.admin_actions;
+    create policy "Admins can insert admin actions"
+    on public.admin_actions
+    for insert
+    to authenticated
+    with check (public.is_admin() and admin_id = auth.uid());
+  end if;
+end $$;
 
-insert into public.communities (id, campus, name, description, category, is_official, status)
+insert into public.communities (id, campus, name, description, category, is_official, posting_mode, status)
 values
-  ('11111111-1111-4111-8111-111111111111', 'MUST', 'MUST Marketplace Updates', 'Official updates about marketplace changes, safety tips, announcements, and new features.', 'Announcements', true, 'active'),
-  ('22222222-2222-4222-8222-222222222222', 'MUST', 'Campus Deals', 'Admin-curated student deals, discounts, business offers, and promoted listings.', 'Deals', true, 'active'),
-  ('33333333-3333-4333-8333-333333333333', 'MUST', 'Lost & Found', 'Students report lost and found items. Admins can post confirmed lost/found updates.', 'Safety', true, 'active'),
-  ('44444444-4444-4444-8444-444444444444', 'MUST', 'Services Around Campus', 'Admin-curated services like hairdressing, repairs, tutoring, laundry, printing, and photography.', 'Services', true, 'active'),
-  ('55555555-5555-4555-8555-555555555555', 'MUST', 'School Updates & Useful Links', 'Important student links, portals, school notices, library/e-learning links, and campus resources.', 'Resources', true, 'active')
+  ('11111111-1111-4111-8111-111111111111', 'MUST', 'MUST Marketplace Updates', 'Official updates about marketplace changes, safety tips, announcements, and new features.', 'Announcements', true, 'admin_only', 'active'),
+  ('22222222-2222-4222-8222-222222222222', 'MUST', 'Campus Deals', 'Admin-curated student deals, discounts, business offers, and promoted listings.', 'Deals', true, 'everyone', 'active'),
+  ('33333333-3333-4333-8333-333333333333', 'MUST', 'Lost & Found', 'Students report lost and found items. Admins can post confirmed lost/found updates.', 'Safety', true, 'everyone', 'active'),
+  ('44444444-4444-4444-8444-444444444444', 'MUST', 'Services Around Campus', 'Admin-curated services like hairdressing, repairs, tutoring, laundry, printing, and photography.', 'Services', true, 'everyone', 'active'),
+  ('55555555-5555-4555-8555-555555555555', 'MUST', 'School Updates & Useful Links', 'Important student links, portals, school notices, library/e-learning links, and campus resources.', 'Resources', true, 'admin_only', 'active')
 on conflict (id) do update set
   campus = excluded.campus,
   name = excluded.name,
   description = excluded.description,
   category = excluded.category,
   is_official = excluded.is_official,
+  posting_mode = excluded.posting_mode,
   status = excluded.status,
   updated_at = now();
 
@@ -177,12 +188,22 @@ using (
   )
 );
 
+drop policy if exists "Admins and open groups can create community posts" on public.community_posts;
 drop policy if exists "Admins can create community posts" on public.community_posts;
-create policy "Admins can create community posts"
+create policy "Admins and open groups can create community posts"
 on public.community_posts
 for insert
 to authenticated
-with check (author_id = auth.uid() and public.is_admin());
+with check (
+  author_id = auth.uid()
+  and (
+    public.is_admin()
+    or exists (
+      select 1 from public.communities c
+      where c.id = community_id and c.status = 'active' and c.posting_mode = 'everyone'
+    )
+  )
+);
 
 drop policy if exists "Admins can update community posts" on public.community_posts;
 create policy "Admins can update community posts"
@@ -260,14 +281,24 @@ to public
 using (bucket_id = 'community-media');
 
 drop policy if exists "Admins can upload community media" on storage.objects;
-create policy "Admins can upload community media"
+drop policy if exists "Authenticated users can upload community media" on storage.objects;
+create policy "Authenticated users can upload community media"
 on storage.objects
 for insert
 to authenticated
 with check (
   bucket_id = 'community-media'
-  and public.is_admin()
   and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    public.is_admin()
+    or exists (
+      select 1
+      from public.communities c
+      where c.id::text = (storage.foldername(name))[1]
+        and c.status = 'active'
+        and c.posting_mode = 'everyone'
+    )
+  )
 );
 
 create index if not exists idx_communities_campus_status on public.communities(campus, status);

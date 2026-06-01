@@ -21,6 +21,7 @@ export type Community = {
   category: string;
   cover_url: string | null;
   is_official: boolean;
+  posting_mode?: 'everyone' | 'admin_only' | string;
   status: string;
   created_by: string | null;
   created_at?: string;
@@ -76,6 +77,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Announcements',
     cover_url: null,
     is_official: true,
+    posting_mode: 'admin_only',
     status: 'active',
     created_by: null,
   },
@@ -87,6 +89,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Deals',
     cover_url: null,
     is_official: true,
+    posting_mode: 'everyone',
     status: 'active',
     created_by: null,
   },
@@ -98,6 +101,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Safety',
     cover_url: null,
     is_official: true,
+    posting_mode: 'everyone',
     status: 'active',
     created_by: null,
   },
@@ -109,6 +113,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Services',
     cover_url: null,
     is_official: true,
+    posting_mode: 'everyone',
     status: 'active',
     created_by: null,
   },
@@ -120,6 +125,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Resources',
     cover_url: null,
     is_official: true,
+    posting_mode: 'admin_only',
     status: 'active',
     created_by: null,
   },
@@ -181,7 +187,7 @@ async function fetchProfiles(userIds: string[]) {
 export async function getCommunities(viewerId?: string | null) {
   const { data, error } = await supabase
     .from('communities')
-    .select('id, campus, name, description, category, cover_url, is_official, status, created_by, created_at, updated_at')
+    .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
     .eq('campus', DEFAULT_CAMPUS)
     .eq('status', 'active')
     .order('created_at', { ascending: true });
@@ -361,7 +367,19 @@ export async function createCommunityPost(args: {
     return { post: null as CommunityPost | null, error: GENERIC_ERROR };
   }
 
-  if (!(await assertAdmin(args.authorId, args.authorEmail))) {
+  const isAdmin = await assertAdmin(args.authorId, args.authorEmail);
+  const { data: community, error: communityError } = await supabase
+    .from('communities')
+    .select('id, posting_mode, status')
+    .eq('id', args.communityId)
+    .maybeSingle();
+
+  if (communityError || !community || community.status !== 'active') {
+    if (communityError) console.error('Community posting check failed:', serializeError(communityError));
+    return { post: null as CommunityPost | null, error: GENERIC_ERROR };
+  }
+
+  if (!isAdmin && community.posting_mode !== 'everyone') {
     return { post: null as CommunityPost | null, error: PERMISSION_ERROR };
   }
 
@@ -383,7 +401,7 @@ export async function createCommunityPost(args: {
     content,
     media_urls: mediaUrls,
     media_type: mediaType,
-    is_pinned: Boolean(args.isPinned),
+    is_pinned: isAdmin ? Boolean(args.isPinned) : false,
     status: 'active',
   };
 
@@ -475,6 +493,7 @@ export async function createCommunity(args: {
   name: string;
   description: string;
   category: string;
+  postingMode?: 'everyone' | 'admin_only';
 }) {
   if (!isValidUuid(args.adminId)) return { community: null as Community | null, error: GENERIC_ERROR };
   if (!(await assertAdmin(args.adminId, args.adminEmail))) return { community: null as Community | null, error: PERMISSION_ERROR };
@@ -495,10 +514,11 @@ export async function createCommunity(args: {
       description,
       category,
       is_official: true,
+      posting_mode: args.postingMode || 'everyone',
       status: 'active',
       created_by: args.adminId,
     })
-    .select('id, campus, name, description, category, cover_url, is_official, status, created_by, created_at, updated_at')
+    .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
     .single();
 
   if (error) {
@@ -523,6 +543,31 @@ export async function updateCommunityStatus(communityId: string, adminId: string
 
   if (error) {
     console.error('Community status update failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
+  }
+
+  return { error: null };
+}
+
+export async function updateCommunityPostingMode(
+  communityId: string,
+  adminId: string,
+  adminEmail: string | null | undefined,
+  postingMode: 'everyone' | 'admin_only'
+) {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId) || !isAllowedValue(postingMode, ['everyone', 'admin_only'] as const)) {
+    return { error: GENERIC_ERROR };
+  }
+
+  if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
+
+  const { error } = await supabase
+    .from('communities')
+    .update({ posting_mode: postingMode, updated_at: new Date().toISOString() })
+    .eq('id', communityId);
+
+  if (error) {
+    console.error('Community posting mode update failed:', serializeError(error));
     return { error: GENERIC_ERROR };
   }
 

@@ -529,8 +529,16 @@ function SellPageContent() {
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
             <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
             <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
-              Create a free account and you can post immediately.
+              Create a free account to list an item, offer a service, or post a request for sellers.
             </p>
+            <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
+              <Link href="/signin?next=/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                Create account
+              </Link>
+              <Link href="/signin?next=/sell&mode=signin" className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+                Sign in
+              </Link>
+            </div>
           </div>
           <AuthPromptModal open next="/sell" onClose={() => router.push('/')} />
         </main>

@@ -255,6 +255,25 @@ export default function Home() {
           </div>
         ) : null}
 
+        {!user ? (
+          <section className="mb-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-blue-950 dark:bg-zinc-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Trade faster with a free account.</p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Post listings, send messages, follow MUST groups, and manage your profile.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <Link href="/signin?mode=signup" className="rounded-2xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700">
+                  Create account
+                </Link>
+                <Link href="/signin?mode=signin" className="rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <div className="mb-4">
           <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 sm:gap-3 sm:px-4 dark:border-zinc-700 dark:bg-zinc-900">
             <span className="text-lg text-gray-400 dark:text-zinc-500">⌕</span>
@@ -310,8 +329,16 @@ export default function Home() {
             ) : null}
             {filteredListings.length === 0 ? (
               <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-black text-blue-600 dark:bg-blue-950 dark:text-blue-200">
+                  +
+                </div>
                 <p className="font-semibold text-gray-900 dark:text-white">
                   {listings.length === 0 ? 'No listings yet. Be the first to post.' : 'No matching listings found.'}
+                </p>
+                <p className="mx-auto mt-2 max-w-md text-sm">
+                  {listings.length === 0
+                    ? 'Start with an item, service, or campus deal that MUST students can inspect before paying.'
+                    : 'Try a different category, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
                   <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">

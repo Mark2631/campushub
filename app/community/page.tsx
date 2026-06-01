@@ -115,7 +115,7 @@ export default function CommunityPage() {
             </div>
             {isAdmin ? (
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
-                Admin only posting
+                Admin controls
               </span>
             ) : null}
           </div>
@@ -146,6 +146,9 @@ export default function CommunityPage() {
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">
                           <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                           Official
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
+                          {community.posting_mode === 'admin_only' ? 'Admin posts' : 'Everyone posts'}
                         </span>
                       </div>
                       <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
@@ -208,4 +211,3 @@ export default function CommunityPage() {
     </div>
   );
 }
-

@@ -16,6 +16,7 @@ import {
   getCommunityById,
   getCommunityPosts,
   reactToCommunityPost,
+  updateCommunityPostStatus,
   uploadCommunityMedia,
 } from '../../../lib/community';
 import { validateUploadFile } from '../../../lib/storage';
@@ -228,7 +229,11 @@ export default function CommunityGroupPage({ params }: Props) {
 
   const handlePublish = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!community || !user || !isAdmin || publishing) return;
+    if (!community || !user || publishing) return;
+    if (!isAdmin && community.posting_mode !== 'everyone') {
+      setMessage({ type: 'error', text: 'You do not have permission to do that.' });
+      return;
+    }
 
     setPublishing(true);
     setMessage(null);
@@ -254,7 +259,7 @@ export default function CommunityGroupPage({ params }: Props) {
       authorEmail: user.email,
       content: postContent,
       mediaUrls,
-      isPinned: postPinned,
+      isPinned: isAdmin ? postPinned : false,
     });
     setPublishing(false);
 
@@ -270,6 +275,18 @@ export default function CommunityGroupPage({ params }: Props) {
     clearComposer();
   };
 
+  const handleHidePost = async (postId: string) => {
+    if (!user || !isAdmin) return;
+    const { error } = await updateCommunityPostStatus(postId, user.id, user.email, 'hidden');
+    if (error) {
+      console.error('Community post hide failed:', error);
+      showToast({ type: 'error', message: error });
+      return;
+    }
+    setPosts((current) => current.filter((post) => post.id !== postId));
+    showToast({ type: 'success', message: 'Post removed.' });
+  };
+
   const renderPost = (post: CommunityPost) => {
     const name = profileName(post.author);
     return (
@@ -279,7 +296,6 @@ export default function CommunityGroupPage({ params }: Props) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate font-bold text-slate-950 dark:text-white">{name}</p>
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Admin only</span>
               {post.is_pinned ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-200">
                   <Pin className="h-3 w-3" aria-hidden="true" />
@@ -292,6 +308,18 @@ export default function CommunityGroupPage({ params }: Props) {
             </p>
           </div>
         </div>
+
+        {isAdmin ? (
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => handleHidePost(post.id)}
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+            >
+              Remove post
+            </button>
+          </div>
+        ) : null}
 
         {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-slate-200">{post.content}</p> : null}
         <PostMedia post={post} />
@@ -391,6 +419,9 @@ export default function CommunityGroupPage({ params }: Props) {
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{community.name}</h1>
                   <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
+                    {community.posting_mode === 'admin_only' ? 'Admin posts' : 'Everyone posts'}
+                  </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -415,20 +446,22 @@ export default function CommunityGroupPage({ params }: Props) {
           </div>
         ) : null}
 
-        {isAdmin ? (
+        {user && (isAdmin || community.posting_mode === 'everyone') ? (
           <form onSubmit={handlePublish} className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Admin post composer</p>
-              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                <input type="checkbox" checked={postPinned} onChange={(event) => setPostPinned(event.target.checked)} />
-                Pin post
-              </label>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{isAdmin ? 'Admin post composer' : 'New group post'}</p>
+              {isAdmin ? (
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <input type="checkbox" checked={postPinned} onChange={(event) => setPostPinned(event.target.checked)} />
+                  Pin post
+                </label>
+              ) : null}
             </div>
             <textarea
               value={postContent}
               onChange={(event) => setPostContent(event.target.value)}
               rows={4}
-              placeholder="Share an official update..."
+              placeholder={isAdmin ? 'Share an official update...' : 'Write something for the group...'}
               className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
             />
             {selectedMedia.length > 0 ? (
@@ -459,6 +492,18 @@ export default function CommunityGroupPage({ params }: Props) {
               </button>
             </div>
           </form>
+        ) : !user ? (
+          <button
+            type="button"
+            onClick={() => setAuthOpen(true)}
+            className="mb-5 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          >
+            Create a free account to join the conversation.
+          </button>
+        ) : community.posting_mode === 'admin_only' ? (
+          <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+            This group is admin-only for posting. You can still comment and react.
+          </div>
         ) : null}
 
         {pinnedPost ? (

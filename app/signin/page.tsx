@@ -251,12 +251,10 @@ function SignInPageContent() {
           <button
             type="button"
             onClick={handleGoogle}
-            aria-disabled="true"
             className="mt-6 flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
           >
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950 dark:bg-slate-950 dark:text-white">G</span>
             <span>Continue with Google</span>
-            <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black uppercase text-slate-950">Coming soon</span>
           </button>
 
           <div className="my-5 flex items-center gap-3">

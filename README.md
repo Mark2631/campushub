@@ -1,115 +1,154 @@
 # CampusTrader
 
-CampusTrader is a campus commerce marketplace for trust-first C2C trading between students and nearby registered businesses.
+CampusTrader is a MUST-focused campus marketplace for Meru University of Science and Technology students and nearby businesses. It helps students discover local deals, list items and services, post requests, message safely, and follow official campus communities.
 
-## Vision
+The current launch scope is intentionally narrow: CampusTrader is for MUST first. Multi-campus expansion and payments are planned for later, but they are not active in this build.
 
-CampusTrader helps students buy, sell, discover services, and coordinate safe trades inside a campus-first marketplace. The platform is designed around inspection before payment, in-app messaging, manual verification, and community groups instead of anonymous public feeds.
+## Product Focus
 
-## Problem Solved
+- Default campus: `MUST`
+- Audience: MUST students, student sellers, nearby businesses, and marketplace admins
+- Core promise: find campus deals you can inspect before paying
+- Safety stance: meet in public, inspect first, avoid advance payments, and keep early conversation in-app
 
-Campus buyers and sellers often rely on scattered chats, status updates, and unverified accounts. That makes discovery messy and trust difficult. CampusTrader centralizes listings, seller messaging, safety reporting, verification workflows, and community groups in one campus commerce hub.
+## Main Features
 
-## Target Users
+- Home discovery with search, category filters, safety messaging, and a clear account CTA for guests.
+- Sell tab with three focused sections: sell an item/service, post a request, and a short selling guide.
+- Requests inside the Sell tab so buyers can post what they are looking for without cluttering Home.
+- Profile as a clean identity and marketplace summary page, with settings moved into a focused modal.
+- Persistent profile photos through the public `profile-media` bucket and `profiles.avatar_url`.
+- Messages with the other user's identity, listing context, unread counts, and clean guest prompts.
+- MUST Communities with official groups, useful links, group posting modes, comments, reactions, and admin moderation.
+- Admin dashboard for verification, reports, listing moderation, business review, complaints, and community management.
+- PWA metadata, app icons, favicon, Apple touch icon, and Open Graph preview assets.
 
-- Students selling or buying used items, food, services, books, electronics, fashion, furniture, and refurbished goods.
-- Nearby registered businesses that serve campus communities.
-- Campus admins and moderators who need simple tools for verification and safety review.
+## Communities
 
-## Current MVP
+Communities are official MUST groups. Admins create and manage the groups, but each group has a posting mode:
 
-- Home discovery with search, category chips, and Supabase-powered listing sections.
-- Sell flow with Supabase Auth guard, image/video upload to the public `listing-media` bucket, and Kenyan Shilling pricing.
-- Listing details with media gallery, seller messaging, reporting, and safety notice.
-- In-app messaging with conversation creation, message sending, and safety warning terms.
-- Profile page with account info, verification request UI, active listings count, and business profile creation.
-- Community tab modeled after WhatsApp Communities with controlled groups and responsive prepared-state modals.
-- Admin dashboard for manual verification, business approval, listing moderation, reports, complaints, and user visibility.
+- `everyone`: signed-in users can create group posts, comment, and react.
+- `admin_only`: admins create official posts; signed-in users can still comment and react.
 
-## Core Categories
+Default communities:
 
-Electronics, Fashion, Furniture, Books, Food, Services, Refurbished, Other.
+- MUST Marketplace Updates
+- Campus Deals
+- Lost & Found
+- Services Around Campus
+- School Updates & Useful Links
 
-## Safety Model
+Admins can create communities, choose posting mode, publish and pin posts, upload media, archive communities, hide posts, and moderate comments. Guests can view active communities and posts. Guests are prompted to create a free account before following, posting, commenting, or reacting.
 
-CampusTrader encourages users to:
+## Useful MUST Links
 
-- Meet in public.
-- Inspect before paying.
-- Avoid advance payments.
-- Keep conversations in-app early in the transaction.
-- Report scams, fake listings, harassment, unsafe meetup requests, wrong categories, and other issues.
+The Community tab includes quick links for:
 
-## Payment Placeholder
+- MUST official website
+- MUST student portal
+- MUST service center
+- MUST library
+- MUST LMS / eLearning
+- Okoa Sem
+- Studocu
+- Nation
+- Tuko
 
-Payments are not active in this MVP. A future-ready fallback contact is reserved for manual M-Pesa coordination: `0745706087`.
+External links open in a new tab with `rel="noopener noreferrer"`.
 
-Future payment support may include:
+## Security Model
 
-- M-Pesa Paybill.
-- Buy Goods/Till.
-- STK Push.
-- Escrow or protected payments.
+Client code never assumes user input is safe. Form fields, UUIDs, enum-like values, and uploads are validated before Supabase calls. User-facing errors stay clean, while technical details are logged with `console.error`.
 
-## Future Roadmap
+Important rules:
 
-- Stronger verification flows for students, national ID, and businesses.
-- Business subscriptions.
-- Boosted listings.
-- M-Pesa Paybill and Buy Goods/Till support.
-- Optional escrow or protected payments.
-- AI moderation for listings, reports, and risky chat behavior.
-- Campus expansion and multi-campus discovery.
-- Predictive marketplace insights.
-- Persistent community groups, memberships, and admin notices.
+- Service role keys must never be exposed in the client.
+- Normal users cannot perform admin actions.
+- Admin actions check the `admins` table.
+- Users can only update their own profile, listings, messages, and membership actions.
+- Listings are hidden or marked sold instead of hard-deleted from client flows.
+- Uploads validate file type and size before storage writes.
+- Raw Supabase errors should not be rendered to users.
 
-## Setup
+## Supabase Setup
 
-```bash
-npm install
-cp .env.local.example .env.local
-```
-
-Add these environment variables to `.env.local`:
+Required environment variables:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
-## Development
+Required public storage buckets:
+
+- `listing-media`
+- `profile-media`
+- `verification-media`
+- `community-media`
+
+Run the SQL in Supabase after the core policy scripts:
+
+```text
+supabase/final-required-policies.sql
+supabase/must-community-launch.sql
+```
+
+`supabase/must-community-launch.sql` creates or aligns the community tables, seeds official MUST communities, adds campus defaults where safe, creates the `community-media` bucket, and adds RLS policies for guests, authenticated users, and admins.
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the app:
 
 ```bash
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open:
 
-## Environment
+```text
+http://localhost:3000
+```
 
-The app expects Supabase environment variables in `.env.local` and uses the client in `lib/supabase.ts`.
+## Build Checks
 
-Required variables:
+Before launch, run:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+```bash
+npm run build
+npx tsc --noEmit
+```
 
-Required storage buckets:
+Manual smoke checks:
 
-- `listing-media`, public.
-- `profile-media`, public.
-- `verification-media`, public.
+- Home loads and shows listings or a polished empty state.
+- Services category works.
+- Sell opens directly to the listing form.
+- Requests are inside Sell.
+- Profile is clean and Settings holds secondary actions.
+- Verified users do not see repeated verification forms.
+- Profile photo persists after upload and refresh.
+- Messages show the other user's avatar/name and listing context.
+- Community groups load, open cleanly, and respect posting mode.
+- Admin can create communities and moderate posts.
+- Guests can view communities but must sign in to participate.
+- PWA icons and Open Graph image use the current logo.
 
 ## Deployment Notes
 
-Before deployment:
+- Add the Supabase environment variables to the deployment platform.
+- Add the deployed URL to Supabase Auth redirect URLs.
+- Confirm storage buckets and policies exist.
+- Confirm the `admins` table contains the approved admin email addresses.
+- Confirm the Open Graph image and app icons are reachable from production URLs.
 
-1. Run the SQL in [supabase/final-required-policies.sql](supabase/final-required-policies.sql) in the Supabase SQL Editor.
-2. Add these environment variables in Vercel:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-3. Add your deployed Vercel URL to the Supabase Auth redirect URLs.
-4. Confirm the public storage buckets exist:
-   - `listing-media`
-   - `profile-media`
-   - `verification-media`
+## Not Active Yet
+
+Payments are not implemented in this build. Future monetization and payment work may include business verification fees, boosted listings, featured business cards, vendor subscriptions, urgent request boosts, sponsored category/community placements, protected payments, escrow, M-Pesa STK Push, and premium seller badges.
+
+Multi-university expansion is also not active yet. The code and schema are prepared around the `campus` default, but users do not choose campuses in the current MUST launch.

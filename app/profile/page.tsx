@@ -484,7 +484,10 @@ export default function ProfilePage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-2xl font-bold">Sign in to continue.</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">Create an account to post, message, verify, and manage listings.</p>
-            <Link href="/signin" className="mt-5 inline-block rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Sign in</Link>
+            <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
+              <Link href="/signin?next=/profile" className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
+              <Link href="/signin?next=/profile&mode=signin" className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">Sign in</Link>
+            </div>
           </div>
         )}
       </main>

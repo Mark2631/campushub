@@ -14,6 +14,7 @@ import {
   getCommunityPosts,
   updateCommunityPostPin,
   updateCommunityPostStatus,
+  updateCommunityPostingMode,
   updateCommunityStatus,
   uploadCommunityMedia,
 } from '../../lib/community';
@@ -163,7 +164,7 @@ export default function AdminPage() {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [communityWorking, setCommunityWorking] = useState(false);
-  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements' });
+  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' as 'everyone' | 'admin_only' });
   const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
 
@@ -394,6 +395,7 @@ export default function AdminPage() {
       name: communityForm.name,
       description: communityForm.description,
       category: communityForm.category,
+      postingMode: communityForm.postingMode,
     });
     setCommunityWorking(false);
 
@@ -406,7 +408,7 @@ export default function AdminPage() {
 
     setCommunities((current) => [community, ...current]);
     setSelectedCommunityId(community.id);
-    setCommunityForm({ name: '', description: '', category: 'Announcements' });
+    setCommunityForm({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' });
     setMessage({ type: 'success', text: 'Community created.' });
     showToast({ type: 'success', message: 'Community created.' });
   };
@@ -995,6 +997,14 @@ export default function AdminPage() {
                     placeholder="Category"
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   />
+                  <select
+                    value={communityForm.postingMode}
+                    onChange={(event) => setCommunityForm((current) => ({ ...current, postingMode: event.target.value as 'everyone' | 'admin_only' }))}
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  >
+                    <option value="everyone">Everyone can post</option>
+                    <option value="admin_only">Admin-only posting</option>
+                  </select>
                   <textarea
                     value={communityForm.description}
                     onChange={(event) => setCommunityForm((current) => ({ ...current, description: event.target.value }))}
@@ -1013,7 +1023,9 @@ export default function AdminPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-white">{community.name}</p>
-                          <p className="mt-1 text-sm text-zinc-500">{community.category} · {community.memberCount || 0} followers</p>
+                          <p className="mt-1 text-sm text-zinc-500">
+                            {community.category} · {community.memberCount || 0} followers · {community.posting_mode === 'admin_only' ? 'Admin-only posting' : 'Everyone can post'}
+                          </p>
                         </div>
                         <StatusPill status={community.status} />
                       </div>
@@ -1035,6 +1047,21 @@ export default function AdminPage() {
                           className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
                         >
                           {community.status === 'active' ? 'Archive' : 'Restore'}
+                        </button>
+                        <button
+                          disabled={communityWorking}
+                          onClick={() => runCommunityAction(
+                            () => updateCommunityPostingMode(
+                              community.id,
+                              authUser!.id,
+                              authUser!.email,
+                              community.posting_mode === 'admin_only' ? 'everyone' : 'admin_only'
+                            ),
+                            community.posting_mode === 'admin_only' ? 'Everyone can post now.' : 'Posting is admin-only now.'
+                          )}
+                          className="rounded-xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60"
+                        >
+                          {community.posting_mode === 'admin_only' ? 'Allow everyone' : 'Admin-only'}
                         </button>
                       </div>
                     </article>

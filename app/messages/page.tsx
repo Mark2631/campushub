@@ -99,9 +99,14 @@ export default function MessagesPage() {
             <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
               Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
             </p>
-            <Link href="/signin" className="inline-block rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-semibold text-white transition">
-              Sign In
-            </Link>
+            <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
+              <Link href="/signin?next=/messages" className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                Create account
+              </Link>
+              <Link href="/signin?next=/messages&mode=signin" className="rounded-2xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+                Sign in
+              </Link>
+            </div>
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-8 text-red-700 dark:text-red-200">
