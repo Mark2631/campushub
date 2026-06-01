@@ -135,7 +135,13 @@ export default async function ListingPage({ params }: Props) {
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
                   <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Seller</p>
                   <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-lg font-bold text-white">S</div>
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-lg font-bold text-white">
+                      {listing.sellerAvatarUrl ? (
+                        <Image src={listing.sellerAvatarUrl} alt="" width={56} height={56} className="h-full w-full object-cover" unoptimized />
+                      ) : (
+                        (listing.sellerName || 'Seller').charAt(0).toUpperCase()
+                      )}
+                    </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader seller'}</p>
@@ -156,7 +162,9 @@ export default async function ListingPage({ params }: Props) {
                       <p className="text-sm text-gray-600 dark:text-zinc-400">
                         {listing.sellerType === 'business'
                           ? 'Nearby campus business'
-                          : 'Verification badge appears here when approved.'}
+                          : listing.badgeType === 'blue' || listing.badgeType === 'admin'
+                            ? 'Verified CampusTrader seller'
+                            : 'CampusTrader seller'}
                       </p>
                       {listing.sellerSince ? (
                         <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
@@ -173,7 +181,7 @@ export default async function ListingPage({ params }: Props) {
                   ) : (
                     <>
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
-                      <WhatsAppButton userId={listing.seller_id} />
+                      <WhatsAppButton userId={listing.seller_id} phoneNumber={listing.sellerPhoneNumber} />
                       <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                     </>
                   )}

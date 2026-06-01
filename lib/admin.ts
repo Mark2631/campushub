@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { ComplaintRecord, getComplaints, updateComplaintStatus } from './complaints';
-import { isValidUuid } from './validation';
+import { cleanText, isValidUuid } from './validation';
 
 export interface AdminVerificationRequest {
   id: string;
@@ -925,6 +925,46 @@ export async function sendReportResponse(reporterId: string, adminId: string, me
   }
 
   await insertOptionalNotification(reporterId, 'report response', 'Report response', message);
+
+  return { error: null };
+}
+
+export async function addAdminByEmail(adminId: string, email: string) {
+  if (!isValidUuid(adminId)) return invalidAdminAction();
+  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
+
+  const normalizedEmail = cleanText(email, 180).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return { error: 'Enter a valid email address.' };
+  }
+
+  const [{ error: adminError }, { error: profileError }, { error: auditError }] = await Promise.all([
+    supabase.from('admins').upsert({ email: normalizedEmail }, { onConflict: 'email' }),
+    supabase
+      .from('profiles')
+      .update({
+        role: 'admin',
+        badge_type: 'admin',
+        verification_status: 'verified',
+        account_status: 'active',
+      })
+      .eq('email', normalizedEmail),
+    supabase.from('admin_actions').insert({
+      admin_id: adminId,
+      action_type: 'user_verify',
+      target_type: 'user',
+      target_id: adminId,
+      reason: `Added admin ${normalizedEmail}`,
+    }),
+  ]);
+
+  if (adminError) {
+    console.error('Add admin failed:', adminError);
+    return { error: 'Something went wrong. Try again.' };
+  }
+
+  if (profileError) console.error('Admin profile promotion failed:', profileError);
+  if (auditError) console.error('Add admin audit failed:', auditError);
 
   return { error: null };
 }

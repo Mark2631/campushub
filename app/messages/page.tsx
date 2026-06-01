@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Trash2 } from 'lucide-react';
 import Header from '../../components/Header';
 import BottomNav from '../../components/BottomNav';
 import SafetyBanner from '../../components/SafetyBanner';
 import useUser from '../../hooks/useUser';
-import { getUserConversations } from '../../lib/conversations';
+import { getUserConversations, hideConversationForUser } from '../../lib/conversations';
 
 type ConversationSummary = {
   id: string;
@@ -41,10 +42,11 @@ function Avatar({ profile }: { profile: ConversationSummary['otherUser'] }) {
 }
 
 export default function MessagesPage() {
-  const { user, loading } = useUser();
+  const { user, loading, showToast } = useUser();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +66,23 @@ export default function MessagesPage() {
 
     loadConversations();
   }, [user]);
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    if (!user || deletingId) return;
+
+    setDeletingId(conversationId);
+    const { error } = await hideConversationForUser(conversationId, user.id);
+    setDeletingId(null);
+
+    if (error) {
+      console.error('Conversation delete failed:', error);
+      showToast({ type: 'error', message: error });
+      return;
+    }
+
+    setConversations((current) => current.filter((conversation) => conversation.id !== conversationId));
+    showToast({ type: 'success', message: 'Conversation removed.' });
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
@@ -126,22 +145,21 @@ export default function MessagesPage() {
           <ul className="space-y-3">
             {conversations.map((conversation) => (
               <li key={conversation.id}>
-                <Link
-                  href={`/messages/${conversation.id}`}
-                  className="block rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 transition hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg dark:hover:shadow-blue-500/10"
-                >
+                <article className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-blue-400 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-600 dark:hover:shadow-blue-500/10">
                   <div className="flex items-center justify-between gap-4">
-                    <Avatar profile={conversation.otherUser} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-gray-900 dark:text-white">{profileName(conversation.otherUser)}</p>
-                        <span className="text-xs text-gray-400">•</span>
-                        <p className="truncate text-xs text-gray-500 dark:text-zinc-500">{conversation.listingTitle}</p>
+                    <Link href={`/messages/${conversation.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                      <Avatar profile={conversation.otherUser} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate font-semibold text-gray-900 dark:text-white">{profileName(conversation.otherUser)}</p>
+                          <span className="text-xs text-gray-400">•</span>
+                          <p className="truncate text-xs text-gray-500 dark:text-zinc-500">{conversation.listingTitle}</p>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">
+                          {conversation.lastMessage?.content || 'No messages yet'}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-zinc-400 mt-1 line-clamp-2">
-                        {conversation.lastMessage?.content || 'No messages yet'}
-                      </p>
-                    </div>
+                    </Link>
                     <div className="flex flex-col items-end gap-2">
                       <span className="text-xs text-gray-500 dark:text-zinc-500 whitespace-nowrap">
                         {conversation.lastMessage ? new Date(conversation.lastMessage.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
@@ -151,9 +169,18 @@ export default function MessagesPage() {
                           {conversation.unreadCount}
                         </div>
                       ) : null}
+                      <button
+                        type="button"
+                        aria-label="Remove conversation"
+                        onClick={() => handleDeleteConversation(conversation.id)}
+                        disabled={deletingId === conversation.id}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:text-red-300"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
-                </Link>
+                </article>
               </li>
             ))}
           </ul>

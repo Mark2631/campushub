@@ -7,14 +7,21 @@ import { getProfileById } from '../lib/profiles';
 export default function WhatsAppButton({
   userId,
   label = 'Continue on WhatsApp',
+  phoneNumber,
 }: {
   userId: string;
   label?: string;
+  phoneNumber?: string | null;
 }) {
   const { showToast } = useUser();
   const [busy, setBusy] = useState(false);
 
   const openWhatsApp = async () => {
+    if (phoneNumber) {
+      window.open(`https://wa.me/${phoneNumber}`, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     setBusy(true);
     const { profile, error } = await getProfileById(userId);
     setBusy(false);

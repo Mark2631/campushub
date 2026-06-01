@@ -549,6 +549,26 @@ export async function updateCommunityStatus(communityId: string, adminId: string
   return { error: null };
 }
 
+export async function updateCommunityCoverUrl(communityId: string, adminId: string, adminEmail: string | null | undefined, coverUrl: string) {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId)) {
+    return { error: GENERIC_ERROR };
+  }
+
+  if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
+
+  const { error } = await supabase
+    .from('communities')
+    .update({ cover_url: cleanText(coverUrl, 1000), updated_at: new Date().toISOString() })
+    .eq('id', communityId);
+
+  if (error) {
+    console.error('Community cover update failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
+  }
+
+  return { error: null };
+}
+
 export async function updateCommunityPostingMode(
   communityId: string,
   adminId: string,

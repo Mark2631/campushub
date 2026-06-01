@@ -51,9 +51,12 @@ function statusClass(status?: string | null) {
   return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
 }
 
-function listingEmptyText(filter: 'active' | 'sold' | 'hidden') {
+type ListingFilter = 'active' | 'sold' | 'hidden' | 'pending_payment';
+
+function listingEmptyText(filter: ListingFilter) {
   if (filter === 'active') return 'No active listings';
   if (filter === 'sold') return 'No sold listings';
+  if (filter === 'pending_payment') return 'No pending listings';
   return 'No hidden listings';
 }
 
@@ -71,7 +74,7 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
-  const [listingFilter, setListingFilter] = useState<'active' | 'sold' | 'hidden'>('active');
+  const [listingFilter, setListingFilter] = useState<ListingFilter>('active');
   const [listingActionId, setListingActionId] = useState<string | null>(null);
   const [verificationType, setVerificationType] = useState<(typeof verificationTypes)[number]['value']>('student');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
@@ -96,6 +99,7 @@ export default function ProfilePage() {
   const activeListingsCount = userListings.filter((listing) => listing.status === 'active').length;
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
+  const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
   const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
 
   const loadProfile = async () => {
@@ -390,10 +394,11 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-2">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   ['Active', activeListingsCount],
                   ['Sold', soldListingsCount],
+                  ['Pending', pendingListingsCount],
                   ['Hidden', hiddenListingsCount],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-950">
@@ -433,15 +438,15 @@ export default function ProfilePage() {
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold">My Listings</h2>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, sold, and hidden listings.</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, pending, sold, and hidden listings.</p>
                 </div>
                 <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
               </div>
 
-              <div className="mb-4 grid grid-cols-3 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(['active', 'sold', 'hidden'] as const).map((status) => (
+              <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+                {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
                   <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                    {status}
+                    {status === 'pending_payment' ? 'Pending' : status}
                   </button>
                 ))}
               </div>

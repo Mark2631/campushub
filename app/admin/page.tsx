@@ -12,6 +12,7 @@ import {
   createCommunityPost,
   getCommunities,
   getCommunityPosts,
+  updateCommunityCoverUrl,
   updateCommunityPostPin,
   updateCommunityPostStatus,
   updateCommunityPostingMode,
@@ -20,6 +21,7 @@ import {
 } from '../../lib/community';
 import {
   AdminDashboardData,
+  addAdminByEmail,
   getAdminDashboardData,
   updateReportStatus,
   suspendUser,
@@ -39,6 +41,12 @@ import {
   revokeVerification,
   sendReportResponse,
 } from '../../lib/admin';
+import {
+  BusinessPostPayment,
+  approveBusinessPostPayment,
+  getBusinessPostPayments,
+  rejectBusinessPostPayment,
+} from '../../lib/businessPostPayments';
 
 const emptyDashboard: AdminDashboardData = {
   verifications: [],
@@ -155,7 +163,7 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'verifications' | 'reports' | 'communities' | 'audit'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'verifications' | 'reports' | 'communities' | 'audit'>('overview');
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const [modalNotes, setModalNotes] = useState('');
   const [modalTitle, setModalTitle] = useState('');
@@ -167,6 +175,10 @@ export default function AdminPage() {
   const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' as 'everyone' | 'admin_only' });
   const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
+  const [communityCoverFile, setCommunityCoverFile] = useState<File | null>(null);
+  const [businessPayments, setBusinessPayments] = useState<BusinessPostPayment[]>([]);
+  const [paymentNotes, setPaymentNotes] = useState<Record<string, string>>({});
+  const [newAdminEmail, setNewAdminEmail] = useState('');
 
   const usersById = useMemo(() => {
     return new Map(dashboard.users.map((user) => [user.id, user]));
@@ -176,12 +188,14 @@ export default function AdminPage() {
     if (!isAdmin) return;
 
     setLoadingDashboard(true);
-    const [data, communityData] = await Promise.all([
+    const [data, communityData, paymentsData] = await Promise.all([
       getAdminDashboardData(),
       getCommunities(authUser?.id),
+      getBusinessPostPayments('all'),
     ]);
     setDashboard(data);
     setCommunities(communityData.communities);
+    setBusinessPayments(paymentsData.payments);
     if (!selectedCommunityId && communityData.communities[0]) {
       setSelectedCommunityId(communityData.communities[0].id);
     }
@@ -194,13 +208,15 @@ export default function AdminPage() {
     let isMounted = true;
 
     const loadInitialDashboard = async () => {
-      const [data, communityData] = await Promise.all([
+      const [data, communityData, paymentsData] = await Promise.all([
         getAdminDashboardData(),
         getCommunities(authUser?.id),
+        getBusinessPostPayments('all'),
       ]);
       if (isMounted) {
         setDashboard(data);
         setCommunities(communityData.communities);
+        setBusinessPayments(paymentsData.payments);
         if (communityData.communities[0]) {
           setSelectedCommunityId((current) => current || communityData.communities[0].id);
         }
@@ -397,18 +413,39 @@ export default function AdminPage() {
       category: communityForm.category,
       postingMode: communityForm.postingMode,
     });
-    setCommunityWorking(false);
 
     if (error || !community) {
+      setCommunityWorking(false);
       console.error('Community create failed:', error);
       setMessage({ type: 'error', text: error || 'Something went wrong. Try again.' });
       showToast({ type: 'error', message: error || 'Something went wrong. Try again.' });
       return;
     }
 
-    setCommunities((current) => [community, ...current]);
+    let nextCommunity = community;
+    if (communityCoverFile) {
+      const { publicUrl, error: uploadError } = await uploadCommunityMedia(community.id, authUser.id, communityCoverFile);
+      if (uploadError || !publicUrl) {
+        console.error('Community cover upload failed:', uploadError);
+        setCommunityWorking(false);
+        setMessage({ type: 'error', text: 'Upload failed. Please retry.' });
+        showToast({ type: 'error', message: 'Upload failed. Please retry.' });
+        return;
+      }
+
+      const { error: coverError } = await updateCommunityCoverUrl(community.id, authUser.id, authUser.email, publicUrl);
+      if (coverError) {
+        console.error('Community cover save failed:', coverError);
+      } else {
+        nextCommunity = { ...community, cover_url: publicUrl };
+      }
+    }
+
+    setCommunityWorking(false);
+    setCommunities((current) => [nextCommunity, ...current]);
     setSelectedCommunityId(community.id);
     setCommunityForm({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' });
+    setCommunityCoverFile(null);
     setMessage({ type: 'success', text: 'Community created.' });
     showToast({ type: 'success', message: 'Community created.' });
   };
@@ -475,6 +512,46 @@ export default function AdminPage() {
     ]);
     setCommunities(communities);
     setCommunityPosts(posts);
+  };
+
+  const handleAddAdmin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!authUser?.id) return;
+
+    setWorkingId('add-admin');
+    const { error } = await addAdminByEmail(authUser.id, newAdminEmail);
+    setWorkingId(null);
+
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      showToast({ type: 'error', message: error });
+      return;
+    }
+
+    setNewAdminEmail('');
+    setMessage({ type: 'success', text: 'Admin added.' });
+    showToast({ type: 'success', message: 'Admin added.' });
+    await loadDashboard();
+  };
+
+  const handlePaymentAction = async (paymentId: string, action: 'approve' | 'reject') => {
+    if (!authUser?.id) return;
+
+    setWorkingId(paymentId);
+    const result = action === 'approve'
+      ? await approveBusinessPostPayment(paymentId, authUser.id, authUser.email)
+      : await rejectBusinessPostPayment(paymentId, authUser.id, authUser.email, paymentNotes[paymentId] || 'Payment not verified.');
+    setWorkingId(null);
+
+    if (result.error) {
+      setMessage({ type: 'error', text: result.error });
+      showToast({ type: 'error', message: result.error });
+      return;
+    }
+
+    setMessage({ type: 'success', text: action === 'approve' ? 'Payment approved.' : 'Payment rejected.' });
+    showToast({ type: 'success', message: action === 'approve' ? 'Payment approved.' : 'Payment rejected.' });
+    await loadDashboard();
   };
 
   if (userLoading || adminLoading) {
@@ -551,7 +628,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-zinc-800 pb-0">
-          {(['overview', 'users', 'businesses', 'listings', 'verifications', 'reports', 'communities', 'audit'] as const).map((t) => (
+          {(['overview', 'users', 'businesses', 'listings', 'payments', 'verifications', 'reports', 'communities', 'audit'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -581,6 +658,7 @@ export default function AdminPage() {
                   ['Active listings', dashboard.stats.activeListings],
                   ['Reported listings', dashboard.stats.reportedListings],
                   ['Businesses', dashboard.stats.businesses],
+                  ['Payment reviews', businessPayments.filter((payment) => payment.status === 'pending').length],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
                     <p className="text-2xl font-bold text-white">{value}</p>
@@ -642,7 +720,28 @@ export default function AdminPage() {
         {/* Users Tab */}
         {tab === 'users' && (
           <section className="space-y-6">
-            <h2 className="text-xl font-bold">User management ({dashboard.users.length} users)</h2>
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">User management ({dashboard.users.length} users)</h2>
+                <p className="mt-1 text-sm text-zinc-400">Add trusted admins and manage account status.</p>
+              </div>
+              <form onSubmit={handleAddAdmin} className="flex w-full gap-2 sm:max-w-md">
+                <input
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={(event) => setNewAdminEmail(event.target.value)}
+                  placeholder="admin@email.com"
+                  className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  required
+                />
+                <button
+                  disabled={workingId === 'add-admin'}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {workingId === 'add-admin' ? 'Adding...' : 'Add admin'}
+                </button>
+              </form>
+            </div>
             <div className="space-y-3">
               {dashboard.users.length > 0 ? (
                 dashboard.users.map((user) => (
@@ -810,6 +909,66 @@ export default function AdminPage() {
                 ))
               ) : (
                 <EmptyState text="No listings found." />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Payments Tab */}
+        {tab === 'payments' && (
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold">Business post payments</h2>
+              <p className="mt-1 text-sm text-zinc-400">Approve paid business posts so pending listings can go live.</p>
+            </div>
+            <div className="space-y-3">
+              {businessPayments.length > 0 ? (
+                businessPayments.map((payment) => (
+                  <article key={payment.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-white">{payment.listingTitle || payment.listing_id}</p>
+                          <StatusPill status={payment.status} />
+                        </div>
+                        <p className="mt-2 text-sm text-zinc-400">
+                          {payment.businessName || 'Business'} · KSh {payment.amount_ksh} · Till {payment.till_number}
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-500">Reference: {payment.reference || 'Not added'}</p>
+                        <p className="mt-1 text-xs text-zinc-600">{payment.ownerEmail || payment.user_id} · {formatDate(payment.created_at)}</p>
+                        {payment.admin_note ? <p className="mt-2 text-sm text-amber-200">{payment.admin_note}</p> : null}
+                      </div>
+                      {payment.status === 'pending' ? (
+                        <div className="grid gap-2 sm:min-w-72">
+                          <input
+                            value={paymentNotes[payment.id] || ''}
+                            onChange={(event) => setPaymentNotes((current) => ({ ...current, [payment.id]: event.target.value }))}
+                            placeholder="Optional rejection note"
+                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              disabled={workingId === payment.id}
+                              onClick={() => handlePaymentAction(payment.id, 'approve')}
+                              className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              disabled={workingId === payment.id}
+                              onClick={() => handlePaymentAction(payment.id, 'reject')}
+                              className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <EmptyState text="No business payment reviews yet." />
               )}
             </div>
           </section>
@@ -1005,6 +1164,16 @@ export default function AdminPage() {
                     <option value="everyone">Everyone can post</option>
                     <option value="admin_only">Admin-only posting</option>
                   </select>
+                  <label className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-100">
+                    Cover image
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={(event) => setCommunityCoverFile(event.currentTarget.files?.[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+                  {communityCoverFile ? <p className="text-xs text-zinc-500">{communityCoverFile.name}</p> : null}
                   <textarea
                     value={communityForm.description}
                     onChange={(event) => setCommunityForm((current) => ({ ...current, description: event.target.value }))}

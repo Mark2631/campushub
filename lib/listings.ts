@@ -36,6 +36,8 @@ export interface Listing {
   sellerType?: 'student' | 'business';
   badgeType?: 'none' | 'blue' | 'gold' | 'admin';
   sellerSince?: string | null;
+  sellerAvatarUrl?: string | null;
+  sellerPhoneNumber?: string | null;
 }
 
 type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
@@ -43,10 +45,12 @@ type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sel
 type ProfileRow = {
   id: string;
   full_name: string | null;
-  email: string | null;
+  email?: string | null;
   badge_type: string | null;
   verification_status: string | null;
   role: string | null;
+  avatar_url?: string | null;
+  phone_number?: string | null;
   created_at: string | null;
 };
 
@@ -56,6 +60,48 @@ type BusinessRow = {
   verification_status: string | null;
   badge_type?: string | null;
 };
+
+async function fetchPublicProfiles(sellerIds: string[]) {
+  if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
+
+  const publicResponse = await supabase
+    .from('marketplace_profiles')
+    .select('id, full_name, avatar_url, phone_number, badge_type, verification_status, role, created_at')
+    .in('id', sellerIds);
+
+  if (!publicResponse.error) {
+    return { data: (publicResponse.data || []) as ProfileRow[], error: null };
+  }
+
+  logSupabaseError('Marketplace profile view fetch failed:', publicResponse.error);
+  const fallbackResponse = await supabase
+    .from('profiles')
+    .select('id, full_name, email, avatar_url, phone_number, badge_type, verification_status, role, created_at')
+    .in('id', sellerIds);
+
+  return { data: (fallbackResponse.data || []) as ProfileRow[], error: fallbackResponse.error };
+}
+
+async function fetchPublicBusinesses(businessIds: string[]) {
+  if (businessIds.length === 0) return { data: [] as BusinessRow[], error: null as unknown };
+
+  const publicResponse = await supabase
+    .from('marketplace_businesses')
+    .select('id, business_name, verification_status, badge_type')
+    .in('id', businessIds);
+
+  if (!publicResponse.error) {
+    return { data: (publicResponse.data || []) as BusinessRow[], error: null };
+  }
+
+  logSupabaseError('Marketplace business view fetch failed:', publicResponse.error);
+  const fallbackResponse = await supabase
+    .from('businesses')
+    .select('id, business_name, verification_status, badge_type')
+    .in('id', businessIds);
+
+  return { data: (fallbackResponse.data || []) as BusinessRow[], error: fallbackResponse.error };
+}
 
 function logSupabaseError(label: string, error: unknown, extra?: unknown) {
   const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error || {}), 2);
@@ -69,18 +115,8 @@ async function enrichListings(rows: ListingRow[]) {
   const businessIds = Array.from(new Set(rows.map((row) => row.business_id).filter(Boolean))) as string[];
 
   const [profilesResponse, businessesResponse] = await Promise.all([
-    sellerIds.length
-      ? supabase
-          .from('profiles')
-          .select('id, full_name, email, badge_type, verification_status, role, created_at')
-          .in('id', sellerIds)
-      : Promise.resolve({ data: [], error: null }),
-    businessIds.length
-      ? supabase
-          .from('businesses')
-          .select('id, business_name, verification_status, badge_type')
-          .in('id', businessIds)
-      : Promise.resolve({ data: [], error: null }),
+    fetchPublicProfiles(sellerIds),
+    fetchPublicBusinesses(businessIds),
   ]);
 
   if (profilesResponse.error) {
@@ -113,6 +149,8 @@ async function enrichListings(rows: ListingRow[]) {
       sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
       badgeType: badgeType as Listing['badgeType'],
       sellerSince: profile?.created_at || null,
+      sellerAvatarUrl: profile?.avatar_url || null,
+      sellerPhoneNumber: profile?.phone_number || null,
     };
   });
 }
@@ -268,6 +306,7 @@ export async function insertListing(
     businessId?: string | null;
     mediaUrls?: string[];
     videoUrl?: string | null;
+    status?: 'active' | 'pending_payment';
   }
 ) {
   if (!isValidUuid(userId)) {
@@ -290,7 +329,7 @@ export async function insertListing(
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
-      status: 'active',
+      status: data.status || 'active',
       location: validated.value.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
@@ -407,6 +446,7 @@ export async function updateListing(
     businessId?: string | null;
     mediaUrls?: string[];
     videoUrl?: string | null;
+    status?: 'active' | 'pending_payment';
   }
 ) {
   if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
@@ -429,6 +469,7 @@ export async function updateListing(
     business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
+    ...(data.status ? { status: data.status } : {}),
     campus: DEFAULT_CAMPUS,
     updated_at: new Date().toISOString(),
   };

@@ -32,6 +32,7 @@ type ConversationRow = {
   listing_id: string | null;
   buyer_id: string;
   seller_id: string;
+  hidden_for?: string[] | null;
 };
 
 type ListingTitleRow = {
@@ -56,7 +57,7 @@ export async function findOrCreateConversation(
 
   const { data: existing, error: fetchError } = await supabase
     .from('conversations')
-    .select('id')
+    .select('id, hidden_for')
     .eq('listing_id', listingId)
     .eq('buyer_id', buyerId)
     .eq('seller_id', sellerId)
@@ -68,6 +69,14 @@ export async function findOrCreateConversation(
   }
 
   if (existing) {
+    const hiddenFor = ((existing as { hidden_for?: string[] | null }).hidden_for || []).filter((id) => id !== buyerId);
+    if (hiddenFor.length !== ((existing as { hidden_for?: string[] | null }).hidden_for || []).length) {
+      const { error: unhideError } = await supabase
+        .from('conversations')
+        .update({ hidden_for: hiddenFor })
+        .eq('id', existing.id);
+      if (unhideError) console.error('Conversation unhide failed:', serializeError(unhideError));
+    }
     return { conversation: existing, error: null };
   }
 
@@ -174,7 +183,7 @@ export async function getUserConversations(userId: string) {
 
   const { data, error } = await supabase
     .from('conversations')
-    .select('id, listing_id, buyer_id, seller_id')
+    .select('id, listing_id, buyer_id, seller_id, hidden_for')
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false });
 
@@ -183,7 +192,7 @@ export async function getUserConversations(userId: string) {
     return { conversations: [], error: GENERIC_ERROR };
   }
 
-  const rows = (data || []) as ConversationRow[];
+  const rows = ((data || []) as ConversationRow[]).filter((row) => !(row.hidden_for || []).includes(userId));
   if (rows.length === 0) {
     return { conversations: [], error: null };
   }
@@ -231,7 +240,7 @@ export async function getConversationById(conversationId: string, userId: string
 
   const { data, error } = await supabase
     .from('conversations')
-    .select('id, listing_id, buyer_id, seller_id')
+    .select('id, listing_id, buyer_id, seller_id, hidden_for')
     .eq('id', conversationId)
     .maybeSingle();
 
@@ -246,6 +255,10 @@ export async function getConversationById(conversationId: string, userId: string
 
   if (data.buyer_id !== userId && data.seller_id !== userId) {
     return { conversation: null, error: PERMISSION_ERROR };
+  }
+
+  if (((data as ConversationRow).hidden_for || []).includes(userId)) {
+    return { conversation: null, error: 'Conversation not found.' };
   }
 
   const otherUserId = data.buyer_id === userId ? data.seller_id : data.buyer_id;
@@ -274,6 +287,41 @@ export async function getConversationById(conversationId: string, userId: string
     },
     error: derivedError,
   };
+}
+
+export async function hideConversationForUser(conversationId: string, userId: string) {
+  if (!isValidUuid(conversationId) || !isValidUuid(userId)) {
+    return { error: GENERIC_ERROR };
+  }
+
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('id, buyer_id, seller_id, hidden_for')
+    .eq('id', conversationId)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error('Conversation hide fetch failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
+  }
+
+  const row = data as ConversationRow;
+  if (row.buyer_id !== userId && row.seller_id !== userId) {
+    return { error: PERMISSION_ERROR };
+  }
+
+  const hiddenFor = Array.from(new Set([...(row.hidden_for || []), userId]));
+  const { error: updateError } = await supabase
+    .from('conversations')
+    .update({ hidden_for: hiddenFor })
+    .eq('id', conversationId);
+
+  if (updateError) {
+    console.error('Conversation hide failed:', serializeError(updateError));
+    return { error: GENERIC_ERROR };
+  }
+
+  return { error: null };
 }
 
 export async function sendMessage(conversationId: string, senderId: string, content: string) {

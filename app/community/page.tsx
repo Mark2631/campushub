@@ -147,9 +147,6 @@ export default function CommunityPage() {
                           <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                           Official
                         </span>
-                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
-                          {community.posting_mode === 'admin_only' ? 'Admin posts' : 'Everyone posts'}
-                        </span>
                       </div>
                       <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">

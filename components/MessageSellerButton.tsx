@@ -14,7 +14,7 @@ type Props = {
 
 export default function MessageSellerButton({ listingId, sellerId }: Props) {
   const router = useRouter();
-  const { user, loading, pushNotification } = useUser();
+  const { user, loading } = useUser();
   const [status, setStatus] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -46,11 +46,6 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
       return;
     }
 
-    await pushNotification({
-      type: 'message',
-      title: 'Conversation ready',
-      body: 'Your conversation with the seller is open.',
-    });
     router.push(`/messages/${conversation.id}`);
   };
 

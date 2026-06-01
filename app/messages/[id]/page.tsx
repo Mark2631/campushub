@@ -2,12 +2,14 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Send, Trash2 } from 'lucide-react';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
-import { getConversationById, Message, sendMessage } from '../../../lib/conversations';
+import { getConversationById, Message, hideConversationForUser, sendMessage } from '../../../lib/conversations';
 import { createNotificationRecord } from '../../../lib/notifications';
 import { isValidUuid } from '../../../lib/validation';
 
@@ -37,12 +39,14 @@ const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery 
 
 export default function ConversationPage({ params }: Props) {
   const { id } = use(params);
+  const router = useRouter();
   const { user, loading, showToast } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
 
   useEffect(() => {
@@ -127,6 +131,23 @@ export default function ConversationPage({ params }: Props) {
     });
   };
 
+  const handleDeleteConversation = async () => {
+    if (!user || !conversation || deleting) return;
+
+    setDeleting(true);
+    const { error } = await hideConversationForUser(conversation.id, user.id);
+    setDeleting(false);
+
+    if (error) {
+      console.error('Conversation delete failed:', error);
+      showToast({ type: 'error', message: error });
+      return;
+    }
+
+    showToast({ type: 'success', message: 'Conversation removed.' });
+    router.replace('/messages');
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
@@ -165,14 +186,27 @@ export default function ConversationPage({ params }: Props) {
           <Link href="/messages" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold mb-4">
             ← Back to Messages
           </Link>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
-              {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
+                {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
+                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
-              <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
-            </div>
+            {conversation ? (
+              <button
+                type="button"
+                aria-label="Remove conversation"
+                onClick={handleDeleteConversation}
+                disabled={deleting}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:text-red-300"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
         </header>
 
@@ -193,7 +227,7 @@ export default function ConversationPage({ params }: Props) {
               ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
               {conversation?.otherUser.id ? (
                 <div className="mt-3">
-                  <WhatsAppButton userId={conversation.otherUser.id} />
+                  <WhatsAppButton userId={conversation.otherUser.id} phoneNumber={conversation.otherUser.phone_number} />
                   <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                 </div>
               ) : null}
@@ -243,29 +277,27 @@ export default function ConversationPage({ params }: Props) {
             </div>
 
             {/* Message Form */}
-            <form onSubmit={handleSend} className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300">
-                Send a message
-              </label>
+            <form onSubmit={handleSend} className="space-y-3">
               {showWarning ? (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
                   Be careful. Avoid moving outside the app too early or paying before inspection.
                 </div>
               ) : null}
-              <div className="flex gap-3">
+              <div className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <textarea
                   value={messageText}
                   onChange={(event) => setMessageText(event.target.value)}
-                  rows={2}
-                  className="flex-1 resize-none rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-700 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  rows={1}
+                  className="min-h-11 flex-1 resize-none rounded-2xl border-0 bg-transparent px-3 py-3 text-sm text-gray-900 outline-none placeholder-gray-500 dark:text-white dark:placeholder-zinc-500"
                   placeholder="Write your message..."
                 />
                 <button
                   type="submit"
                   disabled={sending || !messageText.trim()}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-6 py-3 text-sm font-semibold text-white transition self-end"
+                  aria-label="Send message"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:bg-gray-400"
                 >
-                  {sending ? '⏳' : '📤'}
+                  <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
               {conversation ? <ReportButton targetType="message" targetId={conversation.id} label="Report conversation" /> : null}

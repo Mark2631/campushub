@@ -2,7 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Heart, ImagePlus, Pin, Send, Video } from 'lucide-react';
+import { Heart, ImagePlus, Pin, Send } from 'lucide-react';
 import AuthPromptModal from '../../../components/AuthPromptModal';
 import BottomNav from '../../../components/BottomNav';
 import Header from '../../../components/Header';
@@ -419,9 +419,6 @@ export default function CommunityGroupPage({ params }: Props) {
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{community.name}</h1>
                   <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
-                    {community.posting_mode === 'admin_only' ? 'Admin posts' : 'Everyone posts'}
-                  </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -447,9 +444,9 @@ export default function CommunityGroupPage({ params }: Props) {
         ) : null}
 
         {user && (isAdmin || community.posting_mode === 'everyone') ? (
-          <form onSubmit={handlePublish} className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <form onSubmit={handlePublish} className="mb-5 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">{isAdmin ? 'Admin post composer' : 'New group post'}</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">New group post</p>
               {isAdmin ? (
                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
                   <input type="checkbox" checked={postPinned} onChange={(event) => setPostPinned(event.target.checked)} />
@@ -460,9 +457,9 @@ export default function CommunityGroupPage({ params }: Props) {
             <textarea
               value={postContent}
               onChange={(event) => setPostContent(event.target.value)}
-              rows={4}
-              placeholder={isAdmin ? 'Share an official update...' : 'Write something for the group...'}
-              className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
+              rows={3}
+              placeholder="Write something for the group..."
+              className="w-full resize-none rounded-2xl border-0 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-slate-950"
             />
             {selectedMedia.length > 0 ? (
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -487,7 +484,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 Clear
               </button>
               <button type="submit" disabled={publishing} className="ml-auto inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
-                <Video className="h-4 w-4" aria-hidden="true" />
+                <Send className="h-4 w-4" aria-hidden="true" />
                 {publishing ? uploadStatus || 'Publishing...' : 'Publish'}
               </button>
             </div>
@@ -500,10 +497,6 @@ export default function CommunityGroupPage({ params }: Props) {
           >
             Create a free account to join the conversation.
           </button>
-        ) : community.posting_mode === 'admin_only' ? (
-          <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
-            This group is admin-only for posting. You can still comment and react.
-          </div>
         ) : null}
 
         {pinnedPost ? (

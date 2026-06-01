@@ -12,7 +12,7 @@ export async function signUpWithPassword(email: string, password: string, fullNa
       data: {
         full_name: fullName,
       },
-      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback?mode=signin` : undefined,
     },
   });
 }

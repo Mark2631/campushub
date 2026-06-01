@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
@@ -37,6 +38,55 @@ function appendWelcome(path: string) {
 
 function friendlyAuthMessage(fallback: string) {
   return fallback;
+}
+
+function passwordSignInMessage(error: unknown) {
+  const message = error && typeof error === 'object' && 'message' in error ? String((error as { message?: unknown }).message || '') : '';
+  if (/confirm|verified|email/i.test(message)) {
+    return 'Confirm your email before signing in.';
+  }
+  if (/invalid|credentials|password/i.test(message)) {
+    return 'Unable to sign in. Review your email and password.';
+  }
+  return 'Unable to sign in. Try again.';
+}
+
+function PasswordInput({
+  label,
+  value,
+  onChange,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      {label}
+      <div className="mt-2 flex rounded-2xl border border-slate-200 bg-white transition focus-within:border-blue-500 dark:border-slate-800 dark:bg-slate-950">
+        <input
+          type={visible ? 'text' : 'password'}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          autoComplete={autoComplete}
+          className="min-w-0 flex-1 rounded-l-2xl bg-transparent px-4 py-3 text-slate-950 outline-none dark:text-white"
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          className="inline-flex w-12 shrink-0 items-center justify-center rounded-r-2xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+        >
+          {visible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+        </button>
+      </div>
+    </label>
+  );
 }
 
 function SignInPageContent() {
@@ -102,6 +152,13 @@ function SignInPageContent() {
       return;
     }
 
+    if (signupForm.password.length < 6) {
+      const message = 'Use at least 6 characters for your password.';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
+      return;
+    }
+
     setSignupPending(true);
     persistEmail(email);
 
@@ -124,25 +181,12 @@ function SignInPageContent() {
       return;
     }
 
-    const signin = await signInWithPassword(email, signupForm.password);
     setSignupPending(false);
-
-    if (signin.error || !signin.data.session) {
-      if (signin.error) console.error('Post-signup sign-in failed:', signin.error);
-      const message = friendlyAuthMessage('Account created, but sign-in did not complete. Try signing in with your password.');
-      showToast({ type: 'error', message });
-      setNotice({
-        tone: 'error',
-        message,
-      });
-      setMode('signin');
-      setSigninForm({ email, password: '' });
-      return;
-    }
-
-    await ensureProfile(signin.data.session.user);
-    showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
-    await completeAuth('Welcome to CampusTrader.');
+    const message = 'Account created. Check your email to confirm it, then sign in.';
+    showToast({ type: 'success', message });
+    setNotice({ tone: 'success', message });
+    setMode('signin');
+    setSigninForm({ email, password: '' });
   };
 
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -159,7 +203,7 @@ function SignInPageContent() {
 
     if (error || !data.session) {
       if (error) console.error('Sign-in failed:', error);
-      const message = friendlyAuthMessage('Unable to sign in. Review your email and password.');
+      const message = friendlyAuthMessage(passwordSignInMessage(error));
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
       return;
@@ -285,26 +329,18 @@ function SignInPageContent() {
                   required
                 />
               </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Password
-                <input
-                  type="password"
-                  value={signupForm.password}
-                  onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  required
-                />
-              </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Confirm password
-                <input
-                  type="password"
-                  value={signupForm.confirmPassword}
-                  onChange={(event) => setSignupForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  required
-                />
-              </label>
+              <PasswordInput
+                label="Password"
+                value={signupForm.password}
+                autoComplete="new-password"
+                onChange={(password) => setSignupForm((current) => ({ ...current, password }))}
+              />
+              <PasswordInput
+                label="Confirm password"
+                value={signupForm.confirmPassword}
+                autoComplete="new-password"
+                onChange={(confirmPassword) => setSignupForm((current) => ({ ...current, confirmPassword }))}
+              />
               <button
                 type="submit"
                 disabled={signupPending}
@@ -325,16 +361,12 @@ function SignInPageContent() {
                   required
                 />
               </label>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Password
-                <input
-                  type="password"
-                  value={signinForm.password}
-                  onChange={(event) => setSigninForm((current) => ({ ...current, password: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                  required
-                />
-              </label>
+              <PasswordInput
+                label="Password"
+                value={signinForm.password}
+                autoComplete="current-password"
+                onChange={(password) => setSigninForm((current) => ({ ...current, password }))}
+              />
               <button
                 type="button"
                 onClick={() => {

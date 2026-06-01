@@ -5,7 +5,7 @@ export const GENERIC_ERROR = 'Something went wrong. Try again.';
 export const UPLOAD_ERROR = 'Upload failed. Please retry.';
 export const PERMISSION_ERROR = 'You do not have permission to do that.';
 
-export const allowedListingStatuses = ['active', 'sold', 'hidden', 'reported'] as const;
+export const allowedListingStatuses = ['active', 'sold', 'hidden', 'reported', 'pending_payment'] as const;
 export const allowedListingConditions = ['new', 'used', 'refurbished', 'service'] as const;
 export const allowedVerificationStatuses = ['unverified', 'pending', 'verified', 'rejected'] as const;
 export const allowedRequestStatuses = ['open', 'closed', 'hidden'] as const;

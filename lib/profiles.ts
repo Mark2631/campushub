@@ -13,6 +13,7 @@ export interface ProfileRecord {
   role?: string | null;
   account_status?: string | null;
   phone_number?: string | null;
+  email_verified?: boolean | null;
   campus?: string | null;
   created_at?: string;
 }
@@ -77,6 +78,7 @@ export async function ensureProfile(user: User) {
   const fullName =
     user.user_metadata?.full_name || user.user_metadata?.fullName || user.user_metadata?.name || '';
   const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar || null;
+  const emailVerified = Boolean(user.email_confirmed_at);
   const existing = await getProfileById(user.id);
   const current = existing.profile;
   const isAdmin = user.email?.toLowerCase() === 'mwanginewton107@gmail.com' || current?.role === 'admin' || current?.badge_type === 'admin';
@@ -94,6 +96,7 @@ export async function ensureProfile(user: User) {
     account_status: accountStatus,
     role: isAdmin ? 'admin' : current?.role || 'user',
     phone_number: current?.phone_number || null,
+    email_verified: current?.email_verified || emailVerified,
     campus: current?.campus || DEFAULT_CAMPUS,
   });
 
@@ -117,7 +120,18 @@ export async function getProfileById(userId: string) {
 
   if (error) {
     console.error('Error fetching profile:', serializeError(error));
-    return { profile: null, error: GENERIC_ERROR };
+    const fallback = await supabase
+      .from('marketplace_profiles')
+      .select('id, full_name, avatar_url, phone_number, badge_type, verification_status, role, email_verified, created_at')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (fallback.error) {
+      console.error('Error fetching public profile:', serializeError(fallback.error));
+      return { profile: null, error: GENERIC_ERROR };
+    }
+
+    return { profile: (fallback.data || null) as ProfileRecord | null, error: null };
   }
 
   return { profile: (data || null) as ProfileRecord | null, error: null };

@@ -20,7 +20,8 @@ The current launch scope is intentionally narrow: CampusTrader is for MUST first
 - Persistent profile photos through the public `profile-media` bucket and `profiles.avatar_url`.
 - Messages with the other user's identity, listing context, unread counts, and clean guest prompts.
 - MUST Communities with official groups, useful links, group posting modes, comments, reactions, and admin moderation.
-- Admin dashboard for verification, reports, listing moderation, business review, complaints, and community management.
+- Admin dashboard for verification, reports, listing moderation, business review, business post payment review, complaints, admin invites, and community management.
+- Manual business post review: businesses pay KSh 60 to Till `6362615` (`Newton Mwangi`), then admins approve the post before it goes live.
 - PWA metadata, app icons, favicon, Apple touch icon, and Open Graph preview assets.
 
 ## Communities
@@ -91,9 +92,14 @@ Run the SQL in Supabase after the core policy scripts:
 ```text
 supabase/final-required-policies.sql
 supabase/must-community-launch.sql
+supabase/final-launch-polish.sql
 ```
 
 `supabase/must-community-launch.sql` creates or aligns the community tables, seeds official MUST communities, adds campus defaults where safe, creates the `community-media` bucket, and adds RLS policies for guests, authenticated users, and admins.
+
+`supabase/final-launch-polish.sql` adds the final launch columns and policies for email trust status, business post payment review, conversation hiding, public marketplace seller views, community posting mode enforcement, admin invites, and community media uploads.
+
+Auth note: if Supabase Auth email confirmation is enabled, users must confirm through the email link before password sign-in succeeds. If you want users to access the app before email confirmation, disable "Confirm email" in Supabase Auth settings; the app will still record `profiles.email_verified` when Supabase marks the email as confirmed.
 
 ## Local Development
 
@@ -135,7 +141,9 @@ Manual smoke checks:
 - Profile photo persists after upload and refresh.
 - Messages show the other user's avatar/name and listing context.
 - Community groups load, open cleanly, and respect posting mode.
-- Admin can create communities and moderate posts.
+- Signed-in users can post in open communities; admins can remove posts.
+- Admin can create communities, upload cover images, and moderate posts.
+- Business posts stay pending until payment review is approved.
 - Guests can view communities but must sign in to participate.
 - PWA icons and Open Graph image use the current logo.
 
@@ -149,6 +157,6 @@ Manual smoke checks:
 
 ## Not Active Yet
 
-Payments are not implemented in this build. Future monetization and payment work may include business verification fees, boosted listings, featured business cards, vendor subscriptions, urgent request boosts, sponsored category/community placements, protected payments, escrow, M-Pesa STK Push, and premium seller badges.
+Full checkout, escrow, protected payments, and M-Pesa STK Push are not active yet. This build only includes manual business-post payment review for KSh 60 posts. Future monetization work may include business verification fees, boosted listings, featured business cards, vendor subscriptions, urgent request boosts, sponsored category/community placements, protected payments, escrow, M-Pesa STK Push, and premium seller badges.
 
 Multi-university expansion is also not active yet. The code and schema are prepared around the `campus` default, but users do not choose campuses in the current MUST launch.
