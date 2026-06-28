@@ -1,3 +1,6 @@
+"next": "...",
+"@supabase/supabase-js": "...",
+"@supabase/ssr": "..."
 {
   "name": "campushub",
   "version": "0.1.0",
