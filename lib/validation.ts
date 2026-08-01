@@ -47,7 +47,7 @@ export function isAllowedValue<T extends readonly string[]>(value: unknown, allo
 
 export function normalizeAllowedCategory(value: unknown) {
   const normalized = normalizeCategory(String(value ?? ''));
-  return STANDARD_CATEGORIES.includes(normalized as (typeof STANDARD_CATEGORIES)[number]) ? normalized : 'Other';
+  return STANDARD_CATEGORIES.includes(normalized as (typeof STANDARD_CATEGORIES)[number]) ? normalized : 'Services';
 }
 
 export function cleanErrorForUser(error?: unknown, fallback = GENERIC_ERROR) {

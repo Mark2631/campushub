@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MessageCircle, PlusCircle, User, Users } from 'lucide-react';
+import { Home, MessageCircle, PlusCircle, User, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import useUser from '../hooks/useUser';
 import AuthPromptModal from './AuthPromptModal';
@@ -10,8 +10,8 @@ import AuthPromptModal from './AuthPromptModal';
 const navItems = [
   { href: '/', label: 'Home', Icon: Home },
   { href: '/sell', label: 'Sell', Icon: PlusCircle },
+  { href: '/community', label: 'Network', Icon: UsersRound },
   { href: '/messages', label: 'Messages', Icon: MessageCircle },
-  { href: '/community', label: 'Community', Icon: Users },
   { href: '/profile', label: 'Profile', Icon: User },
 ];
 
@@ -28,7 +28,7 @@ export default function BottomNav() {
             {navItems.map((item) => {
               const isActive = item.href === pathname || (item.href !== '/' && pathname.startsWith(item.href));
               const Icon = item.Icon;
-              const isProtected = item.href === '/sell' || item.href === '/messages' || item.href === '/profile';
+              const isProtected = item.href === '/sell' || item.href === '/community' || item.href === '/messages' || item.href === '/profile';
               const className = `flex-1 px-1 py-3 text-center transition-colors sm:py-4 ${
                 isActive
                   ? 'text-blue-600 dark:text-blue-400 border-t-2 border-blue-600 dark:border-blue-400'

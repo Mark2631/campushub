@@ -81,9 +81,9 @@ export default function CommunityPage() {
         <header className="mb-6">
           <Logo />
           <p className="mt-5 text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Meru University of Science and Technology</p>
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">MUST Communities</h1>
+          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Network</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Official groups for marketplace updates, deals, services, lost items, and useful campus links.
+            Your personalized CampusTrader hub for followed communities, trusted traders, wishlists, order updates, campus announcements, events, clubs, lost and found, and verified business updates.
           </p>
         </header>
 
@@ -111,7 +111,7 @@ export default function CommunityPage() {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Megaphone className="h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Official groups</h2>
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Campus channels</h2>
             </div>
             {isAdmin ? (
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
@@ -184,7 +184,7 @@ export default function CommunityPage() {
         <section>
           <div className="mb-3 flex items-center gap-2">
             <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Useful MUST links</h2>
+            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Useful campus links</h2>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {communityLinks.map((link) => (

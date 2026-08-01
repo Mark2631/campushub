@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
+import { CircleHelp, Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -69,6 +70,7 @@ export default function ProfilePage() {
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -339,7 +341,12 @@ export default function ProfilePage() {
       <Header />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
         <header className="mb-6">
-          <Logo />
+          <div className="flex items-start justify-between gap-3">
+            <Logo />
+            <button type="button" onClick={() => setHelpOpen(true)} aria-label="Open help center" className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-blue-600 shadow-sm transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300">
+              <CircleHelp className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
           <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
         </header>
@@ -362,7 +369,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-4">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-2xl font-black text-white ring-4 ring-slate-100 dark:ring-slate-800">
                     {avatarPreview || profile?.avatar_url ? (
-                      <img src={avatarPreview || profile?.avatar_url || ''} alt="" className="h-full w-full object-cover" />
+                      <Image src={avatarPreview || profile?.avatar_url || ''} alt="" width={80} height={80} unoptimized={Boolean(avatarPreview)} className="h-full w-full object-cover" />
                     ) : (
                       displayName.charAt(0).toUpperCase()
                     )}
@@ -378,7 +385,7 @@ export default function ProfilePage() {
                       ) : null}
                     </div>
                     <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">{profile?.email || user.email}</p>
-                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">MUST campus</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">MUST institution · Meru County</p>
                   </div>
                 </div>
 
@@ -389,7 +396,7 @@ export default function ProfilePage() {
                   </button>
                   <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
                     <Settings className="h-4 w-4" aria-hidden="true" />
-                    Settings
+                    Manage
                   </button>
                 </div>
               </div>
@@ -428,7 +435,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Verify to earn a trusted badge</p>
-                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
+                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Manage</button>
                   </div>
                 )}
               </div>
@@ -502,8 +509,8 @@ export default function ProfilePage() {
           <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold">Settings</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Account, verification, business profile, and support.</p>
+                <h2 className="text-xl font-bold">Manage</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Account, verification, business profile, institution, privacy, appearance, and support.</p>
               </div>
               <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -522,6 +529,18 @@ export default function ProfilePage() {
                     {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
                   </button>
                   {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-bold">Institution</h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Current launch scope: MUST. Changing institution does not automatically move existing listings or requests.</p>
+                  </div>
+                  <Link href="/institution?next=/profile" className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm font-bold text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
+                    Manage institution
+                  </Link>
                 </div>
               </section>
 
@@ -590,7 +609,13 @@ export default function ProfilePage() {
               </section>
 
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Help</h3>
+                <h3 className="font-bold">Help Center</h3>
+                <div className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-400 sm:grid-cols-2">
+                  <p>FAQs and navigation guidance.</p>
+                  <p>Posting, buying, selling, verification, and safety tips.</p>
+                  <a className="font-bold text-blue-600 dark:text-blue-300" href="https://wa.me/254745706087">WhatsApp 0745706087</a>
+                  <a className="font-bold text-blue-600 dark:text-blue-300" href="tel:+254745706087">Call support</a>
+                </div>
                 <form onSubmit={handleComplaintSubmit} className="mt-3 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
@@ -621,6 +646,24 @@ export default function ProfilePage() {
                 Sign out
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+
+      {helpOpen ? (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8" onClick={() => setHelpOpen(false)}>
+          <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div><h2 className="text-xl font-bold">Help Center</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Fast answers for using CampusTrader safely.</p></div>
+              <button type="button" aria-label="Close help" onClick={() => setHelpOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {['How to post a listing', 'Buying and meeting safely', 'Selling guide', 'Community and Network guide', 'Verification guide', 'Report a bug or suggest a feature'].map((item) => (
+                <details key={item} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800"><summary className="cursor-pointer font-bold">{item}</summary><p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">Use Manage for account actions, keep trades inside your institution first, meet in public, and contact support if anything feels unsafe.</p></details>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2"><a href="https://wa.me/254745706087" className="rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white">WhatsApp 0745706087</a><a href="tel:+254745706087" className="rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-bold dark:border-slate-700">Call support</a></div>
           </div>
         </div>
       ) : null}

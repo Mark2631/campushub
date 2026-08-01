@@ -58,7 +58,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             </Link>
 
             <Link href="/profile#help-settings" onClick={onClose} className="block rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
-              Help & Settings
+              Help & Manage
             </Link>
 
             {isAdmin ? (
