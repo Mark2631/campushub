@@ -15,16 +15,16 @@ const categories = STANDARD_CATEGORIES;
 const listingsPageSize = 60;
 const categorySections = [
   { title: 'Electronics', category: 'Electronics' },
-  { title: 'Services', category: 'Services' },
-  { title: 'Fashion', category: 'Fashion' },
   { title: 'Books', category: 'Books' },
-  { title: 'Refurbished Deals', category: 'Refurbished' },
-  { title: 'Food', category: 'Food' },
-  { title: 'Business', category: 'Business' },
-  { title: 'Other', category: 'Other' },
-] as const;
+  { title: 'Fashion', category: 'Fashion' },
+  { title: 'Housing', category: 'Housing' },
+  { title: 'Services', category: 'Services' },
+  { title: 'Jobs', category: 'Jobs' },
+  { title: 'Events', category: 'Events' },
+  { title: 'Free Items', category: 'Free Items' },
+];
 
-function readCachedHomeListings() {
+function readCachedListings() {
   if (typeof window === 'undefined') return [] as Listing[];
 
   try {
@@ -220,11 +220,7 @@ export default function Home() {
       .filter((listing) => listingBelongsToCategory(listing, 'Services'))
       .slice(0, 8);
 
-    const refurbished = filteredListings
-      .filter((listing) => listingBelongsToCategory(listing, 'Refurbished'))
-      .slice(0, 8);
-
-    return { recent, services, refurbished };
+    return { recent, services };
   }, [currentTime, filteredListings]);
 
   const greetingName = profileName || user?.email?.split('@')[0];
@@ -235,7 +231,6 @@ export default function Home() {
 
   const listingsForCategorySection = (category: string) => {
     if (category === 'Services') return sectionBuckets.services;
-    if (category === 'Refurbished') return sectionBuckets.refurbished;
     return filteredListings.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 8);
   };
 

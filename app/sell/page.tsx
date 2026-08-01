@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClipboardList, ImagePlus, UserRound, Video } from 'lucide-react';
@@ -19,9 +20,10 @@ import { createItemRequest, getItemRequestById } from '../../lib/itemRequests';
 import { getListingById, insertListing, normalizeCategory, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
 import { getProfileById, type ProfileRecord } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
+import { STANDARD_CATEGORIES } from '../../lib/categories';
 import { isValidUuid } from '../../lib/validation';
 
-const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Business', 'Refurbished', 'Other'];
+const categories = STANDARD_CATEGORIES;
 const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
 const maxVideoSize = 15 * 1024 * 1024;
@@ -833,7 +835,7 @@ function SellPageContent() {
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {images.map((image, index) => (
                   <div key={index} className="relative rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-800">
-                    <img src={image.previewUrl} alt={`Preview ${index + 1}`} className="w-full h-20 object-cover" />
+                    <Image src={image.previewUrl} alt={`Preview ${index + 1}`} width={160} height={80} unoptimized className="h-20 w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
@@ -1013,9 +1015,9 @@ function SellPageContent() {
             {hasPreviewContent ? (
               <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
                 <div className="space-y-3">
-                  <div className="flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-center text-white">
+                  <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-center text-white">
                     {images[0] ? (
-                      <img src={images[0].previewUrl} alt="Listing preview" className="h-full w-full object-cover" />
+                      <Image src={images[0].previewUrl} alt="Listing preview" fill sizes="(max-width: 640px) 100vw, 420px" unoptimized className="object-cover" />
                     ) : (
                       <div className="px-6">
                         <p className="text-xs font-black uppercase tracking-[0.24em]">{formData.category}</p>

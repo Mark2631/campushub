@@ -145,29 +145,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const authCallback = params.get('auth_callback');
-
-        if (authCallback === 'success' && accessToken && refreshToken) {
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (sessionError) {
-            console.error('Auth callback session error:', sessionError);
-          }
-
+        if (params.get('auth_callback') === 'success') {
           const cleanUrl = `${window.location.origin}${window.location.pathname}`;
           window.history.replaceState({}, '', cleanUrl);
-
-          if (sessionData.session && isMounted) {
-            setSession(sessionData.session);
-            setLoading(false);
-            await Promise.all([syncProfile(sessionData.session.user), syncAdmin(sessionData.session.user), syncNotifications(sessionData.session.user)]);
-            return;
-          }
         }
       }
 

@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
-import { ensureProfile } from '../../lib/profiles';
+import { exchangeOAuthCodeForSession, sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
+import { ensureProfile, getProfileById } from '../../lib/profiles';
 
 type AuthMode = 'signup' | 'signin';
 type Notice = { tone: 'success' | 'error' | 'info'; message: string };
@@ -95,12 +95,14 @@ function SignInPageContent() {
   const { user, loading, refreshSession, showToast } = useUser();
   const next = searchParams.get('next') || '/';
   const callbackError = searchParams.get('error');
+  const oauthCode = searchParams.get('code');
+  const oauthCallback = searchParams.get('oauth_callback');
   const requestedMode = searchParams.get('mode');
   const initialEmail = useMemo(() => rememberedEmail(), []);
   const [mode, setMode] = useState<AuthMode>(requestedMode === 'signin' ? 'signin' : 'signup');
   const [notice, setNotice] = useState<Notice | null>(
     callbackError
-      ? { tone: 'error', message: 'Something went wrong. Try again.' }
+      ? { tone: 'error', message: decodeURIComponent(callbackError) }
       : null
   );
   const [signupPending, setSignupPending] = useState(false);
@@ -120,10 +122,57 @@ function SignInPageContent() {
   const [resetEmail, setResetEmail] = useState(initialEmail);
 
   useEffect(() => {
-    if (!loading && user) {
-      router.replace('/');
-    }
-  }, [loading, router, user]);
+    let active = true;
+
+    const completeOAuth = async () => {
+      if (oauthCallback !== '1' || !oauthCode) return;
+
+      setNotice({ tone: 'info', message: 'Finishing Google sign-in...' });
+      const { data, error } = await exchangeOAuthCodeForSession(oauthCode);
+
+      if (!active) return;
+
+      if (error || !data.session) {
+        const message = error?.message || 'Google sign-in could not be completed.';
+        console.error('OAuth code exchange failed:', error);
+        setNotice({ tone: 'error', message });
+        showToast({ type: 'error', message });
+        router.replace('/signin?mode=signin');
+        return;
+      }
+
+      const { profile } = await ensureProfile(data.session.user);
+      const destination = profile?.institution_id ? next : `/institution?next=${encodeURIComponent(next)}`;
+      showToast({ type: 'success', message: 'Signed in with Google.' });
+      router.replace(destination);
+      router.refresh();
+    };
+
+    void completeOAuth();
+
+    return () => {
+      active = false;
+    };
+  }, [next, oauthCallback, oauthCode, router, showToast]);
+
+  useEffect(() => {
+    let active = true;
+
+    const redirectAuthenticatedUser = async () => {
+      if (loading || !user || oauthCallback === '1') return;
+
+      const { profile } = await getProfileById(user.id);
+      if (!active) return;
+
+      router.replace(profile?.institution_id ? '/' : '/institution');
+    };
+
+    void redirectAuthenticatedUser();
+
+    return () => {
+      active = false;
+    };
+  }, [loading, oauthCallback, router, user]);
 
   const persistEmail = (email: string) => {
     if (typeof window !== 'undefined' && email) {
@@ -131,10 +180,11 @@ function SignInPageContent() {
     }
   };
 
-  const completeAuth = async (message: string, destination = next) => {
+  const completeAuth = async (message: string, destination = next, hasInstitution = true) => {
     await refreshSession();
     setNotice({ tone: 'success', message });
-    router.replace(message === 'Welcome to CampusTrader.' ? appendWelcome(destination) : destination);
+    const resolvedDestination = hasInstitution ? destination : `/institution?next=${encodeURIComponent(destination)}`;
+    router.replace(message === 'Welcome to CampusTrader.' && hasInstitution ? appendWelcome(resolvedDestination) : resolvedDestination);
     router.refresh();
   };
 
@@ -174,10 +224,10 @@ function SignInPageContent() {
     }
 
     if (signup.data.session) {
-      await ensureProfile(signup.data.session.user);
+      const { profile } = await ensureProfile(signup.data.session.user);
       setSignupPending(false);
       showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
-      await completeAuth('Welcome to CampusTrader.');
+      await completeAuth('Welcome to CampusTrader.', next, Boolean(profile?.institution_id));
       return;
     }
 
@@ -209,17 +259,17 @@ function SignInPageContent() {
       return;
     }
 
-    await ensureProfile(data.session.user);
+    const { profile } = await ensureProfile(data.session.user);
     showToast({ type: 'success', message: 'Signed in successfully.' });
-    await completeAuth('Signed in successfully.', next);
+    await completeAuth('Signed in successfully.', next, Boolean(profile?.institution_id));
   };
 
   const handleGoogle = async () => {
     setNotice(null);
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(next);
     if (error) {
       console.error('Google sign-in failed:', error);
-      const message = 'Something went wrong. Try again.';
+      const message = error.message || 'Google sign-in could not start.';
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
     }

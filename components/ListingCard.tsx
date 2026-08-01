@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Listing } from '../lib/listings';
 
@@ -14,12 +15,14 @@ export default function ListingCard({ listing }: { listing: Listing }) {
       href={`/listing/${listing.id}`}
       className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-600"
     >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
-          <img
+          <Image
             src={firstImage || ''}
             alt={listing.title}
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 220px"
+            className="object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />
         ) : (

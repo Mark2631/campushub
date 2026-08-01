@@ -15,6 +15,7 @@ export interface ProfileRecord {
   phone_number?: string | null;
   email_verified?: boolean | null;
   campus?: string | null;
+  institution_id?: string | null;
   created_at?: string;
 }
 
@@ -98,6 +99,7 @@ export async function ensureProfile(user: User) {
     phone_number: current?.phone_number || null,
     email_verified: current?.email_verified || emailVerified,
     campus: current?.campus || DEFAULT_CAMPUS,
+    institution_id: current?.institution_id || null,
   });
 
   return { profile: (data || null) as ProfileRecord | null, error };

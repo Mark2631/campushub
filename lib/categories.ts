@@ -4,48 +4,110 @@ type ListingCategoryInput = {
   status?: string | null;
 };
 
+export const STANDARD_CATEGORIES = [
+  'Electronics',
+  'Books',
+  'Fashion',
+  'Housing',
+  'Services',
+  'Jobs',
+  'Events',
+  'Free Items',
+  'Requests',
+] as const;
+
+export const SERVICE_SUBCATEGORIES = [
+  'Printing',
+  'Laundry',
+  'Repairs',
+  'Photography',
+  'Tutoring',
+  'Salon',
+  'Barber',
+  'Transport',
+] as const;
+
+const categoryAliases: Record<string, (typeof STANDARD_CATEGORIES)[number]> = {
+  electronic: 'Electronics',
+  electronics: 'Electronics',
+  gadget: 'Electronics',
+  gadgets: 'Electronics',
+  book: 'Books',
+  books: 'Books',
+  notes: 'Books',
+  study: 'Books',
+  fashion: 'Fashion',
+  clothes: 'Fashion',
+  clothing: 'Fashion',
+  'cloth designs': 'Fashion',
+  housing: 'Housing',
+  hostel: 'Housing',
+  hostels: 'Housing',
+  bedsitter: 'Housing',
+  bedsitters: 'Housing',
+  roommate: 'Housing',
+  roommates: 'Housing',
+  service: 'Services',
+  services: 'Services',
+  'campus services': 'Services',
+  skill: 'Services',
+  skills: 'Services',
+  printing: 'Services',
+  laundry: 'Services',
+  repairs: 'Services',
+  photography: 'Services',
+  tutoring: 'Services',
+  salon: 'Services',
+  barber: 'Services',
+  transport: 'Services',
+  job: 'Jobs',
+  jobs: 'Jobs',
+  gig: 'Jobs',
+  gigs: 'Jobs',
+  attachment: 'Jobs',
+  attachments: 'Jobs',
+  event: 'Events',
+  events: 'Events',
+  ticket: 'Events',
+  tickets: 'Events',
+  free: 'Free Items',
+  'free item': 'Free Items',
+  'free items': 'Free Items',
+  request: 'Requests',
+  requests: 'Requests',
+  furniture: 'Housing',
+  'room items': 'Housing',
+  food: 'Services',
+  meals: 'Services',
+  snacks: 'Services',
+  business: 'Services',
+  'business offers': 'Services',
+  refurbished: 'Electronics',
+  refurb: 'Electronics',
+  other: 'Services',
+  others: 'Services',
+};
+
 export function normalizeCategory(value?: string | null) {
-  const raw = String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const raw = String(value ?? '').trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+  return categoryAliases[raw] || 'Services';
+}
 
-  if (['service', 'services', 'campus services', 'skill', 'skills'].includes(raw)) return 'Services';
-  if (['electronic', 'electronics', 'gadget', 'gadgets'].includes(raw)) return 'Electronics';
-  if (['book', 'books', 'notes', 'study'].includes(raw)) return 'Books';
-  if (['fashion', 'clothes', 'clothing', 'cloth designs'].includes(raw)) return 'Fashion';
-  if (['furniture', 'room items'].includes(raw)) return 'Furniture';
-  if (['food', 'meals', 'snacks'].includes(raw)) return 'Food';
-  if (['business', 'business offers'].includes(raw)) return 'Business';
-  if (['refurbished', 'refurb'].includes(raw)) return 'Refurbished';
-  if (['other', 'others'].includes(raw)) return 'Other';
-
-  return 'Other';
+export function isStandardCategory(value?: string | null): value is (typeof STANDARD_CATEGORIES)[number] {
+  return STANDARD_CATEGORIES.includes(normalizeCategory(value) as (typeof STANDARD_CATEGORIES)[number]);
 }
 
 export function listingBelongsToCategory(listing: ListingCategoryInput, category: string): boolean {
-  const normalizedCategory = normalizeCategory(listing.category);
+  const normalizedListingCategory = normalizeCategory(listing.category);
+  const normalizedFilterCategory = normalizeCategory(category);
   const condition = String(listing.condition ?? '').trim().toLowerCase();
 
-  if (category === 'Services') {
-    return normalizedCategory === 'Services' || condition === 'service';
+  if (normalizedFilterCategory === 'Services') {
+    return normalizedListingCategory === 'Services' || condition === 'service';
   }
 
-  if (category === 'Refurbished') {
-    return normalizedCategory === 'Refurbished' || condition === 'refurbished';
-  }
-
-  return normalizedCategory === category;
+  return normalizedListingCategory === normalizedFilterCategory;
 }
-
-export const STANDARD_CATEGORIES = [
-  'Electronics',
-  'Fashion',
-  'Furniture',
-  'Books',
-  'Food',
-  'Services',
-  'Refurbished',
-  'Business',
-  'Other',
-] as const;
 
 export function logCategoryStats(listings: ListingCategoryInput[]) {
   if (typeof window === 'undefined' || process.env.NODE_ENV !== 'development') return;
