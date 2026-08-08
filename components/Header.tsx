@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bell, Settings, X } from 'lucide-react';
 import useUser from '../hooks/useUser';
 import Logo from './Logo';
@@ -26,6 +27,8 @@ export default function Header() {
 
   const userLabel = user?.email ? user.email : 'Signed in';
   const avatar = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+
+  const router = useRouter();
 
   return (
     <>
@@ -158,9 +161,12 @@ export default function Header() {
                 ) : null}
               </Link>
             ) : (
-              <Link href="/signin" className="rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6">
+              <button
+                onClick={() => router.push('/signin')}
+                className="rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6"
+              >
                 Sign In
-              </Link>
+              </button>
             )}
           </div>
         </div>

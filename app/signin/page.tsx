@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
+import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
 import { ensureProfile } from '../../lib/profiles';
 
 type AuthMode = 'signup' | 'signin';
@@ -292,14 +292,7 @@ function SignInPageContent() {
 
           <NoticeBanner notice={notice} />
 
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="mt-6 flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-          >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950 dark:bg-slate-950 dark:text-white">G</span>
-            <span>Continue with Google</span>
-          </button>
+          {/* Google sign-in removed per request */}
 
           <div className="my-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
