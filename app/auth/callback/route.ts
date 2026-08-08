@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+function getSafeRedirectPath(value: string | null) {
+  if (!value) return '/';
+
+  try {
+    const decoded = decodeURIComponent(value);
+    if (!decoded.startsWith('/') || decoded.startsWith('//')) return '/';
+    return decoded;
+  } catch {
+    return '/';
+  }
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const providerError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
+  const nextPath = getSafeRedirectPath(requestUrl.searchParams.get('next'));
 
   if (!code) {
     const redirectUrl = new URL('/signin', request.url);
@@ -32,7 +45,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const redirectUrl = new URL('/', request.url);
+  const redirectUrl = new URL(nextPath, request.url);
   redirectUrl.searchParams.set('auth_callback', 'success');
   redirectUrl.searchParams.set('access_token', data.session.access_token);
   redirectUrl.searchParams.set('refresh_token', data.session.refresh_token);

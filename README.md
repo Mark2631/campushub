@@ -78,7 +78,14 @@ Required environment variables:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+# or continue using the common public anon key name:
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_project_anon_key
 ```
+
+For Google OAuth, configure the Supabase provider and your Google Cloud consent screen:
+- Add the CampusTrader app name, logo, and authorized domains.
+- Add the redirect URI exactly as `https://<your-app-domain>/auth/callback`.
+- Confirm the OAuth consent screen is published for external access.
 
 Required public storage buckets:
 

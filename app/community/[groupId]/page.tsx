@@ -21,6 +21,7 @@ import {
 } from '../../../lib/community';
 import { validateUploadFile } from '../../../lib/storage';
 import { isValidUuid } from '../../../lib/validation';
+import Image from 'next/image';
 
 type Props = {
   params: Promise<{ groupId: string }>;
@@ -39,7 +40,7 @@ function profileName(profile?: { full_name: string | null; email: string | null 
 function Avatar({ name, src }: { name: string; src?: string | null }) {
   return (
     <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-black text-white">
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
+      {src ? <Image src={src} alt="" width={36} height={36} className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
     </div>
   );
 }
@@ -60,7 +61,7 @@ function PostMedia({ post }: { post: CommunityPost }) {
   return (
     <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {post.media_urls.map((url) => (
-        <img key={url} src={url} alt="" className="max-h-96 w-full rounded-2xl object-cover" />
+        <Image key={url} src={url} alt="" width={1200} height={800} className="max-h-96 w-full rounded-2xl object-cover" />
       ))}
     </div>
   );
@@ -68,7 +69,7 @@ function PostMedia({ post }: { post: CommunityPost }) {
 
 export default function CommunityGroupPage({ params }: Props) {
   const { groupId } = use(params);
-  const { user, isAdmin, loading, showToast } = useUser();
+  const { user, isAdmin, loading, institution, showToast } = useUser();
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [authOpen, setAuthOpen] = useState(false);
@@ -94,7 +95,7 @@ export default function CommunityGroupPage({ params }: Props) {
     const load = async () => {
       setFetching(true);
       const [{ community }, { posts, error }] = await Promise.all([
-        getCommunityById(groupId, user?.id),
+        getCommunityById(groupId, user?.id, institution),
         getCommunityPosts(groupId, user?.id),
       ]);
 
@@ -411,7 +412,7 @@ export default function CommunityGroupPage({ params }: Props) {
 
         <header className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="h-28 bg-gradient-to-br from-blue-600 via-emerald-500 to-slate-900">
-            {community.cover_url ? <img src={community.cover_url} alt="" className="h-full w-full object-cover" /> : null}
+            {community.cover_url ? <Image src={community.cover_url} alt="" width={1200} height={300} className="h-full w-full object-cover" /> : null}
           </div>
           <div className="p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -468,7 +469,7 @@ export default function CommunityGroupPage({ params }: Props) {
                     {media.file.type.startsWith('video/') ? (
                       <video src={media.previewUrl} className="h-24 w-full object-cover" />
                     ) : (
-                      <img src={media.previewUrl} alt="" className="h-24 w-full object-cover" />
+                      <Image src={media.previewUrl} alt="" width={320} height={96} className="h-24 w-full object-cover" />
                     )}
                   </div>
                 ))}

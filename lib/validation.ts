@@ -1,6 +1,29 @@
 import { STANDARD_CATEGORIES, normalizeCategory } from './categories';
 
-export const DEFAULT_CAMPUS = 'MUST';
+export const DEFAULT_CAMPUS = 'MUST' as const;
+export const SUPPORTED_INSTITUTIONS = ['MUST', 'NAIROBI', 'KISUMU', 'ELDORET', 'OTHER'] as const;
+export type Institution = (typeof SUPPORTED_INSTITUTIONS)[number];
+
+const institutionLabels: Record<Institution, string> = {
+  MUST: 'MUST',
+  NAIROBI: 'Nairobi',
+  KISUMU: 'Kisumu',
+  ELDORET: 'Eldoret',
+  OTHER: 'Other campus',
+};
+
+export function normalizeInstitution(value: unknown): Institution {
+  if (typeof value !== 'string') return DEFAULT_CAMPUS;
+  const normalized = value.trim().toUpperCase();
+  return SUPPORTED_INSTITUTIONS.includes(normalized as Institution)
+    ? (normalized as Institution)
+    : DEFAULT_CAMPUS;
+}
+
+export function institutionLabel(value: Institution) {
+  return institutionLabels[value] ?? String(value);
+}
+
 export const GENERIC_ERROR = 'Something went wrong. Try again.';
 export const UPLOAD_ERROR = 'Upload failed. Please retry.';
 export const PERMISSION_ERROR = 'You do not have permission to do that.';

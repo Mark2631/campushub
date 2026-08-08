@@ -6,6 +6,7 @@ import { Bell, Settings, X } from 'lucide-react';
 import useUser from '../hooks/useUser';
 import Logo from './Logo';
 import SettingsPanel from './SettingsPanel';
+import { institutionLabel, normalizeInstitution, SUPPORTED_INSTITUTIONS } from '../lib/validation';
 
 export default function Header() {
   const {
@@ -17,6 +18,8 @@ export default function Header() {
     markAllNotificationsRead,
     deleteNotification,
     clearNotifications,
+    institution,
+    setInstitution,
   } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -35,6 +38,24 @@ export default function Header() {
             <div className="hidden sm:block">
               <Logo />
             </div>
+          </div>
+
+          <div className="hidden items-center gap-2 sm:flex">
+            <label htmlFor="institution-select" className="sr-only">
+              Choose institution
+            </label>
+            <select
+              id="institution-select"
+              value={institution}
+              onChange={(event) => setInstitution(normalizeInstitution(event.target.value))}
+              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+            >
+              {SUPPORTED_INSTITUTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {institutionLabel(option)}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">

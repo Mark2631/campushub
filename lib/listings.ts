@@ -11,8 +11,10 @@ import {
   isAllowedValue,
   isMissingColumnError,
   isValidUuid,
+  normalizeInstitution,
   parseOptionalNumber,
 } from './validation';
+import { getInstitutionIdForCode } from './institutions';
 
 export interface Listing {
   id: string;
@@ -194,15 +196,22 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
   };
 }
 
-export async function getListings(limit = 20, offset = 0) {
+export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
   try {
-    const { data, error } = await supabase
+    const query = supabase
       .from('listings')
       .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-      .limit(limit);
+      .eq('status', 'active');
+    if (institution) {
+      const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
+      if (instId) {
+        query.eq('institution_id', instId);
+      } else {
+        query.eq('campus', normalizeInstitution(institution));
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
@@ -217,15 +226,23 @@ export async function getListings(limit = 20, offset = 0) {
   }
 }
 
-export async function getServiceListings(limit = 12) {
+export async function getServiceListings(limit = 12, institution: string = DEFAULT_CAMPUS) {
   try {
-    const { data, error } = await supabase
+    const query = supabase
       .from('listings')
       .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active')
-      .or('condition.eq.service,category.eq.Services,category.eq.services,category.eq.Service')
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .or('condition.eq.service,category.eq.Services,category.eq.services,category.eq.Service');
+    if (institution) {
+      const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
+      if (instId) {
+        query.eq('institution_id', instId);
+      } else {
+        query.eq('campus', normalizeInstitution(institution));
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(limit);
 
     if (error) {
       logSupabaseError('Error fetching service listings:', error);
@@ -307,6 +324,7 @@ export async function insertListing(
     mediaUrls?: string[];
     videoUrl?: string | null;
     status?: 'active' | 'pending_payment';
+    campus?: string;
   }
 ) {
   if (!isValidUuid(userId)) {
@@ -333,7 +351,16 @@ export async function insertListing(
       location: validated.value.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
-      campus: DEFAULT_CAMPUS,
+      campus: normalizeInstitution(data.campus ?? DEFAULT_CAMPUS),
+      // optionally set institution_id when we can resolve it
+      ...(await (async () => {
+        try {
+          const id = await getInstitutionIdForCode(normalizeInstitution(data.campus ?? DEFAULT_CAMPUS));
+          return id ? { institution_id: id } : {};
+        } catch {
+          return {};
+        }
+      })()),
     };
 
     let insertQuery = supabase
@@ -447,6 +474,7 @@ export async function updateListing(
     mediaUrls?: string[];
     videoUrl?: string | null;
     status?: 'active' | 'pending_payment';
+    campus?: string;
   }
 ) {
   if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
@@ -470,7 +498,15 @@ export async function updateListing(
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
     ...(data.status ? { status: data.status } : {}),
-    campus: DEFAULT_CAMPUS,
+    ...(data.campus ? { campus: normalizeInstitution(data.campus) } : {}),
+    ...(await (async () => {
+      try {
+        const id = data.campus ? await getInstitutionIdForCode(normalizeInstitution(data.campus)) : null;
+        return id ? { institution_id: id } : {};
+      } catch {
+        return {};
+      }
+    })()),
     updated_at: new Date().toISOString(),
   };
 

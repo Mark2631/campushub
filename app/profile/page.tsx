@@ -6,6 +6,7 @@ import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
+import Image from 'next/image';
 import ReportButton from '../../components/ReportButton';
 import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
@@ -362,7 +363,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-4">
                   <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-2xl font-black text-white ring-4 ring-slate-100 dark:ring-slate-800">
                     {avatarPreview || profile?.avatar_url ? (
-                      <img src={avatarPreview || profile?.avatar_url || ''} alt="" className="h-full w-full object-cover" />
+                      <Image src={avatarPreview || profile?.avatar_url || ''} alt="" width={80} height={80} className="h-full w-full object-cover" />
                     ) : (
                       displayName.charAt(0).toUpperCase()
                     )}

@@ -10,6 +10,7 @@ import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
 import { Community, followCommunity, getCommunities } from '../../lib/community';
 import { communityLinks } from '../../lib/communityLinks';
+import { institutionLabel } from '../../lib/validation';
 
 function initials(name: string) {
   return name
@@ -21,7 +22,7 @@ function initials(name: string) {
 }
 
 export default function CommunityPage() {
-  const { user, isAdmin, showToast } = useUser();
+  const { user, isAdmin, institution, showToast } = useUser();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
@@ -32,7 +33,7 @@ export default function CommunityPage() {
 
     const load = async () => {
       setLoading(true);
-      const { communities } = await getCommunities(user?.id);
+      const { communities } = await getCommunities(user?.id, institution);
       if (!mounted) return;
       setCommunities(communities);
       setLoading(false);
@@ -43,7 +44,7 @@ export default function CommunityPage() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, institution]);
 
   const handleFollow = async (communityId: string) => {
     if (!user) {
@@ -80,8 +81,8 @@ export default function CommunityPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-8">
         <header className="mb-6">
           <Logo />
-          <p className="mt-5 text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">Meru University of Science and Technology</p>
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">MUST Communities</h1>
+          <p className="mt-5 text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{institutionLabel(institution)} communities</p>
+          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{institutionLabel(institution)} Communities</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Official groups for marketplace updates, deals, services, lost items, and useful campus links.
           </p>

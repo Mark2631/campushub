@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Listing } from '../lib/listings';
 
@@ -16,9 +17,11 @@ export default function ListingCard({ listing }: { listing: Listing }) {
     >
       <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
-          <img
+          <Image
             src={firstImage || ''}
             alt={listing.title}
+            width={800}
+            height={800}
             className="h-full w-full object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />

@@ -86,7 +86,7 @@ function ListingSkeletons() {
 }
 
 export default function Home() {
-  const { user } = useUser();
+  const { user, institution } = useUser();
   const [cachedListings] = useState(readCachedHomeListings);
   const [listings, setListings] = useState<Listing[]>(cachedListings);
   const [profileName, setProfileName] = useState<string | null>(null);
@@ -118,8 +118,8 @@ export default function Home() {
     const loadListings = async () => {
       if (isMounted) setLoadingListings(true);
       const [{ listings: rows, error }, { listings: serviceRows }] = await Promise.all([
-        getListings(listingsPageSize),
-        getServiceListings(12),
+        getListings(listingsPageSize, 0, institution),
+        getServiceListings(12, institution),
       ]);
       if (!isMounted) return;
       const mergedRows = [...(rows as Listing[])];
@@ -146,7 +146,7 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, []);
+  }, [institution]);
 
   useEffect(() => {
     logCategoryStats(listings);
@@ -372,7 +372,7 @@ export default function Home() {
                       disabled={loadingMore}
                       onClick={async () => {
                         setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset);
+                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset, institution);
                         setLoadingMore(false);
                         setError(error);
                         setListingOffset((current) => current + rows.length);

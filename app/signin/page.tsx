@@ -100,7 +100,7 @@ function SignInPageContent() {
   const [mode, setMode] = useState<AuthMode>(requestedMode === 'signin' ? 'signin' : 'signup');
   const [notice, setNotice] = useState<Notice | null>(
     callbackError
-      ? { tone: 'error', message: 'Something went wrong. Try again.' }
+      ? { tone: 'error', message: callbackError }
       : null
   );
   const [signupPending, setSignupPending] = useState(false);
@@ -162,7 +162,7 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, next);
 
     if (signup.error) {
       setSignupPending(false);
@@ -216,10 +216,10 @@ function SignInPageContent() {
 
   const handleGoogle = async () => {
     setNotice(null);
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(next);
     if (error) {
       console.error('Google sign-in failed:', error);
-      const message = 'Something went wrong. Try again.';
+      const message = (error && typeof error === 'object' && 'message' in error) ? String((error as any).message) : 'Something went wrong. Try again.';
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
     }
