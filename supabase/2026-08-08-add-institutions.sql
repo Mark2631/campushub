@@ -4,9 +4,11 @@
 -- 1) Create institutions table
 CREATE TABLE IF NOT EXISTS institutions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- `code` is a short machine-friendly identifier (used by backfill and lookups)
+  code text UNIQUE,
   name text NOT NULL,
-  short_name text NOT NULL,
-  slug text NOT NULL UNIQUE,
+  short_name text,
+  slug text UNIQUE,
   county text,
   logo text,
   cover text,
