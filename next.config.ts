@@ -26,6 +26,7 @@ const securityHeaders = [
     // Conservative CSP that allows Supabase, Google OAuth, and common asset hosts.
     value:
       "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline'; " +
       "connect-src 'self' https: wss:; " +
       "img-src 'self' data: blob: https:; " +
       "style-src 'self' 'unsafe-inline' https:; " +

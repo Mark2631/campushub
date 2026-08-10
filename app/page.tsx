@@ -329,7 +329,7 @@ export default function Home() {
             ) : null}
             {filteredListings.length === 0 ? (
               <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-black text-blue-600 dark:bg-blue-950 dark:text-blue-200">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-semibold text-blue-600 dark:bg-blue-950 dark:text-blue-200">
                   +
                 </div>
                 <p className="font-semibold text-gray-900 dark:text-white">

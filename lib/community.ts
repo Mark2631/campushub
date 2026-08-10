@@ -18,6 +18,7 @@ import { getInstitutionIdForCode } from './institutions';
 export type Community = {
   id: string;
   campus: string;
+  institution_id?: string | null;
   name: string;
   description: string;
   category: string;

@@ -81,7 +81,7 @@ export default function CommunityPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-8">
         <header className="mb-6">
           <Logo />
-          <p className="mt-5 text-xs font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{institutionLabel(institution)} communities</p>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{institutionLabel(institution)} communities</p>
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{institutionLabel(institution)} Communities</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             Official groups for marketplace updates, deals, services, lost items, and useful campus links.
@@ -135,16 +135,16 @@ export default function CommunityPage() {
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                 >
                   <div className="flex gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-sm font-black text-white">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-sm font-semibold text-white">
                       {initials(community.name)}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate font-bold text-slate-950 dark:text-white">{community.name}</h3>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                           {community.category}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">
                           <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                           Official
                         </span>

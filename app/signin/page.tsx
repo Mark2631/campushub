@@ -214,17 +214,6 @@ function SignInPageContent() {
     await completeAuth('Signed in successfully.', next);
   };
 
-  const handleGoogle = async () => {
-    setNotice(null);
-    const { error } = await signInWithGoogle(next);
-    if (error) {
-      console.error('Google sign-in failed:', error);
-      const message = (error && typeof error === 'object' && 'message' in error) ? String((error as any).message) : 'Something went wrong. Try again.';
-      showToast({ type: 'error', message });
-      setNotice({ tone: 'error', message });
-    }
-  };
-
   const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (resetPending) return;
@@ -269,7 +258,7 @@ function SignInPageContent() {
         <section className="w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">
+              <h1 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">
                 {mode === 'signup' ? 'Join CampusTrader' : 'Sign in'}
               </h1>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">

@@ -27,7 +27,7 @@ export async function getInstitutionIdForCode(code: string) {
     const id = data?.id ?? null;
     idCache.set(normalized, id);
     return id;
-  } catch (err) {
+  } catch {
     idCache.set(normalized, null);
     return null;
   }

@@ -111,7 +111,7 @@ export default function Header() {
                           <div key={notification.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-start gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
                                 <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
                                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
                               </div>
@@ -155,7 +155,7 @@ export default function Header() {
                 </span>
                 <span className="hidden max-w-[10rem] truncate font-medium sm:inline md:max-w-[12rem]">{userLabel}</span>
                 {isAdmin ? (
-                  <span className="hidden rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700 sm:inline dark:bg-emerald-900/40 dark:text-emerald-200">
+                  <span className="hidden rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 sm:inline dark:bg-emerald-900/40 dark:text-emerald-200">
                     ADMIN
                   </span>
                 ) : null}
@@ -163,7 +163,7 @@ export default function Header() {
             ) : (
               <button
                 onClick={() => router.push('/signin')}
-                className="rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6"
+                className="rounded-2xl bg-gradient-to-r from-slate-600 to-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6"
               >
                 Sign In
               </button>

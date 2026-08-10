@@ -244,9 +244,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const setInstitution = (nextInstitution: Institution) => {
+  const setInstitution = useCallback((nextInstitution: Institution) => {
     setInstitutionState(nextInstitution);
-  };
+  }, []);
 
   const pushNotification = useCallback(async (notification: { title: string; body: string; type: string }) => {
     const localNotification: AppNotification = {
