@@ -1,6 +1,3 @@
-"next": "...",
-"@supabase/supabase-js": "...",
-"@supabase/ssr": "..."
 {
   "name": "campushub",
   "version": "0.1.0",
@@ -9,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "type-check": "tsc --noEmit",
+    "ci": "npm run lint && npm run type-check && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

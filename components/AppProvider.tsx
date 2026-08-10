@@ -14,6 +14,7 @@ import {
   markNotificationRead,
 } from '../lib/notifications';
 import { ProfileContext, personalProfileContext, readStoredProfileContext, storeProfileContext } from '../lib/profileContext';
+import { DEFAULT_CAMPUS, Institution, normalizeInstitution } from '../lib/validation';
 
 type Theme = 'dark' | 'light';
 
@@ -35,6 +36,8 @@ type AppContextValue = {
   showToast: (toast: { type?: 'success' | 'error' | 'warning' | 'info'; message: string }) => void;
   profileContext: ProfileContext;
   setProfileContext: (context: ProfileContext) => void;
+  institution: Institution;
+  setInstitution: (institution: Institution) => void;
 };
 
 type Toast = {
@@ -81,6 +84,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return personalProfileContext;
     return readStoredProfileContext();
   });
+  const [institution, setInstitutionState] = useState<Institution>(() => {
+    if (typeof window === 'undefined') return DEFAULT_CAMPUS;
+    return normalizeInstitution(window.localStorage.getItem('campustrader-institution'));
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -89,6 +96,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     storeProfileContext(profileContext);
   }, [profileContext]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('campustrader-institution', institution);
+  }, [institution]);
 
   useEffect(() => {
     let isMounted = true;
@@ -232,6 +244,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const setInstitution = useCallback((nextInstitution: Institution) => {
+    setInstitutionState(nextInstitution);
+  }, []);
+
   const pushNotification = useCallback(async (notification: { title: string; body: string; type: string }) => {
     const localNotification: AppNotification = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -309,8 +325,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showToast,
       profileContext,
       setProfileContext,
+      institution,
+      setInstitution,
     }),
-    [adminLoading, clearNotifications, deleteNotification, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, showToast, theme]
+    [adminLoading, clearNotifications, deleteNotification, institution, isAdmin, loading, markAllNotificationsRead, notifications, profileContext, pushNotification, session, setInstitution, showToast, theme]
   );
 
   return (

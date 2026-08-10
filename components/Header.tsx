@@ -1,11 +1,13 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bell, Settings, X } from 'lucide-react';
 import useUser from '../hooks/useUser';
 import Logo from './Logo';
 import SettingsPanel from './SettingsPanel';
+import { institutionLabel, normalizeInstitution, SUPPORTED_INSTITUTIONS } from '../lib/validation';
 
 export default function Header() {
   const {
@@ -17,12 +19,16 @@ export default function Header() {
     markAllNotificationsRead,
     deleteNotification,
     clearNotifications,
+    institution,
+    setInstitution,
   } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const userLabel = user?.email ? user.email : 'Signed in';
   const avatar = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+
+  const router = useRouter();
 
   return (
     <>
@@ -35,6 +41,24 @@ export default function Header() {
             <div className="hidden sm:block">
               <Logo />
             </div>
+          </div>
+
+          <div className="hidden items-center gap-2 sm:flex">
+            <label htmlFor="institution-select" className="sr-only">
+              Choose institution
+            </label>
+            <select
+              id="institution-select"
+              value={institution}
+              onChange={(event) => setInstitution(normalizeInstitution(event.target.value))}
+              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+            >
+              {SUPPORTED_INSTITUTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {institutionLabel(option)}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -87,7 +111,7 @@ export default function Header() {
                           <div key={notification.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex items-start gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-black uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
                                 <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
                                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
                               </div>
@@ -131,15 +155,18 @@ export default function Header() {
                 </span>
                 <span className="hidden max-w-[10rem] truncate font-medium sm:inline md:max-w-[12rem]">{userLabel}</span>
                 {isAdmin ? (
-                  <span className="hidden rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-700 sm:inline dark:bg-emerald-900/40 dark:text-emerald-200">
+                  <span className="hidden rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 sm:inline dark:bg-emerald-900/40 dark:text-emerald-200">
                     ADMIN
                   </span>
                 ) : null}
               </Link>
             ) : (
-              <Link href="/signin" className="rounded-2xl bg-gradient-to-r from-blue-600 to-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6">
+              <button
+                onClick={() => router.push('/signin')}
+                className="rounded-2xl bg-gradient-to-r from-slate-600 to-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6"
+              >
                 Sign In
-              </Link>
+              </button>
             )}
           </div>
         </div>

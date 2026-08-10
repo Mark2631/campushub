@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 items-center px-4 py-8 sm:py-12">
         <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Account recovery</p>
-          <h1 className="mt-3 text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">Reset your password</h1>
+          <h1 className="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Reset your password</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Enter a new password for your CampusTrader account.</p>
 
           {notice ? (

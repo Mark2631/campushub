@@ -4,7 +4,19 @@ export async function signInWithPassword(email: string, password: string) {
   return supabase.auth.signInWithPassword({ email, password });
 }
 
-export async function signUpWithPassword(email: string, password: string, fullName: string) {
+function getSafeRedirectPath(value?: string | null) {
+  if (!value) return undefined;
+  const path = String(value);
+  if (path.startsWith('/') && !path.startsWith('//')) return path;
+  return undefined;
+}
+
+export async function signUpWithPassword(email: string, password: string, fullName: string, next?: string) {
+  const safeNext = getSafeRedirectPath(next);
+  const redirectTo = typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback?mode=signin${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ''}`
+    : undefined;
+
   return supabase.auth.signUp({
     email,
     password,
@@ -12,20 +24,26 @@ export async function signUpWithPassword(email: string, password: string, fullNa
       data: {
         full_name: fullName,
       },
-      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback?mode=signin` : undefined,
+      emailRedirectTo: redirectTo,
     },
   });
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(next?: string) {
   if (typeof window === 'undefined') {
     return { data: null, error: new Error('Google sign-in is only available in the browser.') };
+  }
+
+  const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+  const safeNext = getSafeRedirectPath(next);
+  if (safeNext) {
+    callbackUrl.searchParams.set('next', safeNext);
   }
 
   return supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: callbackUrl.toString(),
     },
   });
 }

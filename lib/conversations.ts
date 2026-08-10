@@ -102,7 +102,8 @@ async function fetchConversationMessages(conversationIds: string[]) {
     .from('messages')
     .select('id, conversation_id, sender_id, content, created_at')
     .in('conversation_id', validConversationIds)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false })
+    .limit(Math.min(validConversationIds.length * 200, 1000));
 
   if (error) {
     console.error('Error fetching conversation messages:', serializeError(error));
@@ -126,6 +127,10 @@ async function fetchConversationMessages(conversationIds: string[]) {
     acc[conversationId].push(message);
     return acc;
   }, {});
+
+  for (const conversationId of Object.keys(messagesByConversation)) {
+    messagesByConversation[conversationId].reverse();
+  }
 
   return { messagesByConversation, error: null };
 }

@@ -11,11 +11,14 @@ import {
   cleanText,
   isAllowedValue,
   isValidUuid,
+  normalizeInstitution,
 } from './validation';
+import { getInstitutionIdForCode } from './institutions';
 
 export type Community = {
   id: string;
   campus: string;
+  institution_id?: string | null;
   name: string;
   description: string;
   category: string;
@@ -72,6 +75,7 @@ export const officialCommunitySeeds: Community[] = [
   {
     id: '11111111-1111-4111-8111-111111111111',
     campus: DEFAULT_CAMPUS,
+    institution_id: null,
     name: 'MUST Marketplace Updates',
     description: 'Official marketplace changes, safety tips, announcements, and feature updates.',
     category: 'Announcements',
@@ -84,6 +88,7 @@ export const officialCommunitySeeds: Community[] = [
   {
     id: '22222222-2222-4222-8222-222222222222',
     campus: DEFAULT_CAMPUS,
+    institution_id: null,
     name: 'Campus Deals',
     description: 'Admin-curated student deals, discounts, business offers, and promoted listings.',
     category: 'Deals',
@@ -96,6 +101,7 @@ export const officialCommunitySeeds: Community[] = [
   {
     id: '33333333-3333-4333-8333-333333333333',
     campus: DEFAULT_CAMPUS,
+    institution_id: null,
     name: 'Lost & Found',
     description: 'Confirmed lost and found updates for students around MUST.',
     category: 'Safety',
@@ -108,6 +114,7 @@ export const officialCommunitySeeds: Community[] = [
   {
     id: '44444444-4444-4444-8444-444444444444',
     campus: DEFAULT_CAMPUS,
+    institution_id: null,
     name: 'Services Around Campus',
     description: 'Hairdressing, repairs, tutoring, laundry, printing, photography, and other campus services.',
     category: 'Services',
@@ -120,6 +127,7 @@ export const officialCommunitySeeds: Community[] = [
   {
     id: '55555555-5555-4555-8555-555555555555',
     campus: DEFAULT_CAMPUS,
+    institution_id: null,
     name: 'School Updates & Useful Links',
     description: 'Important student links, portals, notices, library resources, and e-learning access.',
     category: 'Resources',
@@ -184,13 +192,20 @@ async function fetchProfiles(userIds: string[]) {
   return new Map((data || []).map((profile) => [profile.id, profile as CommunityProfile]));
 }
 
-export async function getCommunities(viewerId?: string | null) {
-  const { data, error } = await supabase
+export async function getCommunities(viewerId?: string | null, institution: string = DEFAULT_CAMPUS) {
+  let query = supabase
     .from('communities')
     .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
-    .eq('campus', DEFAULT_CAMPUS)
     .eq('status', 'active')
     .order('created_at', { ascending: true });
+
+  if (institution) {
+    const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
+    if (instId) query = query.eq('institution_id', instId);
+    else query = query.eq('campus', normalizeInstitution(institution));
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Community fetch failed:', serializeError(error));
@@ -253,12 +268,12 @@ export async function getCommunities(viewerId?: string | null) {
   };
 }
 
-export async function getCommunityById(communityId: string, viewerId?: string | null) {
+export async function getCommunityById(communityId: string, viewerId?: string | null, institution: string = DEFAULT_CAMPUS) {
   if (!isValidUuid(communityId)) {
     return { community: null as Community | null, error: null };
   }
 
-  const { communities, error } = await getCommunities(viewerId);
+  const { communities, error } = await getCommunities(viewerId, institution);
   return { community: communities.find((community) => community.id === communityId) || null, error };
 }
 
@@ -510,6 +525,14 @@ export async function createCommunity(args: {
     .from('communities')
     .insert({
       campus: DEFAULT_CAMPUS,
+      ...(await (async () => {
+        try {
+          const id = await getInstitutionIdForCode(normalizeInstitution(DEFAULT_CAMPUS));
+          return id ? { institution_id: id } : {};
+        } catch {
+          return {};
+        }
+      })()),
       name,
       description,
       category,

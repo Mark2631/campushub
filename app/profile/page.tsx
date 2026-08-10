@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
+import Image from 'next/image';
 import ReportButton from '../../components/ReportButton';
 import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
@@ -102,7 +103,7 @@ export default function ProfilePage() {
   const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
   const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
     setProfileLoading(true);
     const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }] = await Promise.all([
@@ -118,11 +119,11 @@ export default function ProfilePage() {
     setUserListings(listings);
     setVerificationRequest(request);
     setProfileLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
-    void loadProfile();
-  }, [user]);
+    void Promise.resolve().then(loadProfile);
+  }, [loadProfile]);
 
   useEffect(() => {
     return () => {
@@ -360,9 +361,9 @@ export default function ProfilePage() {
             <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 text-2xl font-black text-white ring-4 ring-slate-100 dark:ring-slate-800">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-2xl font-semibold text-white ring-4 ring-slate-100 dark:ring-slate-800">
                     {avatarPreview || profile?.avatar_url ? (
-                      <img src={avatarPreview || profile?.avatar_url || ''} alt="" className="h-full w-full object-cover" />
+                      <Image src={avatarPreview || profile?.avatar_url || ''} alt="" width={80} height={80} className="h-full w-full object-cover" />
                     ) : (
                       displayName.charAt(0).toUpperCase()
                     )}
@@ -402,7 +403,7 @@ export default function ProfilePage() {
                   ['Hidden', hiddenListingsCount],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-950">
-                    <p className="text-xl font-black">{value}</p>
+                    <p className="text-xl font-semibold">{value}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
                   </div>
                 ))}

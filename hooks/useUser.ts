@@ -19,6 +19,8 @@ export default function useUser() {
     showToast,
     profileContext,
     setProfileContext,
+    institution,
+    setInstitution,
   } = useAppContext();
 
   return {
@@ -37,5 +39,7 @@ export default function useUser() {
     showToast,
     profileContext,
     setProfileContext,
+    institution,
+    setInstitution,
   };
 }

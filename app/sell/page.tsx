@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ClipboardList, ImagePlus, UserRound, Video } from 'lucide-react';
+import Image from 'next/image';
 import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
@@ -35,7 +36,7 @@ type SelectedMedia = {
 function SellPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, pushNotification, profileContext, showToast } = useUser();
+  const { user, loading, institution, pushNotification, profileContext, showToast } = useUser();
   const editListingId = searchParams.get('edit');
   const requestMode = searchParams.get('mode') === 'request';
   const sourceRequestId = searchParams.get('request');
@@ -92,9 +93,11 @@ function SellPageContent() {
         ? 'Verified'
         : 'Unverified';
 
-  useEffect(() => {
+  const [prevRequestMode, setPrevRequestMode] = useState(requestMode);
+  if (requestMode !== prevRequestMode) {
+    setPrevRequestMode(requestMode);
     if (requestMode) setActiveTab('requests');
-  }, [requestMode]);
+  }
 
   useEffect(() => {
     const loadEditListing = async () => {
@@ -246,7 +249,7 @@ function SellPageContent() {
       setRequestSubmitting(true);
       setRequestMessage(null);
       showToast({ type: 'info', message: 'Posting your request...' });
-      const { request, error } = await createItemRequest(user.id, requestForm);
+      const { request, error } = await createItemRequest(user.id, requestForm, institution);
 
       if (error || !request) {
         const text = error || 'Something went wrong. Try again.';
@@ -436,6 +439,7 @@ function SellPageContent() {
       mediaUrls,
       videoUrl,
       status: isNewBusinessPost ? 'pending_payment' as const : undefined,
+      campus: institution,
     };
 
     if (editListingId) {
@@ -663,7 +667,7 @@ function SellPageContent() {
                   <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
                     Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-black uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
                     {sellerBadge}
                   </span>
                   {activeSellerProfile?.phone_number ? (
@@ -833,7 +837,7 @@ function SellPageContent() {
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {images.map((image, index) => (
                   <div key={index} className="relative rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-800">
-                    <img src={image.previewUrl} alt={`Preview ${index + 1}`} className="w-full h-20 object-cover" />
+                    <Image src={image.previewUrl} alt={`Preview ${index + 1}`} width={320} height={80} className="w-full h-20 object-cover" />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
@@ -1013,12 +1017,12 @@ function SellPageContent() {
             {hasPreviewContent ? (
               <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
                 <div className="space-y-3">
-                  <div className="flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 text-center text-white">
+                  <div className="flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-center text-white">
                     {images[0] ? (
-                      <img src={images[0].previewUrl} alt="Listing preview" className="h-full w-full object-cover" />
+                      <Image src={images[0].previewUrl} alt="Listing preview" width={1200} height={480} className="h-full w-full object-cover" />
                     ) : (
                       <div className="px-6">
-                        <p className="text-xs font-black uppercase tracking-[0.24em]">{formData.category}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em]">{formData.category}</p>
                         <p className="mt-3 text-xl font-bold">{formData.title || 'Your listing preview'}</p>
                       </div>
                     )}
@@ -1040,7 +1044,7 @@ function SellPageContent() {
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price ? `KSh ${Number(formData.price).toLocaleString()}` : 'Add price'}</p>
                   <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
                   <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
-                    <p className="text-xs font-black uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
                     <p className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{sellerDisplayName}</p>
                   </div>
                 </div>
@@ -1069,15 +1073,15 @@ function SellPageContent() {
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-black uppercase text-amber-700 dark:text-amber-300">Amount</p>
+                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Amount</p>
                   <p className="mt-1 font-bold text-gray-950 dark:text-white">KSh {BUSINESS_POST_FEE_KSH}</p>
                 </div>
                 <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-black uppercase text-amber-700 dark:text-amber-300">Till</p>
+                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Till</p>
                   <p className="mt-1 font-bold text-gray-950 dark:text-white">{BUSINESS_POST_TILL}</p>
                 </div>
                 <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-black uppercase text-amber-700 dark:text-amber-300">Name</p>
+                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Name</p>
                   <p className="mt-1 font-bold text-gray-950 dark:text-white">{BUSINESS_POST_TILL_NAME}</p>
                 </div>
               </div>
