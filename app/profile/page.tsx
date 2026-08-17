@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
+import { HelpCircle, Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
 import ReportButton from '../../components/ReportButton';
+import HelpCenterModal from '../../components/HelpCenterModal';
+import ManagePanel from '../../components/ManagePanel';
 import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
 import { signOut } from '../../lib/auth';
@@ -69,6 +71,7 @@ export default function ProfilePage() {
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -338,10 +341,18 @@ export default function ProfilePage() {
     <div className="flex min-h-screen flex-col bg-slate-50 pb-24 text-slate-900 dark:bg-slate-950 dark:text-white">
       <Header />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
-        <header className="mb-6">
-          <Logo />
-          <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
+        <header className="mb-6 flex items-start justify-between">
+          <div>
+            <Logo />
+            <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
+          </div>
+          <button
+            onClick={() => setHelpOpen(true)}
+            className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center gap-1.5 font-bold text-xs hover:bg-emerald-500/20 transition-all shadow-sm"
+          >
+            <HelpCircle className="w-4 h-4" /> Help Center
+          </button>
         </header>
 
         {loading || profileLoading ? (
@@ -625,6 +636,7 @@ export default function ProfilePage() {
         </div>
       ) : null}
 
+      <HelpCenterModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
       <BottomNav />
     </div>
   );

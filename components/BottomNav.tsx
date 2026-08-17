@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MessageCircle, PlusCircle, User, Users } from 'lucide-react';
+import { Home, MessageCircle, PlusCircle, User, Rss } from 'lucide-react';
 import { useState } from 'react';
 import useUser from '../hooks/useUser';
 import AuthPromptModal from './AuthPromptModal';
@@ -10,8 +10,8 @@ import AuthPromptModal from './AuthPromptModal';
 const navItems = [
   { href: '/', label: 'Home', Icon: Home },
   { href: '/sell', label: 'Sell', Icon: PlusCircle },
+  { href: '/network', label: 'Network', Icon: Rss },
   { href: '/messages', label: 'Messages', Icon: MessageCircle },
-  { href: '/community', label: 'Community', Icon: Users },
   { href: '/profile', label: 'Profile', Icon: User },
 ];
 
@@ -26,13 +26,16 @@ export default function BottomNav() {
         <div className="mx-auto max-w-6xl px-2 sm:px-4">
           <div className="flex items-center justify-around">
             {navItems.map((item) => {
-              const isActive = item.href === pathname || (item.href !== '/' && pathname.startsWith(item.href));
+              const isActive =
+                item.href === '/'
+                  ? pathname === '/'
+                  : pathname.startsWith(item.href) || (item.href === '/network' && pathname.startsWith('/community'));
               const Icon = item.Icon;
               const isProtected = item.href === '/sell' || item.href === '/messages' || item.href === '/profile';
-              const className = `flex-1 px-1 py-3 text-center transition-colors sm:py-4 ${
+              const className = `flex-1 px-1 py-3 text-center transition-colors sm:py-3.5 ${
                 isActive
-                  ? 'text-blue-600 dark:text-blue-400 border-t-2 border-blue-600 dark:border-blue-400'
-                  : 'text-slate-600 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400'
+                  ? 'text-emerald-600 dark:text-emerald-400 border-t-2 border-emerald-600 dark:border-emerald-400 font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
               }`;
               const content = (
                 <>

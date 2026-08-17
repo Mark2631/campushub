@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Listing } from '../lib/listings';
 
 export default function ListingCard({ listing }: { listing: Listing }) {
@@ -12,29 +13,32 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/listing/${listing.id}`}
-      className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-600"
+      className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-emerald-500/50 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500/50"
     >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 text-sm text-slate-500 dark:from-slate-800 dark:to-slate-700 dark:text-slate-500">
         {showImage ? (
-          <img
+          <Image
             src={firstImage || ''}
             alt={listing.title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="h-full w-full object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
+            unoptimized
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 px-3 text-center text-white">
+          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-600 via-teal-500 to-slate-900 px-3 text-center text-white">
             <span className="text-[10px] font-black uppercase tracking-wide">{listing.category}</span>
             <span className="mt-1 text-xs font-bold">{listing.sellerType === 'business' ? 'Verified seller' : 'Campus listing'}</span>
           </div>
         )}
       </div>
-      <div className="p-2.5 sm:p-3">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-5 text-gray-900 sm:text-sm dark:text-white">{listing.title}</h3>
-        <p className="mt-1 text-sm font-black text-blue-600 sm:text-base dark:text-blue-400">
+      <div className="p-3">
+        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-5 text-slate-900 sm:text-sm dark:text-white">{listing.title}</h3>
+        <p className="mt-1 text-sm font-black text-emerald-600 sm:text-base dark:text-emerald-400">
           {listing.price != null ? `KSh ${listing.price.toLocaleString()}` : 'Free'}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-gray-600 dark:text-zinc-400">{listing.location || 'Campus location'}</p>
+        <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-400">{listing.location || 'Campus location'}</p>
         <div className="mt-2 flex min-h-5 items-center gap-1.5">
           {listing.badgeType === 'gold' ? (
             <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-black uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
@@ -53,7 +57,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
               Business
             </span>
           ) : null}
-          <span className="truncate text-[10px] text-gray-500 dark:text-zinc-500">{listing.category}</span>
+          <span className="truncate text-[10px] text-slate-500 dark:text-slate-400">{listing.category}</span>
         </div>
       </div>
     </Link>

@@ -4,18 +4,31 @@ type ListingCategoryInput = {
   status?: string | null;
 };
 
-export function normalizeCategory(value?: string | null) {
+export const CATEGORY_GROUPS = {
+  Marketplace: ['Electronics', 'Books', 'Fashion', 'Furniture', 'Food', 'Refurbished', 'Free Stuff'],
+  Housing: ['Hostels', 'Bedsitters', 'Roommates'],
+  Services: ['Printing', 'Laundry', 'Repairs', 'Photography', 'Tutoring', 'Salon', 'Barber', 'Transport'],
+  Jobs: ['Part-time', 'Attachments', 'Campus Ambassador'],
+  Events: ['Tickets', 'Events'],
+  Businesses: ['Business Offers', 'Verified Businesses'],
+  Other: ['Other']
+} as const;
+
+export function normalizeCategory(value?: string | null): string {
   const raw = String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 
-  if (['service', 'services', 'campus services', 'skill', 'skills'].includes(raw)) return 'Services';
-  if (['electronic', 'electronics', 'gadget', 'gadgets'].includes(raw)) return 'Electronics';
-  if (['book', 'books', 'notes', 'study'].includes(raw)) return 'Books';
-  if (['fashion', 'clothes', 'clothing', 'cloth designs'].includes(raw)) return 'Fashion';
-  if (['furniture', 'room items'].includes(raw)) return 'Furniture';
+  if (['electronics', 'electronic', 'gadget', 'gadgets', 'phone', 'laptop'].includes(raw)) return 'Electronics';
+  if (['book', 'books', 'notes', 'study', 'calculator', 'drawing equipment'].includes(raw)) return 'Books';
+  if (['fashion', 'clothes', 'clothing', 'shoes'].includes(raw)) return 'Fashion';
+  if (['furniture', 'room items', 'bed', 'desk'].includes(raw)) return 'Furniture';
+  if (['hostel', 'hostels', 'bedsitter', 'bedsitters', 'roommate', 'roommates', 'housing'].includes(raw)) return 'Housing';
+  if (['service', 'services', 'printing', 'photocopying', 'laundry', 'repairs', 'repair', 'tutoring', 'tutor', 'salon', 'barber', 'transport'].includes(raw)) return 'Services';
+  if (['job', 'jobs', 'part-time', 'gigs', 'attachment', 'attachments', 'ambassador'].includes(raw)) return 'Jobs';
+  if (['event', 'events', 'ticket', 'tickets'].includes(raw)) return 'Events';
+  if (['free', 'free stuff', 'giveaway'].includes(raw)) return 'Free Stuff';
   if (['food', 'meals', 'snacks'].includes(raw)) return 'Food';
-  if (['business', 'business offers'].includes(raw)) return 'Business';
   if (['refurbished', 'refurb'].includes(raw)) return 'Refurbished';
-  if (['other', 'others'].includes(raw)) return 'Other';
+  if (['business', 'business offers'].includes(raw)) return 'Businesses';
 
   return 'Other';
 }
@@ -37,13 +50,17 @@ export function listingBelongsToCategory(listing: ListingCategoryInput, category
 
 export const STANDARD_CATEGORIES = [
   'Electronics',
+  'Books',
   'Fashion',
   'Furniture',
-  'Books',
-  'Food',
+  'Housing',
   'Services',
+  'Jobs',
+  'Events',
+  'Free Stuff',
+  'Food',
   'Refurbished',
-  'Business',
+  'Businesses',
   'Other',
 ] as const;
 
