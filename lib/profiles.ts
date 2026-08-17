@@ -1,7 +1,8 @@
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { safeFileName, storageBuckets, uploadPublicFile, validateUploadFile } from './storage';
-import { DEFAULT_CAMPUS, GENERIC_ERROR, UPLOAD_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid } from './validation';
+import { DEFAULT_CAMPUS, GENERIC_ERROR, UPLOAD_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid, normalizeInstitution } from './validation';
+import { getInstitutionIdForCode } from './institutions';
 
 export interface ProfileRecord {
   id: string;
@@ -98,6 +99,14 @@ export async function ensureProfile(user: User) {
     phone_number: current?.phone_number || null,
     email_verified: current?.email_verified || emailVerified,
     campus: current?.campus || DEFAULT_CAMPUS,
+    ...(await (async () => {
+      try {
+        const id = await getInstitutionIdForCode(normalizeInstitution(current?.campus || DEFAULT_CAMPUS));
+        return id ? { institution_id: id } : {};
+      } catch {
+        return {};
+      }
+    })()),
   });
 
   return { profile: (data || null) as ProfileRecord | null, error };

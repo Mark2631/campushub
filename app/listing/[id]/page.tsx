@@ -47,9 +47,9 @@ export default async function ListingPage({ params }: Props) {
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const fallbackPanel = (
-    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-600 via-sky-500 to-emerald-500 p-8 text-center text-white dark:border-zinc-800">
+    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-700 to-slate-900 p-8 text-center text-white dark:border-zinc-800">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.24em]">{listing.category}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em]">{listing.category}</p>
         <p className="mt-3 text-2xl font-bold">{listing.title}</p>
         <p className="mt-2 text-sm text-blue-50/90">Listing preview for items without uploaded media.</p>
       </div>
@@ -146,15 +146,15 @@ export default async function ListingPage({ params }: Props) {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader seller'}</p>
                         {listing.badgeType === 'gold' ? (
-                          <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                          <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                             Gold tick
                           </span>
                         ) : listing.badgeType === 'admin' ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                             Admin
                           </span>
                         ) : listing.badgeType === 'blue' ? (
-                          <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                          <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
                             Verified
                           </span>
                         ) : null}

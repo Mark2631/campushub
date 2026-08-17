@@ -38,7 +38,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Signed in as</p>
             <p className="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{user?.email || 'Guest'}</p>
             {isAdmin ? (
-              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                 Admin badge
               </p>
             ) : null}

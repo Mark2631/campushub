@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Send, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
@@ -189,7 +190,11 @@ export default function ConversationPage({ params }: Props) {
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
-                {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+                {conversation?.otherUser.avatar_url ? (
+                  <Image src={conversation.otherUser.avatar_url} alt="" width={48} height={48} className="h-full w-full object-cover" />
+                ) : (
+                  otherName.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="min-w-0">
                 <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
@@ -249,7 +254,11 @@ export default function ConversationPage({ params }: Props) {
                   >
                     {!isOwn && startsGroup ? (
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-[10px] font-bold text-white">
-                        {conversation?.otherUser.avatar_url ? <img src={conversation.otherUser.avatar_url} alt="" className="h-full w-full object-cover" /> : otherName.charAt(0).toUpperCase()}
+                        {conversation?.otherUser.avatar_url ? (
+                          <Image src={conversation.otherUser.avatar_url} alt="" width={28} height={28} className="h-full w-full object-cover" />
+                        ) : (
+                          otherName.charAt(0).toUpperCase()
+                        )}
                       </div>
                     ) : !isOwn ? <div className="w-7" /> : null}
                     <div

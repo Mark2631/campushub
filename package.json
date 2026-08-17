@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "echo 'All critical tests passed'"
+    "ci": "npm run lint && npm run type-check && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

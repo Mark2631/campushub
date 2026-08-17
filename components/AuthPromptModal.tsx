@@ -19,7 +19,7 @@ export default function AuthPromptModal({ open, next, onClose }: Props) {
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-black text-slate-950 dark:text-white">Create a free account to join the conversation.</h2>
+            <h2 className="text-xl font-semibold text-slate-950 dark:text-white">Create a free account to join the conversation.</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
               Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
             </p>

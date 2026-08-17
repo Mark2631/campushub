@@ -18,7 +18,7 @@ export default function Logo({ compact = false, href = '/' }: LogoProps) {
       </span>
       {!compact ? (
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-lg font-black tracking-tight text-slate-950 sm:text-xl dark:text-white">CampusTrader</span>
+          <span className="truncate text-lg font-semibold tracking-tight text-slate-950 sm:text-xl dark:text-white">CampusTrader</span>
           <span className="hidden text-xs font-semibold text-slate-500 sm:block dark:text-slate-400">Student Marketplace</span>
         </span>
       ) : null}

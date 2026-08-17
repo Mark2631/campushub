@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import { sendPasswordResetEmail, signInWithGoogle, signInWithPassword, signUpWithPassword } from '../../lib/auth';
+import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
 import { ensureProfile } from '../../lib/profiles';
 
 type AuthMode = 'signup' | 'signin';
@@ -162,7 +162,7 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, next);
 
     if (signup.error) {
       setSignupPending(false);
@@ -214,17 +214,6 @@ function SignInPageContent() {
     await completeAuth('Signed in successfully.', next);
   };
 
-  const handleGoogle = async () => {
-    setNotice(null);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      console.error('Google sign-in failed:', error);
-      const message = 'Something went wrong. Try again.';
-      showToast({ type: 'error', message });
-      setNotice({ tone: 'error', message });
-    }
-  };
-
   const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (resetPending) return;
@@ -269,7 +258,7 @@ function SignInPageContent() {
         <section className="w-full min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-black text-slate-950 sm:text-3xl dark:text-white">
+              <h1 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">
                 {mode === 'signup' ? 'Join CampusTrader' : 'Sign in'}
               </h1>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -292,14 +281,7 @@ function SignInPageContent() {
 
           <NoticeBanner notice={notice} />
 
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="mt-6 flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-          >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950 dark:bg-slate-950 dark:text-white">G</span>
-            <span>Continue with Google</span>
-          </button>
+          {/* Google sign-in removed per request */}
 
           <div className="my-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />

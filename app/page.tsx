@@ -86,7 +86,7 @@ function ListingSkeletons() {
 }
 
 export default function Home() {
-  const { user } = useUser();
+  const { user, institution } = useUser();
   const [cachedListings] = useState(readCachedHomeListings);
   const [listings, setListings] = useState<Listing[]>(cachedListings);
   const [profileName, setProfileName] = useState<string | null>(null);
@@ -118,8 +118,8 @@ export default function Home() {
     const loadListings = async () => {
       if (isMounted) setLoadingListings(true);
       const [{ listings: rows, error }, { listings: serviceRows }] = await Promise.all([
-        getListings(listingsPageSize),
-        getServiceListings(12),
+        getListings(listingsPageSize, 0, institution),
+        getServiceListings(12, institution),
       ]);
       if (!isMounted) return;
       const mergedRows = [...(rows as Listing[])];
@@ -146,7 +146,7 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, []);
+  }, [institution]);
 
   useEffect(() => {
     logCategoryStats(listings);
@@ -329,7 +329,7 @@ export default function Home() {
             ) : null}
             {filteredListings.length === 0 ? (
               <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-black text-blue-600 dark:bg-blue-950 dark:text-blue-200">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-semibold text-blue-600 dark:bg-blue-950 dark:text-blue-200">
                   +
                 </div>
                 <p className="font-semibold text-gray-900 dark:text-white">
@@ -372,7 +372,7 @@ export default function Home() {
                       disabled={loadingMore}
                       onClick={async () => {
                         setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset);
+                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset, institution);
                         setLoadingMore(false);
                         setError(error);
                         setListingOffset((current) => current + rows.length);

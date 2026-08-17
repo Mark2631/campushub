@@ -21,6 +21,7 @@ import {
 } from '../../../lib/community';
 import { validateUploadFile } from '../../../lib/storage';
 import { isValidUuid } from '../../../lib/validation';
+import Image from 'next/image';
 
 type Props = {
   params: Promise<{ groupId: string }>;
@@ -38,8 +39,8 @@ function profileName(profile?: { full_name: string | null; email: string | null 
 
 function Avatar({ name, src }: { name: string; src?: string | null }) {
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-black text-white">
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-semibold text-white">
+      {src ? <Image src={src} alt="" width={36} height={36} className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
     </div>
   );
 }
@@ -60,7 +61,7 @@ function PostMedia({ post }: { post: CommunityPost }) {
   return (
     <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {post.media_urls.map((url) => (
-        <img key={url} src={url} alt="" className="max-h-96 w-full rounded-2xl object-cover" />
+        <Image key={url} src={url} alt="" width={1200} height={800} className="max-h-96 w-full rounded-2xl object-cover" />
       ))}
     </div>
   );
@@ -68,11 +69,11 @@ function PostMedia({ post }: { post: CommunityPost }) {
 
 export default function CommunityGroupPage({ params }: Props) {
   const { groupId } = use(params);
-  const { user, isAdmin, loading, showToast } = useUser();
+  const { user, isAdmin, loading, institution, showToast } = useUser();
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [authOpen, setAuthOpen] = useState(false);
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(() => isValidUuid(groupId));
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [postContent, setPostContent] = useState('');
@@ -85,16 +86,13 @@ export default function CommunityGroupPage({ params }: Props) {
   const feedPosts = useMemo(() => posts.filter((post) => post.id !== pinnedPost?.id), [pinnedPost?.id, posts]);
 
   useEffect(() => {
-    if (!isValidUuid(groupId)) {
-      setFetching(false);
-      return;
-    }
+    if (!isValidUuid(groupId)) return;
 
     let mounted = true;
     const load = async () => {
       setFetching(true);
       const [{ community }, { posts, error }] = await Promise.all([
-        getCommunityById(groupId, user?.id),
+        getCommunityById(groupId, user?.id, institution),
         getCommunityPosts(groupId, user?.id),
       ]);
 
@@ -109,7 +107,7 @@ export default function CommunityGroupPage({ params }: Props) {
     return () => {
       mounted = false;
     };
-  }, [groupId, user?.id]);
+  }, [groupId, user?.id, institution]);
 
   useEffect(() => {
     return () => {
@@ -297,7 +295,7 @@ export default function CommunityGroupPage({ params }: Props) {
             <div className="flex flex-wrap items-center gap-2">
               <p className="truncate font-bold text-slate-950 dark:text-white">{name}</p>
               {post.is_pinned ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-200">
                   <Pin className="h-3 w-3" aria-hidden="true" />
                   Pinned
                 </span>
@@ -410,15 +408,15 @@ export default function CommunityGroupPage({ params }: Props) {
         <Link href="/community" className="mb-4 inline-flex text-sm font-semibold text-blue-600 dark:text-blue-300">Back to Community</Link>
 
         <header className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="h-28 bg-gradient-to-br from-blue-600 via-emerald-500 to-slate-900">
-            {community.cover_url ? <img src={community.cover_url} alt="" className="h-full w-full object-cover" /> : null}
+          <div className="h-28 bg-gradient-to-br from-slate-700 to-slate-900">
+            {community.cover_url ? <Image src={community.cover_url} alt="" width={1200} height={300} className="h-full w-full object-cover" /> : null}
           </div>
           <div className="p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{community.name}</h1>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -468,7 +466,7 @@ export default function CommunityGroupPage({ params }: Props) {
                     {media.file.type.startsWith('video/') ? (
                       <video src={media.previewUrl} className="h-24 w-full object-cover" />
                     ) : (
-                      <img src={media.previewUrl} alt="" className="h-24 w-full object-cover" />
+                      <Image src={media.previewUrl} alt="" width={320} height={96} className="h-24 w-full object-cover" />
                     )}
                   </div>
                 ))}

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
-const supabaseHost = "hnhhednibexcfwfizawy.supabase.co";
+const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : "hnhhednibexcfwfizawy.supabase.co";
 
 const securityHeaders = [
   {
@@ -25,7 +27,7 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(self)",
+    value: "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
   },
   {
     key: "Content-Security-Policy",
@@ -39,22 +41,32 @@ const securityHeaders = [
       `frame-src https://accounts.google.com https://${supabaseHost}`,
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      `form-action 'self' https://${supabaseHost} https://accounts.google.com`,
     ].join("; "),
   },
 ];
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: supabaseHost,
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
       },
       {
         protocol: "https",
@@ -64,15 +76,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "via.placeholder.com",
       },
-    ],
-  },
-  async headers() {
-    return [
       {
-        source: "/:path*",
-        headers: securityHeaders,
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/**",
       },
-    ];
+    ],
   },
 };
 

@@ -1,4 +1,5 @@
 import { getSupabase } from './supabase';
+import { supabase } from './supabase';
 
 export interface Institution {
   id: string;
@@ -72,11 +73,11 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
 ];
 
 export async function fetchInstitutions(): Promise<Institution[]> {
-  const supabase = getSupabase();
-  if (!supabase) return SEEDED_INSTITUTIONS;
+  const sb = getSupabase();
+  if (!sb) return SEEDED_INSTITUTIONS;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('institutions')
       .select('*')
       .eq('status', 'active')
@@ -107,4 +108,38 @@ export function getStoredInstitution(): Institution | null {
 export function setStoredInstitution(inst: Institution) {
   if (typeof window === 'undefined') return;
   localStorage.setItem('campustrader_selected_institution', JSON.stringify(inst));
+}
+
+// Institution code-based lookups (from remote)
+const idCache = new Map<string, string | null>();
+
+export async function getInstitutionByCode(code: string) {
+  const normalized = (code || '').toString();
+  try {
+    const { data, error } = await supabase.from('institutions').select('id, code, name').eq('code', normalized).maybeSingle();
+    if (error) return { institution: null, error };
+    return { institution: data || null, error: null };
+  } catch (err) {
+    return { institution: null, error: err };
+  }
+}
+
+export async function getInstitutionIdForCode(code: string) {
+  const normalized = (code || '').toString();
+  if (!normalized) return null;
+  if (idCache.has(normalized)) return idCache.get(normalized) || null;
+
+  try {
+    const { data, error } = await supabase.from('institutions').select('id').eq('code', normalized).maybeSingle();
+    if (error) {
+      idCache.set(normalized, null);
+      return null;
+    }
+    const id = data?.id ?? null;
+    idCache.set(normalized, id);
+    return id;
+  } catch {
+    idCache.set(normalized, null);
+    return null;
+  }
 }

@@ -8,8 +8,10 @@ import {
   cleanText,
   isMissingColumnError,
   isValidUuid,
+  normalizeInstitution,
   parseOptionalNumber,
 } from './validation';
+import { getInstitutionIdForCode } from './institutions';
 
 export interface ItemRequest {
   id: string;
@@ -90,7 +92,8 @@ export async function createItemRequest(
     minPrice?: string | number | null;
     maxPrice?: string | number | null;
     location?: string;
-  }
+  },
+  institution: string = DEFAULT_CAMPUS
 ) {
   if (!isValidUuid(userId)) {
     return { request: null as ItemRequest | null, error: 'Sign in to request an item.' };
@@ -122,7 +125,15 @@ export async function createItemRequest(
     location: cleanText(data.location, 120) || null,
     interested_count: 0,
     status: 'open',
-    campus: DEFAULT_CAMPUS,
+    campus: normalizeInstitution(institution),
+    ...(await (async () => {
+      try {
+        const id = await getInstitutionIdForCode(normalizeInstitution(institution));
+        return id ? { institution_id: id } : {};
+      } catch {
+        return {};
+      }
+    })()),
   };
 
   try {
