@@ -18,3 +18,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 });
+
+/** Safe accessor — returns the client or null when env vars are missing at build time. */
+export function getSupabase() {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return supabase;
+}

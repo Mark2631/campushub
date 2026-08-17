@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { HelpCircle, Settings, ShieldCheck, UserRound, X } from 'lucide-react';
+import { ChevronDown, HelpCircle, Settings, ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -78,6 +78,7 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [listingFilter, setListingFilter] = useState<ListingFilter>('active');
+  const [listingsCollapsed, setListingsCollapsed] = useState(false);
   const [listingActionId, setListingActionId] = useState<string | null>(null);
   const [verificationType, setVerificationType] = useState<(typeof verificationTypes)[number]['value']>('student');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
@@ -201,7 +202,7 @@ export default function ProfilePage() {
 
     if (error) {
       console.error('Listing status update failed:', error);
-      setCleanError();
+      setCleanError(error);
       return;
     }
 
@@ -445,55 +446,69 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <button
+                type="button"
+                onClick={() => setListingsCollapsed((c) => !c)}
+                className="flex w-full items-center justify-between gap-3 p-5 text-left"
+              >
                 <div>
                   <h2 className="text-xl font-bold">My Listings</h2>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, pending, sold, and hidden listings.</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    {activeListingsCount} active · {soldListingsCount} sold · {pendingListingsCount} pending · {hiddenListingsCount} hidden
+                  </p>
                 </div>
-                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
-              </div>
+                <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${listingsCollapsed ? '' : 'rotate-180'}`} />
+              </button>
 
-              <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
-                  <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                    {status === 'pending_payment' ? 'Pending' : status}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                {filteredListings.length > 0 ? (
-                  filteredListings.map((listing) => (
-                    <article key={listing.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="truncate font-bold">{listing.title}</p>
-                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                            {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
-                          <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
-                          {listing.status !== 'sold' ? (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Sold</button>
-                          ) : null}
-                          {listing.status !== 'hidden' ? (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Hide</button>
-                          ) : (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Restore</button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
-                    <p className="font-bold">{listingEmptyText(listingFilter)}</p>
+              {!listingsCollapsed && (
+                <div className="border-t border-slate-200 p-5 pt-4 dark:border-slate-800">
+                  <div className="mb-4 flex items-center justify-end">
+                    <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
                   </div>
-                )}
-              </div>
+
+                  <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
+                    {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
+                      <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                        {status === 'pending_payment' ? 'Pending' : status}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-3">
+                    {filteredListings.length > 0 ? (
+                      filteredListings.map((listing) => (
+                        <article key={listing.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="truncate font-bold">{listing.title}</p>
+                              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                                {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                              <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                              <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
+                              {listing.status !== 'sold' ? (
+                                <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Sold</button>
+                              ) : null}
+                              {listing.status !== 'hidden' ? (
+                                <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Hide</button>
+                              ) : (
+                                <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Restore</button>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+                        <p className="font-bold">{listingEmptyText(listingFilter)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           </>
         ) : (

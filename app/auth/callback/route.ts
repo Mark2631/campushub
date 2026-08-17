@@ -7,6 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const mode = requestUrl.searchParams.get('mode');
   const providerError = requestUrl.searchParams.get('error_description') || requestUrl.searchParams.get('error');
 
   if (!code) {
@@ -17,9 +18,9 @@ export async function GET(request: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
 
@@ -32,10 +33,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const redirectUrl = new URL('/', request.url);
-  redirectUrl.searchParams.set('auth_callback', 'success');
-  redirectUrl.searchParams.set('access_token', data.session.access_token);
-  redirectUrl.searchParams.set('refresh_token', data.session.refresh_token);
-
-  return NextResponse.redirect(redirectUrl);
+  // Pass tokens via URL hash fragment — NOT query params.
+  // Hash fragments are never sent to the server in HTTP requests,
+  // so they won't appear in server logs, analytics, or referrer headers.
+  const destination = mode === 'signin' ? '/' : '/?welcome=1';
+  const redirectUrl = new URL(destination, request.url);
+  const hashParams = new URLSearchParams({
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    type: 'auth_callback',
+  });
+  
+  return NextResponse.redirect(`${redirectUrl.toString()}#${hashParams.toString()}`);
 }

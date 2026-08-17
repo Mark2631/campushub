@@ -90,23 +90,31 @@ export default function ManagePanel({
               Select your institution to filter marketplace listings, hostels, services, and campus feeds.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {SEEDED_INSTITUTIONS.map((inst) => (
-                <button
-                  key={inst.id}
-                  onClick={() => handleSelectInstitution(inst)}
-                  className={`p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between ${
-                    selectedInst?.id === inst.id
-                      ? 'bg-emerald-500/15 border-emerald-500 text-white font-bold'
-                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                  }`}
-                >
-                  <div>
-                    <div className="font-bold text-white">{inst.short_name}</div>
-                    <div className="text-[11px] text-slate-400 truncate">{inst.name}</div>
-                  </div>
-                  {selectedInst?.id === inst.id && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-                </button>
-              ))}
+              {SEEDED_INSTITUTIONS.map((inst) => {
+                const isComingSoon = inst.status === 'coming_soon';
+                const isSelected = selectedInst?.id === inst.id;
+                return (
+                  <button
+                    key={inst.id}
+                    onClick={() => !isComingSoon && handleSelectInstitution(inst)}
+                    disabled={isComingSoon}
+                    className={`p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-emerald-500/15 border-emerald-500 text-white font-bold'
+                        : isComingSoon
+                          ? 'bg-slate-900/50 border-slate-800/50 text-slate-500 cursor-not-allowed opacity-60'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div>
+                      <div className={isComingSoon ? 'font-bold text-slate-500' : 'font-bold text-white'}>{inst.short_name}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{inst.name}</div>
+                    </div>
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                    {isComingSoon && <span className="text-[9px] font-bold uppercase text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20 shrink-0">Coming soon</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

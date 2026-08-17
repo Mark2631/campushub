@@ -418,15 +418,35 @@ export async function updateListingLifecycleStatus(
     return { error: GENERIC_ERROR };
   }
 
-  const { error } = await supabase
+  // Try with seller_id first (modern schema)
+  const { data, error } = await supabase
     .from('listings')
     .update({ status })
     .eq('id', listingId)
-    .eq('seller_id', sellerId);
+    .eq('seller_id', sellerId)
+    .select('id');
 
-  if (error) {
-    logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
-    return { error: GENERIC_ERROR };
+  if (!error && data && data.length > 0) {
+    return { error: null };
+  }
+
+  // Fallback: try with user_id (legacy schema / RLS policy mismatch)
+  const fallback = await supabase
+    .from('listings')
+    .update({ status })
+    .eq('id', listingId)
+    .eq('user_id', sellerId)
+    .select('id');
+
+  if (fallback.error) {
+    logSupabaseError('Error updating listing lifecycle status:', fallback.error, { listingId, sellerId, status });
+    return { error: 'Could not update listing status. Check that you own this listing.' };
+  }
+
+  if (!fallback.data || fallback.data.length === 0) {
+    // Neither seller_id nor user_id matched — ownership mismatch or listing doesn't exist
+    logSupabaseError('Listing status update matched 0 rows:', { listingId, sellerId, status });
+    return { error: 'Could not update listing. You may not own this listing.' };
   }
 
   return { error: null };

@@ -144,12 +144,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const initAuth = async () => {
       if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const authCallback = params.get('auth_callback');
+        // Read auth callback tokens from hash fragment (security: hash is never sent to server)
+        const hashString = window.location.hash.slice(1); // Remove leading '#'
+        const hashParams = new URLSearchParams(hashString);
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const authType = hashParams.get('type');
 
-        if (authCallback === 'success' && accessToken && refreshToken) {
+        if (authType === 'auth_callback' && accessToken && refreshToken) {
           const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -159,7 +161,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             console.error('Auth callback session error:', sessionError);
           }
 
-          const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+          // Clean the hash from the URL
+          const cleanUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
           window.history.replaceState({}, '', cleanUrl);
 
           if (sessionData.session && isMounted) {

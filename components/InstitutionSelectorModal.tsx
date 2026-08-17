@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Check, Sparkles } from 'lucide-react';
 import { fetchInstitutions, setStoredInstitution, Institution, SEEDED_INSTITUTIONS } from '@/lib/institutions';
-import { updateProfile } from '@/lib/profiles';
 
 interface InstitutionSelectorModalProps {
   isOpen: boolean;

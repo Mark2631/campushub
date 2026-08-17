@@ -27,7 +27,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'Meru Poly',
     slug: 'meru-poly',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
   {
     id: '33333333-3333-4333-a333-333333333333',
@@ -35,7 +35,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'Mukiria TTI',
     slug: 'mukiria-tti',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
   {
     id: '44444444-4444-4444-a444-444444444444',
@@ -43,7 +43,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'Mitunguu TTI',
     slug: 'mitunguu-tti',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
   {
     id: '55555555-5555-4555-a555-555555555555',
@@ -51,7 +51,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'Karumo TTI',
     slug: 'karumo-tti',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
   {
     id: '66666666-6666-4666-a666-666666666666',
@@ -59,7 +59,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'MKU Meru',
     slug: 'mku-meru',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
   {
     id: '77777777-7777-4777-a777-777777777777',
@@ -67,7 +67,7 @@ export const SEEDED_INSTITUTIONS: Institution[] = [
     short_name: 'KeMU Meru',
     slug: 'kemu-meru',
     county: 'Meru',
-    status: 'active',
+    status: 'coming_soon',
   },
 ];
 

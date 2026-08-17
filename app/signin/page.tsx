@@ -100,7 +100,7 @@ function SignInPageContent() {
   const [mode, setMode] = useState<AuthMode>(requestedMode === 'signin' ? 'signin' : 'signup');
   const [notice, setNotice] = useState<Notice | null>(
     callbackError
-      ? { tone: 'error', message: 'Something went wrong. Try again.' }
+      ? { tone: 'error', message: callbackError === 'access_denied' ? 'Sign-in was cancelled.' : `Sign-in failed: ${callbackError}` }
       : null
   );
   const [signupPending, setSignupPending] = useState(false);
