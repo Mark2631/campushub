@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Image from 'next/image';
 import type { Listing } from '../lib/listings';
 
 export default function ListingCard({ listing }: { listing: Listing }) {
