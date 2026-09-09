@@ -151,7 +151,7 @@ export default function ConversationPage({ params }: Props) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
         <Header />
         <main className="flex-1 flex items-center justify-center px-4 py-8">
           <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-blue-500 animate-spin" />
@@ -163,7 +163,7 @@ export default function ConversationPage({ params }: Props) {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
         <Header />
         <main className="flex-1 px-4 py-8">
           <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
@@ -179,7 +179,7 @@ export default function ConversationPage({ params }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
       <Header />
 
       <main className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full">
@@ -239,7 +239,7 @@ export default function ConversationPage({ params }: Props) {
             </div>
 
             {/* Messages Container */}
-            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 min-h-96 max-h-96 overflow-y-auto">
+            <div className="min-h-96 max-h-[32rem] space-y-4 overflow-y-auto rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
               {messages.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-zinc-400 py-8">No messages yet.</p>
               ) : (
@@ -264,7 +264,7 @@ export default function ConversationPage({ params }: Props) {
                     <div
                       className={`max-w-xs rounded-2xl px-4 py-3 ${
                         isOwn
-                          ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white'
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/10'
                           : 'bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white'
                       }`}
                     >
@@ -294,6 +294,7 @@ export default function ConversationPage({ params }: Props) {
               ) : null}
               <div className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 <textarea
+                  aria-label="Message"
                   value={messageText}
                   onChange={(event) => setMessageText(event.target.value)}
                   rows={1}
