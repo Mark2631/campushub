@@ -165,8 +165,6 @@ function SignInPageContent() {
     setNotice(null);
     const email = signupForm.email.trim();
     const fullName = signupForm.fullName.trim();
-    const phone = signupForm.phone.trim();
-
     if (signupForm.password !== signupForm.confirmPassword) {
       showToast({ type: 'error', message: 'Passwords do not match.' });
       setNotice({ tone: 'error', message: 'Passwords do not match.' });
@@ -183,7 +181,9 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, phone, next);
+    // Phone is profile contact information, not an auth requirement. Keep it out
+    // of Supabase auth metadata so signup cannot fail because of phone data.
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, undefined, next);
 
     if (signup.error) {
       setSignupPending(false);

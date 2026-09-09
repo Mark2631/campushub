@@ -13,8 +13,11 @@ function getSafeRedirectPath(value?: string | null) {
 
 export async function signUpWithPassword(email: string, password: string, fullName: string, phone?: string, next?: string) {
   const safeNext = getSafeRedirectPath(next);
-  const redirectOrigin = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : '');
+  // Always use the origin the user is currently visiting. A stale development
+  // redirect URL can make Supabase reject an otherwise valid signup in production.
+  const redirectOrigin = typeof window !== 'undefined'
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || '';
   const redirectTo = redirectOrigin
     ? `${redirectOrigin}/auth/callback?mode=signin${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ''}`
     : undefined;
