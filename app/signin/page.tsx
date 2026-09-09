@@ -7,7 +7,7 @@ import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
 import { ensureProfile } from '../../lib/profiles';
-import { validateKenyanPhone } from '../../lib/phoneValidation';
+import { normalizeKenyanPhone, validateKenyanPhone } from '../../lib/phoneValidation';
 
 type AuthMode = 'signup' | 'signin';
 type Notice = { tone: 'success' | 'error' | 'info'; message: string };
@@ -147,12 +147,13 @@ function SignInPageContent() {
     setNotice(null);
     const email = signupForm.email.trim();
     const fullName = signupForm.fullName.trim();
-    const phone = signupForm.phone.trim();
-    const phoneError = validateKenyanPhone(phone);
+    const phone = normalizeKenyanPhone(signupForm.phone);
+    const phoneError = phone ? null : validateKenyanPhone(signupForm.phone);
 
-    if (phoneError) {
-      showToast({ type: 'error', message: phoneError });
-      setNotice({ tone: 'error', message: phoneError });
+    if (phoneError || !phone) {
+      const message = phoneError || 'Use format +254712345678 or 0712345678';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
       return;
     }
 
