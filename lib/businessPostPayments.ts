@@ -1,10 +1,8 @@
 import { supabase } from './supabase';
 import { createNotificationRecord } from './notifications';
-import { GENERIC_ERROR, PERMISSION_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid } from './validation';
+import { GENERIC_ERROR, PERMISSION_ERROR, cleanMultilineText, isAllowedValue, isValidUuid } from './validation';
 
-export const BUSINESS_POST_FEE_KSH = 60;
-export const BUSINESS_POST_TILL = '6362615';
-export const BUSINESS_POST_TILL_NAME = 'Newton Mwangi';
+// Legacy payment records remain readable for existing admin data; new business posts no longer require payment.
 
 export type BusinessPostPaymentStatus = 'pending' | 'verified' | 'rejected';
 
@@ -88,57 +86,6 @@ async function fetchPayment(paymentId: string) {
   }
 
   return { payment: (data || null) as BusinessPostPayment | null, error: null };
-}
-
-export async function createBusinessPostPayment(args: {
-  listingId: string;
-  userId: string;
-  businessId: string;
-  reference?: string;
-}) {
-  if (!isValidUuid(args.listingId) || !isValidUuid(args.userId) || !isValidUuid(args.businessId)) {
-    return { payment: null as BusinessPostPayment | null, error: GENERIC_ERROR };
-  }
-
-  const { data: listing, error: listingError } = await supabase
-    .from('listings')
-    .select('id, seller_id, business_id, title, status')
-    .eq('id', args.listingId)
-    .maybeSingle();
-
-  if (listingError || !listing) {
-    if (listingError) console.error('Business payment listing check failed:', serializeError(listingError));
-    return { payment: null as BusinessPostPayment | null, error: GENERIC_ERROR };
-  }
-
-  const listingRow = listing as ListingPaymentRow;
-  if (listingRow.seller_id !== args.userId || listingRow.business_id !== args.businessId) {
-    return { payment: null as BusinessPostPayment | null, error: PERMISSION_ERROR };
-  }
-
-  const payload = {
-    listing_id: args.listingId,
-    business_id: args.businessId,
-    user_id: args.userId,
-    amount_ksh: BUSINESS_POST_FEE_KSH,
-    till_number: BUSINESS_POST_TILL,
-    account_name: BUSINESS_POST_TILL_NAME,
-    reference: cleanText(args.reference || '', 100) || null,
-    status: 'pending',
-  };
-
-  const { data, error } = await supabase
-    .from('business_post_payments')
-    .upsert(payload, { onConflict: 'listing_id' })
-    .select('id, listing_id, business_id, user_id, amount_ksh, till_number, account_name, reference, status, admin_note, verified_by, verified_at, created_at, updated_at')
-    .single();
-
-  if (error) {
-    console.error('Business payment create failed:', serializeError(error), payload);
-    return { payment: null as BusinessPostPayment | null, error: GENERIC_ERROR };
-  }
-
-  return { payment: data as BusinessPostPayment, error: null };
 }
 
 export async function getBusinessPostPayments(status: BusinessPostPaymentStatus | 'all' = 'pending') {

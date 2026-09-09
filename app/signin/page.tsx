@@ -109,6 +109,7 @@ function SignInPageContent() {
   const [resetOpen, setResetOpen] = useState(false);
   const [signupForm, setSignupForm] = useState({
     fullName: '',
+    phoneNumber: '',
     email: initialEmail,
     password: '',
     confirmPassword: '',
@@ -145,6 +146,14 @@ function SignInPageContent() {
     setNotice(null);
     const email = signupForm.email.trim();
     const fullName = signupForm.fullName.trim();
+    const phoneNumber = signupForm.phoneNumber.trim();
+
+    if (!/^\+?[0-9\s()-]{9,20}$/.test(phoneNumber)) {
+      const message = 'Enter a valid phone number for WhatsApp contact.';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
+      return;
+    }
 
     if (signupForm.password !== signupForm.confirmPassword) {
       showToast({ type: 'error', message: 'Passwords do not match.' });
@@ -162,7 +171,7 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, next);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, phoneNumber, next);
 
     if (signup.error) {
       setSignupPending(false);
@@ -300,6 +309,20 @@ function SignInPageContent() {
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   required
                 />
+              </label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                WhatsApp phone number
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="e.g. 0712 345 678"
+                  value={signupForm.phoneNumber}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, phoneNumber: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  required
+                />
+                <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Used only when buyers choose to contact you on WhatsApp.</span>
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email
