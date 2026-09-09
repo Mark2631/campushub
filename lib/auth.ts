@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { normalizeKenyanPhone } from './phoneValidation';
 
 export async function signInWithPassword(email: string, password: string) {
   return supabase.auth.signInWithPassword({ email, password });
@@ -22,13 +23,15 @@ export async function signUpWithPassword(email: string, password: string, fullNa
     ? `${redirectOrigin}/auth/callback?mode=signin${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ''}`
     : undefined;
 
+  const normalizedPhone = phone?.trim() ? normalizeKenyanPhone(phone) : null;
+
   return supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
-        ...(phone ? { phone_number: phone } : {}),
+        ...(normalizedPhone ? { phone_number: normalizedPhone } : {}),
       },
       emailRedirectTo: redirectTo,
     },
