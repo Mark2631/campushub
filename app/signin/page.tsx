@@ -37,7 +37,26 @@ function appendWelcome(path: string) {
   return '/?welcome=1';
 }
 
-function friendlyAuthMessage(fallback: string) {
+function friendlyAuthMessage(error: unknown, fallback: string) {
+  const message = error && typeof error === 'object' && 'message' in error
+    ? String((error as { message?: unknown }).message || '')
+    : '';
+
+  if (/redirect|url|allowed/i.test(message)) {
+    return 'Sign-up is temporarily unavailable because the email redirect is not configured. Please try again shortly.';
+  }
+  if (/already registered|already exists|user already/i.test(message)) {
+    return 'An account with this email already exists. Switch to Sign in or reset your password.';
+  }
+  if (/password/i.test(message) && /weak|least|length|character/i.test(message)) {
+    return 'Use a stronger password with at least 6 characters.';
+  }
+  if (/rate limit|too many/i.test(message)) {
+    return 'Too many attempts. Please wait a few minutes and try again.';
+  }
+  if (/invalid email|email.*invalid/i.test(message)) {
+    return 'Enter a valid email address.';
+  }
   return fallback;
 }
 
@@ -178,7 +197,7 @@ function SignInPageContent() {
     if (signup.error) {
       setSignupPending(false);
       console.error('Signup failed:', signup.error);
-      const message = friendlyAuthMessage('Unable to create account. Check your details and try again.');
+      const message = friendlyAuthMessage(signup.error, 'Unable to create account. Check your details and try again.');
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
       return;
@@ -214,7 +233,7 @@ function SignInPageContent() {
 
     if (error || !data.session) {
       if (error) console.error('Sign-in failed:', error);
-      const message = friendlyAuthMessage(passwordSignInMessage(error));
+      const message = passwordSignInMessage(error);
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
       return;
@@ -238,7 +257,7 @@ function SignInPageContent() {
 
     if (error) {
       console.error('Password reset failed:', error);
-      const message = friendlyAuthMessage('Something went wrong. Try again.');
+      const message = friendlyAuthMessage(error, 'Something went wrong. Try again.');
       showToast({ type: 'error', message });
       setNotice({ tone: 'error', message });
       return;
