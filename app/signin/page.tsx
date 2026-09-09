@@ -181,9 +181,9 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    // Phone is profile contact information, not an auth requirement. Keep it out
-    // of Supabase auth metadata so signup cannot fail because of phone data.
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, undefined, next);
+    // Phone is optional profile contact information. When provided, pass it as
+    // metadata so ensureProfile can prefill Manage with the normalized number.
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next);
 
     if (signup.error) {
       setSignupPending(false);
