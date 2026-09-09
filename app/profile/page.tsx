@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Settings, ShieldCheck, UserRound, X } from 'lucide-react';
+import { ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -389,8 +389,8 @@ export default function ProfilePage() {
                     Edit profile
                   </button>
                   <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                    <Settings className="h-4 w-4" aria-hidden="true" />
-                    Settings
+                    <UserRound className="h-4 w-4" aria-hidden="true" />
+                    Manage
                   </button>
                 </div>
               </div>
