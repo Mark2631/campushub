@@ -11,7 +11,7 @@ function getSafeRedirectPath(value?: string | null) {
   return undefined;
 }
 
-export async function signUpWithPassword(email: string, password: string, fullName: string, phone: string, next?: string) {
+export async function signUpWithPassword(email: string, password: string, fullName: string, phone?: string, next?: string) {
   const safeNext = getSafeRedirectPath(next);
   const redirectOrigin = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
     (typeof window !== 'undefined' ? window.location.origin : '');
@@ -25,7 +25,7 @@ export async function signUpWithPassword(email: string, password: string, fullNa
     options: {
       data: {
         full_name: fullName,
-        phone_number: phone,
+        ...(phone ? { phone_number: phone } : {}),
       },
       emailRedirectTo: redirectTo,
     },

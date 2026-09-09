@@ -90,7 +90,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
       <Header />
       <div className="sticky top-[65px] z-30 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg dark:from-blue-700 dark:to-blue-800 sm:top-[73px]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:py-3">
@@ -104,8 +104,9 @@ export default function MessagesPage() {
 
       <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
         <header className="mb-8 mt-2">
-          <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Keep your conversations organized and secure.</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Your inbox</p>
+          <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Keep buying and selling conversations in one place.</p>
         </header>
 
         <div className="mb-6">
@@ -150,7 +151,7 @@ export default function MessagesPage() {
           <ul className="space-y-3">
             {conversations.map((conversation) => (
               <li key={conversation.id}>
-                <article className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:border-blue-400 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-600 dark:hover:shadow-blue-500/10">
+                <article className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg sm:p-5 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700">
                   <div className="flex items-center justify-between gap-4">
                     <Link href={`/messages/${conversation.id}`} className="flex min-w-0 flex-1 items-center gap-4">
                       <Avatar profile={conversation.otherUser} />
