@@ -11,7 +11,7 @@ function getSafeRedirectPath(value?: string | null) {
   return undefined;
 }
 
-export async function signUpWithPassword(email: string, password: string, fullName: string, next?: string) {
+export async function signUpWithPassword(email: string, password: string, fullName: string, phone: string, next?: string) {
   const safeNext = getSafeRedirectPath(next);
   const redirectTo = typeof window !== 'undefined'
     ? `${window.location.origin}/auth/callback?mode=signin${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ''}`
@@ -23,6 +23,7 @@ export async function signUpWithPassword(email: string, password: string, fullNa
     options: {
       data: {
         full_name: fullName,
+        phone_number: phone,
       },
       emailRedirectTo: redirectTo,
     },

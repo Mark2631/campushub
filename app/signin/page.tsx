@@ -7,6 +7,7 @@ import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
 import { ensureProfile } from '../../lib/profiles';
+import { validateKenyanPhone } from '../../lib/phoneValidation';
 
 type AuthMode = 'signup' | 'signin';
 type Notice = { tone: 'success' | 'error' | 'info'; message: string };
@@ -109,6 +110,7 @@ function SignInPageContent() {
   const [resetOpen, setResetOpen] = useState(false);
   const [signupForm, setSignupForm] = useState({
     fullName: '',
+    phone: '',
     email: initialEmail,
     password: '',
     confirmPassword: '',
@@ -145,6 +147,14 @@ function SignInPageContent() {
     setNotice(null);
     const email = signupForm.email.trim();
     const fullName = signupForm.fullName.trim();
+    const phone = signupForm.phone.trim();
+    const phoneError = validateKenyanPhone(phone);
+
+    if (phoneError) {
+      showToast({ type: 'error', message: phoneError });
+      setNotice({ tone: 'error', message: phoneError });
+      return;
+    }
 
     if (signupForm.password !== signupForm.confirmPassword) {
       showToast({ type: 'error', message: 'Passwords do not match.' });
@@ -162,7 +172,7 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, next);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, phone, next);
 
     if (signup.error) {
       setSignupPending(false);
@@ -300,6 +310,20 @@ function SignInPageContent() {
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   required
                 />
+              </label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Phone number
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="0712345678"
+                  value={signupForm.phone}
+                  onChange={(event) => setSignupForm((current) => ({ ...current, phone: event.target.value }))}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  aria-describedby="phone-format"
+                  required
+                />
+                <span id="phone-format" className="mt-1 block text-xs text-slate-500">Use format +254712345678 or 0712345678</span>
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email

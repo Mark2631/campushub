@@ -9,13 +9,6 @@ import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
-import {
-  BUSINESS_POST_FEE_KSH,
-  BUSINESS_POST_TILL,
-  BUSINESS_POST_TILL_NAME,
-  createBusinessPostPayment,
-} from '../../lib/businessPostPayments';
-import { createComplaint } from '../../lib/complaints';
 import { createItemRequest, getItemRequestById } from '../../lib/itemRequests';
 import { getListingById, insertListing, normalizeCategory, normalizeListingCondition, updateListing, uploadListingMedia } from '../../lib/listings';
 import { getProfileById, type ProfileRecord } from '../../lib/profiles';
@@ -73,8 +66,6 @@ function SellPageContent() {
   const [requestMessage, setRequestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [requestPrefillMessage, setRequestPrefillMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SellTab>(requestMode ? 'requests' : 'sell');
-  const [paymentReference, setPaymentReference] = useState('');
-  const [paymentHelpSubmitting, setPaymentHelpSubmitting] = useState(false);
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
   const isNewBusinessPost = !editListingId && profileContext.mode === 'business' && Boolean(profileContext.businessId);
@@ -372,8 +363,7 @@ function SellPageContent() {
     setPostWithoutMediaReady(false);
     setExistingMediaUrls([]);
     setExistingVideoUrl(null);
-    setPaymentReference('');
-  };
+    };
 
   const validateListingForm = () => {
     if (!user) return 'Sign in to post a listing.';
@@ -438,7 +428,7 @@ function SellPageContent() {
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
       mediaUrls,
       videoUrl,
-      status: isNewBusinessPost ? 'pending_payment' as const : undefined,
+      status: isNewBusinessPost ? 'active' as const : undefined,
       campus: institution,
     };
 
@@ -483,39 +473,14 @@ function SellPageContent() {
         return;
       }
 
-      if (isNewBusinessPost && listing?.id && profileContext.businessId) {
-        const { error: paymentError } = await createBusinessPostPayment({
-          listingId: listing.id,
-          userId: user!.id,
-          businessId: profileContext.businessId,
-          reference: paymentReference,
-        });
-
-        if (paymentError) {
-          console.error('Business post payment review failed:', paymentError);
-          const text = 'Something went wrong. Try again.';
-          setMessage({ type: 'error', text });
-          showToast({ type: 'error', message: text });
-          return;
-        }
-      }
-
       setCreatedListingId(listing?.id || null);
-      const successText = editListingId
-        ? 'Listing updated successfully.'
-        : isNewBusinessPost
-          ? 'Payment sent for review. Your listing goes live after admin approval.'
-          : 'Listing posted successfully.';
+      const successText = editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.';
       setMessage({ type: 'success', text: successText });
       showToast({ type: 'success', message: successText });
       await pushNotification({
         type: editListingId ? 'listing updated' : isNewBusinessPost ? 'business post review' : 'listing posted',
         title: editListingId ? 'Listing updated' : isNewBusinessPost ? 'Business post in review' : 'Listing posted successfully',
-        body: editListingId
-          ? `${listing?.title || 'Your listing'} has been updated.`
-          : isNewBusinessPost
-            ? `${listing?.title || 'Your listing'} will go live after payment approval.`
-            : `${listing?.title || 'Your listing'} is now live.`,
+        body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
       });
       resetForm();
       window.dispatchEvent(new Event('campustrader:listings-refresh'));
@@ -548,35 +513,6 @@ function SellPageContent() {
     await submitListing();
   };
 
-  const copyTillNumber = async () => {
-    try {
-      await navigator.clipboard.writeText(BUSINESS_POST_TILL);
-      showToast({ type: 'success', message: 'Till number copied.' });
-    } catch (error) {
-      console.error('Till copy failed:', error);
-      showToast({ type: 'info', message: `Till number: ${BUSINESS_POST_TILL}` });
-    }
-  };
-
-  const messageAdminAboutPayment = async () => {
-    if (!user || paymentHelpSubmitting) return;
-
-    setPaymentHelpSubmitting(true);
-    const { error } = await createComplaint({
-      userId: user.id,
-      email: user.email || '',
-      subject: 'Business post payment help',
-      message: `I need help with a business post payment.\n\nBusiness: ${profileContext.mode === 'business' ? profileContext.businessName : 'Business profile'}\nListing draft: ${formData.title || 'Untitled'}\nTill: ${BUSINESS_POST_TILL}\nReference: ${paymentReference || 'Not added'}`,
-    });
-    setPaymentHelpSubmitting(false);
-
-    if (error) {
-      showToast({ type: 'error', message: error });
-      return;
-    }
-
-    showToast({ type: 'success', message: 'Admin message sent.' });
-  };
 
   if (loading) {
     return (
@@ -1054,56 +990,7 @@ function SellPageContent() {
             )}
           </div>
 
-          {isNewBusinessPost ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-950/30">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm font-bold text-amber-900 dark:text-amber-100">Business post review</p>
-                  <p className="mt-1 text-sm leading-6 text-amber-800 dark:text-amber-200">
-                    Pay KSh {BUSINESS_POST_FEE_KSH} to publish this business post. It goes live after admin approval.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyTillNumber}
-                  className="rounded-2xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-900 transition hover:border-amber-400 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
-                >
-                  Copy Till
-                </button>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Amount</p>
-                  <p className="mt-1 font-bold text-gray-950 dark:text-white">KSh {BUSINESS_POST_FEE_KSH}</p>
-                </div>
-                <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Till</p>
-                  <p className="mt-1 font-bold text-gray-950 dark:text-white">{BUSINESS_POST_TILL}</p>
-                </div>
-                <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300">Name</p>
-                  <p className="mt-1 font-bold text-gray-950 dark:text-white">{BUSINESS_POST_TILL_NAME}</p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-                <input
-                  type="text"
-                  value={paymentReference}
-                  onChange={(event) => setPaymentReference(event.target.value)}
-                  placeholder="Optional payment code or note"
-                  className="w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-gray-950 outline-none focus:border-amber-500 dark:border-amber-900 dark:bg-zinc-950 dark:text-white"
-                />
-                <button
-                  type="button"
-                  onClick={messageAdminAboutPayment}
-                  disabled={paymentHelpSubmitting}
-                  className="rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm font-bold text-amber-900 transition hover:border-amber-400 disabled:opacity-60 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
-                >
-                  {paymentHelpSubmitting ? 'Sending...' : 'Message admin'}
-                </button>
-              </div>
-            </div>
-          ) : null}
+  
 
           <button
             type="submit"

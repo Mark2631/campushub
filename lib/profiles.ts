@@ -96,7 +96,7 @@ export async function ensureProfile(user: User) {
     badge_type: isAdmin ? 'admin' : current?.badge_type || null,
     account_status: accountStatus,
     role: isAdmin ? 'admin' : current?.role || 'user',
-    phone_number: current?.phone_number || null,
+    phone_number: current?.phone_number || user.user_metadata?.phone_number || null,
     email_verified: current?.email_verified || emailVerified,
     campus: current?.campus || DEFAULT_CAMPUS,
     ...(await (async () => {

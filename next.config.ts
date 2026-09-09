@@ -40,10 +40,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      {
-        source: '/:path*',
-        headers: securityHeaders,
-      },
+    {
+      source: '/:path*',
+      headers: [...securityHeaders, { key: 'Vary', value: 'Accept-Encoding' }],
+    },
     ];
   },
   images: {
