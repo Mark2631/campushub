@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Send, Trash2 } from 'lucide-react';
+import { ImagePlus, Send, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
@@ -13,6 +13,7 @@ import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, hideConversationForUser, sendMessage } from '../../../lib/conversations';
 import { createNotificationRecord } from '../../../lib/notifications';
 import { isValidUuid } from '../../../lib/validation';
+import { storageBuckets, uploadPublicFile, validateUploadFile } from '../../../lib/storage';
 
 type Props = {
   params: Promise<{
@@ -48,6 +49,9 @@ export default function ConversationPage({ params }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
 
   useEffect(() => {
@@ -91,10 +95,35 @@ export default function ConversationPage({ params }: Props) {
     setMessages((current) => current.map((item) => item.id === failedMessage.id ? message : item));
   };
 
+  const handleAttachment = (file: File | undefined) => {
+    if (!file) return;
+    const kind = file.type.startsWith('video/') ? 'video' : 'image';
+    const validationError = validateUploadFile(file, kind);
+    if (validationError) {
+      showToast({ type: 'error', message: validationError });
+      return;
+    }
+    if (attachmentPreview) URL.revokeObjectURL(attachmentPreview);
+    setAttachment(file);
+    setAttachmentPreview(URL.createObjectURL(file));
+  };
+
   const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!messageText.trim() || !user || !conversation) return;
-    const content = messageText.trim();
+    if ((!messageText.trim() && !attachment) || !user || !conversation || uploading) return;
+    let content = messageText.trim();
+
+    if (attachment) {
+      setUploading(true);
+      const uploaded = await uploadPublicFile(storageBuckets.listingMedia, user.id, attachment);
+      setUploading(false);
+      if (uploaded.error || !uploaded.publicUrl) {
+        showToast({ type: 'error', message: uploaded.error || 'Attachment upload failed.' });
+        return;
+      }
+      const mediaType = attachment.type.startsWith('video/') ? 'video' : 'image';
+      content = `${content}${content ? '\\n\\n' : ''}[[media:${uploaded.publicUrl}|${mediaType}|${attachment.name}]]`;
+    }
     const optimisticId = `local-${Date.now()}`;
     const optimisticMessage: Message = {
       id: optimisticId,
@@ -106,6 +135,9 @@ export default function ConversationPage({ params }: Props) {
     };
     setMessages((current) => [...current, optimisticMessage]);
     setMessageText('');
+    setAttachment(null);
+    if (attachmentPreview) URL.revokeObjectURL(attachmentPreview);
+    setAttachmentPreview(null);
     setSending(true);
     const slowTimer = window.setTimeout(() => {
       showToast({ type: 'warning', message: 'Message is taking longer than expected. Keep this page open.' });
@@ -269,7 +301,17 @@ export default function ConversationPage({ params }: Props) {
                       }`}
                     >
                       {!isOwn && startsGroup ? <p className="mb-1 text-[11px] font-semibold text-gray-500 dark:text-zinc-400">{otherName}</p> : null}
-                      <p className="text-sm">{message.content}</p>
+                      {(() => {
+                        const mediaMatch = message.content.match(/\\[\\[media:(.+?)\\|(image|video)\\|(.+?)\\]\\]/);
+                        const text = message.content.replace(/\\n?\\n?\\[\\[media:.+?\\]\\]/, '').trim();
+                        return (
+                          <>
+                            {mediaMatch?.[2] === 'video' ? <video controls preload="metadata" className="mb-2 max-h-64 w-full rounded-xl" src={mediaMatch[1]} /> : null}
+                            {mediaMatch?.[2] === 'image' ? <a href={mediaMatch[1]} target="_blank" rel="noreferrer"><img src={mediaMatch[1]} alt={mediaMatch[3]} className="mb-2 max-h-64 w-full rounded-xl object-cover" /></a> : null}
+                            {text ? <p className="whitespace-pre-wrap text-sm">{text}</p> : null}
+                          </>
+                        );
+                      })()}
                       <p className={`mt-2 text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-zinc-500'}`}>
                         {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                         {message.status === 'sending' ? ' · sending' : message.status === 'failed' ? ' · failed' : ''}
@@ -292,7 +334,18 @@ export default function ConversationPage({ params }: Props) {
                   Be careful. Avoid moving outside the app too early or paying before inspection.
                 </div>
               ) : null}
+              {attachmentPreview ? (
+                <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                  {attachment?.type.startsWith('video/') ? <video src={attachmentPreview} className="h-16 w-16 rounded-xl object-cover" muted /> : <img src={attachmentPreview} alt="Attachment preview" className="h-16 w-16 rounded-xl object-cover" />}
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium">{attachment?.name}</p>
+                  <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-slate-500 hover:bg-white hover:text-red-600 dark:hover:bg-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>
+                </div>
+              ) : null}
               <div className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-800 dark:hover:text-blue-300" aria-label="Attach image or video">
+                  <ImagePlus className="h-5 w-5" aria-hidden="true" />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" className="sr-only" onChange={(event) => { handleAttachment(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+                </label>
                 <textarea
                   aria-label="Message"
                   value={messageText}
@@ -303,7 +356,7 @@ export default function ConversationPage({ params }: Props) {
                 />
                 <button
                   type="submit"
-                  disabled={sending || !messageText.trim()}
+                  disabled={sending || uploading || (!messageText.trim() && !attachment)}
                   aria-label="Send message"
                   className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:bg-gray-400"
                 >
