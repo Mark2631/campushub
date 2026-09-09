@@ -91,12 +91,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full overflow-x-hidden flex flex-col">
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{if(localStorage.getItem('campustrader-theme')==='light'){document.documentElement.classList.remove('dark')}}catch(e){}",
-          }}
-        />
         <AppProvider>
           {children}
           <PWAInstallPrompt />

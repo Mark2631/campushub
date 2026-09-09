@@ -22,7 +22,7 @@ const securityHeaders = [
     value: 'interest-cohort=()',
   },
   {
-    key: 'Content-Security-Policy',
+    key: 'Content-Security-Policy-Report-Only',
     // Conservative CSP that allows Supabase, Google OAuth, and common asset hosts.
     value:
       "default-src 'self'; " +
