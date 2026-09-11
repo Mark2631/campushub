@@ -23,6 +23,8 @@ export default function ListingCard({ listing }: { listing: Listing }) {
             width={400}
             height={400}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            quality={65}
+            loading="lazy"
             className="h-full w-full object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />

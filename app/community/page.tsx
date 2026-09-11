@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Megaphone, ShieldCheck, UsersRound } from 'lucide-react';
+import { Megaphone, ShieldCheck, UsersRound } from 'lucide-react';
 import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
-import { Community, followCommunity, getCommunities } from '../../lib/community';
-import { communityLinks } from '../../lib/communityLinks';
+import { Community, createCommunityRequest, followCommunity, getCommunities } from '../../lib/community';
 import { institutionLabel } from '../../lib/validation';
 
 function initials(name: string) {
@@ -27,6 +26,9 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [workingId, setWorkingId] = useState<string | null>(null);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestForm, setRequestForm] = useState({ name: '', description: '', category: 'General' });
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -74,6 +76,18 @@ export default function CommunityPage() {
 
   const followedCommunities = communities.filter((community) => community.isFollowed);
 
+  const submitRequest = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user) { setAuthOpen(true); return; }
+    setRequesting(true);
+    const result = await createCommunityRequest({ ...requestForm, userId: user.id, campus: institution });
+    setRequesting(false);
+    if (result.error) { showToast({ type: 'error', message: result.error }); return; }
+    setRequestForm({ name: '', description: '', category: 'General' });
+    setRequestOpen(false);
+    showToast({ type: 'success', message: 'Community request submitted for admin approval.' });
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <Header />
@@ -84,8 +98,26 @@ export default function CommunityPage() {
           <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{institutionLabel(institution)} communities</p>
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{institutionLabel(institution)} Communities</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Official groups for marketplace updates, deals, services, lost items, and useful campus links.
+            Follow trusted campus channels for marketplace updates, deals, services, lost items, and announcements.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => { if (!user) setAuthOpen(true); else setRequestOpen((open) => !open); }}
+              className="rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Request a community
+            </button>
+            {isAdmin ? <Link href="/admin" className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Create as admin</Link> : null}
+          </div>
+          {requestOpen ? (
+            <form onSubmit={submitRequest} className="mt-4 grid gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+              <input required value={requestForm.name} onChange={(event) => setRequestForm((form) => ({ ...form, name: event.target.value }))} placeholder="Community name" className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+              <input value={requestForm.category} onChange={(event) => setRequestForm((form) => ({ ...form, category: event.target.value }))} placeholder="Category" className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+              <textarea required value={requestForm.description} onChange={(event) => setRequestForm((form) => ({ ...form, description: event.target.value }))} placeholder="What is this community for?" rows={3} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+              <button disabled={requesting} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{requesting ? 'Submitting...' : 'Submit for approval'}</button>
+            </form>
+          ) : null}
         </header>
 
         {followedCommunities.length > 0 ? (
@@ -182,26 +214,6 @@ export default function CommunityPage() {
           )}
         </section>
 
-        <section>
-          <div className="mb-3 flex items-center gap-2">
-            <ExternalLink className="h-4 w-4 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-            <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">Useful MUST links</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {communityLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <span className="block">{link.label}</span>
-                <span className="mt-2 block text-xs font-medium text-slate-500 dark:text-slate-400">{link.href.replace(/^https?:\/\//, '')}</span>
-              </a>
-            ))}
-          </div>
-        </section>
       </main>
 
       <AuthPromptModal open={authOpen} next="/community" onClose={() => setAuthOpen(false)} />
