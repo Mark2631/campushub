@@ -210,12 +210,12 @@ export async function getCommunities(viewerId?: string | null, institution: stri
   if (error) {
     console.error('Community fetch failed:', serializeError(error));
     return {
-      communities: officialCommunitySeeds.map((community) => ({ ...community, memberCount: 0, postCount: 0, latestPostPreview: null, isFollowed: false })),
+      communities: [],
       error: null,
     };
   }
 
-  const communities = ((data?.length ? data : officialCommunitySeeds) || []) as Community[];
+  const communities = (data || []) as Community[];
   const ids = communities.map((community) => community.id).filter(isValidUuid);
 
   const [membersResponse, postsResponse, followedResponse] = await Promise.all([
@@ -500,6 +500,32 @@ export async function uploadCommunityMedia(communityId: string, userId: string, 
     upsert: false,
     path,
   });
+}
+
+export async function createCommunityRequest(args: {
+  userId: string;
+  name: string;
+  description: string;
+  category: string;
+  campus?: string;
+}) {
+  if (!isValidUuid(args.userId)) return { community: null as Community | null, error: PERMISSION_ERROR };
+  const name = cleanText(args.name, 120);
+  const description = cleanMultilineText(args.description, 700);
+  const category = cleanText(args.category, 80) || 'General';
+  if (!name || !description) return { community: null as Community | null, error: 'Name and description are required.' };
+
+  const { data, error } = await supabase
+    .from('communities')
+    .insert({ campus: args.campus || DEFAULT_CAMPUS, name, description, category, is_official: false, posting_mode: 'everyone', status: 'pending', created_by: args.userId })
+    .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
+    .single();
+
+  if (error) {
+    console.error('Community request failed:', serializeError(error));
+    return { community: null as Community | null, error: 'Community requests are not configured yet. Ask an admin to run the Supabase setup.' };
+  }
+  return { community: data as Community, error: null };
 }
 
 export async function createCommunity(args: {

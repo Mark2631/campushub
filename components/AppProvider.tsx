@@ -177,7 +177,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (sessionData.session && isMounted) {
             setSession(sessionData.session);
             setLoading(false);
-            await Promise.all([syncProfile(sessionData.session.user), syncAdmin(sessionData.session.user), syncNotifications(sessionData.session.user)]);
+            void syncProfile(sessionData.session.user);
+            void syncAdmin(sessionData.session.user);
+            void syncNotifications(sessionData.session.user);
             return;
           }
         }
@@ -196,11 +198,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       setSession(data.session ?? null);
       setLoading(false);
-      await Promise.all([
-        syncProfile(data.session?.user ?? null),
-        syncAdmin(data.session?.user ?? null),
-        syncNotifications(data.session?.user ?? null),
-      ]);
+      void syncProfile(data.session?.user ?? null);
+      void syncAdmin(data.session?.user ?? null);
+      void syncNotifications(data.session?.user ?? null);
     };
 
     initAuth();

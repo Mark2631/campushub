@@ -63,6 +63,9 @@ type BusinessRow = {
   badge_type?: string | null;
 };
 
+const listingCache = new Map<string, { expiresAt: number; listings: Listing[] }>();
+const LISTING_CACHE_TTL = 30_000;
+
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
 
@@ -197,6 +200,10 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
 }
 
 export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
+  const cacheKey = `listings:${normalizeInstitution(institution)}:${limit}:${offset}`;
+  const cached = listingCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return { listings: cached.listings, error: null };
+
   try {
     const query = supabase
       .from('listings')
@@ -219,6 +226,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
     }
 
     const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
+    listingCache.set(cacheKey, { listings: liveListings, expiresAt: Date.now() + LISTING_CACHE_TTL });
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
