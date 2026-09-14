@@ -63,8 +63,7 @@ type BusinessRow = {
   badge_type?: string | null;
 };
 
-const listingCache = new Map<string, { expiresAt: number; listings: Listing[] }>();
-const LISTING_CACHE_TTL = 30_000;
+const MUST_INSTITUTION_ID = '340a2cab-13d8-4af8-91f1-bb6089fd2f89';
 
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
@@ -200,21 +199,20 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
 }
 
 export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
-  const cacheKey = `listings:${normalizeInstitution(institution)}:${limit}:${offset}`;
-  const cached = listingCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) return { listings: cached.listings, error: null };
-
   try {
     const query = supabase
       .from('listings')
       .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active');
     if (institution) {
-      const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
-      if (instId) {
-        query.eq('institution_id', instId);
+      const normalizedInstitution = normalizeInstitution(institution);
+      const institutionId = normalizedInstitution === 'MUST'
+        ? MUST_INSTITUTION_ID
+        : await getInstitutionIdForCode(normalizedInstitution);
+      if (institutionId) {
+        query.eq('institution_id', institutionId);
       } else {
-        query.eq('campus', normalizeInstitution(institution));
+        query.eq('campus', normalizedInstitution);
       }
     }
 
@@ -226,7 +224,6 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
     }
 
     const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
-    listingCache.set(cacheKey, { listings: liveListings, expiresAt: Date.now() + LISTING_CACHE_TTL });
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
