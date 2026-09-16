@@ -10,6 +10,8 @@ import WhatsAppButton from '../../../components/WhatsAppButton';
 import { getListingById } from '../../../lib/listings';
 import { isValidUuid } from '../../../lib/validation';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{
     id: string;

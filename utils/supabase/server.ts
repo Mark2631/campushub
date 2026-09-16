@@ -1,15 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase public environment variables')
-}
-
-const url = supabaseUrl
-const key = supabaseKey
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key'
 
 export async function createClient() {
   const cookieStore = await cookies()
