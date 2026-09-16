@@ -342,7 +342,7 @@ export async function insertListing(
       return { listing: null, error: validated.error || GENERIC_ERROR };
     }
 
-    const listingToInsert = {
+    const listingToInsert: Record<string, unknown> = {
       user_id: userId,
       seller_id: userId,
       business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
