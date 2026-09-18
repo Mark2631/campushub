@@ -48,9 +48,11 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      // Supabase Storage image URLs are public and must be allowed at build time.
+      // Do not depend on NEXT_PUBLIC_SUPABASE_URL being present during config evaluation.
       {
         protocol: 'https',
-        hostname: process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname : 'supabase.co',
+        hostname: '**.supabase.co',
         pathname: '/**',
       },
       {
