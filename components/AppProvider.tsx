@@ -75,8 +75,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'light';
-    return window.localStorage.getItem('campustrader-theme') === 'dark' ? 'dark' : 'light';
+    if (typeof window === 'undefined') return 'dark';
+    return window.localStorage.getItem('campustrader-theme') === 'light' ? 'light' : 'dark';
   });
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
