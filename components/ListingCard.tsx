@@ -13,7 +13,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/listing/${listing.id}`}
-      className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-600"
+      className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
       <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
@@ -36,11 +36,11 @@ export default function ListingCard({ listing }: { listing: Listing }) {
         )}
       </div>
       <div className="p-2.5 sm:p-3">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-5 text-gray-900 sm:text-sm dark:text-white">{listing.title}</h3>
-        <p className="mt-1 text-sm font-semibold text-blue-600 sm:text-base dark:text-blue-400">
+        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-bold leading-5 text-slate-950 sm:text-sm dark:text-slate-50">{listing.title}</h3>
+        <p className="mt-1 text-sm font-extrabold text-blue-700 sm:text-base dark:text-cyan-300">
           {listing.price != null ? `KSh ${listing.price.toLocaleString()}` : 'Free'}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-gray-600 dark:text-zinc-400">{listing.location || 'Campus location'}</p>
+        <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-300">{listing.location || 'Campus location'}</p>
         <div className="mt-2 flex min-h-5 items-center gap-1.5">
           {listing.badgeType === 'gold' ? (
             <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
