@@ -483,6 +483,9 @@ function SellPageContent() {
         body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
       });
       resetForm();
+      window.dispatchEvent(new CustomEvent('campustrader:listing-created', {
+        detail: { listing: listing ?? null, institution },
+      }));
       window.dispatchEvent(new Event('campustrader:listings-refresh'));
       router.refresh();
       if (editListingId) {

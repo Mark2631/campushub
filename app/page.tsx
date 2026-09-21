@@ -101,8 +101,8 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadListings = async () => {
-      if (isMounted) setLoadingListings(true);
+    const loadListings = async (options?: { initial?: boolean }) => {
+      if (isMounted && options?.initial) setLoadingListings(true);
       const { listings: rows, error } = await getListings(listingsPageSize, 0, institution);
       if (!isMounted) return;
       setListings(rows);
@@ -112,7 +112,7 @@ export default function Home() {
       setLoadingListings(false);
     };
 
-    loadListings();
+    void loadListings({ initial: true });
     const refreshListings = () => {
       void loadListings();
     };
