@@ -40,6 +40,7 @@ import {
   rejectVerification,
   revokeVerification,
   sendReportResponse,
+  adminSetUserRole,
 } from '../../lib/admin';
 const emptyDashboard: AdminDashboardData = {
   verifications: [],
@@ -724,6 +725,20 @@ export default function AdminPage() {
                         <p className="mt-1 text-xs text-zinc-600">{formatDate(user.created_at)}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={async () => {
+                            setWorkingId(user.id);
+                            const result = await adminSetUserRole(user.id, user.role === 'admin' ? 'user' : 'admin');
+                            setWorkingId(null);
+                            if (result.error) { showToast({ type: 'error', message: result.error }); return; }
+                            showToast({ type: 'success', message: user.role === 'admin' ? 'Admin access removed.' : 'User promoted to admin.' });
+                            await loadDashboard();
+                          }}
+                          disabled={workingId === user.id}
+                          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          {workingId === user.id ? 'Saving...' : user.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                        </button>
                         <button
                           onClick={() => openModal('user_warn', 'Warn User', `Send a warning to ${user.full_name || user.email}?`, user.id, 'user')}
                           className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700"

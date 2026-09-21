@@ -114,6 +114,31 @@ async function safeCount(label: string, query: () => PromiseLike<{ count: number
   }
 }
 
+function storagePathFromUrl(url: string) {
+  const marker = '/storage/v1/object/';
+  const markerIndex = url.indexOf(marker);
+  if (markerIndex < 0) return url;
+  const remainder = url.slice(markerIndex + marker.length).replace(/^sign\//, '').replace(/^public\//, '');
+  const bucketPrefix = 'verification-media/';
+  return remainder.startsWith(bucketPrefix) ? remainder.slice(bucketPrefix.length) : remainder;
+}
+
+async function signedVerificationUrls(urls: string[] | null | undefined) {
+  if (!urls?.length) return [];
+  const signedUrls = await Promise.all(urls.map(async (url) => {
+    const { data, error } = await supabase.storage.from('verification-media').createSignedUrl(storagePathFromUrl(url), 3600);
+    if (error || !data?.signedUrl) return null;
+    return data.signedUrl;
+  }));
+  return signedUrls.filter((url): url is string => Boolean(url));
+}
+
+export async function adminSetUserRole(targetUserId: string, newRole: 'admin' | 'user') {
+  if (!isValidUuid(targetUserId)) return { error: 'Invalid user.' };
+  const { data, error } = await supabase.rpc('admin_set_user_role', { target_user_id: targetUserId, new_role: newRole });
+  return { data, error: error?.message || null };
+}
+
 async function insertOptionalNotification(userId: string, type: string, title: string, body: string) {
   if (!isValidUuid(userId)) return;
 
@@ -183,9 +208,13 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       const response = await supabase
         .from('verification_requests')
         .select('id, user_id, business_id, type, request_type, document_name, document_urls, admin_note, status, created_at')
-        .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      return { data: (response.data || []) as AdminVerificationRequest[], error: response.error };
+      const requests = (response.data || []) as AdminVerificationRequest[];
+      const withSignedUrls = await Promise.all(requests.map(async (request) => ({
+        ...request,
+        document_urls: await signedVerificationUrls(request.document_urls),
+      })));
+      return { data: withSignedUrls, error: response.error };
     }),
     safeSection('businesses', [] as AdminBusiness[], async () => {
       const response = await supabase
