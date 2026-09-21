@@ -12,7 +12,7 @@ import { getProfileById } from '../lib/profiles';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
 const categories = STANDARD_CATEGORIES;
-const listingsPageSize = 60;
+const listingsPageSize = 24;
 const categorySections = [
   { title: 'Electronics', category: 'Electronics' },
   { title: 'Services', category: 'Services' },

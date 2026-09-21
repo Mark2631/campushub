@@ -1,7 +1,8 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { Listing } from '../lib/listings';
 
@@ -17,14 +18,11 @@ export default function ListingCard({ listing }: { listing: Listing }) {
     >
       <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
-          <Image
-            src={firstImage || ''}
+          <img
+            src={firstImage || '/placeholder-image.png'}
             alt={listing.title}
-            width={400}
-            height={400}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            quality={65}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />

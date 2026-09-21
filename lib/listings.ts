@@ -190,7 +190,21 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     condition: normalizeListingCondition(row.condition || 'used', category),
     status: row.status || 'active',
     location: row.location ?? null,
-    media_urls: Array.isArray(row.media_urls) ? row.media_urls : [],
+    media_urls: (() => {
+    const rawMediaUrls = row.media_urls as unknown;
+    if (Array.isArray(rawMediaUrls)) {
+      return rawMediaUrls.filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+    }
+    if (typeof rawMediaUrls === 'string') {
+      try {
+        const parsed = JSON.parse(rawMediaUrls);
+        return Array.isArray(parsed) ? parsed.filter((url): url is string => typeof url === 'string' && url.trim().length > 0) : [];
+      } catch {
+        return rawMediaUrls.startsWith('http') ? [rawMediaUrls] : [];
+      }
+    }
+    return [];
+  })(),
     video_url: row.video_url ?? null,
     campus: row.campus || DEFAULT_CAMPUS,
     created_at: row.created_at || new Date().toISOString(),
