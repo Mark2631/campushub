@@ -208,6 +208,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       const response = await supabase
         .from('verification_requests')
         .select('id, user_id, business_id, type, request_type, document_name, document_urls, admin_note, status, created_at')
+        .in('status', ['pending', 'submitted'])
         .order('created_at', { ascending: false });
       const requests = (response.data || []) as AdminVerificationRequest[];
       const withSignedUrls = await Promise.all(requests.map(async (request) => ({
@@ -228,6 +229,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       const response = await supabase
         .from('listings')
         .select('id, seller_id, title, price, status, location, created_at')
+        .in('status', ['active', 'reported'])
         .order('created_at', { ascending: false })
         .limit(80);
       return { data: (response.data || []) as AdminListing[], error: response.error };
