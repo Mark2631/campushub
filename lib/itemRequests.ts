@@ -115,7 +115,7 @@ export async function createItemRequest(
     return { request: null as ItemRequest | null, error: 'Minimum budget cannot be higher than maximum budget.' };
   }
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     user_id: userId,
     title,
     description: cleanMultilineText(data.description || '', 1000) || null,

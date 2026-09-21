@@ -7,12 +7,12 @@ import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
-import { getListings, getServiceListings, Listing } from '../lib/listings';
+import { getListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
 const categories = STANDARD_CATEGORIES;
-const listingsPageSize = 60;
+const listingsPageSize = 24;
 const categorySections = [
   { title: 'Electronics', category: 'Electronics' },
   { title: 'Services', category: 'Services' },
@@ -23,19 +23,6 @@ const categorySections = [
   { title: 'Business', category: 'Business' },
   { title: 'Other', category: 'Other' },
 ] as const;
-
-function readCachedHomeListings() {
-  if (typeof window === 'undefined') return [] as Listing[];
-
-  try {
-    const cached = window.sessionStorage.getItem('campustrader-home-listings');
-    if (!cached) return [] as Listing[];
-    return JSON.parse(cached) as Listing[];
-  } catch {
-    window.sessionStorage.removeItem('campustrader-home-listings');
-    return [] as Listing[];
-  }
-}
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -87,13 +74,12 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user, institution } = useUser();
-  const [cachedListings] = useState(readCachedHomeListings);
-  const [listings, setListings] = useState<Listing[]>(cachedListings);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [error, setError] = useState<string | null>(null);
-  const [loadingListings, setLoadingListings] = useState(cachedListings.length === 0);
+  const [loadingListings, setLoadingListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreListings, setHasMoreListings] = useState(true);
   const [listingOffset, setListingOffset] = useState(0);
@@ -117,19 +103,9 @@ export default function Home() {
 
     const loadListings = async () => {
       if (isMounted) setLoadingListings(true);
-      const [{ listings: rows, error }, { listings: serviceRows }] = await Promise.all([
-        getListings(listingsPageSize, 0, institution),
-        getServiceListings(12, institution),
-      ]);
+      const { listings: rows, error } = await getListings(listingsPageSize, 0, institution);
       if (!isMounted) return;
-      const mergedRows = [...(rows as Listing[])];
-      serviceRows.forEach((listing) => {
-        if (!mergedRows.some((item) => item.id === listing.id)) {
-          mergedRows.push(listing);
-        }
-      });
-      setListings(mergedRows);
-      window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(mergedRows));
+      setListings(rows);
       setListingOffset(rows.length);
       setHasMoreListings(rows.length === listingsPageSize);
       setError(error);

@@ -307,7 +307,7 @@ export default function ConversationPage({ params }: Props) {
                         return (
                           <>
                             {mediaMatch?.[2] === 'video' ? <video controls preload="metadata" className="mb-2 max-h-64 w-full rounded-xl" src={mediaMatch[1]} /> : null}
-                            {mediaMatch?.[2] === 'image' ? <a href={mediaMatch[1]} target="_blank" rel="noreferrer"><img src={mediaMatch[1]} alt={mediaMatch[3]} className="mb-2 max-h-64 w-full rounded-xl object-cover" /></a> : null}
+                            {mediaMatch?.[2] === 'image' ? <a href={mediaMatch[1]} target="_blank" rel="noreferrer"><Image src={mediaMatch[1]} alt={mediaMatch[3]} width={640} height={480} unoptimized className="mb-2 max-h-64 w-full rounded-xl object-cover" /></a> : null}
                             {text ? <p className="whitespace-pre-wrap text-sm">{text}</p> : null}
                           </>
                         );
@@ -336,7 +336,7 @@ export default function ConversationPage({ params }: Props) {
               ) : null}
               {attachmentPreview ? (
                 <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
-                  {attachment?.type.startsWith('video/') ? <video src={attachmentPreview} className="h-16 w-16 rounded-xl object-cover" muted /> : <img src={attachmentPreview} alt="Attachment preview" className="h-16 w-16 rounded-xl object-cover" />}
+                  {attachment?.type.startsWith('video/') ? <video src={attachmentPreview} className="h-16 w-16 rounded-xl object-cover" muted /> : <Image src={attachmentPreview} alt="Attachment preview" width={64} height={64} unoptimized className="h-16 w-16 rounded-xl object-cover" />}
                   <p className="min-w-0 flex-1 truncate text-sm font-medium">{attachment?.name}</p>
                   <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-slate-500 hover:bg-white hover:text-red-600 dark:hover:bg-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
