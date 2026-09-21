@@ -203,7 +203,9 @@ export default function ProfilePage() {
       return;
     }
 
-    setUserListings((current) => current.map((listing) => listing.id === listingId ? { ...listing, status } : listing));
+    setUserListings((current) => status === 'active'
+    ? current.map((listing) => listing.id === listingId ? { ...listing, status } : listing)
+    : current.filter((listing) => listing.id !== listingId));
     window.dispatchEvent(new Event('campustrader:listings-refresh'));
     showToast({ type: 'success', message: status === 'sold' ? 'Marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
   };
