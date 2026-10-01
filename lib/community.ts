@@ -192,12 +192,13 @@ async function fetchProfiles(userIds: string[]) {
   return new Map((data || []).map((profile) => [profile.id, profile as CommunityProfile]));
 }
 
-export async function getCommunities(viewerId?: string | null, institution: string = DEFAULT_CAMPUS) {
+export async function getCommunities(viewerId?: string | null, institution: string = DEFAULT_CAMPUS, includeArchived = false) {
   let query = supabase
     .from('communities')
     .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
-    .eq('status', 'active')
     .order('created_at', { ascending: true });
+
+  if (!includeArchived) query = query.eq('status', 'active');
 
   if (institution) {
     const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
