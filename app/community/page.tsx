@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Megaphone, ShieldCheck, UsersRound } from 'lucide-react';
 import AuthPromptModal from '../../components/AuthPromptModal';
 import BottomNav from '../../components/BottomNav';
@@ -167,8 +168,12 @@ export default function CommunityPage() {
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                 >
                   <div className="flex gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-sm font-semibold text-white">
-                      {initials(community.name)}
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-slate-600 to-slate-800 text-sm font-semibold text-white">
+                      {community.cover_url ? (
+                        <Image src={community.cover_url} alt="" fill sizes="48px" className="object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center">{initials(community.name)}</span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

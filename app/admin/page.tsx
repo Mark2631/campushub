@@ -185,7 +185,7 @@ export default function AdminPage() {
     setLoadingDashboard(true);
     const [data, communityData, auditData] = await Promise.all([
       getAdminDashboardData(),
-      getCommunities(authUser?.id),
+      getCommunities(authUser?.id, undefined, true),
       getAdminAudit(20),
     ]);
     setDashboard(data);
@@ -501,7 +501,7 @@ export default function AdminPage() {
     setMessage({ type: 'success', text: successText });
     showToast({ type: 'success', message: successText });
     const [{ communities }, { posts }] = await Promise.all([
-      getCommunities(authUser?.id),
+      getCommunities(authUser?.id, undefined, true),
       selectedCommunityId ? getCommunityPosts(selectedCommunityId, authUser?.id) : Promise.resolve({ posts: [] as CommunityPost[], error: null }),
     ]);
     setCommunities(communities);
