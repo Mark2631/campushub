@@ -23,6 +23,7 @@ import {
   AdminDashboardData,
   addAdminByEmail,
   getAdminDashboardData,
+  getAdminAudit,
   updateReportStatus,
   suspendUser,
   unblockUser,
@@ -171,6 +172,8 @@ export default function AdminPage() {
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
   const [communityCoverFile, setCommunityCoverFile] = useState<File | null>(null);
   const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [auditEntries, setAuditEntries] = useState<Awaited<ReturnType<typeof getAdminAudit>>['data']>([]);
+  const [auditError, setAuditError] = useState<string | null>(null);
 
   const usersById = useMemo(() => {
     return new Map(dashboard.users.map((user) => [user.id, user]));
@@ -180,11 +183,14 @@ export default function AdminPage() {
     if (!isAdmin) return;
 
     setLoadingDashboard(true);
-    const [data, communityData] = await Promise.all([
+    const [data, communityData, auditData] = await Promise.all([
       getAdminDashboardData(),
       getCommunities(authUser?.id),
+      getAdminAudit(20),
     ]);
     setDashboard(data);
+    setAuditEntries(auditData.data);
+    setAuditError(auditData.error);
     setCommunities(communityData.communities);
     if (!selectedCommunityId && communityData.communities[0]) {
       setSelectedCommunityId(communityData.communities[0].id);
@@ -1247,14 +1253,30 @@ export default function AdminPage() {
         )}
 
         {/* Audit Tab */}
-        {tab === 'audit' && (
-          <section className="space-y-6">
-            <h2 className="text-xl font-bold">Admin action audit log</h2>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-              <p className="text-sm text-zinc-400">Loading audit history...</p>
+  {tab === 'audit' && (
+  <section className="space-y-4">
+  <div>
+  <h2 className="text-xl font-bold">Admin audit</h2>
+  <p className="mt-1 text-sm text-zinc-400">Recent administrative actions.</p>
+  </div>
+  {auditError ? <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{auditError}</p> : null}
+  {auditEntries.length === 0 ? <EmptyState text="No recent admin actions." /> : (
+    <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
+      <div className="divide-y divide-zinc-800">
+        {auditEntries.map((entry) => (
+          <div key={entry.id} className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-100">{formatStatus(entry.action_type)}</p>
+              <p className="truncate text-xs text-zinc-500">{entry.target_type}{entry.reason ? ` · ${entry.reason}` : ''}</p>
             </div>
-          </section>
-        )}
+            <time className="shrink-0 text-xs text-zinc-500">{formatDate(entry.created_at)}</time>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+  </section>
+  )}
       </main>
 
       <ModalDialog isOpen={modalState.type !== null} title={modalTitle} onClose={() => setModalState({ type: null })} onConfirm={confirmAction} isLoading={workingId !== null}>

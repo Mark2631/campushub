@@ -69,6 +69,24 @@ export interface PlatformStats {
   pendingBusinesses: number;
 }
 
+export interface AdminAuditEntry {
+  id: string;
+  action_type: string;
+  target_type: string;
+  target_id: string | null;
+  reason: string | null;
+  created_at: string;
+}
+
+export async function getAdminAudit(limit = 20) {
+  const { data, error } = await supabase
+    .from('admin_actions')
+    .select('id, action_type, target_type, target_id, reason, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return { data: (data || []) as AdminAuditEntry[], error: error?.message || null };
+}
+
 export interface AdminDashboardData {
   verifications: AdminVerificationRequest[];
   businesses: AdminBusiness[];
@@ -208,7 +226,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       const response = await supabase
         .from('verification_requests')
         .select('id, user_id, business_id, type, request_type, document_name, document_urls, admin_note, status, created_at')
-        .in('status', ['pending', 'submitted'])
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
       const requests = (response.data || []) as AdminVerificationRequest[];
       const withSignedUrls = await Promise.all(requests.map(async (request) => ({
