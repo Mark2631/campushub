@@ -70,7 +70,7 @@ async function fetchPublicProfiles(sellerIds: string[]) {
 
   const publicResponse = await supabase
     .from('marketplace_profiles')
-    .select('id, full_name, avatar_url, phone_number, badge_type, verification_status, role, created_at')
+    .select('id, full_name, avatar_url, badge_type, verification_status, created_at')
     .in('id', sellerIds);
 
   if (!publicResponse.error) {
@@ -80,7 +80,7 @@ async function fetchPublicProfiles(sellerIds: string[]) {
   logSupabaseError('Marketplace profile view fetch failed:', publicResponse.error);
   const fallbackResponse = await supabase
     .from('profiles')
-    .select('id, full_name, email, avatar_url, phone_number, badge_type, verification_status, role, created_at')
+    .select('id, full_name, avatar_url, badge_type, verification_status, created_at')
     .in('id', sellerIds);
 
   return { data: (fallbackResponse.data || []) as ProfileRow[], error: fallbackResponse.error };
