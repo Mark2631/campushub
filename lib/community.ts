@@ -181,7 +181,7 @@ async function fetchProfiles(userIds: string[]) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, avatar_url')
+    .select('id, full_name, avatar_url')
     .in('id', ids);
 
   if (error) {
