@@ -58,8 +58,15 @@ export async function signInWithGoogle(next?: string) {
 }
 
 export async function sendPasswordResetEmail(email: string) {
-  return supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined,
+  if (typeof window === 'undefined') {
+    return { data: {}, error: new Error('Password recovery is only available in the browser.') };
+  }
+
+  const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+  callbackUrl.searchParams.set('next', '/reset-password');
+
+  return supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: callbackUrl.toString(),
   });
 }
 

@@ -178,6 +178,13 @@ function SignInPageContent() {
       return;
     }
 
+    if (!email || !email.includes('@')) {
+      const message = 'Enter a valid email address.';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
+      return;
+    }
+
     setSignupPending(true);
     persistEmail(email);
 
@@ -240,8 +247,15 @@ function SignInPageContent() {
     if (resetPending) return;
 
     setNotice(null);
-    setResetPending(true);
     const email = resetEmail.trim();
+    if (!email || !email.includes('@')) {
+      const message = 'Enter a valid email address.';
+      showToast({ type: 'error', message });
+      setNotice({ tone: 'error', message });
+      return;
+    }
+
+    setResetPending(true);
     persistEmail(email);
     const { error } = await sendPasswordResetEmail(email);
     setResetPending(false);
