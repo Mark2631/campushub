@@ -523,7 +523,7 @@ export async function createCommunityRequest(args: {
 
   if (error) {
     console.error('Community request failed:', serializeError(error));
-    return { community: null as Community | null, error: 'Community requests are not configured yet. Ask an admin to run the Supabase setup.' };
+    return { community: null as Community | null, error: error.message || 'Community request could not be created.' };
   }
   return { community: data as Community, error: null };
 }
@@ -562,17 +562,19 @@ export async function createCommunity(args: {
       name,
       description,
       category,
-      is_official: true,
+        is_official: true,
       posting_mode: args.postingMode || 'everyone',
       status: 'active',
       created_by: args.adminId,
+      approved_by: args.adminId,
+      approved_at: new Date().toISOString(),
     })
     .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
     .single();
 
   if (error) {
     console.error('Community create failed:', serializeError(error));
-    return { community: null as Community | null, error: GENERIC_ERROR };
+    return { community: null as Community | null, error: error.message || GENERIC_ERROR };
   }
 
   return { community: data as Community, error: null };
