@@ -158,7 +158,7 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'verifications' | 'reports' | 'communities' | 'audit'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'delivery' | 'verifications' | 'reports' | 'communities'>('overview');
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const [modalNotes, setModalNotes] = useState('');
   const [modalTitle, setModalTitle] = useState('');
@@ -603,7 +603,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-zinc-800 pb-0">
-          {(['overview', 'users', 'businesses', 'listings', 'verifications', 'reports', 'communities', 'audit'] as const).map((t) => (
+          {(['overview', 'users', 'businesses', 'listings', 'payments', 'delivery', 'verifications', 'reports', 'communities'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -1252,9 +1252,25 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* Audit Tab */}
-  {tab === 'audit' && (
-  <section className="space-y-4">
+        {tab === 'payments' && (
+    <section className="space-y-4">
+      <div><h2 className="text-xl font-bold">Escrow & payments</h2><p className="mt-1 text-sm text-zinc-400">Protected order monitoring will appear here once the verified transaction backend is connected.</p></div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{['Payment secured', 'Awaiting handover', 'Disputed', 'Payout pending'].map((label) => <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-3 text-2xl font-bold text-zinc-300">—</p></div>)}</div>
+      <EmptyState text="No transaction records are available from the current backend contract. No payment or payout state is being simulated." />
+    </section>
+  )}
+
+  {tab === 'delivery' && (
+    <section className="space-y-4">
+      <div><h2 className="text-xl font-bold">D-Delivery</h2><p className="mt-1 text-sm text-zinc-400">Manage campus delivery requests without exposing rider or customer data prematurely.</p></div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{['Pending requests', 'Unassigned', 'Active deliveries', 'Completed'].map((label) => <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-3 text-2xl font-bold text-zinc-300">—</p></div>)}</div>
+      <EmptyState text="Delivery requests will appear here after the D-Delivery tables and rider policies are connected." />
+    </section>
+  )}
+
+  {/* Backend audit data remains loaded for troubleshooting, but is intentionally not a visible admin navigation section. */}
+  {false && (
+    <section className="space-y-4">
   <div>
   <h2 className="text-xl font-bold">Admin audit</h2>
   <p className="mt-1 text-sm text-zinc-400">Recent administrative actions.</p>
