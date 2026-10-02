@@ -63,6 +63,14 @@ export default async function NewOrderPage({ searchParams }: Props) {
               </div>
             </section>
 
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-start justify-between gap-4">
+                <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-zinc-500">Payment merchant</p><h2 className="mt-2 font-bold">CampusTrader protected payments</h2><p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Till 6362615 · Newton Mwangi</p></div>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">1% platform fee</span>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-zinc-500">The final fee and total will be calculated and confirmed by the backend before any payment request. No payment is initiated in this preview.</p>
+            </section>
+
             <section className="rounded-3xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900/60 dark:bg-blue-950/20">
               <div className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" /><div><p className="font-semibold text-blue-950 dark:text-blue-100">Transaction protection</p><p className="mt-1 text-sm leading-6 text-blue-800 dark:text-blue-200/80">CampusTrader holds the order state until handover and receipt are confirmed. Seller release is controlled by the transaction state.</p></div></div>
             </section>
