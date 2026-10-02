@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
+import BuyOrderButton from '../../../components/BuyOrderButton';
 import ReportButton from '../../../components/ReportButton';
 import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
@@ -182,6 +183,7 @@ export default async function ListingPage({ params }: Props) {
                     </button>
                   ) : (
                     <>
+                      <BuyOrderButton listingId={listing.id} />
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                       <WhatsAppButton userId={listing.seller_id} phoneNumber={listing.sellerPhoneNumber} />
                       <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>

@@ -437,6 +437,13 @@ export default function ProfilePage() {
               </div>
             </section>
 
+            <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
+              <div className="flex items-center justify-between gap-4">
+                <div><p className="text-sm font-bold text-blue-950 dark:text-blue-100">Payments & orders</p><p className="mt-1 text-xs text-blue-800 dark:text-blue-200/80">Track protected purchases, sales, and delivery.</p></div>
+                <Link href="/orders" className="shrink-0 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white">View orders</Link>
+              </div>
+            </section>
+
             <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
