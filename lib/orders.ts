@@ -53,3 +53,11 @@ export async function getMyOrders() {
 export async function getOrderEvents(orderId: string) {
   return supabase.from('order_events').select('id, event_type, previous_order_state, new_order_state, actor_role, safe_metadata, created_at').eq('order_id', orderId).order('created_at', { ascending: true });
 }
+
+export async function confirmOrderReceipt(orderId: string) {
+  return supabase.rpc('buyer_confirm_order_receipt', { p_order_id: orderId });
+}
+
+export async function openOrderDispute(orderId: string, reason: string, description: string) {
+  return supabase.rpc('open_order_dispute', { p_order_id: orderId, p_reason: reason, p_description: description, p_evidence_references: [] });
+}

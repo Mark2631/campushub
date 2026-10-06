@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
+import AdminTransactionDesk from '../../components/AdminTransactionDesk';
 import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
 import {
@@ -1252,21 +1253,9 @@ export default function AdminPage() {
           </section>
         )}
 
-        {tab === 'payments' && (
-    <section className="space-y-4">
-      <div><h2 className="text-xl font-bold">Escrow & payments</h2><p className="mt-1 text-sm text-zinc-400">Protected order monitoring will appear here once the verified transaction backend is connected.</p></div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{['Payment secured', 'Awaiting handover', 'Disputed', 'Payout pending'].map((label) => <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-3 text-2xl font-bold text-zinc-300">—</p></div>)}</div>
-      <EmptyState text="No transaction records are available from the current backend contract. No payment or payout state is being simulated." />
-    </section>
-  )}
+        {tab === 'payments' && <AdminTransactionDesk mode="escrow" />}
 
-  {tab === 'delivery' && (
-    <section className="space-y-4">
-      <div><h2 className="text-xl font-bold">D-Delivery</h2><p className="mt-1 text-sm text-zinc-400">Manage campus delivery requests without exposing rider or customer data prematurely.</p></div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{['Pending requests', 'Unassigned', 'Active deliveries', 'Completed'].map((label) => <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-3 text-2xl font-bold text-zinc-300">—</p></div>)}</div>
-      <EmptyState text="Delivery requests will appear here after the D-Delivery tables and rider policies are connected." />
-    </section>
-  )}
+  {tab === 'delivery' && <AdminTransactionDesk mode="delivery" />}
 
   {/* Backend audit data remains loaded for troubleshooting, but is intentionally not a visible admin navigation section. */}
   {false && (
