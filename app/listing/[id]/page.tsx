@@ -9,6 +9,7 @@ import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import { getListingById } from '../../../lib/listings';
+import { isDirectPurchaseListing } from '../../../lib/orders';
 import { isValidUuid } from '../../../lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -49,6 +50,7 @@ export default async function ListingPage({ params }: Props) {
     day: 'numeric',
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
+  const canStartOrder = isDirectPurchaseListing(listing);
   const fallbackPanel = (
     <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-700 to-slate-900 p-8 text-center text-white dark:border-zinc-800">
       <div>
@@ -183,7 +185,15 @@ export default async function ListingPage({ params }: Props) {
                     </button>
                   ) : (
                     <>
-                      <BuyOrderButton listingId={listing.id} />
+                      {canStartOrder ? (
+                        <BuyOrderButton listingId={listing.id} />
+                      ) : (
+                        <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                          {listing.status !== 'active'
+                            ? 'This listing is not available for a new protected order.'
+                            : 'Protected checkout is available for active, paid products. Message the seller to discuss this listing.'}
+                        </p>
+                      )}
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                       <WhatsAppButton userId={listing.seller_id} phoneNumber={listing.sellerPhoneNumber} />
                       <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>

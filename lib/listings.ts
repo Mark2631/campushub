@@ -430,7 +430,7 @@ export async function getListingById(id: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, campus, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
       .maybeSingle();
 

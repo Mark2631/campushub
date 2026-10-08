@@ -19,7 +19,7 @@ const securityHeaders = [
   },
   {
     key: 'Permissions-Policy',
-    value: 'interest-cohort=()',
+    value: 'interest-cohort=(), camera=(), microphone=(), geolocation=()',
   },
   {
     key: 'Content-Security-Policy-Report-Only',

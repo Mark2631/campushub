@@ -612,7 +612,7 @@ export default function AdminPage() {
                 tab === t ? 'border-b-2 border-blue-500 text-blue-300' : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
-              {formatStatus(t)}
+              {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : formatStatus(t)}
             </button>
           ))}
         </div>

@@ -134,7 +134,7 @@ export default function Header() {
               </div>
             ) : null}
             <button
-              aria-label="Settings"
+              aria-label="Manage"
               onClick={() => setSettingsOpen(true)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
             >

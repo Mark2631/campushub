@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://campus-trader.vercel.app'),
   title: 'CampusTrader | MUST Campus Marketplace',
-  description: 'Buy, sell, request services, follow official updates, and message students around Meru University safely.',
+  description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
   keywords: [
     'CampusTrader',
     'Campus Trader',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'CampusTrader | MUST Campus Marketplace',
-    description: 'Buy, sell, request services, follow official updates, and message students around Meru University safely.',
+    description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
     url: 'https://campus-trader.vercel.app',
     siteName: 'CampusTrader',
     images: [
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     title: 'CampusTrader | MUST Campus Marketplace',
-    description: 'Buy, sell, request services, follow official updates, and message students around Meru University safely.',
+    description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
     images: ['/og-campus-trader-v2.png'],
   },
   icons: {
