@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
@@ -12,6 +13,7 @@ import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
 import { signOut } from '../../lib/auth';
 import { createComplaint } from '../../lib/complaints';
+import { transactionHelpTopics } from '../../lib/transactionHelp';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import {
   BusinessRecord,
@@ -61,7 +63,7 @@ function listingEmptyText(filter: ListingFilter) {
   return 'No hidden listings';
 }
 
-export default function ProfilePage() {
+function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -69,7 +71,7 @@ export default function ProfilePage() {
   const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(helpRequested);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -102,6 +104,9 @@ export default function ProfilePage() {
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
   const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
   const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
+  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
+  const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
+  const signInHref = `/signin?mode=signin&next=${encodeURIComponent(authNextPath)}`;
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -124,6 +129,11 @@ export default function ProfilePage() {
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!settingsOpen || !helpRequested || !user) return;
+    document.getElementById('manage-help')?.scrollIntoView({ block: 'nearest' });
+  }, [helpRequested, settingsOpen, user]);
 
   useEffect(() => {
     return () => {
@@ -497,11 +507,13 @@ export default function ProfilePage() {
           </>
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-2xl font-bold">Sign in to continue.</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">Create an account to post, message, verify, and manage listings.</p>
+            <h2 className="text-2xl font-bold">{helpRequested ? 'Sign in to contact support.' : 'Sign in to continue.'}</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
+              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to post, message, verify, and manage listings.'}
+            </p>
             <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
-              <Link href="/signin?next=/profile" className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
-              <Link href="/signin?next=/profile&mode=signin" className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">Sign in</Link>
+              <Link href={createAccountHref} className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
+              <Link href={signInHref} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">Sign in</Link>
             </div>
           </div>
         )}
@@ -512,8 +524,8 @@ export default function ProfilePage() {
           <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold">Settings</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Account, verification, business profile, and support.</p>
+                <h2 className="text-xl font-bold">Manage</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Orders, verification, business profile, institution, payments, and support.</p>
               </div>
               <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -535,6 +547,26 @@ export default function ProfilePage() {
                 </div>
               </section>
 
+              <section aria-label="Manage areas" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Manage areas</h3>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Orders</Link>
+                  <Link href="/orders?view=buying" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Purchases</Link>
+                  <Link href="/orders?view=selling" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Sales</Link>
+                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Payments / transactions</Link>
+                  <a href="#manage-verification" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Verification</a>
+                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Business profile</a>
+                  <a href="#manage-institution" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Institution</a>
+                  <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help</a>
+                </div>
+              </section>
+
+              <section id="manage-institution" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Institution</h3>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Current institution: <span className="font-semibold text-slate-900 dark:text-white">{profile?.campus || 'MUST'}</span></p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-500">Orders remain associated with the institution on their listing.</p>
+              </section>
+
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">WhatsApp</h3>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -543,7 +575,7 @@ export default function ProfilePage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <section id="manage-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-bold">Verification</h3>
@@ -577,7 +609,7 @@ export default function ProfilePage() {
                 ) : null}
               </section>
 
-              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <section id="manage-business-profile" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Selling Profile</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>Personal</button>
@@ -599,9 +631,14 @@ export default function ProfilePage() {
                 </form>
               </section>
 
-              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Help</h3>
-                <form onSubmit={handleComplaintSubmit} className="mt-3 grid gap-3">
+              <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Help &amp; support</h3>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  {transactionHelpTopics.map((topic) => (
+                    <li key={topic.title}><span className="font-semibold text-slate-800 dark:text-slate-200">{topic.title}:</span> {topic.content}</li>
+                  ))}
+                </ul>
+                <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <button type="submit" disabled={complaintSubmitting} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{complaintSubmitting ? 'Sending...' : 'Report issue'}</button>
@@ -637,5 +674,32 @@ export default function ProfilePage() {
 
       <BottomNav />
     </div>
+  );
+}
+
+function ProfileRoute() {
+  const searchParams = useSearchParams();
+  const helpRequested = searchParams.get('manage') === 'help';
+
+  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} />;
+}
+
+function ProfileLoading() {
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <Header />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28">
+        <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Loading profile…</p>
+      </main>
+      <BottomNav />
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileRoute />
+    </Suspense>
   );
 }
