@@ -130,7 +130,12 @@ export default function OrderCheckoutForm({ listingId, sellerId, listingPrice, l
           deliveryOption,
           campus: listingCampus,
           dropoffLocation: deliveryOption === 'd_delivery'
-            ? [receiverName.trim(), normalizeKenyanPhone(receiverPhone), dropoff.trim(), instructions.trim()].filter(Boolean).join(' · ')
+            ? [
+                `Receiver: ${receiverName.trim()}`,
+                `Receiver phone: ${normalizeKenyanPhone(receiverPhone)}`,
+                `Location: ${dropoff.trim()}`,
+                instructions.trim() ? `Instructions: ${instructions.trim()}` : '',
+              ].filter(Boolean).join('\n')
             : '',
           deliveryZoneCode: deliveryOption === 'd_delivery' ? zoneCode : '',
           buyerPhone: normalizedBuyerPhone,

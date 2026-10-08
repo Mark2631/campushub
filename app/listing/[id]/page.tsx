@@ -4,6 +4,7 @@ import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
 import BuyOrderButton from '../../../components/BuyOrderButton';
+import ListingInventoryManager from '../../../components/ListingInventoryManager';
 import ReportButton from '../../../components/ReportButton';
 import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
@@ -179,6 +180,7 @@ export default async function ListingPage({ params }: Props) {
                 </div>
 
                 <div className="flex flex-col gap-3">
+                  <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
                   {listing.status === 'sold' ? (
                     <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300" disabled>
                       Sold

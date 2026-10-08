@@ -20,6 +20,9 @@ export type MarketplaceOrder = {
   listing_id: string;
   listing_title_snapshot: string;
   quantity: number;
+  item_unit_price?: number | null;
+  item_subtotal?: number | null;
+  platform_fee_percent?: number | null;
   total_amount: number;
   platform_fee_amount: number | null;
   delivery_fee_snapshot: number | null;
@@ -28,6 +31,7 @@ export type MarketplaceOrder = {
   seller_acceptance_state: string | null;
   buyer_receipt_state: string | null;
   seller_release_state: string | null;
+  refund_state?: string | null;
   payout_state: string | null;
   delivery_option: string;
   created_at: string;
@@ -35,8 +39,20 @@ export type MarketplaceOrder = {
   expires_at?: string | null;
 };
 
+export type OrderFulfillmentDetails = {
+  buyer_phone?: string | null;
+  pickup_location?: string | null;
+  dropoff_location?: string | null;
+  delivery_zone_code?: string | null;
+  receiver_name?: string | null;
+  receiver_phone?: string | null;
+  delivery_instructions?: string | null;
+  rider_name?: string | null;
+  rider_phone?: string | null;
+};
+
 export type OrderEvent = {
-  id: string;
+  id: string | number;
   event_type: string;
   previous_order_state: string | null;
   new_order_state: string | null;
@@ -100,6 +116,17 @@ export async function getCheckoutConfig() {
   };
 }
 
+export async function getListingInventory(listingId: string) {
+  return supabase.rpc('get_listing_inventory', { p_listing_id: listingId });
+}
+
+export async function setListingInventory(listingId: string, totalQuantity: number) {
+  return supabase.rpc('set_listing_inventory', {
+    p_listing_id: listingId,
+    p_total_quantity: totalQuantity,
+  });
+}
+
 export async function createMarketplaceOrder(input: {
   listingId: string;
   quantity: number;
@@ -135,7 +162,7 @@ export async function getMyOrders(userId: string) {
 
   return supabase
     .from('orders')
-    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, payout_state, delivery_option, created_at, updated_at, expires_at')
+    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, item_unit_price, item_subtotal, platform_fee_percent, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, refund_state, payout_state, delivery_option, created_at, updated_at, expires_at')
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(100);
@@ -162,16 +189,68 @@ export async function getOrderEvents(orderId: string) {
     .order('created_at', { ascending: true });
 }
 
+export async function getOrderFulfillmentDetails(orderId: string) {
+  return supabase.rpc('get_order_fulfillment_details', { p_order_id: orderId });
+}
+
+export async function cancelMarketplaceOrder(orderId: string, idempotencyKey: string) {
+  return supabase.rpc('cancel_marketplace_order', {
+    p_order_id: orderId,
+    p_idempotency_key: idempotencyKey,
+  });
+}
+
 export async function confirmOrderReceipt(orderId: string) {
   return supabase.rpc('buyer_confirm_order_receipt', { p_order_id: orderId });
 }
 
 export async function sellerAcceptOrder(orderId: string) {
-  return supabase.rpc('seller_accept_order', { p_order_id: orderId });
+  return supabase.rpc('seller_accept_marketplace_order', { p_order_id: orderId });
 }
 
-export async function sellerDeclineOrder(orderId: string) {
-  return supabase.rpc('seller_decline_order', { p_order_id: orderId });
+export async function sellerDeclineOrder(orderId: string, reason: string) {
+  return supabase.rpc('seller_decline_marketplace_order', {
+    p_order_id: orderId,
+    p_reason: reason,
+  });
+}
+
+export async function sellerConfirmPickupHandover(orderId: string) {
+  return supabase.rpc('seller_confirm_pickup_handover', { p_order_id: orderId });
+}
+
+export async function adminResolveOrderDispute(disputeId: string, decision: 'refund_buyer' | 'seller_favored', note: string) {
+  return supabase.rpc('admin_resolve_order_dispute', {
+    p_dispute_id: disputeId,
+    p_decision: decision,
+    p_note: note,
+  });
+}
+
+export async function adminRecordManualRefund(orderId: string, externalReference: string, adminNote: string) {
+  return supabase.rpc('admin_record_manual_refund', {
+    p_order_id: orderId,
+    p_external_reference: externalReference,
+    p_admin_note: adminNote,
+  });
+}
+
+export async function adminUpdateManualDelivery(input: {
+  deliveryId: string;
+  deliveryState: string;
+  riderName: string;
+  riderPhone: string;
+  operatorNote: string;
+  idempotencyKey: string;
+}) {
+  return supabase.rpc('admin_update_manual_delivery', {
+    p_delivery_id: input.deliveryId,
+    p_delivery_state: input.deliveryState,
+    p_rider_name: input.riderName || null,
+    p_rider_phone: input.riderPhone || null,
+    p_operator_note: input.operatorNote,
+    p_idempotency_key: input.idempotencyKey,
+  });
 }
 
 export async function openOrderDispute(orderId: string, reason: string, description: string) {
@@ -221,6 +300,30 @@ export function getTransactionErrorMessage(error: unknown, data: unknown, stage:
   if (detail.includes('OUT_OF_STOCK') || detail.includes('INSUFFICIENT_INVENTORY') || detail.includes('INVENTORY_NOT_CONFIGURED')) {
     return 'This listing is not available for checkout at the requested quantity. Ask the seller to update its stock.';
   }
+  if (detail.includes('CANNOT_BUY_OWN_LISTING')) {
+    return 'You cannot place an order for your own listing.';
+  }
+  if (detail.includes('RECEIPT_CONFIRMATION_NOT_ALLOWED')) {
+    return 'Receipt can only be confirmed after the seller or rider records handover. No receipt status was changed.';
+  }
+  if (detail.includes('PAYMENT_NOT_VERIFIED_OR_ORDER_NOT_ACCEPTABLE')) {
+    return 'This seller action is available only after the backend verifies payment and confirms the order is in the right state.';
+  }
+  if (detail.includes('ORDER_NOT_ELIGIBLE_FOR_PAYMENT')) {
+    return 'This order is not eligible for a payment request. Check the order status before trying again.';
+  }
+  if (detail.includes('AUTH_REQUIRED')) {
+    return 'Your session has expired. Sign in again, then refresh the order before retrying.';
+  }
+  if (detail.includes('ADMIN_REQUIRED')) {
+    return 'This action requires an authorized CampusTrader administrator.';
+  }
+  if (detail.includes('DELIVERY_ZONE_NOT_CONFIGURED') || detail.includes('DELIVERY_UNAVAILABLE')) {
+    return 'D-Delivery is not available for this destination yet. No order or payment was created; choose self pickup or try again later.';
+  }
+  if (detail.includes('PAYOUT_NOT_ELIGIBLE') || detail.includes('RELEASE_NOT_ELIGIBLE')) {
+    return 'Manual settlement is blocked until the backend confirms payment, valid handover, buyer receipt, and no active dispute.';
+  }
   if (detail.includes('LISTING_UNAVAILABLE') || detail.includes('LISTING_NOT_ACTIVE') || detail.includes('LISTING_SOLD')) {
     return 'This listing is no longer available for a new order. Return to the listing to contact the seller.';
   }
@@ -232,6 +335,9 @@ export function getTransactionErrorMessage(error: unknown, data: unknown, stage:
   }
   if (detail.includes('DISPUT')) {
     return 'This transaction is under review. It cannot be released while a dispute is open.';
+  }
+  if (detail.includes('PGRST202') || detail.includes('FUNCTION NOT FOUND') || detail.includes('DOES NOT EXIST')) {
+    return 'This transaction action is not installed in the backend yet. No order, payment, delivery, or release status was changed.';
   }
   if (stage === 'payment') {
     return 'The payment request could not be confirmed. The order is not marked as paid; check Orders or retry when safe.';

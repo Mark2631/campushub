@@ -1,19 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import useSWR from 'swr';
 import {
+  cancelMarketplaceOrder,
   confirmOrderReceipt,
   getMyOrders,
   getOrderEvents,
+  getOrderFulfillmentDetails,
   getOrderParticipantNames,
   getTransactionResultError,
   openOrderDispute,
   sellerAcceptOrder,
+  sellerConfirmPickupHandover,
   sellerDeclineOrder,
   type MarketplaceOrder,
   type OrderEvent,
+  type OrderFulfillmentDetails,
 } from '../lib/orders';
 
 type Props = { userId: string; activeTab: 'buying' | 'selling' };
@@ -30,7 +34,7 @@ const disputeReasons: DisputeReason[] = [
   { value: 'SELLER_UNAVAILABLE', label: 'Seller unavailable' },
   { value: 'BUYER_UNAVAILABLE', label: 'Buyer unavailable' },
   { value: 'DELIVERY_PROBLEM', label: 'Delivery issue' },
-  { value: 'PAYMENT_PROBLEM', label: 'Payment issue' },
+  { value: 'PAYMENT_ISSUE', label: 'Payment issue' },
   { value: 'OTHER', label: 'Other' },
 ];
 
@@ -54,7 +58,7 @@ function orderIsPaid(order: MarketplaceOrder) {
 }
 
 function orderIsClosed(order: MarketplaceOrder) {
-  return ['COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED'].includes(normalizeState(order.order_state));
+  return ['COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUNDED', 'SELLER_DECLINED', 'REFUND_PENDING'].includes(normalizeState(order.order_state));
 }
 
 export default function OrdersActivity({ userId, activeTab }: Props) {
@@ -64,6 +68,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const [disputeOrderId, setDisputeOrderId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState('ITEM_NOT_RECEIVED');
   const [disputeDescription, setDisputeDescription] = useState('');
+  const cancellationKeys = useRef<Record<string, string>>({});
 
   const { data, error, isLoading, mutate } = useSWR(
     userId ? `campustrader-orders:${userId}` : null,
@@ -77,7 +82,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
     },
     {
       revalidateOnFocus: true,
-      refreshInterval: (latestData) => latestData?.orders.some((order) => ['STK_REQUESTED', 'PENDING', 'PENDING_PAYMENT', 'PAYMENT_PENDING'].includes(normalizeState(order.payment_state))) ? 8000 : 0,
+      refreshInterval: (latestData) => latestData?.orders.some((order) => ['STK_REQUESTED', 'PENDING', 'PENDING_PAYMENT', 'PAYMENT_PENDING', 'PENDING_VERIFICATION'].includes(normalizeState(order.payment_state))) ? 8000 : 0,
     },
   );
 
@@ -93,10 +98,32 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
   const orders = (data?.orders || []).filter((order) => activeTab === 'buying' ? order.buyer_id === userId : order.seller_id === userId);
   const participantNames = data?.participantNames || {};
+  const expandedOrder = orders.find((order) => order.id === expandedOrderId);
+  const canReadFulfillmentDetails = Boolean(expandedOrder && (
+    expandedOrder.buyer_id === userId
+    || (expandedOrder.seller_id === userId && orderIsPaid(expandedOrder))
+  ));
+  const fulfillmentKey = expandedOrderId && canReadFulfillmentDetails
+    ? ['campustrader-order-fulfillment', expandedOrderId] as const
+    : null;
+  const {
+    data: fulfillmentDetails,
+    error: fulfillmentError,
+    isLoading: fulfillmentLoading,
+  } = useSWR<OrderFulfillmentDetails>(
+    fulfillmentKey,
+    async ([, orderId]) => {
+      const { data: raw, error: queryError } = await getOrderFulfillmentDetails(String(orderId));
+      if (queryError) throw queryError;
+      const details = Array.isArray(raw) ? raw[0] : raw;
+      return details && typeof details === 'object' ? details as OrderFulfillmentDetails : {};
+    },
+  );
 
-  async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline') {
+  async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline' | 'handover') {
     if (action === 'receipt' && !window.confirm('Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
     if (action === 'decline' && !window.confirm('Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
+    if (action === 'handover' && !window.confirm('Confirm only after you have physically handed the item to the buyer. This will be recorded in the transaction history. Continue?')) return;
 
     setBusyKey(`${order.id}:${action}`);
     setFeedback(null);
@@ -105,7 +132,9 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         ? await confirmOrderReceipt(order.id)
         : action === 'accept'
           ? await sellerAcceptOrder(order.id)
-          : await sellerDeclineOrder(order.id);
+          : action === 'decline'
+            ? await sellerDeclineOrder(order.id, 'Seller is unable to fulfill this order.')
+            : await sellerConfirmPickupHandover(order.id);
       const actionError = getTransactionResultError(result.error, result.data, 'general');
       if (actionError) {
         setFeedback({ type: 'error', text: actionError });
@@ -114,13 +143,37 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
           ? 'Receipt confirmed. The transaction is awaiting the configured release workflow.'
           : action === 'accept'
             ? 'Order accepted. Payment remains protected; prepare the item for handover.'
-            : 'Order declined. Refund handling remains subject to backend processing.';
+            : action === 'decline'
+              ? 'Order declined. Refund handling remains subject to backend processing.'
+              : 'Pickup handover recorded. The buyer can confirm receipt in Orders.';
         setFeedback({ type: 'success', text: successText });
       }
       await mutate();
       if (expandedOrderId === order.id) await mutateEvents();
     } catch {
       setFeedback({ type: 'error', text: 'The transaction service could not complete that action. Refresh the order before retrying.' });
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function cancelUnpaidOrder(order: MarketplaceOrder) {
+    if (!window.confirm('Cancel this unpaid order? The backend will release its reserved stock if the order is still eligible.')) return;
+    cancellationKeys.current[order.id] ??= crypto.randomUUID();
+    setBusyKey(`${order.id}:cancel`);
+    setFeedback(null);
+    try {
+      const result = await cancelMarketplaceOrder(order.id, cancellationKeys.current[order.id]);
+      const actionError = getTransactionResultError(result.error, result.data, 'general');
+      if (actionError) {
+        setFeedback({ type: 'error', text: actionError });
+      } else {
+        setFeedback({ type: 'success', text: 'Order cancellation was recorded by the backend. No payment or refund is assumed.' });
+      }
+      await mutate();
+      if (expandedOrderId === order.id) await mutateEvents();
+    } catch {
+      setFeedback({ type: 'error', text: 'Cancellation could not be confirmed. Refresh Orders before retrying; the backend remains authoritative.' });
     } finally {
       setBusyKey(null);
     }
@@ -180,16 +233,32 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const orderState = normalizeState(order.order_state);
         const sellerState = normalizeState(order.seller_acceptance_state);
         const isBuying = activeTab === 'buying';
-        const sellerPending = ['SELLER_PENDING', 'PENDING', 'WAITING'].includes(sellerState) || (!sellerState && orderState === 'SELLER_PENDING');
+        const sellerPending = ['SELLER_PENDING', 'PENDING', 'WAITING', 'NOT_STARTED'].includes(sellerState)
+          || (!sellerState && ['SELLER_PENDING', 'AWAITING_SELLER', 'PAYMENT_SECURED'].includes(orderState));
         const sellerAccepted = ['ACCEPTED', 'SELLER_ACCEPTED'].includes(sellerState) || orderState === 'SELLER_ACCEPTED';
         const canSellerRespond = !isBuying && orderIsPaid(order) && sellerPending && !orderIsClosed(order) && orderState !== 'DISPUTED';
-        const canConfirmReceipt = isBuying && orderIsPaid(order) && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER'].includes(orderState) && orderState !== 'DISPUTED';
+        const deliveryOption = normalizeState(order.delivery_option);
+        const isSelfPickup = ['PICKUP', 'SELF_PICKUP'].includes(deliveryOption);
+        const canSellerConfirmHandover = !isBuying && isSelfPickup && orderIsPaid(order) && sellerAccepted
+          && ['AWAITING_HANDOVER', 'SELLER_ACCEPTED', 'HANDED_OVER'].includes(orderState)
+          && !orderIsClosed(order) && orderState !== 'DISPUTED';
+        const buyerReceiptState = normalizeState(order.buyer_receipt_state);
+        const canConfirmReceipt = isBuying && orderIsPaid(order)
+          && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER', 'RECEIPT_CONFIRMED'].includes(orderState)
+          && !['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState)
+          && orderState !== 'DISPUTED';
+        const paymentState = normalizeState(order.payment_state);
+        const canCancel = isBuying && !orderIsPaid(order)
+          && ['', 'NOT_STARTED', 'FAILED', 'PAYMENT_FAILED', 'CANCELLED', 'PAYMENT_CANCELLED', 'TIMED_OUT'].includes(paymentState)
+          && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const canDispute = isBuying && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const nameId = isBuying ? order.seller_id : order.buyer_id;
         const personName = participantNames[nameId] || (isBuying ? 'Seller' : 'Buyer');
         const fee = Number(order.platform_fee_amount || 0);
         const deliveryFee = Number(order.delivery_fee_snapshot || 0);
-        const productAmount = Math.max(0, Number(order.total_amount || 0) - fee - deliveryFee);
+        const productAmount = order.item_subtotal != null && Number.isFinite(Number(order.item_subtotal))
+          ? Number(order.item_subtotal)
+          : Math.max(0, Number(order.total_amount || 0) - fee - deliveryFee);
         const isExpanded = expandedOrderId === order.id;
         const orderEvents = isExpanded ? events || [] : [];
 
@@ -229,13 +298,15 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                   <button type="button" onClick={() => runOrderAction(order, 'decline')} disabled={busyKey !== null} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 disabled:opacity-50">{busyKey === `${order.id}:decline` ? 'Declining…' : 'Decline order'}</button>
                 </>
               ) : null}
+              {canSellerConfirmHandover ? <button type="button" onClick={() => runOrderAction(order, 'handover')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:handover` ? 'Recording handover…' : 'Confirm pickup handover'}</button> : null}
               {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : 'Confirm receipt'}</button> : null}
+              {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : 'Cancel unpaid order'}</button> : null}
               {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 disabled:opacity-50">Report a problem / dispute</button> : null}
-              <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">{isExpanded ? 'Hide transaction history' : 'View transaction history'}</button>
+              <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">{isExpanded ? 'Hide order details' : 'View order details'}</button>
               {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">View listing</Link> : null}
             </div>
 
-            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-zinc-400">After handover, the buyer confirms receipt in Orders. Your settlement status is shown here when recorded by the backend.</p> : null}
+            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-zinc-400">{isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'} Settlement status is shown when recorded by the backend.</p> : null}
 
             {disputeOrderId === order.id ? (
               <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
@@ -259,8 +330,26 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             ) : null}
 
             {isExpanded ? (
-              <section className="mt-4 rounded-2xl border border-slate-200 p-4 dark:border-zinc-800" aria-label={`Transaction history for ${order.order_number}`}>
-                <h3 className="font-semibold">Transaction timeline</h3>
+              <div className="mt-4 space-y-4">
+                <section className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800" aria-label={`Fulfillment details for ${order.order_number}`}>
+                  <h3 className="font-semibold">Fulfillment details</h3>
+                  {!canReadFulfillmentDetails ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Private fulfillment details are available to the buyer and to the seller after payment is secured.</p> : null}
+                  {canReadFulfillmentDetails && fulfillmentLoading ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Loading private fulfillment details…</p> : null}
+                  {canReadFulfillmentDetails && fulfillmentError ? <p role="status" className="mt-2 text-sm text-amber-700 dark:text-amber-200">Private fulfillment details are unavailable for this session. No extra contact information is shown.</p> : null}
+                  {canReadFulfillmentDetails && !fulfillmentLoading && !fulfillmentError && fulfillmentDetails ? (
+                    <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                      {fulfillmentDetails.delivery_zone_code ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Delivery zone</dt><dd className="mt-1 font-medium">{prettyState(fulfillmentDetails.delivery_zone_code)}</dd></div> : null}
+                      {fulfillmentDetails.pickup_location ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Pickup location</dt><dd className="mt-1 font-medium">{fulfillmentDetails.pickup_location}</dd></div> : null}
+                      {fulfillmentDetails.dropoff_location ? <div className="sm:col-span-2"><dt className="text-xs text-slate-500 dark:text-zinc-500">Delivery location and instructions</dt><dd className="mt-1 whitespace-pre-wrap font-medium">{fulfillmentDetails.dropoff_location}</dd></div> : null}
+                      {fulfillmentDetails.receiver_name ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Receiver</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_name}</dd></div> : null}
+                      {fulfillmentDetails.receiver_phone ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Receiver phone</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_phone}</dd></div> : null}
+                    </dl>
+                  ) : null}
+                  {canReadFulfillmentDetails && !fulfillmentLoading && !fulfillmentError && !fulfillmentDetails?.delivery_zone_code && !fulfillmentDetails?.pickup_location && !fulfillmentDetails?.dropoff_location && !fulfillmentDetails?.receiver_name && !fulfillmentDetails?.receiver_phone ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">No additional fulfillment details are available for this order.</p> : null}
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800" aria-label={`Transaction history for ${order.order_number}`}>
+                  <h3 className="font-semibold">Transaction timeline</h3>
                 {eventsLoading ? <p className="mt-3 text-sm text-slate-500 dark:text-zinc-400">Loading recorded events…</p> : null}
                 {eventError ? <p role="status" className="mt-3 text-sm text-amber-700 dark:text-amber-200">Recorded timeline is unavailable for this session.</p> : null}
                 {!eventsLoading && !eventError && orderEvents.length === 0 ? <p className="mt-3 text-sm text-slate-500 dark:text-zinc-400">No transaction events have been recorded yet.</p> : null}
@@ -276,7 +365,8 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                     ))}
                   </ol>
                 ) : null}
-              </section>
+                </section>
+              </div>
             ) : null}
           </article>
         );

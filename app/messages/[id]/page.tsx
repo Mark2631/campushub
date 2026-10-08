@@ -11,7 +11,7 @@ import ReportButton from '../../../components/ReportButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, hideConversationForUser, sendMessage } from '../../../lib/conversations';
-import { createNotificationRecord } from '../../../lib/notifications';
+import { createMessageNotificationRecord } from '../../../lib/notifications';
 import { isValidUuid } from '../../../lib/validation';
 import { storageBuckets, uploadPublicFile, validateUploadFile } from '../../../lib/storage';
 
@@ -155,13 +155,7 @@ export default function ConversationPage({ params }: Props) {
     }
 
     setMessages((current) => current.map((item) => item.id === optimisticId ? message : item));
-    const recipientId = conversation.buyerId === user.id ? conversation.sellerId : conversation.buyerId;
-    await createNotificationRecord({
-      userId: recipientId,
-      type: 'new message',
-      title: 'New message',
-      body: `New message about ${conversation.listingTitle || 'a listing'}.`,
-    });
+    await createMessageNotificationRecord(message.id);
   };
 
   const handleDeleteConversation = async () => {

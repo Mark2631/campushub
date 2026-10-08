@@ -24,26 +24,74 @@ export async function createNotificationRecord(data: {
     return { notification: null, error: null };
   }
 
-  const payload = {
-    user_id: data.userId,
-    type: data.type,
-    title: data.title,
-    body: data.body,
-    read: false,
-  };
+  try {
+    const { data: result, error } = await supabase.rpc('create_self_notification', {
+      p_type: data.type,
+      p_title: data.title,
+      p_body: data.body,
+    });
 
-  const { data: notification, error } = await supabase
-    .from('notifications')
-    .insert(payload)
-    .select('*')
-    .single();
+    if (error) {
+      console.error('Self-notification RPC failed:', serializeError(error));
+      return { notification: null, error: GENERIC_ERROR };
+    }
 
-  if (error) {
-    console.error('Notification insert failed:', serializeError(error), payload);
+    const notification = Array.isArray(result) ? result[0] : result;
+    if (!notification || typeof notification !== 'object' || !('id' in notification)) {
+      return { notification: null, error: null };
+    }
+
+    return { notification: notification as AppNotification, error: null };
+  } catch (error) {
+    console.error('Self-notification RPC failed:', serializeError(error));
     return { notification: null, error: GENERIC_ERROR };
   }
+}
 
-  return { notification: notification as AppNotification, error: null };
+export async function createMessageNotificationRecord(messageId: string) {
+  if (!isValidUuid(messageId)) return { error: null };
+
+  try {
+    const { error } = await supabase.rpc('notify_conversation_message', {
+      p_message_id: messageId,
+    });
+    if (error) {
+      console.error('Message notification RPC failed:', serializeError(error));
+      return { error: GENERIC_ERROR };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Message notification RPC failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
+  }
+}
+
+export async function createAdminNotificationRecord(data: {
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+}) {
+  if (!isValidUuid(data.userId)) return { error: null };
+
+  try {
+    const { error } = await supabase.rpc('admin_create_notification', {
+      p_user_id: data.userId,
+      p_type: data.type,
+      p_title: data.title,
+      p_body: data.body,
+    });
+    if (error) {
+      console.error('Admin notification RPC failed:', serializeError(error));
+      return { error: GENERIC_ERROR };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Admin notification RPC failed:', serializeError(error));
+    return { error: GENERIC_ERROR };
+  }
 }
 
 export async function getUserNotifications(userId: string) {

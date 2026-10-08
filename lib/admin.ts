@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { createAdminNotificationRecord } from './notifications';
 import { ComplaintRecord, getComplaints, updateComplaintStatus } from './complaints';
 import { cleanText, isValidUuid } from './validation';
 
@@ -158,15 +159,7 @@ export async function adminSetUserRole(targetUserId: string, newRole: 'admin' | 
 }
 
 async function insertOptionalNotification(userId: string, type: string, title: string, body: string) {
-  if (!isValidUuid(userId)) return;
-
-  const { error } = await supabase
-    .from('notifications')
-    .insert({ user_id: userId, type, title, body, read: false });
-
-  if (error) {
-    console.error('Optional notification insert failed:', error);
-  }
+  await createAdminNotificationRecord({ userId, type, title, body });
 }
 
 function idsAreValid(...ids: Array<string | null | undefined>) {
