@@ -68,7 +68,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const { data, error, isLoading, mutate } = useSWR(
     userId ? `campustrader-orders:${userId}` : null,
     async () => {
-      const { data: rows, error: queryError } = await getMyOrders();
+      const { data: rows, error: queryError } = await getMyOrders(userId);
       if (queryError) throw queryError;
       const orders = (rows || []) as MarketplaceOrder[];
       const profileIds = orders.flatMap((order) => [order.buyer_id, order.seller_id]);

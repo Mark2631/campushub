@@ -25,7 +25,13 @@ export default function SettingsPanel({ open, onClose }: Props) {
       >
         <div className="overflow-y-auto p-4 sm:p-6">
           <div className="mb-6 flex items-start justify-between gap-4">
-            <Logo compact />
+            <div className="flex min-w-0 items-center gap-3">
+              <Logo compact />
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Manage</h2>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Account, orders, and help</p>
+              </div>
+            </div>
             <button
               onClick={onClose}
               className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
@@ -35,8 +41,8 @@ export default function SettingsPanel({ open, onClose }: Props) {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Signed in as</p>
-            <p className="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{user?.email || 'Guest'}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{user ? 'Signed in as' : 'Account'}</p>
+            <p className="mt-2 break-words text-sm font-semibold text-slate-900 dark:text-white">{user?.email || 'Not signed in'}</p>
             {isAdmin ? (
               <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                 Admin badge
@@ -65,21 +71,31 @@ export default function SettingsPanel({ open, onClose }: Props) {
               Orders & transactions
             </Link>
 
+            <Link href="/help" onClick={onClose} className="block rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+              Help &amp; support
+            </Link>
+
             {isAdmin ? (
               <Link href="/admin" onClick={onClose} className="block rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-200">
                 Admin Panel
               </Link>
             ) : null}
 
-            <button
-              onClick={async () => {
-                await signOut();
-                onClose();
-              }}
-              className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-semibold text-red-700 transition hover:border-red-300 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-200"
-            >
-              Sign out
-            </button>
+            {user ? (
+              <button
+                onClick={async () => {
+                  await signOut();
+                  onClose();
+                }}
+                className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-left text-sm font-semibold text-red-700 transition hover:border-red-300 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-200"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link href="/signin?mode=signin" onClick={onClose} className="block rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       </div>

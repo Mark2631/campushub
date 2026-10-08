@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { isValidUuid } from './validation';
 
 export type CheckoutConfig = {
   merchant_name: string;
@@ -129,10 +130,13 @@ export async function requestOrderPayment(orderId: string, buyerPhone: string, i
   });
 }
 
-export async function getMyOrders() {
+export async function getMyOrders(userId: string) {
+  if (!isValidUuid(userId)) throw new Error('A valid authenticated user is required to load orders.');
+
   return supabase
     .from('orders')
     .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, payout_state, delivery_option, created_at, updated_at, expires_at')
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(100);
 }

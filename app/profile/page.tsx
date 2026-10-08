@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ShieldCheck, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
@@ -12,6 +13,7 @@ import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
 import { signOut } from '../../lib/auth';
 import { createComplaint } from '../../lib/complaints';
+import { transactionHelpTopics } from '../../lib/transactionHelp';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import {
   BusinessRecord,
@@ -61,7 +63,7 @@ function listingEmptyText(filter: ListingFilter) {
   return 'No hidden listings';
 }
 
-export default function ProfilePage() {
+function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -69,7 +71,7 @@ export default function ProfilePage() {
   const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(helpRequested);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -102,6 +104,9 @@ export default function ProfilePage() {
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
   const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
   const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
+  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
+  const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
+  const signInHref = `/signin?mode=signin&next=${encodeURIComponent(authNextPath)}`;
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -124,6 +129,11 @@ export default function ProfilePage() {
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!settingsOpen || !helpRequested || !user) return;
+    document.getElementById('manage-help')?.scrollIntoView({ block: 'nearest' });
+  }, [helpRequested, settingsOpen, user]);
 
   useEffect(() => {
     return () => {
@@ -497,11 +507,13 @@ export default function ProfilePage() {
           </>
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-2xl font-bold">Sign in to continue.</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">Create an account to post, message, verify, and manage listings.</p>
+            <h2 className="text-2xl font-bold">{helpRequested ? 'Sign in to contact support.' : 'Sign in to continue.'}</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
+              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to post, message, verify, and manage listings.'}
+            </p>
             <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
-              <Link href="/signin?next=/profile" className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
-              <Link href="/signin?next=/profile&mode=signin" className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">Sign in</Link>
+              <Link href={createAccountHref} className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
+              <Link href={signInHref} className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">Sign in</Link>
             </div>
           </div>
         )}
@@ -620,14 +632,11 @@ export default function ProfilePage() {
               </section>
 
               <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Help</h3>
+                <h3 className="font-bold">Help &amp; support</h3>
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                  <li>Choose Buy / Order on an eligible paid product, review the server-calculated total, and use the M-PESA prompt when payment setup is available.</li>
-                  <li>An STK request or screenshot is not payment confirmation. Only verified backend confirmation marks payment secured.</li>
-                  <li>Self pickup is free. D-Delivery is optional and appears only for backend-configured destinations and fees; dispatch is coordinated by the CampusTrader operator.</li>
-                  <li>Accept or collect the item only after checking the details. Confirm receipt only after you have received and checked your order.</li>
-                  <li>Report a problem or dispute transaction if something is wrong. An active dispute blocks release while it is reviewed.</li>
-                  <li>Keep communication and payment details private. Use the support form below if you need help.</li>
+                  {transactionHelpTopics.map((topic) => (
+                    <li key={topic.title}><span className="font-semibold text-slate-800 dark:text-slate-200">{topic.title}:</span> {topic.content}</li>
+                  ))}
                 </ul>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
@@ -665,5 +674,32 @@ export default function ProfilePage() {
 
       <BottomNav />
     </div>
+  );
+}
+
+function ProfileRoute() {
+  const searchParams = useSearchParams();
+  const helpRequested = searchParams.get('manage') === 'help';
+
+  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} />;
+}
+
+function ProfileLoading() {
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <Header />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28">
+        <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Loading profile…</p>
+      </main>
+      <BottomNav />
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoading />}>
+      <ProfileRoute />
+    </Suspense>
   );
 }
