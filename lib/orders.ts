@@ -130,7 +130,8 @@ export async function setListingInventory(listingId: string, totalQuantity: numb
 export async function createMarketplaceOrder(input: {
   listingId: string;
   quantity: number;
-  deliveryOption: 'pickup' | 'd_delivery';
+    deliveryOption: 'pickup' | 'd_delivery';
+    paymentPreference?: 'direct' | 'protected';
   campus: string;
   dropoffLocation: string;
   deliveryZoneCode: string;
@@ -141,6 +142,7 @@ export async function createMarketplaceOrder(input: {
     p_listing_id: input.listingId,
     p_quantity: input.quantity,
     p_delivery_option: input.deliveryOption,
+    p_payment_preference: input.paymentPreference || 'direct',
     p_campus: input.campus,
     p_dropoff_location: input.dropoffLocation,
     p_delivery_zone_code: input.deliveryZoneCode || null,
