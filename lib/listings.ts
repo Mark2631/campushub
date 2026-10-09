@@ -24,6 +24,7 @@ export interface Listing {
   title: string;
   description: string | null;
   category: string;
+  listing_type?: string | null;
   price: number | null;
   negotiable: boolean;
   condition: string;
@@ -185,6 +186,7 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     title: row.title || '',
     description: row.description ?? null,
     category,
+    listing_type: row.listing_type ?? null,
     price: row.price ?? null,
     negotiable: Boolean(row.negotiable),
     condition: normalizeListingCondition(row.condition || 'used', category),
@@ -216,7 +218,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
   try {
     const query = supabase
       .from('listings')
-      .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active');
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
@@ -249,7 +251,7 @@ export async function getServiceListings(limit = 12, institution: string = DEFAU
   try {
     const query = supabase
       .from('listings')
-      .select('id, title, price, category, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active')
       .or('condition.eq.service,category.eq.Services,category.eq.services,category.eq.Service');
     if (institution) {
@@ -430,7 +432,7 @@ export async function getListingById(id: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, campus, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, campus, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
       .maybeSingle();
 
