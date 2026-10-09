@@ -34,9 +34,9 @@ export default async function NewOrderPage({ searchParams }: Props) {
         </Link>
 
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">Protected order</p>
-          <h1 className="mt-2 text-3xl font-bold">Review your order</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-zinc-400">The backend calculates the final total. Payment is only secured after verified M-PESA confirmation.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-300">Order request</p>
+          <h1 className="mt-2 text-3xl font-bold">How would you like to transact?</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-zinc-400">Choose direct payment or optional CampusTrader protection, then choose pickup or D-Delivery.</p>
         </div>
 
         {!listing ? (
@@ -61,7 +61,7 @@ export default async function NewOrderPage({ searchParams }: Props) {
             </section>
 
             {!isDirectPurchaseListing(listing) ? (
-              <Notice>This listing is not eligible for direct checkout. Only active, paid product listings can be ordered here. You can still contact the seller from the listing page.</Notice>
+              <Notice>This listing is for contact or enquiry only. You can still message or contact the seller from the listing page.</Notice>
             ) : (
               <OrderCheckoutForm
                 listingId={listing.id}

@@ -62,21 +62,14 @@ export type OrderEvent = {
 };
 
 export function isDirectPurchaseListing(listing: {
-  category?: string | null;
-  condition?: string | null;
+  listing_type?: string | null;
   price?: number | null;
   status?: string | null;
 }) {
-  const category = String(listing.category ?? '').trim().toLowerCase();
-  const condition = String(listing.condition ?? '').trim().toLowerCase();
-  const status = String(listing.status ?? '').trim().toLowerCase();
-
-  return status === 'active'
+  return String(listing.listing_type ?? '').trim().toUpperCase() === 'PHYSICAL_PRODUCT'
+    && String(listing.status ?? '').trim().toLowerCase() === 'active'
     && Number.isFinite(Number(listing.price))
-    && Number(listing.price) > 0
-    && condition !== 'service'
-    && !['service', 'services', 'request', 'requests', 'wanted'].some((value) => category === value)
-    && !/looking for|wanted post|request post/.test(`${category} ${condition}`);
+    && Number(listing.price) > 0;
 }
 
 export async function getCheckoutConfig() {
@@ -130,7 +123,8 @@ export async function setListingInventory(listingId: string, totalQuantity: numb
 export async function createMarketplaceOrder(input: {
   listingId: string;
   quantity: number;
-  deliveryOption: 'pickup' | 'd_delivery';
+    deliveryOption: 'pickup' | 'd_delivery';
+    paymentPreference?: 'direct' | 'protected';
   campus: string;
   dropoffLocation: string;
   deliveryZoneCode: string;
@@ -141,6 +135,7 @@ export async function createMarketplaceOrder(input: {
     p_listing_id: input.listingId,
     p_quantity: input.quantity,
     p_delivery_option: input.deliveryOption,
+    p_payment_option: input.paymentPreference === 'protected' ? 'CAMPUS_TRADER_PROTECTED' : 'DIRECT',
     p_campus: input.campus,
     p_dropoff_location: input.dropoffLocation,
     p_delivery_zone_code: input.deliveryZoneCode || null,
@@ -149,11 +144,33 @@ export async function createMarketplaceOrder(input: {
   });
 }
 
-export async function requestOrderPayment(orderId: string, buyerPhone: string, idempotencyKey: string) {
-  return supabase.rpc('request_order_payment', {
+export async function getManualPaymentInstructions(orderId: string) {
+  return supabase.rpc('get_manual_payment_instructions', { p_order_id: orderId });
+}
+
+export async function submitManualPaymentReference(orderId: string, reference: string, idempotencyKey: string) {
+  return supabase.rpc('submit_manual_payment_reference', {
     p_order_id: orderId,
-    p_buyer_phone: buyerPhone,
+    p_mpesa_reference: reference.trim(),
     p_idempotency_key: idempotencyKey,
+  });
+}
+
+export async function adminVerifyManualPayment(orderId: string, paymentAttemptId: string, fundsConfirmed: boolean, amountReceived: number, adminNote: string) {
+  return supabase.rpc('admin_verify_manual_payment', {
+    p_order_id: orderId,
+    p_payment_attempt_id: paymentAttemptId,
+    p_funds_confirmed: fundsConfirmed,
+    p_amount_received: amountReceived,
+    p_admin_note: adminNote.trim(),
+  });
+}
+
+export async function adminReleaseProtectedOrder(orderId: string, externalReference: string, reason: string) {
+  return supabase.rpc('admin_release_protected_order', {
+    p_order_id: orderId,
+    p_external_reference: externalReference.trim(),
+    p_reason: reason.trim(),
   });
 }
 

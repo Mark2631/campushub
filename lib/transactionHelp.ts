@@ -5,7 +5,7 @@ export const transactionHelpTopics = [
   },
   {
     title: 'M-PESA payment confirmation',
-    content: 'A payment prompt can be requested only when payment setup is enabled. An STK request, screenshot, or user-entered code is not proof of payment; only backend verification can mark an order as secured. If a request times out or money was deducted, check Orders and report the issue before retrying.',
+    content: 'Protected payment is manual for now. After the seller accepts, pay using the configured CampusTrader instructions and submit the M-PESA reference. A reference or screenshot is not proof of payment; only an authorized administrator can confirm funds. Direct payments between buyer and seller are not verified or protected by CampusTrader.',
   },
   {
     title: 'Pickup and D-Delivery',
