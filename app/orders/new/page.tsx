@@ -61,7 +61,7 @@ export default async function NewOrderPage({ searchParams }: Props) {
             </section>
 
             {!isDirectPurchaseListing(listing) ? (
-              <Notice>This listing is for contact or enquiry only. You can still message or contact the seller from the listing page.</Notice>
+              <Notice>This listing is not enabled for ordering. You can still message or contact the seller from the listing page.</Notice>
             ) : (
               <OrderCheckoutForm
                 listingId={listing.id}
