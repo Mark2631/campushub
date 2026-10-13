@@ -37,6 +37,19 @@ export default function OrdersPageContent({ initialView }: Props) {
           </section>
         ) : null}
 
+        {user ? (
+          <section aria-label="Request shortcuts" className="mt-5 grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => setActiveTab('buying')} className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-left transition hover:border-blue-400 dark:border-blue-950 dark:bg-blue-950/30">
+              <span className="block text-sm font-bold text-blue-700 dark:text-blue-200">My requests</span>
+              <span className="mt-1 block text-xs leading-5 text-blue-700/70 dark:text-blue-200/70">Orders you placed</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('selling')} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left transition hover:border-emerald-400 dark:border-emerald-950 dark:bg-emerald-950/30">
+              <span className="block text-sm font-bold text-emerald-700 dark:text-emerald-200">Incoming requests</span>
+              <span className="mt-1 block text-xs leading-5 text-emerald-700/70 dark:text-emerald-200/70">Requests for your listings</span>
+            </button>
+          </section>
+        ) : null}
+
         <div role="tablist" aria-label="Orders" className="mt-6 grid grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
           {(['buying', 'selling'] as const).map((tab) => (
             <button
