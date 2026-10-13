@@ -37,12 +37,14 @@ function parseOptionalPrice(value?: string | number | null) {
   return parseOptionalNumber(value);
 }
 
-export async function getItemRequests(limit = 10) {
+export async function getItemRequests(limit = 10, institution?: string) {
   try {
-    const { data, error } = await supabase
+    const institutionId = institution ? await getInstitutionIdForCode(normalizeInstitution(institution)) : null;
+    const query = supabase
       .from('item_requests')
       .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at')
-      .eq('status', 'open')
+      .eq('status', 'open');
+    const { data, error } = await (institutionId ? query.eq('institution_id', institutionId) : institution ? query.eq('campus', normalizeInstitution(institution)) : query)
       .order('created_at', { ascending: false })
       .limit(limit);
 
