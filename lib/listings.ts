@@ -64,14 +64,13 @@ type BusinessRow = {
   badge_type?: string | null;
 };
 
-const MUST_INSTITUTION_ID = '340a2cab-13d8-4af8-91f1-bb6089fd2f89';
 
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
 
   const publicResponse = await supabase
     .from('marketplace_profiles')
-    .select('id, full_name, avatar_url, badge_type, verification_status, created_at')
+    .select('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at')
     .in('id', sellerIds);
 
   if (!publicResponse.error) {
@@ -222,9 +221,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       .eq('status', 'active');
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
-      const institutionId = normalizedInstitution === 'MUST'
-        ? MUST_INSTITUTION_ID
-        : await getInstitutionIdForCode(normalizedInstitution);
+      const institutionId = await getInstitutionIdForCode(normalizedInstitution);
       if (institutionId) {
         query.eq('institution_id', institutionId);
       } else {
