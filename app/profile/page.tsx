@@ -30,6 +30,7 @@ import {
   upsertProfile,
 } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
+import { institutionLabel, normalizeInstitution } from '../../lib/validation';
 
 const verificationTypes = [
   { value: 'student', label: 'Student ID' },
@@ -391,7 +392,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                       ) : null}
                     </div>
                     <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">{profile?.email || user.email}</p>
-                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">MUST campus</p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
                   </div>
                 </div>
 

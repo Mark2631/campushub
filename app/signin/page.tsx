@@ -6,7 +6,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
-import { ensureProfile } from '../../lib/profiles';
+import { ensureProfile, normalizeKenyanPhone } from '../../lib/profiles';
+import { institutionLabel, SUPPORTED_INSTITUTIONS, type Institution } from '../../lib/validation';
 
 type AuthMode = 'signup' | 'signin';
 type Notice = { tone: 'success' | 'error' | 'info'; message: string };
@@ -129,6 +130,7 @@ function SignInPageContent() {
   const [signupForm, setSignupForm] = useState({
     fullName: '',
     phone: '',
+    institution: '' as Institution | '',
     email: initialEmail,
     password: '',
     confirmPassword: '',
@@ -185,12 +187,18 @@ function SignInPageContent() {
       return;
     }
 
+    if (!signupForm.institution) {
+      setNotice({ tone: 'error', message: 'Choose your institution.' });
+      return;
+    }
+    if (!normalizeKenyanPhone(signupForm.phone)) {
+      setNotice({ tone: 'error', message: 'Enter a valid Kenyan WhatsApp number.' });
+      return;
+    }
     setSignupPending(true);
     persistEmail(email);
 
-    // Phone is optional profile contact information. When provided, pass it as
-    // metadata so ensureProfile can prefill Manage with the normalized number.
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next, signupForm.institution);
 
     if (signup.error) {
       setSignupPending(false);
@@ -203,6 +211,7 @@ function SignInPageContent() {
 
     if (signup.data.session) {
       await ensureProfile(signup.data.session.user);
+      window.localStorage.setItem('campustrader-institution', signupForm.institution);
       setSignupPending(false);
       showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
       await completeAuth('Welcome to CampusTrader.');
@@ -298,7 +307,7 @@ function SignInPageContent() {
               </h1>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 {mode === 'signup'
-                  ? 'Buy, sell, and message students around campus.'
+                  ? 'Buy, sell, and connect across universities and technical institutions.'
                   : 'Welcome back.'}
               </p>
             </div>
@@ -337,7 +346,14 @@ function SignInPageContent() {
                 />
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Phone number
+                Institution
+                <select value={signupForm.institution} onChange={(event) => setSignupForm((current) => ({ ...current, institution: event.target.value as Institution }))} required className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white">
+                  <option value="">Select your institution</option>
+                  {SUPPORTED_INSTITUTIONS.map((code) => <option key={code} value={code}>{institutionLabel(code)}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                WhatsApp phone number
                 <input
                   type="tel"
                   inputMode="tel"
@@ -346,8 +362,9 @@ function SignInPageContent() {
                   onChange={(event) => setSignupForm((current) => ({ ...current, phone: event.target.value }))}
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   aria-describedby="phone-format"
+                  required
                 />
-                <span id="phone-format" className="mt-1 block text-xs text-slate-500">Optional. Add a Kenyan number later in Manage for WhatsApp contact.</span>
+                <span id="phone-format" className="mt-1 block text-xs text-slate-500">Use your WhatsApp number. It will appear automatically on your profile.</span>
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email

@@ -108,7 +108,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const syncProfile = async (userToSync: User | null) => {
       if (!userToSync || syncedProfileIds.has(userToSync.id)) return;
       syncedProfileIds.add(userToSync.id);
-      const { error } = await ensureProfile(userToSync);
+      const { profile, error } = await ensureProfile(userToSync);
+      if (isMounted && profile?.campus) setInstitutionState(normalizeInstitution(profile.campus));
       if (error && !loggedProfileErrors.has(error)) {
         loggedProfileErrors.add(error);
         console.error('Profile sync error:', error);

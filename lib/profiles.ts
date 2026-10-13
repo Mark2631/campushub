@@ -16,6 +16,7 @@ export interface ProfileRecord {
   phone_number?: string | null;
   email_verified?: boolean | null;
   campus?: string | null;
+  institution_id?: string | null;
   created_at?: string;
 }
 
@@ -98,10 +99,10 @@ export async function ensureProfile(user: User) {
     role: isAdmin ? 'admin' : current?.role || 'user',
     phone_number: current?.phone_number || user.user_metadata?.phone_number || null,
     email_verified: current?.email_verified || emailVerified,
-    campus: current?.campus || DEFAULT_CAMPUS,
+    campus: normalizeInstitution(user.user_metadata?.institution || current?.campus || DEFAULT_CAMPUS),
     ...(await (async () => {
       try {
-        const id = await getInstitutionIdForCode(normalizeInstitution(current?.campus || DEFAULT_CAMPUS));
+        const id = await getInstitutionIdForCode(normalizeInstitution(user.user_metadata?.institution || current?.campus || DEFAULT_CAMPUS));
         return id ? { institution_id: id } : {};
       } catch {
         return {};
