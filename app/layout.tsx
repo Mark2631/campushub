@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://campus-trader.vercel.app'),
-  title: 'CampusTrader | MUST Campus Marketplace',
-  description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
+  title: 'CampusTrader | Inter-Institutional Marketplace',
+  description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
   keywords: [
     'CampusTrader',
     'Campus Trader',
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
   },
   openGraph: {
-    title: 'CampusTrader | MUST Campus Marketplace',
-    description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
+    title: 'CampusTrader | Inter-Institutional Marketplace',
+    description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
     url: 'https://campus-trader.vercel.app',
     siteName: 'CampusTrader',
     images: [
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
         url: '/og-campus-trader-v2.png',
         width: 1200,
         height: 630,
-        alt: 'CampusTrader MUST marketplace preview',
+        alt: 'CampusTrader marketplace preview',
       },
     ],
     locale: 'en_KE',
@@ -56,8 +56,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'CampusTrader | MUST Campus Marketplace',
-    description: 'Buy, sell, place protected orders, request services, follow official updates, and message students around Meru University safely.',
+    title: 'CampusTrader | Inter-Institutional Marketplace',
+    description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
     images: ['/og-campus-trader-v2.png'],
   },
   icons: {
