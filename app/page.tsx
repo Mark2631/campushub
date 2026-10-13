@@ -218,6 +218,7 @@ export default function Home() {
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
+  const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
   const visibleCategorySections = activeCategory === 'All'
     ? categorySections
     : categorySections.filter((section) => section.category === activeCategory);
@@ -282,50 +283,35 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mb-3">
-          <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
-              {['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeBrowseTab === tab}
-                  onClick={() => {
+        <div className="mb-5 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
+            {['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={(['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab) ? activeBrowseTab === tab : activeCategory === tab)}
+                onClick={() => {
+                  if (['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab)) {
                     setActiveBrowseTab(tab);
                     setActiveCategory('All');
-                  }}
-                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    activeBrowseTab === tab
-                      ? 'border-blue-500 bg-blue-600 text-white'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max gap-3 pb-1">
-              {['All', ...categories].map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition sm:px-5 ${
-                    activeCategory === category
-                      ? 'border-blue-500 bg-blue-600 text-white'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
+                  } else {
+                    setActiveBrowseTab('All');
+                    setActiveCategory(tab);
+                  }
+                }}
+                className={`shrink-0 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
+                  (['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab) ? activeBrowseTab === tab && activeCategory === 'All' : activeCategory === tab)
+                    ? 'border-blue-500 bg-blue-600 text-white'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+            <button type="button" onClick={() => setFiltersOpen(true)} className="shrink-0 rounded-full border border-gray-300 bg-gray-50 px-3.5 py-2 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+              More filters
+            </button>
           </div>
         </div>
 
@@ -391,13 +377,17 @@ export default function Home() {
                     </div>
                   </section>
                 )}
-                {visibleCategorySections.map((section) => (
-                  <ListingSection
-                    key={section.category}
-                    title={section.title}
-                    listings={listingsForCategorySection(section.category)}
-                  />
-                ))}
+                {hasActiveBrowseFilter ? (
+                  <ListingSection title={activeBrowseTab !== 'All' ? activeBrowseTab : activeCategory} listings={filteredListings} />
+                ) : (
+                  visibleCategorySections.map((section) => (
+                    <ListingSection
+                      key={section.category}
+                      title={section.title}
+                      listings={listingsForCategorySection(section.category)}
+                    />
+                  ))
+                )}
                 {hasMoreListings ? (
                   <div className="mb-10 flex justify-center">
                     <button

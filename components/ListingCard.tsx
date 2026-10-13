@@ -14,7 +14,9 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/listing/${listing.id}`}
-      className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
+      prefetch
+      aria-label={`View ${listing.title}`}
+      className="group block min-h-full touch-manipulation overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
       <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
