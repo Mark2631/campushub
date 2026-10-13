@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     siteName: 'CampusTrader',
     images: [
       {
-        url: '/og-campus-trader-v2.png',
+        url: '/opengraph-image',
         width: 1200,
         height: 630,
         alt: 'CampusTrader marketplace preview',
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'CampusTrader | Inter-Institutional Marketplace',
     description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
-    images: ['/og-campus-trader-v2.png'],
+    images: ['/opengraph-image'],
   },
   icons: {
     icon: [
