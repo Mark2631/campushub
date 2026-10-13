@@ -9,6 +9,7 @@ import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
+import { getItemRequests, type ItemRequest } from '../lib/itemRequests';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
 const categories = STANDARD_CATEGORIES;
@@ -75,6 +76,7 @@ function ListingSkeletons() {
 export default function Home() {
   const { user, institution } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -123,6 +125,14 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
+  }, [institution]);
+
+  useEffect(() => {
+    let mounted = true;
+    void getItemRequests(30, institution).then(({ requests }) => {
+      if (mounted) setStudentRequests(requests.slice(0, 6));
+    });
+    return () => { mounted = false; };
   }, [institution]);
 
   useEffect(() => {
@@ -367,6 +377,31 @@ export default function Home() {
               </div>
             ) : (
               <>
+                {!hasActiveBrowseFilter && (
+                  <section className="mb-8 sm:mb-10" aria-labelledby="student-requests-heading">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h2 id="student-requests-heading" className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">Student Requests</h2>
+                        <p className="text-xs text-gray-600 dark:text-zinc-400">What students at your institution are looking for</p>
+                      </div>
+                      <Link href="/sell?mode=request" className="shrink-0 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Post a request</Link>
+                    </div>
+                    {studentRequests.length ? (
+                      <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 sm:mx-0 sm:px-0">
+                        {studentRequests.map((request) => (
+                          <div key={request.id} className="w-60 shrink-0 rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                            <p className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{request.title}</p>
+                            <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-zinc-400">{request.description || request.category}</p>
+                            {request.max_price != null && <p className="mt-2 text-xs font-medium text-blue-600 dark:text-blue-400">Budget up to KSh {request.max_price.toLocaleString('en-KE')}</p>}
+                            {request.location && <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{request.location}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-sm text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">No open requests yet. Be the first to post what you need.</div>
+                    )}
+                  </section>
+                )}
                 {sectionBuckets.recent.length > 0 ? (
                   <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
                 ) : (
