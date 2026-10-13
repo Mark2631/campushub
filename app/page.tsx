@@ -291,7 +291,10 @@ export default function Home() {
                   type="button"
                   role="tab"
                   aria-selected={activeBrowseTab === tab}
-                  onClick={() => setActiveBrowseTab(tab)}
+                  onClick={() => {
+                    setActiveBrowseTab(tab);
+                    setActiveCategory('All');
+                  }}
                   className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                     activeBrowseTab === tab
                       ? 'border-blue-500 bg-blue-600 text-white'
@@ -346,12 +349,18 @@ export default function Home() {
                   +
                 </div>
                 <p className="font-semibold text-gray-900 dark:text-white">
-                  {listings.length === 0 ? 'No listings yet. Be the first to post.' : 'No matching listings found.'}
+                  {listings.length === 0
+                    ? 'No listings yet. Be the first to post.'
+                    : activeBrowseTab === 'All'
+                      ? 'No matching listings found.'
+                      : `No ${activeBrowseTab.toLowerCase()} found yet.`}
                 </p>
                 <p className="mx-auto mt-2 max-w-md text-sm">
                   {listings.length === 0
                     ? 'Start with an item, service, or campus deal that MUST students can inspect before paying.'
-                    : 'Try a different category, clear filters, or post what you need from the Sell tab.'}
+                    : activeBrowseTab === 'Requests'
+                      ? 'Post a request from the Sell tab so nearby students can respond.'
+                      : 'Try another section, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
                   <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
