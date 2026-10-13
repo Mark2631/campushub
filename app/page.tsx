@@ -339,8 +339,19 @@ export default function Home() {
           <>
             {error ? (
               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                <p className="font-semibold">Something went wrong loading listings.</p>
-                <p className="mt-1 text-sm">Try refreshing the page.</p>
+                <p className="font-semibold">Listings are taking longer than expected.</p>
+                <p className="mt-1 text-sm">You can retry without losing your search or browse section.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setLoadingListings(true);
+                    window.dispatchEvent(new Event('campustrader:listings-refresh'));
+                  }}
+                  className="mt-3 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100"
+                >
+                  Retry listings
+                </button>
               </div>
             ) : null}
             {filteredListings.length === 0 ? (
@@ -363,9 +374,9 @@ export default function Home() {
                       : 'Try another section, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
-                  <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                    Post listing
-                  </Link>
+                    <Link href={activeBrowseTab === 'Requests' ? '/sell?mode=request' : '/sell'} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                      {activeBrowseTab === 'Requests' ? 'Post a request' : 'Post listing'}
+                    </Link>
                 </div>
               </div>
             ) : (
