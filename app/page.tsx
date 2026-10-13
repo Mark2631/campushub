@@ -78,6 +78,7 @@ export default function Home() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [activeBrowseTab, setActiveBrowseTab] = useState('All');
   const [error, setError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -150,6 +151,17 @@ export default function Home() {
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const activeListings = listings.filter((listing) => String(listing.status ?? 'active').toLowerCase() === 'active');
+    const browseText = (listing: Listing) => `${listing.category} ${listing.title} ${listing.description || ''}`.toLowerCase();
+    const browseMatches = (listing: Listing) => {
+      const text = browseText(listing);
+      if (activeBrowseTab === 'All') return true;
+      if (activeBrowseTab === 'Products') return String(listing.listing_type || '').toUpperCase() === 'PHYSICAL_PRODUCT';
+      if (activeBrowseTab === 'Requests') return /wanted|request|looking for|need /.test(text);
+      if (activeBrowseTab === 'Room share') return /roommate|room share|bedsitter|shared room/.test(text);
+      if (activeBrowseTab === 'Rentals') return /rent|rental|hostel|apartment|house/.test(text);
+      if (activeBrowseTab === 'Businesses') return listingBelongsToCategory(listing, 'Business') || /shop|restaurant|printing|repair/.test(text);
+      return listingBelongsToCategory(listing, activeBrowseTab);
+    };
 
     return activeListings.filter((listing) => {
       const normalizedCategory = normalizeCategory(listing.category);
@@ -169,6 +181,7 @@ export default function Home() {
       const matchesNegotiable = !filters.negotiableOnly || listing.negotiable;
 
       return (
+        browseMatches(listing) &&
         matchesCategory &&
         matchesQuery &&
         matchesMinPrice &&
@@ -179,7 +192,7 @@ export default function Home() {
         matchesNegotiable
       );
     });
-  }, [activeCategory, filters, listings, query]);
+  }, [activeBrowseTab, activeCategory, filters, listings, query]);
 
   const sectionBuckets = useMemo(() => {
     const twoDaysAgo = currentTime - 2 * 24 * 60 * 60 * 1000;
@@ -269,22 +282,46 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="mb-3">
+          <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
+              {['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeBrowseTab === tab}
+                  onClick={() => setActiveBrowseTab(tab)}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    activeBrowseTab === tab
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="mb-5">
           <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max gap-3 pb-1">
-            {['All', ...categories].map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition sm:px-5 ${
-                  activeCategory === category
-                    ? 'border-blue-500 bg-blue-600 text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+              {['All', ...categories].map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition sm:px-5 ${
+                    activeCategory === category
+                      ? 'border-blue-500 bg-blue-600 text-white'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
           </div>
         </div>
