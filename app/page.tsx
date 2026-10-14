@@ -372,7 +372,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {sectionBuckets.recent.length > 0 ? (
+                {!hasActiveBrowseFilter && (sectionBuckets.recent.length > 0 ? (
                   <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
                 ) : (
                   <section className="mb-8 sm:mb-10">
@@ -381,7 +381,7 @@ export default function Home() {
                       <p className="font-semibold text-gray-900 dark:text-white">No fresh listings from the last 2 days.</p>
                     </div>
                   </section>
-                )}
+                ))}
                 {hasActiveBrowseFilter ? (
                   <ListingSection title={activeBrowseTab !== 'All' ? activeBrowseTab : activeCategory} listings={filteredListings} />
                 ) : (
