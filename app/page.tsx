@@ -9,6 +9,7 @@ import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
+import { getItemRequests, type ItemRequest } from '../lib/itemRequests';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
 const categories = STANDARD_CATEGORIES;
@@ -75,6 +76,7 @@ function ListingSkeletons() {
 export default function Home() {
   const { user, institution } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -123,6 +125,14 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
+  }, [institution]);
+
+  useEffect(() => {
+    let mounted = true;
+    void getItemRequests(30, institution).then(({ requests }) => {
+      if (mounted) setStudentRequests(requests.slice(0, 6));
+    });
+    return () => { mounted = false; };
   }, [institution]);
 
   useEffect(() => {

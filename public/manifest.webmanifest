@@ -1,7 +1,7 @@
 {
   "name": "CampusTrader",
   "short_name": "CampusTrader",
-  "description": "MUST campus marketplace for students and nearby businesses",
+  "description": "A marketplace connecting students, traders and businesses across universities, colleges and technical institutions",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

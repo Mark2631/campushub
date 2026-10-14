@@ -12,7 +12,7 @@ function getSafeRedirectPath(value?: string | null) {
   return undefined;
 }
 
-export async function signUpWithPassword(email: string, password: string, fullName: string, phone?: string, next?: string) {
+export async function signUpWithPassword(email: string, password: string, fullName: string, phone?: string, next?: string, institution: string = 'MUST') {
   const safeNext = getSafeRedirectPath(next);
   // Always use the origin the user is currently visiting. A stale development
   // redirect URL can make Supabase reject an otherwise valid signup in production.
@@ -31,6 +31,7 @@ export async function signUpWithPassword(email: string, password: string, fullNa
     options: {
       data: {
         full_name: fullName,
+        institution,
         ...(normalizedPhone ? { phone_number: normalizedPhone } : {}),
       },
       emailRedirectTo: redirectTo,
