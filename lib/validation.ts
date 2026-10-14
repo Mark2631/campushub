@@ -1,11 +1,12 @@
 import { STANDARD_CATEGORIES, normalizeCategory } from './categories';
 
 export const DEFAULT_CAMPUS = 'MUST' as const;
-export const SUPPORTED_INSTITUTIONS = ['MUST', 'NAIROBI', 'KISUMU', 'ELDORET', 'OTHER'] as const;
+export const SUPPORTED_INSTITUTIONS = ['MUST', 'MUKIRIA', 'NAIROBI', 'KISUMU', 'ELDORET', 'OTHER'] as const;
 export type Institution = (typeof SUPPORTED_INSTITUTIONS)[number];
 
 const institutionLabels: Record<Institution, string> = {
   MUST: 'MUST',
+  MUKIRIA: 'Mukiria Technical Training Institute',
   NAIROBI: 'Nairobi',
   KISUMU: 'Kisumu',
   ELDORET: 'Eldoret',
