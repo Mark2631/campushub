@@ -249,11 +249,16 @@ export default function Home() {
           <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
         </header>
 
-        {showWelcome ? (
-          <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
-            Welcome to CampusTrader.
-          </div>
-        ) : null}
+  {showWelcome ? (
+  <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-950 dark:bg-blue-950/30">
+    <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Welcome to CampusTrader</p>
+    <div className="mt-3 grid gap-2 text-xs text-blue-900/80 sm:grid-cols-3 dark:text-blue-100/80">
+      <p><strong>1.</strong> Choose a section below to browse.</p>
+      <p><strong>2.</strong> Tap any card once to view details.</p>
+      <p><strong>3.</strong> Use Orders for your buying and selling activity.</p>
+    </div>
+  </section>
+  ) : null}
 
         {!user ? (
           <section className="mb-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-blue-950 dark:bg-zinc-900">
@@ -295,7 +300,7 @@ export default function Home() {
 
         <div className="mb-5 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
-            {['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
+            {['All', 'Products', 'Room share', 'Rentals', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -377,32 +382,7 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {!hasActiveBrowseFilter && (
-                  <section className="mb-8 sm:mb-10" aria-labelledby="student-requests-heading">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <div>
-                        <h2 id="student-requests-heading" className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">Student Requests</h2>
-                        <p className="text-xs text-gray-600 dark:text-zinc-400">What students at your institution are looking for</p>
-                      </div>
-                      <Link href="/sell?mode=request" className="shrink-0 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Post a request</Link>
-                    </div>
-                    {studentRequests.length ? (
-                      <div className="-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 sm:mx-0 sm:px-0">
-                        {studentRequests.map((request) => (
-                          <div key={request.id} className="w-60 shrink-0 rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                            <p className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">{request.title}</p>
-                            <p className="mt-1 line-clamp-2 text-xs text-gray-600 dark:text-zinc-400">{request.description || request.category}</p>
-                            {request.max_price != null && <p className="mt-2 text-xs font-medium text-blue-600 dark:text-blue-400">Budget up to KSh {request.max_price.toLocaleString('en-KE')}</p>}
-                            {request.location && <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{request.location}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-sm text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">No open requests yet. Be the first to post what you need.</div>
-                    )}
-                  </section>
-                )}
-                {sectionBuckets.recent.length > 0 ? (
+                {!hasActiveBrowseFilter && (sectionBuckets.recent.length > 0 ? (
                   <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
                 ) : (
                   <section className="mb-8 sm:mb-10">
@@ -411,7 +391,7 @@ export default function Home() {
                       <p className="font-semibold text-gray-900 dark:text-white">No fresh listings from the last 2 days.</p>
                     </div>
                   </section>
-                )}
+                ))}
                 {hasActiveBrowseFilter ? (
                   <ListingSection title={activeBrowseTab !== 'All' ? activeBrowseTab : activeCategory} listings={filteredListings} />
                 ) : (
@@ -452,6 +432,15 @@ export default function Home() {
                     </button>
                   </div>
                 ) : null}
+                <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-950 dark:bg-amber-950/20">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold text-amber-950 dark:text-amber-100">Can&apos;t find what you need?</h2>
+                      <p className="mt-1 text-sm text-amber-900/75 dark:text-amber-100/75">Post a request and let students from {institution} respond.</p>
+                    </div>
+                    <Link href="/sell?mode=request" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700">Post a request</Link>
+                  </div>
+                </section>
               </>
             )}
           </>

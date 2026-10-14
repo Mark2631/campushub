@@ -219,15 +219,17 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       .from('listings')
       .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active');
-    if (institution) {
-      const normalizedInstitution = normalizeInstitution(institution);
-      const institutionId = await getInstitutionIdForCode(normalizedInstitution);
-      if (institutionId) {
-        query.eq('institution_id', institutionId);
-      } else {
-        query.eq('campus', normalizedInstitution);
-      }
+  if (institution) {
+    const normalizedInstitution = normalizeInstitution(institution);
+    const institutionId = normalizedInstitution === 'MUST'
+      ? MUST_INSTITUTION_ID
+      : await getInstitutionIdForCode(normalizedInstitution);
+    // Fail closed when an institution cannot be mapped.
+    query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
+  }
+>>>>>>> 81a23f634d51c1d694f0e670dc468a710c48ee9c
     }
+  }
 
     const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
 
@@ -251,14 +253,10 @@ export async function getServiceListings(limit = 12, institution: string = DEFAU
       .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active')
       .or('condition.eq.service,category.eq.Services,category.eq.services,category.eq.Service');
-    if (institution) {
-      const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
-      if (instId) {
-        query.eq('institution_id', instId);
-      } else {
-        query.eq('campus', normalizeInstitution(institution));
-      }
-    }
+  if (institution) {
+    const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
+    query.eq('institution_id', instId || '00000000-0000-0000-0000-000000000000');
+  }
 
     const { data, error } = await query.order('created_at', { ascending: false }).limit(limit);
 
