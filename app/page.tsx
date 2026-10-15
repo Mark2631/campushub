@@ -77,6 +77,8 @@ export default function Home() {
   const { user, institution } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
   const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -129,10 +131,20 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
-    void getItemRequests(30, institution).then(({ requests }) => {
-      if (mounted) setStudentRequests(requests.slice(0, 6));
-    });
-    return () => { mounted = false; };
+    const refreshRequests = async () => {
+      if (mounted) setLoadingRequests(true);
+      const { requests, error } = await getItemRequests(30, institution);
+      if (!mounted) return;
+      setStudentRequests(requests.slice(0, 6));
+      setRequestError(error);
+      setLoadingRequests(false);
+    };
+    void refreshRequests();
+    window.addEventListener('campustrader:requests-refresh', refreshRequests);
+    return () => {
+      mounted = false;
+      window.removeEventListener('campustrader:requests-refresh', refreshRequests);
+    };
   }, [institution]);
 
   useEffect(() => {
@@ -445,6 +457,31 @@ export default function Home() {
             )}
           </>
         )}
+        <section id="campus-requests" className="mt-10 mb-8 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-blue-950 dark:bg-zinc-900 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold sm:text-xl">What students are looking for</h2>
+              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Open requests from your campus. Have it? Reach out to the requester.</p>
+            </div>
+            <Link href="/sell?mode=request" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Post a request</Link>
+          </div>
+          {loadingRequests ? <p role="status" className="text-sm text-gray-500">Loading requests…</p> : requestError ? (
+            <div role="alert" className="rounded-xl border border-amber-200 p-4 text-sm text-amber-800 dark:text-amber-200">
+              Requests could not be loaded. <button type="button" className="font-semibold underline" onClick={() => window.dispatchEvent(new Event('campustrader:requests-refresh'))}>Retry</button>
+            </div>
+          ) : studentRequests.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {studentRequests.map((request) => (
+                <Link key={request.id} href={`/requests/${request.id}`} className="rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
+                  <p className="font-semibold">{request.title}</p>
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
+                  <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
+                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">View request →</span>
+                </Link>
+              ))}
+            </div>
+          ) : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-600 dark:border-zinc-700 dark:text-zinc-400">No open requests are visible for this campus yet. Post the first request.</p>}
+        </section>
       </main>
 
       {filtersOpen ? (
