@@ -472,11 +472,11 @@ export default function Home() {
           ) : studentRequests.length ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {studentRequests.map((request) => (
-                <Link key={request.id} href={`/requests/${request.id}`} className="rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
+                <Link key={request.id} href={`/sell?request=${encodeURIComponent(request.id)}`} className="rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
                   <p className="font-semibold">{request.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
                   <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
-                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">View request →</span>
+                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">Offer this item →</span>
                 </Link>
               ))}
             </div>
