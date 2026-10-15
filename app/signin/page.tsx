@@ -191,8 +191,9 @@ function SignInPageContent() {
       setNotice({ tone: 'error', message: 'Choose your institution.' });
       return;
     }
-    if (!normalizeKenyanPhone(signupForm.phone)) {
-      setNotice({ tone: 'error', message: 'Enter a valid Kenyan WhatsApp number.' });
+    const normalizedPhone = signupForm.phone.trim() ? normalizeKenyanPhone(signupForm.phone) : null;
+    if (signupForm.phone.trim() && !normalizedPhone) {
+      setNotice({ tone: 'error', message: 'Enter a valid Kenyan WhatsApp number or leave it blank.' });
       return;
     }
     setSignupPending(true);
@@ -362,9 +363,8 @@ function SignInPageContent() {
                   onChange={(event) => setSignupForm((current) => ({ ...current, phone: event.target.value }))}
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   aria-describedby="phone-format"
-                  required
-                />
-                <span id="phone-format" className="mt-1 block text-xs text-slate-500">Use your WhatsApp number. It will appear automatically on your profile.</span>
+                  />
+                  <span id="phone-format" className="mt-1 block text-xs text-slate-500">Optional. If added, this WhatsApp number appears automatically on your profile.</span>
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email

@@ -569,11 +569,12 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
               </section>
 
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">WhatsApp</h3>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
-                  <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Save</button>
-                </div>
+  <h3 className="font-bold">WhatsApp</h3>
+  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your signup WhatsApp number is already used here. Only edit it if you need to change it.</p>
+  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="Optional: 07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+  <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Update number</button>
+  </div>
               </section>
 
               <section id="manage-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
