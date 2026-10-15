@@ -199,7 +199,7 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next, signupForm.institution);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, normalizedPhone ?? '', next, signupForm.institution);
 
     if (signup.error) {
       setSignupPending(false);

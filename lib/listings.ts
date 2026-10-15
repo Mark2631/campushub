@@ -226,15 +226,23 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    const { data, error } = await withTimeout(
+      query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit),
+      10000,
+      'Loading listings timed out. Please retry.',
+    );
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
       return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
-    const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
-    return { listings: liveListings, error: null };
+    const normalizedRows = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
+    // Render the listing rows immediately; seller enrichment should not block the marketplace.
+    void enrichListings(normalizedRows).catch((enrichmentError) => {
+      logSupabaseError('Listing seller enrichment failed:', enrichmentError);
+    });
+    return { listings: normalizedRows as Listing[], error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
     return { listings: [] as Listing[], error: GENERIC_ERROR };
