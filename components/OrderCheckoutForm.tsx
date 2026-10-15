@@ -56,6 +56,8 @@ export default function OrderCheckoutForm({ listingId, sellerId, listingPrice, l
   const protectionFee = paymentPreference === 'protected' ? subtotal * (config.platform_fee_percent / 100) : 0;
   const deliveryFee = deliveryOption === 'd_delivery' ? Number(selectedZone?.delivery_fee ?? 0) : 0;
   const canDeliver = config.delivery_enabled && config.delivery_zones.length > 0;
+  // The database's NOT_CONFIGURED placeholder must never be displayed as a live escrow till.
+  const protectedPaymentsReady = Boolean(config.merchant_till_display.trim()) && !['NOT_CONFIGURED', 'COMING_SOON', 'TBD'].includes(config.merchant_till_display.trim().toUpperCase());
 
   function stableKey() { orderKey.current ??= crypto.randomUUID(); return orderKey.current; }
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
@@ -69,7 +71,7 @@ export default function OrderCheckoutForm({ listingId, sellerId, listingPrice, l
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > checkoutConfig.max_quantity_per_order) {
       setErrorMessage(`Choose a whole-number quantity between 1 and ${checkoutConfig.max_quantity_per_order}.`); return;
     }
-    if (paymentPreference === 'protected' && !checkoutConfig.merchant_till_display) {
+    if (paymentPreference === 'protected' && !protectedPaymentsReady) {
       setErrorMessage('Protected payment is temporarily unavailable. Choose direct payment or try again later.'); return;
     }
     if (deliveryOption === 'd_delivery' && (!canDeliver || !selectedZone || !receiverName.trim() || !normalizeKenyanPhone(receiverPhone) || !dropoff.trim())) {
@@ -105,8 +107,8 @@ export default function OrderCheckoutForm({ listingId, sellerId, listingPrice, l
 
     <fieldset><legend className="text-sm font-semibold">How would you like to transact?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">
       <label className={`cursor-pointer rounded-xl border p-3 ${paymentPreference === 'direct' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-zinc-800'}`}><input className="sr-only" type="radio" name="payment" checked={paymentPreference === 'direct'} onChange={() => setPaymentPreference('direct')} disabled={Boolean(order)} /><span className="block text-sm font-semibold">Pay the seller directly</span><span className="text-xs text-slate-500 dark:text-zinc-400">Arrange cash or direct M-PESA yourself. CampusTrader does not verify or protect it.</span></label>
-      <label className={`rounded-xl border p-3 ${config.merchant_till_display ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${paymentPreference === 'protected' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-zinc-800'}`}><input className="sr-only" type="radio" name="payment" checked={paymentPreference === 'protected'} onChange={() => setPaymentPreference('protected')} disabled={!config.merchant_till_display || Boolean(order)} /><span className="block text-sm font-semibold">CampusTrader protected payment</span><span className="text-xs text-slate-500 dark:text-zinc-400">1% protection fee. Manual payment verification; no Daraja required.</span></label>
-    </div>{!config.merchant_till_display ? <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Protected payment is temporarily unavailable until payment instructions are configured. Direct orders remain available.</p> : null}</fieldset>
+      <label className={`rounded-xl border p-3 ${protectedPaymentsReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${paymentPreference === 'protected' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-zinc-800'}`}><input className="sr-only" type="radio" name="payment" checked={paymentPreference === 'protected'} onChange={() => setPaymentPreference('protected')} disabled={!protectedPaymentsReady || Boolean(order)} /><span className="block text-sm font-semibold">CampusTrader protected payment</span><span className="text-xs text-slate-500 dark:text-zinc-400">Coming soon. Available only after the CampusTrader payment till and verification workflow are configured.</span></label>
+    </div>{!protectedPaymentsReady ? <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Protected payment is temporarily unavailable until payment instructions are configured. Direct orders remain available.</p> : null}</fieldset>
 
     <fieldset><legend className="text-sm font-semibold">How will you get the item?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2"><label className={`cursor-pointer rounded-xl border p-3 ${deliveryOption === 'pickup' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-zinc-800'}`}><input className="sr-only" type="radio" name="fulfillment" checked={deliveryOption === 'pickup'} onChange={() => setDeliveryOption('pickup')} disabled={Boolean(order)} /><span className="block text-sm font-semibold">I’ll pick it up</span><span className="text-xs text-slate-500 dark:text-zinc-400">KSh 0</span></label><label className={`rounded-xl border p-3 ${canDeliver ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${deliveryOption === 'd_delivery' ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-zinc-800'}`}><input className="sr-only" type="radio" name="fulfillment" checked={deliveryOption === 'd_delivery'} onChange={() => setDeliveryOption('d_delivery')} disabled={!canDeliver || Boolean(order)} /><span className="block text-sm font-semibold">D-Delivery</span><span className="text-xs text-slate-500 dark:text-zinc-400">Paid directly to the rider after delivery.</span></label></div></fieldset>
 
