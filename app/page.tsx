@@ -10,6 +10,8 @@ import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
 import { getItemRequests, type ItemRequest } from '../lib/itemRequests';
+import { sendMessage } from '../lib/conversations';
+import { supabase } from '../lib/supabase';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
 
 const categories = STANDARD_CATEGORIES;
@@ -79,6 +81,9 @@ export default function Home() {
   const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<ItemRequest | null>(null);
+  const [messagingRequest, setMessagingRequest] = useState(false);
+  const [requestMessageError, setRequestMessageError] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -244,6 +249,30 @@ export default function Home() {
   const visibleCategorySections = activeCategory === 'All'
     ? categorySections
     : categorySections.filter((section) => section.category === activeCategory);
+
+  const messageRequestOwner = async () => {
+    if (!user || !selectedRequest || messagingRequest || user.id === selectedRequest.user_id) return;
+    setMessagingRequest(true);
+    setRequestMessageError(null);
+    try {
+      const { data: existing, error: lookupError } = await supabase.from('conversations')
+        .select('id').is('listing_id', null)
+        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${selectedRequest.user_id}),and(buyer_id.eq.${selectedRequest.user_id},seller_id.eq.${user.id})`)
+        .limit(1).maybeSingle();
+      if (lookupError) throw lookupError;
+      if (existing) { window.location.assign(`/messages/${existing.id}`); return; }
+      const { data: conversation, error: createError } = await supabase.from('conversations')
+        .insert({ listing_id: null, buyer_id: user.id, seller_id: selectedRequest.user_id })
+        .select('id').single();
+      if (createError || !conversation) throw createError || new Error('Conversation could not be created');
+      const { error: sendError } = await sendMessage(conversation.id, user.id, `Hi, I’m interested in your request: ${selectedRequest.title}. Is this still needed?`);
+      if (sendError) console.warn('Request conversation created, but initial message failed:', sendError);
+      window.location.assign(`/messages/${conversation.id}`);
+    } catch (err) {
+      console.error('Could not start request conversation:', err);
+      setRequestMessageError('Could not start a conversation. Please try again.');
+    } finally { setMessagingRequest(false); }
+  };
 
   const listingsForCategorySection = (category: string) => {
     if (category === 'Services') return sectionBuckets.services;
@@ -463,17 +492,39 @@ export default function Home() {
           ) : studentRequests.length ? (
             <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3 [scrollbar-width:thin]">
               {studentRequests.map((request) => (
-                <Link key={request.id} href={`/requests/${request.id}`} className="w-[78vw] max-w-[290px] shrink-0 snap-start rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
+                <button key={request.id} type="button" onClick={() => { setSelectedRequest(request); setRequestMessageError(null); }} className="w-[78vw] max-w-[290px] shrink-0 snap-start rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-blue-400 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                   <p className="font-semibold">{request.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
                   <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
                   <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">View request & message →</span>
-                </Link>
+                </button>
               ))}
             </div>
           ) : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-600 dark:border-zinc-700 dark:text-zinc-400">No open requests are visible for this campus yet. Post the first request.</p>}
         </section>
       </main>
+
+      {selectedRequest ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-3 sm:items-center" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedRequest(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="request-detail-title" className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-gray-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-950 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div><p className="text-xs font-bold uppercase tracking-wide text-blue-600">Campus request · {selectedRequest.category}</p><h2 id="request-detail-title" className="mt-2 text-xl font-bold">{selectedRequest.title}</h2></div>
+              <button type="button" onClick={() => setSelectedRequest(null)} aria-label="Close request details" className="rounded-full border border-gray-200 px-3 py-1 text-sm dark:border-zinc-700">Close</button>
+            </div>
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-zinc-300">{selectedRequest.description || 'No extra details were provided.'}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-zinc-900"><p className="text-xs text-gray-500">Budget</p><p className="mt-1 font-semibold">{selectedRequest.min_price != null || selectedRequest.max_price != null ? `KSh ${selectedRequest.min_price != null ? Number(selectedRequest.min_price).toLocaleString('en-KE') : '0'} – ${selectedRequest.max_price != null ? Number(selectedRequest.max_price).toLocaleString('en-KE') : 'Open'}` : 'Not specified'}</p></div>
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-zinc-900"><p className="text-xs text-gray-500">Location</p><p className="mt-1 font-semibold">{selectedRequest.location || institution || 'Campus'}</p></div>
+            </div>
+            {user?.id === selectedRequest.user_id ? <p className="mt-5 rounded-xl bg-gray-50 p-3 text-sm text-gray-600 dark:bg-zinc-900 dark:text-zinc-300">This is your request. Other students can message you about it.</p> : !user ? (
+              <Link href="/signin?mode=signin" className="mt-5 block rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white">Sign in to message requester</Link>
+            ) : (
+              <button type="button" disabled={messagingRequest} onClick={messageRequestOwner} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">{messagingRequest ? 'Opening conversation…' : 'Message requester'}</button>
+            )}
+            {requestMessageError ? <p role="alert" className="mt-3 text-sm text-red-600">{requestMessageError}</p> : null}
+          </section>
+        </div>
+      ) : null}
 
       {filtersOpen ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 py-4 sm:items-center">
