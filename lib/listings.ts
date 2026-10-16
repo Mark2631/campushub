@@ -213,6 +213,15 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
   };
 }
 
+async function enrichListingsWithDeadline(rows: ListingRow[]): Promise<Listing[]> {
+  if (!rows.length) return [];
+  // Listing cards must not disappear when seller profile enrichment is slow.
+  return Promise.race([
+    enrichListings(rows),
+    new Promise<Listing[]>((resolve) => setTimeout(() => resolve(rows as Listing[]), 2500)),
+  ]);
+}
+
 export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
   try {
     const query = supabase
@@ -233,7 +242,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
-    const liveListings = await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
+    const liveListings = await enrichListingsWithDeadline(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
@@ -260,7 +269,7 @@ export async function getServiceListings(limit = 12, institution: string = DEFAU
       return { listings: [] as Listing[], error: null };
     }
 
-    return { listings: await enrichListings(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
+    return { listings: await enrichListingsWithDeadline(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
   } catch (err) {
     console.error('Unexpected error fetching service listings:', err);
     return { listings: [] as Listing[], error: null };
@@ -435,7 +444,7 @@ export async function getListingById(id: string) {
       return { listing: null, error: null };
     }
 
-    const [listing] = await enrichListings([data as ListingRow]);
+    const [listing] = await enrichListingsWithDeadline([normalizeListingRow(data as ListingRow)]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listing by id:', err);

@@ -77,6 +77,7 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user, institution } = useUser();
+  const [showingMeruFallback, setShowingMeruFallback] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -113,8 +114,14 @@ export default function Home() {
 
     const loadListings = async (options?: { initial?: boolean }) => {
       if (isMounted && options?.initial) setLoadingListings(true);
-      const { listings: rows, error } = await getListings(listingsPageSize, 0, institution);
+      const primaryInstitution = user ? institution : 'MUST';
+      const result = await getListings(listingsPageSize, 0, primaryInstitution);
+      const shouldFallback = !result.error && result.listings.length === 0 && primaryInstitution !== 'MUST';
+      const fallback = shouldFallback ? await getListings(listingsPageSize, 0, 'MUST') : null;
+      const rows = fallback?.listings || result.listings;
+      const error = fallback?.error || result.error;
       if (!isMounted) return;
+      setShowingMeruFallback(Boolean(shouldFallback && fallback?.listings.length));
       setListings(rows);
       setListingOffset(rows.length);
       setHasMoreListings(rows.length === listingsPageSize);
@@ -132,7 +139,7 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, [institution]);
+  }, [institution, user]);
 
   useEffect(() => {
     let mounted = true;
@@ -306,7 +313,7 @@ export default function Home() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">Trade faster with a free account.</p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Post listings, send messages, follow MUST groups, and manage your profile.</p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Post listings, send messages, explore campus communities, and manage your profile.</p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex">
                 <Link href="/signin?mode=signup" className="rounded-2xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -375,6 +382,10 @@ export default function Home() {
           <SafetyBanner />
         </div>
 
+        {showingMeruFallback && !loadingListings ? (
+          <p className="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">No listings at your institution yet. Showing available listings from Meru University so you can explore CampusTrader.</p>
+        ) : null}
+
         {loadingListings ? (
           <ListingSkeletons />
         ) : (
@@ -410,7 +421,7 @@ export default function Home() {
                 </p>
                 <p className="mx-auto mt-2 max-w-md text-sm">
                   {listings.length === 0
-                    ? 'Start with an item, service, or campus deal that MUST students can inspect before paying.'
+                    ? 'Start with an item, service, or campus deal that students can inspect before paying.'
                     : activeBrowseTab === 'Requests'
                       ? 'Post a request from the Sell tab so nearby students can respond.'
                       : 'Try another section, clear filters, or post what you need from the Sell tab.'}
