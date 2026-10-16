@@ -111,10 +111,10 @@ async function enrichListings(rows: ListingRow[]) {
     fetchPublicBusinesses(businessIds),
   ]);
 
-  if (profilesResponse.error) {
+  if (profilesResponse?.error) {
     logSupabaseError('Error enriching listing profiles:', profilesResponse.error);
   }
-  if (businessesResponse.error) {
+  if (businessesResponse?.error) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
 
