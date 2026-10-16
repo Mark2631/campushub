@@ -77,13 +77,7 @@ async function fetchPublicProfiles(sellerIds: string[]) {
     return { data: (publicResponse.data || []) as ProfileRow[], error: null };
   }
 
-  logSupabaseError('Marketplace profile view fetch failed:', publicResponse.error);
-  const fallbackResponse = await supabase
-    .from('profiles')
-    .select('id, full_name, avatar_url, badge_type, verification_status, created_at')
-    .in('id', sellerIds);
-
-  return { data: (fallbackResponse.data || []) as ProfileRow[], error: fallbackResponse.error };
+  // Never query the private profiles table from public listing pages.\n  // Missing seller decoration must not make the listing unavailable.\n  return { data: [] as ProfileRow[], error: null };
 }
 
 async function fetchPublicBusinesses(businessIds: string[]) {
@@ -98,13 +92,7 @@ async function fetchPublicBusinesses(businessIds: string[]) {
     return { data: (publicResponse.data || []) as BusinessRow[], error: null };
   }
 
-  logSupabaseError('Marketplace business view fetch failed:', publicResponse.error);
-  const fallbackResponse = await supabase
-    .from('businesses')
-    .select('id, business_name, verification_status, badge_type')
-    .in('id', businessIds);
-
-  return { data: (fallbackResponse.data || []) as BusinessRow[], error: fallbackResponse.error };
+  // Do not fall back to private business records during public discovery.\n  return { data: [] as BusinessRow[], error: null };
 }
 
 function logSupabaseError(label: string, error: unknown, extra?: unknown) {
@@ -123,15 +111,15 @@ async function enrichListings(rows: ListingRow[]) {
     fetchPublicBusinesses(businessIds),
   ]);
 
-  if (profilesResponse.error) {
+  if (profilesResponse?.error) {
     logSupabaseError('Error enriching listing profiles:', profilesResponse.error);
   }
-  if (businessesResponse.error) {
+  if (businessesResponse?.error) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
 
-  const profilesById = new Map((profilesResponse.data || []).map((profile) => [profile.id, profile as ProfileRow]));
-  const businessesById = new Map((businessesResponse.data || []).map((business) => [business.id, business as BusinessRow]));
+  const profilesById = new Map((profilesResponse?.data || []).map((profile) => [profile.id, profile as ProfileRow]));
+  const businessesById = new Map((businessesResponse?.data || []).map((business) => [business.id, business as BusinessRow]));
 
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
