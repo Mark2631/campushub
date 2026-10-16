@@ -444,15 +444,6 @@ export default function Home() {
                     </button>
                   </div>
                 ) : null}
-                <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-950 dark:bg-amber-950/20">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold text-amber-950 dark:text-amber-100">Can&apos;t find what you need?</h2>
-                      <p className="mt-1 text-sm text-amber-900/75 dark:text-amber-100/75">Post a request and let students from {institution} respond.</p>
-                    </div>
-                    <Link href="/sell?mode=request" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-700">Post a request</Link>
-                  </div>
-                </section>
               </>
             )}
           </>
@@ -470,13 +461,13 @@ export default function Home() {
               Requests could not be loaded. <button type="button" className="font-semibold underline" onClick={() => window.dispatchEvent(new Event('campustrader:requests-refresh'))}>Retry</button>
             </div>
           ) : studentRequests.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3 [scrollbar-width:thin]">
               {studentRequests.map((request) => (
-                <Link key={request.id} href={`/sell?request=${encodeURIComponent(request.id)}`} className="rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
+                <Link key={request.id} href={`/requests/${request.id}`} className="w-[78vw] max-w-[290px] shrink-0 snap-start rounded-xl border border-gray-200 p-4 transition hover:border-blue-400 dark:border-zinc-700">
                   <p className="font-semibold">{request.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
                   <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
-                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">Offer this item →</span>
+                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">View request & message →</span>
                 </Link>
               ))}
             </div>
