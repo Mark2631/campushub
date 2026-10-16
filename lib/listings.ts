@@ -118,8 +118,8 @@ async function enrichListings(rows: ListingRow[]) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
 
-  const profilesById = new Map((profilesResponse.data || []).map((profile) => [profile.id, profile as ProfileRow]));
-  const businessesById = new Map((businessesResponse.data || []).map((business) => [business.id, business as BusinessRow]));
+  const profilesById = new Map((profilesResponse?.data || []).map((profile) => [profile.id, profile as ProfileRow]));
+  const businessesById = new Map((businessesResponse?.data || []).map((business) => [business.id, business as BusinessRow]));
 
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
