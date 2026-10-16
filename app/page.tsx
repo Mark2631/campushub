@@ -396,7 +396,7 @@ export default function Home() {
                 </button>
               </div>
             ) : null}
-            {filteredListings.length === 0 ? (
+            {filteredListings.length === 0 ? (activeBrowseTab === 'Requests' ? null : (
               <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-semibold text-blue-600 dark:bg-blue-950 dark:text-blue-200">
                   +
@@ -421,7 +421,7 @@ export default function Home() {
                     </Link>
                 </div>
               </div>
-            ) : (
+            )) : (
               <>
                 {!hasActiveBrowseFilter && (sectionBuckets.recent.length > 0 ? (
                   <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
