@@ -139,7 +139,7 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, [institution, user]);
+  }, [institution, user?.id]);
 
   useEffect(() => {
     let mounted = true;
