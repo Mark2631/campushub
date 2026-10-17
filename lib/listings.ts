@@ -230,7 +230,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
-    const liveListings = await enrichListingsWithDeadline(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow));
+    const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow) as Listing[];
     return { listings: liveListings, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
@@ -257,7 +257,7 @@ export async function getServiceListings(limit = 12, institution: string = DEFAU
       return { listings: [] as Listing[], error: null };
     }
 
-    return { listings: await enrichListingsWithDeadline(((data || []) as Partial<ListingRow>[]).map(normalizeListingRow)), error: null };
+    return { listings: ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow) as Listing[], error: null };
   } catch (err) {
     console.error('Unexpected error fetching service listings:', err);
     return { listings: [] as Listing[], error: null };

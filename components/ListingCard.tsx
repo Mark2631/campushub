@@ -14,7 +14,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/listing/${listing.id}`}
-      prefetch
+      prefetch={false}
       aria-label={`View ${listing.title}`}
       className="group block min-h-full touch-manipulation overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
