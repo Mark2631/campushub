@@ -115,9 +115,20 @@ export default function Home() {
     const loadListings = async (options?: { initial?: boolean }) => {
       if (isMounted && options?.initial) setLoadingListings(true);
       const primaryInstitution = user ? institution : 'MUST';
-      const result = await getListings(listingsPageSize, 0, primaryInstitution);
+      // Never leave pilot users staring at skeletons indefinitely on a stalled network.
+      const result = await Promise.race([
+        getListings(listingsPageSize, 0, primaryInstitution),
+        new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) =>
+          setTimeout(() => resolve({ listings: [], error: 'Listing request timed out. Please retry.' }), 10000)
+        ),
+      ]);
       const shouldFallback = !result.error && result.listings.length === 0 && primaryInstitution !== 'MUST';
-      const fallback = shouldFallback ? await getListings(listingsPageSize, 0, 'MUST') : null;
+      const fallback = shouldFallback ? await Promise.race([
+        getListings(listingsPageSize, 0, 'MUST'),
+        new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) =>
+          setTimeout(() => resolve({ listings: [], error: 'Listing request timed out. Please retry.' }), 10000)
+        ),
+      ]) : null;
       const rows = fallback?.listings || result.listings;
       const error = fallback?.error || result.error;
       if (!isMounted) return;
