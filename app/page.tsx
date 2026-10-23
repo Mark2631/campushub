@@ -9,7 +9,7 @@ import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
 import { getProfileById } from '../lib/profiles';
-import { getItemRequests, type ItemRequest } from '../lib/itemRequests';
+import { deleteItemRequest, getItemRequests, type ItemRequest } from '../lib/itemRequests';
 import { sendMessage } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
@@ -77,6 +77,8 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user, institution } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingRequest, setDeletingRequest] = useState(false);
   const [showingMeruFallback, setShowingMeruFallback] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
@@ -154,11 +156,23 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
+    if (!user) {
+      setIsAdmin(false);
+      return () => { mounted = false; };
+    }
+    void supabase.rpc('is_admin').then(({ data, error }) => {
+      if (mounted) setIsAdmin(!error && data === true);
+    });
+    return () => { mounted = false; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let mounted = true;
     const refreshRequests = async () => {
       if (mounted) setLoadingRequests(true);
-      const { requests, error } = await getItemRequests(30, institution);
+      const { requests, error } = await getItemRequests(isAdmin ? 100 : 30, institution, isAdmin);
       if (!mounted) return;
-      setStudentRequests(requests.slice(0, 6));
+      setStudentRequests(requests);
       setRequestError(error);
       setLoadingRequests(false);
     };
@@ -168,7 +182,7 @@ export default function Home() {
       mounted = false;
       window.removeEventListener('campustrader:requests-refresh', refreshRequests);
     };
-  }, [institution]);
+  }, [institution, isAdmin, user?.id]);
 
   useEffect(() => {
     logCategoryStats(listings);
@@ -267,6 +281,30 @@ export default function Home() {
   const visibleCategorySections = activeCategory === 'All'
     ? categorySections
     : categorySections.filter((section) => section.category === activeCategory);
+
+  const removeSelectedRequest = async () => {
+    if (!selectedRequest || !user || deletingRequest) return;
+    const canDelete = isAdmin || user.id === selectedRequest.user_id;
+    if (!canDelete) return;
+    const confirmed = window.confirm(
+      isAdmin && user.id !== selectedRequest.user_id
+        ? 'Delete this student request? This removes it from CampusTrader.'
+        : 'Delete your request? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setDeletingRequest(true);
+    setRequestMessageError(null);
+    const result = await deleteItemRequest(selectedRequest.id);
+    setDeletingRequest(false);
+    if (result.error) {
+      setRequestMessageError(result.error);
+      return;
+    }
+    setStudentRequests((current) => current.filter((request) => request.id !== selectedRequest.id));
+    setSelectedRequest(null);
+    window.dispatchEvent(new Event('campustrader:requests-refresh'));
+  };
 
   const messageRequestOwner = async () => {
     if (!user || !selectedRequest || messagingRequest || user.id === selectedRequest.user_id) return;
@@ -518,7 +556,8 @@ export default function Home() {
                   <p className="font-semibold">{request.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
                   <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
-                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">View request & message →</span>
+                  {(isAdmin || user?.id === request.user_id) && request.status !== 'open' ? <span className="mt-2 inline-block rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{request.status}</span> : null}
+                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">{isAdmin ? 'Review request →' : 'View request & message →'}</span>
                 </button>
               ))}
             </div>
@@ -543,6 +582,16 @@ export default function Home() {
             ) : (
               <button type="button" disabled={messagingRequest} onClick={messageRequestOwner} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">{messagingRequest ? 'Opening conversation…' : 'Message requester'}</button>
             )}
+            {(isAdmin || user?.id === selectedRequest.user_id) ? (
+              <button
+                type="button"
+                disabled={deletingRequest}
+                onClick={removeSelectedRequest}
+                className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300"
+              >
+                {deletingRequest ? 'Deleting request…' : isAdmin && user?.id !== selectedRequest.user_id ? 'Delete request (admin)' : 'Delete my request'}
+              </button>
+            ) : null}
             {requestMessageError ? <p role="alert" className="mt-3 text-sm text-red-600">{requestMessageError}</p> : null}
           </section>
         </div>

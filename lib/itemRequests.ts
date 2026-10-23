@@ -37,14 +37,16 @@ function parseOptionalPrice(value?: string | number | null) {
   return parseOptionalNumber(value);
 }
 
-export async function getItemRequests(limit = 10, institution?: string) {
+export async function getItemRequests(limit = 10, institution?: string, adminMode = false) {
   try {
-    const institutionId = institution ? await getInstitutionIdForCode(normalizeInstitution(institution)) : null;
-    const query = supabase
+    const institutionId = !adminMode && institution ? await getInstitutionIdForCode(normalizeInstitution(institution)) : null;
+    let query = supabase
       .from('item_requests')
-      .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at')
-      .eq('status', 'open');
-    const { data, error } = await (institutionId ? query.eq('institution_id', institutionId) : institution ? query.eq('campus', normalizeInstitution(institution)) : query)
+      .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at');
+    if (!adminMode) query = query.eq('status', 'open');
+    if (institutionId) query = query.eq('institution_id', institutionId);
+    else if (!adminMode && institution) query = query.eq('campus', normalizeInstitution(institution));
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -53,7 +55,27 @@ export async function getItemRequests(limit = 10, institution?: string) {
       return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
     }
 
-    return { requests: (data || []) as ItemRequest[], error: null };
+    let rows = (data || []) as ItemRequest[];
+    if (!adminMode) {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData.user) {
+        // Keep the author's own requests visible even if they are older than the public carousel
+        // or have since been closed. RLS still decides which rows this user may read.
+        const { data: ownRows, error: ownError } = await supabase
+          .from('item_requests')
+          .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at')
+          .eq('user_id', authData.user.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (!ownError && ownRows?.length) {
+          const byId = new Map<string, ItemRequest>();
+          [...(ownRows as ItemRequest[]), ...rows].forEach((row) => byId.set(row.id, row));
+          rows = [...byId.values()].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      }
+    }
+
+    return { requests: rows, error: null };
   } catch (err) {
     console.error('Unexpected error fetching item requests:', err);
     return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
@@ -172,5 +194,33 @@ export async function createItemRequest(
   } catch (err) {
     console.error('Unexpected error creating item request:', err);
     return { request: null as ItemRequest | null, error: GENERIC_ERROR };
+  }
+}
+
+/** Delete a request through RLS: its author may delete their own row; admins may delete any row. */
+export async function deleteItemRequest(requestId: string) {
+  if (!isValidUuid(requestId)) {
+    return { error: 'That request could not be found.' };
+  }
+
+  try {
+    const { error } = await supabase
+      .from('item_requests')
+      .delete()
+      .eq('id', requestId);
+
+    if (error) {
+      console.error('Error deleting item request:', serializeError(error));
+      return {
+        error: error.code === '42501'
+          ? 'You can only delete your own requests unless you are an administrator.'
+          : 'Could not delete this request. Please try again.',
+      };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error('Unexpected error deleting item request:', err);
+    return { error: 'Could not delete this request. Please try again.' };
   }
 }
