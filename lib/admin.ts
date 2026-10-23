@@ -684,104 +684,65 @@ export async function terminateBusiness(businessId: string, adminId: string, rea
 // LISTING MODERATION
 // ============================================================================
 
-export async function hideListing(listingId: string, adminId: string, reason: string) {
+type AdminListingAction = 'hide' | 'restore' | 'delete';
+
+async function runAdminListingAction(
+  listingId: string,
+  adminId: string,
+  action: AdminListingAction,
+  reason?: string
+): Promise<{ error: string | null }> {
   if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
   if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
 
-  const { error } = await Promise.all([
-    supabase
-      .from('listings')
-      .update({
-        status: 'hidden',
-        hidden_by: adminId,
-        hidden_at: new Date().toISOString(),
-      })
-      .eq('id', listingId),
-    supabase.from('admin_actions').insert({
-      admin_id: adminId,
-      action_type: 'listing_hide',
-      target_type: 'listing',
-      target_id: listingId,
-      reason,
-    }),
-  ]).then((results) => {
-    const errors = results.map((r) => r.error).filter(Boolean);
-    return errors.length > 0 ? { error: errors[0] } : { error: null };
-  });
+  try {
+    const { data, error } = await supabase.rpc('admin_moderate_listing', {
+      p_listing_id: listingId,
+      p_action: action,
+      p_reason: reason || null,
+    });
 
-  if (error) {
-    console.error('Error hiding listing:', error);
-    return invalidAdminAction();
+    if (error) {
+      console.error(`Admin listing ${action} failed:`, {
+        code: error.code,
+        message: error.message,
+        listingId,
+      });
+
+      if (error.code === '42501') return invalidAdminAction();
+      if (error.code === 'P0002') {
+        return { error: 'This listing no longer exists. Refresh the admin dashboard and try again.' };
+      }
+      return {
+        error: action === 'delete'
+          ? 'Could not delete this listing. Please retry.'
+          : action === 'hide'
+            ? 'Could not hide this listing. Please retry.'
+            : 'Could not restore this listing. Please retry.',
+      };
+    }
+
+    if (data !== listingId) {
+      return { error: 'The listing was not changed. Refresh the admin dashboard and try again.' };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error(`Unexpected admin listing ${action} failure:`, err);
+    return { error: 'The listing action failed unexpectedly. Please retry.' };
   }
+}
 
-  return { error: null };
+export async function hideListing(listingId: string, adminId: string, reason: string) {
+  return runAdminListingAction(listingId, adminId, 'hide', reason);
 }
 
 export async function restoreListing(listingId: string, adminId: string) {
-  if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
-  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
-
-  const { error } = await Promise.all([
-    supabase
-      .from('listings')
-      .update({
-        status: 'active',
-        hidden_by: null,
-        hidden_at: null,
-        deleted_by: null,
-        deleted_at: null,
-      })
-      .eq('id', listingId),
-    supabase.from('admin_actions').insert({
-      admin_id: adminId,
-      action_type: 'listing_restore',
-      target_type: 'listing',
-      target_id: listingId,
-    }),
-  ]).then((results) => {
-    const errors = results.map((r) => r.error).filter(Boolean);
-    return errors.length > 0 ? { error: errors[0] } : { error: null };
-  });
-
-  if (error) {
-    console.error('Error restoring listing:', error);
-    return invalidAdminAction();
-  }
-
-  return { error: null };
+  return runAdminListingAction(listingId, adminId, 'restore');
 }
 
 export async function deleteListingAsAdmin(listingId: string, adminId: string, reason: string) {
-  if (!idsAreValid(listingId, adminId)) return invalidAdminAction();
-  if (!(await assertCurrentUserIsAdmin(adminId))) return invalidAdminAction();
-
-  const { error } = await Promise.all([
-    supabase
-      .from('listings')
-      .update({
-        status: 'hidden',
-        deleted_by: adminId,
-        deleted_at: new Date().toISOString(),
-      })
-      .eq('id', listingId),
-    supabase.from('admin_actions').insert({
-      admin_id: adminId,
-      action_type: 'listing_delete',
-      target_type: 'listing',
-      target_id: listingId,
-      reason,
-    }),
-  ]).then((results) => {
-    const errors = results.map((r) => r.error).filter(Boolean);
-    return errors.length > 0 ? { error: errors[0] } : { error: null };
-  });
-
-  if (error) {
-    console.error('Error deleting listing:', error);
-    return invalidAdminAction();
-  }
-
-  return { error: null };
+  return runAdminListingAction(listingId, adminId, 'delete', reason);
 }
 
 // ============================================================================
