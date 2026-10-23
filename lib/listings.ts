@@ -214,7 +214,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
   try {
     const query = supabase
       .from('listings')
-      .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active');
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
@@ -230,8 +230,11 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
-    const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow) as Listing[];
-    return { listings: liveListings, error: null };
+    const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
+    // The feed uses description, negotiable, and sellerType in its filters.
+    // Enrich seller metadata as well so verified/business badges are accurate;
+    // the deadline fallback keeps listing cards visible on a slow profile query.
+    return { listings: await enrichListingsWithDeadline(liveListings), error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
     return { listings: [] as Listing[], error: GENERIC_ERROR };
