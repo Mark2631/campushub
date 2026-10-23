@@ -280,7 +280,8 @@ export default function AdminPage() {
   };
 
   const confirmAction = async () => {
-    if (!authUser?.id) return;
+    if (!authUser?.id || workingId !== null) return;
+    setWorkingId('modal-action');
 
     try {
       let error = null;
@@ -378,20 +379,24 @@ export default function AdminPage() {
           break;
       }
 
-      setModalState({ type: null });
-
       if (error) {
+        // Keep the dialog and entered reason visible so the admin can retry
+        // or correct the reason instead of having to reopen the action.
         setMessage({ type: 'error', text: error });
         showToast({ type: 'error', message: error });
-      } else {
-        setMessage({ type: 'success', text: 'Action completed successfully.' });
-        showToast({ type: 'success', message: 'Action completed successfully.' });
-        await loadDashboard();
+        return;
       }
+
+      setModalState({ type: null });
+      setMessage({ type: 'success', text: 'Action completed successfully.' });
+      showToast({ type: 'success', message: 'Action completed successfully.' });
+      await loadDashboard();
     } catch (err) {
       console.error('Error in confirmAction:', err);
-      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
-      showToast({ type: 'error', message: 'An unexpected error occurred.' });
+      setMessage({ type: 'error', text: 'The action failed unexpectedly. Your changes were not confirmed; retry or refresh the dashboard.' });
+      showToast({ type: 'error', message: 'The action failed unexpectedly. Your changes were not confirmed; retry or refresh the dashboard.' });
+    } finally {
+      setWorkingId(null);
     }
   };
 
