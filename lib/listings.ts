@@ -453,18 +453,35 @@ export async function updateListingLifecycleStatus(
     return { error: GENERIC_ERROR };
   }
 
-  const { error } = await supabase
-    .from('listings')
-    .update({ status })
-    .eq('id', listingId)
-    .eq('seller_id', sellerId);
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .update({ status })
+      .eq('id', listingId)
+      .eq('user_id', sellerId)
+      .eq('seller_id', sellerId)
+      .select('id, status')
+      .maybeSingle();
 
-  if (error) {
-    logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
+    if (error) {
+      logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
+      if (error.code === '42501') {
+        return { error: 'We could not update this listing. Refresh your profile and try again.' };
+      }
+      return { error: GENERIC_ERROR };
+    }
+
+    // PostgREST can return no error when row-level security silently matches
+    // zero rows. Do not report success until the seller-owned row is returned.
+    if (!data || data.id !== listingId || data.status !== status) {
+      return { error: 'This listing was not updated. Refresh your profile and try again.' };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error('Unexpected error updating listing lifecycle status:', err);
     return { error: GENERIC_ERROR };
   }
-
-  return { error: null };
 }
 
 export async function updateListing(
