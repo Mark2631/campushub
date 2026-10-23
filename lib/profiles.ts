@@ -84,16 +84,19 @@ export async function ensureProfile(user: User) {
   const current = existing.profile;
 
   if (current) {
-    // Do not upsert an existing profile with institution_id/campus. PostgreSQL
-    // runs the BEFORE INSERT guard for an upsert before resolving the conflict,
-    // and legacy campus labels can map to a different institution. Updating
-    // only editable presentation fields preserves the selected signup campus
-    // and avoids repeatedly failing every profile sync.
-    const patch: Record<string, string | null> = {
-      email: user.email || null,
-    };
+    // Never upsert institution fields for an existing profile. PostgreSQL runs
+    // a BEFORE INSERT trigger for an upsert before resolving its conflict; a
+    // stale campus label could otherwise make routine sync fail every time.
+    // An UPDATE of only editable fields preserves the original signup campus
+    // and cannot accidentally change a user's role or verification state.
+    const patch: Record<string, string | null> = {};
+    if (user.email && current.email !== user.email) patch.email = user.email;
     if (!current.full_name && fullName) patch.full_name = fullName;
     if (!current.avatar_url && avatarUrl) patch.avatar_url = avatarUrl;
+
+    if (Object.keys(patch).length === 0) {
+      return { profile: current as ProfileRecord, error: null };
+    }
 
     const { data, error } = await supabase
       .from('profiles')
@@ -104,16 +107,14 @@ export async function ensureProfile(user: User) {
 
     if (error) {
       console.error('Existing profile sync failed:', serializeError(error));
-      return { profile: current, error: GENERIC_ERROR };
+      return { profile: current as ProfileRecord, error: GENERIC_ERROR };
     }
 
     return { profile: (data || current) as ProfileRecord, error: null };
   }
 
-  // For a new profile, derive the institution from the same signup metadata
-  // source and precedence used by guard_profile_privileged_fields(). Let the
-  // database defaults set privileged fields (role, badge, verification,
-  // email_verified, and account status) to safe non-admin values.
+  // Match the database trigger's signup metadata precedence exactly. New
+  // non-admin profiles use table defaults for privileged fields.
   const rawInstitution =
     user.user_metadata?.institution_code ||
     user.user_metadata?.institution ||
@@ -134,15 +135,28 @@ export async function ensureProfile(user: User) {
     };
   }
 
-  const { data, error } = await safeUpsert('profiles', {
+  const isKnownAdminEmail = user.email?.toLowerCase() === 'mwanginewton107@gmail.com';
+  const payload: Record<string, unknown> = {
     id: user.id,
     email: user.email || null,
     full_name: fullName,
     avatar_url: avatarUrl,
     campus: institutionCode,
     institution_id: institutionId,
-  });
+  };
 
+  // The database remains the source of truth for admin membership. These
+  // values are included only for the existing bootstrap admin; trigger-level
+  // admin verification rejects equivalent attempts by ordinary users.
+  if (isKnownAdminEmail) {
+    payload.role = 'admin';
+    payload.verification_status = 'verified';
+    payload.badge_type = 'admin';
+    payload.account_status = 'active';
+    payload.email_verified = Boolean(user.email_confirmed_at);
+  }
+
+  const { data, error } = await safeUpsert('profiles', payload);
   if (error) {
     console.error('New profile creation failed:', serializeError(error));
     return { profile: null, error };
