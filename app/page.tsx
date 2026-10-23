@@ -30,7 +30,7 @@ function readMarketplaceUrlState() {
   const rawCategory = params.get('category') || 'All';
   const category = browseTab !== 'All'
     ? 'All'
-    : rawCategory === 'All' || categories.includes(rawCategory)
+    : rawCategory === 'All' || categories.some((category) => category === rawCategory)
       ? rawCategory
       : 'All';
 
