@@ -506,8 +506,8 @@ export default function Home() {
                     : 'Try another section, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
-                    <Link href={activeBrowseTab === 'Requests' ? '/sell?mode=request' : '/sell'} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                      {activeBrowseTab === 'Requests' ? 'Post a request' : 'Post listing'}
+                    <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                      Post listing
                     </Link>
                 </div>
               </div>
