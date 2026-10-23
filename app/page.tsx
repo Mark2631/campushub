@@ -437,10 +437,12 @@ export default function Home() {
                     const nextBrowseTab = tab as BrowseTab;
                     setActiveBrowseTab(nextBrowseTab);
                     setActiveCategory('All');
+                    setDebouncedQuery(query.trim());
                     writeMarketplaceUrlState(query, 'All', nextBrowseTab, 'push');
                   } else {
                     setActiveBrowseTab('All');
                     setActiveCategory(tab);
+                    setDebouncedQuery(query.trim());
                     writeMarketplaceUrlState(query, tab, 'All', 'push');
                   }
                 }}
