@@ -202,23 +202,44 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   };
 
   const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
-    if (!user) return;
+    if (!user || listingActionId) return;
+
     setListingActionId(listingId);
     setMessage(null);
-    const { error } = await updateListingLifecycleStatus(listingId, user.id, status);
-    setListingActionId(null);
 
-    if (error) {
-      console.error('Listing status update failed:', error);
-      setCleanError();
-      return;
+    try {
+      const { error } = await updateListingLifecycleStatus(listingId, user.id, status);
+      if (error) {
+        console.error('Listing status update failed:', error);
+        setCleanError(error);
+        return;
+      }
+
+      // Keep all lifecycle states in profile memory so Sold/Hidden tabs and
+      // summary counts stay correct; the active tab naturally stops showing it.
+      setUserListings((current) => current.map((listing) => (
+        listing.id === listingId
+          ? { ...listing, status, updated_at: new Date().toISOString() }
+          : listing
+      )));
+
+      // The marketplace re-fetches active listings, so sold/hidden items stop
+      // appearing to buyers after the database confirms the status change.
+      window.dispatchEvent(new Event('campustrader:listings-refresh'));
+      showToast({
+        type: 'success',
+        message: status === 'sold'
+          ? 'Marked as sold and removed from the marketplace.'
+          : status === 'hidden'
+            ? 'Listing hidden from the marketplace.'
+            : 'Listing restored to the marketplace.',
+      });
+    } catch (err) {
+      console.error('Unexpected listing status update failure:', err);
+      setCleanError('We could not update this listing. Check your connection and try again.');
+    } finally {
+      setListingActionId(null);
     }
-
-    setUserListings((current) => status === 'active'
-    ? current.map((listing) => listing.id === listingId ? { ...listing, status } : listing)
-    : current.filter((listing) => listing.id !== listingId));
-    window.dispatchEvent(new Event('campustrader:listings-refresh'));
-    showToast({ type: 'success', message: status === 'sold' ? 'Marked as sold.' : status === 'hidden' ? 'Listing hidden.' : 'Listing restored.' });
   };
 
   const handleBusinessSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -487,12 +508,18 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                           <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
                           <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
                           {listing.status !== 'sold' ? (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Sold</button>
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                              {listingActionId === listing.id ? 'Saving…' : 'Sold'}
+                            </button>
                           ) : null}
                           {listing.status !== 'hidden' ? (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Hide</button>
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                              {listingActionId === listing.id ? 'Saving…' : 'Hide'}
+                            </button>
                           ) : (
-                            <button disabled={listingActionId === listing.id} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Restore</button>
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                              {listingActionId === listing.id ? 'Saving…' : 'Restore'}
+                            </button>
                           )}
                         </div>
                       </div>
