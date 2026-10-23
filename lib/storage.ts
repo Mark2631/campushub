@@ -84,9 +84,8 @@ export function withTimeout<T>(promise: PromiseLike<T>, ms: number, message: str
   ]);
 }
 
-export async function compressImageFile(file: File, maxWidth = 1600) {
+export async function compressImageFile(file: File, maxDimension = 1600) {
   if (typeof window === 'undefined' || !file.type.startsWith('image/')) return file;
-  if (file.size < 750 * 1024) return file;
 
   const imageUrl = URL.createObjectURL(file);
   try {
@@ -97,18 +96,30 @@ export async function compressImageFile(file: File, maxWidth = 1600) {
       img.src = imageUrl;
     });
 
-    if (image.width <= maxWidth) return file;
+    const largestDimension = Math.max(image.width, image.height);
+    const scale = Math.min(1, maxDimension / largestDimension);
+    // Small files can still have very large pixel dimensions, so dimension limits
+    // are checked before deciding to skip compression.
+    if (scale === 1 && file.size < 750 * 1024) return file;
 
-    const scale = maxWidth / image.width;
     const canvas = document.createElement('canvas');
-    canvas.width = maxWidth;
-    canvas.height = Math.round(image.height * scale);
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
     const context = canvas.getContext('2d');
     if (!context) return file;
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.82));
+    // Preserve PNG/WebP formats (and possible transparency) rather than silently
+    // converting those files to JPEG.
+    const outputType = file.type === 'image/png'
+      ? 'image/png'
+      : file.type === 'image/webp'
+        ? 'image/webp'
+        : 'image/jpeg';
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, outputType, 0.82));
     if (!blob) return file;
+    if (scale === 1 && blob.size >= file.size) return file;
+
     return new File([blob], file.name, { type: blob.type || file.type, lastModified: Date.now() });
   } catch (error) {
     console.error('Image compression failed:', error);
