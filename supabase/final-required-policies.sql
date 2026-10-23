@@ -1,4 +1,5 @@
 -- Run this in Supabase SQL Editor before deployment.
+-- Security: raw profile/business tables must not be public; public discovery uses safe projection views.
 
 create extension if not exists pgcrypto;
 
@@ -81,12 +82,14 @@ for select
 to anon, authenticated
 using (status = 'active');
 
+-- Public discovery must use the safe marketplace_profiles view, not the raw profiles table.
 drop policy if exists "Users can read public profiles" on public.profiles;
-create policy "Users can read public profiles"
+drop policy if exists "Users can view own profile" on public.profiles;
+create policy "Users can view own profile"
 on public.profiles
 for select
-to anon, authenticated
-using (true);
+to authenticated
+using (id = auth.uid());
 
 drop policy if exists "Users can insert own profile" on public.profiles;
 create policy "Users can insert own profile"
@@ -125,12 +128,28 @@ for delete
 to authenticated
 using (user_id = auth.uid() and seller_id = auth.uid());
 
+-- Public business discovery is exposed through marketplace_businesses.
+-- Keep raw business rows limited to their owner and authorized admins.
 drop policy if exists "Anyone can read businesses" on public.businesses;
-create policy "Anyone can read businesses"
+drop policy if exists "Users can read own businesses" on public.businesses;
+create policy "Users can read own businesses"
 on public.businesses
 for select
-to anon, authenticated
-using (true);
+to authenticated
+using (owner_id = auth.uid() or user_id = auth.uid());
+
+drop policy if exists "Admins can read businesses" on public.businesses;
+create policy "Admins can read businesses"
+on public.businesses
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.admins a
+    where lower(a.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  )
+);
 
 drop policy if exists "Users can create own businesses" on public.businesses;
 create policy "Users can create own businesses"
