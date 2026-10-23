@@ -16,6 +16,51 @@ import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normal
 
 const categories = STANDARD_CATEGORIES;
 const listingsPageSize = 24;
+const browseTabs = ['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'] as const;
+type BrowseTab = typeof browseTabs[number];
+
+function readMarketplaceUrlState() {
+  if (typeof window === 'undefined') {
+    return { query: '', category: 'All', browseTab: 'All' as BrowseTab };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const rawBrowseTab = params.get('tab') || 'All';
+  const browseTab = browseTabs.includes(rawBrowseTab as BrowseTab) ? rawBrowseTab as BrowseTab : 'All';
+  const rawCategory = params.get('category') || 'All';
+  const category = browseTab !== 'All'
+    ? 'All'
+    : rawCategory === 'All' || categories.some((category) => category === rawCategory)
+      ? rawCategory
+      : 'All';
+
+  return { query: params.get('q') || '', category, browseTab };
+}
+
+function writeMarketplaceUrlState(
+  query: string,
+  category: string,
+  browseTab: BrowseTab,
+  mode: 'push' | 'replace' = 'replace',
+) {
+  if (typeof window === 'undefined') return;
+
+  const params = new URLSearchParams(window.location.search);
+  const normalizedQuery = query.trim();
+  if (normalizedQuery) params.set('q', normalizedQuery);
+  else params.delete('q');
+
+  if (category !== 'All' && browseTab === 'All') params.set('category', category);
+  else params.delete('category');
+
+  if (browseTab !== 'All') params.set('tab', browseTab);
+  else params.delete('tab');
+
+  const search = params.toString();
+  const nextUrl = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+  if (mode === 'push') window.history.pushState({}, '', nextUrl);
+  else window.history.replaceState({}, '', nextUrl);
+}
 const categorySections = [
   { title: 'Electronics', category: 'Electronics' },
   { title: 'Services', category: 'Services' },
@@ -86,9 +131,10 @@ export default function Home() {
   const [messagingRequest, setMessagingRequest] = useState(false);
   const [requestMessageError, setRequestMessageError] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [activeBrowseTab, setActiveBrowseTab] = useState('All');
+  const [query, setQuery] = useState(() => readMarketplaceUrlState().query);
+  const [debouncedQuery, setDebouncedQuery] = useState(() => readMarketplaceUrlState().query.trim());
+  const [activeCategory, setActiveCategory] = useState(() => readMarketplaceUrlState().category);
+  const [activeBrowseTab, setActiveBrowseTab] = useState<BrowseTab>(() => readMarketplaceUrlState().browseTab);
   const [error, setError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -108,6 +154,27 @@ export default function Home() {
     sellerType: 'all',
     negotiableOnly: false,
   });
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
+
+  useEffect(() => {
+    const restoreFromUrl = () => {
+      const state = readMarketplaceUrlState();
+      setQuery(state.query);
+      setDebouncedQuery(state.query.trim());
+      setActiveCategory(state.category);
+      setActiveBrowseTab(state.browseTab);
+    };
+    window.addEventListener('popstate', restoreFromUrl);
+    return () => window.removeEventListener('popstate', restoreFromUrl);
+  }, []);
+
+  useEffect(() => {
+    writeMarketplaceUrlState(debouncedQuery, activeCategory, activeBrowseTab, 'replace');
+  }, [debouncedQuery, activeCategory, activeBrowseTab]);
 
   useEffect(() => {
     let isMounted = true;
@@ -194,7 +261,7 @@ export default function Home() {
   }, [user]);
 
   const filteredListings = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = debouncedQuery.toLowerCase();
     const activeListings = listings.filter((listing) => String(listing.status ?? 'active').toLowerCase() === 'active');
     const browseText = (listing: Listing) => `${listing.category} ${listing.title} ${listing.description || ''}`.toLowerCase();
     const browseMatches = (listing: Listing) => {
@@ -237,7 +304,7 @@ export default function Home() {
         matchesNegotiable
       );
     });
-  }, [activeBrowseTab, activeCategory, filters, listings, query]);
+  }, [activeBrowseTab, activeCategory, debouncedQuery, filters, listings]);
 
   const sectionBuckets = useMemo(() => {
     const twoDaysAgo = currentTime - 2 * 24 * 60 * 60 * 1000;
@@ -263,7 +330,7 @@ export default function Home() {
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
-  const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
+  const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(debouncedQuery) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
   const visibleCategorySections = activeCategory === 'All'
     ? categorySections
     : categorySections.filter((section) => section.category === activeCategory);
@@ -366,12 +433,17 @@ export default function Home() {
                 role="tab"
                 aria-selected={(['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab) ? activeBrowseTab === tab : activeCategory === tab)}
                 onClick={() => {
-                  if (['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab)) {
-                    setActiveBrowseTab(tab);
+                  if (browseTabs.includes(tab as BrowseTab)) {
+                    const nextBrowseTab = tab as BrowseTab;
+                    setActiveBrowseTab(nextBrowseTab);
                     setActiveCategory('All');
+                    setDebouncedQuery(query.trim());
+                    writeMarketplaceUrlState(query, 'All', nextBrowseTab, 'push');
                   } else {
                     setActiveBrowseTab('All');
                     setActiveCategory(tab);
+                    setDebouncedQuery(query.trim());
+                    writeMarketplaceUrlState(query, tab, 'All', 'push');
                   }
                 }}
                 className={`shrink-0 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
@@ -433,13 +505,11 @@ export default function Home() {
                 <p className="mx-auto mt-2 max-w-md text-sm">
                   {listings.length === 0
                     ? 'Start with an item, service, or campus deal that students can inspect before paying.'
-                    : activeBrowseTab === 'Requests'
-                      ? 'Post a request from the Sell tab so nearby students can respond.'
-                      : 'Try another section, clear filters, or post what you need from the Sell tab.'}
+                    : 'Try another section, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
-                    <Link href={activeBrowseTab === 'Requests' ? '/sell?mode=request' : '/sell'} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                      {activeBrowseTab === 'Requests' ? 'Post a request' : 'Post listing'}
+                    <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+                      Post listing
                     </Link>
                 </div>
               </div>
@@ -472,22 +542,41 @@ export default function Home() {
                       type="button"
                       disabled={loadingMore}
                       onClick={async () => {
+                        if (loadingMore) return;
                         setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset, institution);
-                        setLoadingMore(false);
-                        setError(error);
-                        setListingOffset((current) => current + rows.length);
-                        setHasMoreListings(rows.length === listingsPageSize);
-                        setListings((current) => {
-                          const nextListings = [...current];
-                          (rows as Listing[]).forEach((listing) => {
-                            if (!nextListings.some((item) => item.id === listing.id)) {
-                              nextListings.push(listing);
-                            }
+                        try {
+                          // Continue from the same institution used by the first page, including the MUST fallback.
+                          const loadInstitution = showingMeruFallback ? 'MUST' : institution;
+                          const { listings: rows, error: loadError } = await getListings(
+                            listingsPageSize,
+                            listingOffset,
+                            loadInstitution,
+                          );
+
+                          if (loadError) {
+                            setError(loadError);
+                            return;
+                          }
+
+                          setError(null);
+                          setListingOffset((current) => current + rows.length);
+                          setHasMoreListings(rows.length === listingsPageSize);
+                          setListings((current) => {
+                            const nextListings = [...current];
+                            (rows as Listing[]).forEach((listing) => {
+                              if (!nextListings.some((item) => item.id === listing.id)) {
+                                nextListings.push(listing);
+                              }
+                            });
+                            window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
+                            return nextListings;
                           });
-                          window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
-                          return nextListings;
-                        });
+                        } catch (loadError) {
+                          console.error('Could not load more listings:', loadError);
+                          setError('Could not load more listings. Please try again.');
+                        } finally {
+                          setLoadingMore(false);
+                        }
                       }}
                       className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-600"
                     >
