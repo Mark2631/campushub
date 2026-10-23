@@ -542,22 +542,41 @@ export default function Home() {
                       type="button"
                       disabled={loadingMore}
                       onClick={async () => {
+                        if (loadingMore) return;
                         setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset, institution);
-                        setLoadingMore(false);
-                        setError(error);
-                        setListingOffset((current) => current + rows.length);
-                        setHasMoreListings(rows.length === listingsPageSize);
-                        setListings((current) => {
-                          const nextListings = [...current];
-                          (rows as Listing[]).forEach((listing) => {
-                            if (!nextListings.some((item) => item.id === listing.id)) {
-                              nextListings.push(listing);
-                            }
+                        try {
+                          // Continue from the same institution used by the first page, including the MUST fallback.
+                          const loadInstitution = showingMeruFallback ? 'MUST' : institution;
+                          const { listings: rows, error: loadError } = await getListings(
+                            listingsPageSize,
+                            listingOffset,
+                            loadInstitution,
+                          );
+
+                          if (loadError) {
+                            setError(loadError);
+                            return;
+                          }
+
+                          setError(null);
+                          setListingOffset((current) => current + rows.length);
+                          setHasMoreListings(rows.length === listingsPageSize);
+                          setListings((current) => {
+                            const nextListings = [...current];
+                            (rows as Listing[]).forEach((listing) => {
+                              if (!nextListings.some((item) => item.id === listing.id)) {
+                                nextListings.push(listing);
+                              }
+                            });
+                            window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
+                            return nextListings;
                           });
-                          window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
-                          return nextListings;
-                        });
+                        } catch (loadError) {
+                          console.error('Could not load more listings:', loadError);
+                          setError('Could not load more listings. Please try again.');
+                        } finally {
+                          setLoadingMore(false);
+                        }
                       }}
                       className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-600"
                     >
