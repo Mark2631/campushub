@@ -106,7 +106,7 @@ export async function compressImageFile(file: File, maxDimension = 1600) {
     canvas.width = Math.max(1, Math.round(image.width * scale));
     canvas.height = Math.max(1, Math.round(image.height * scale));
     const context = canvas.getContext('2d');
-    if (!context) return file;
+    if (!context) throw new Error('Could not prepare the image canvas.');
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
     // Preserve PNG/WebP formats (and possible transparency) rather than silently
@@ -117,13 +117,14 @@ export async function compressImageFile(file: File, maxDimension = 1600) {
         ? 'image/webp'
         : 'image/jpeg';
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, outputType, 0.82));
-    if (!blob) return file;
+    if (!blob) throw new Error('Could not compress the image.');
     if (scale === 1 && blob.size >= file.size) return file;
 
     return new File([blob], file.name, { type: blob.type || file.type, lastModified: Date.now() });
   } catch (error) {
     console.error('Image compression failed:', error);
-    return file;
+    // Do not silently upload an unprocessed oversized image if resizing fails.
+    throw new Error('This image could not be prepared for upload. Choose another image and try again.');
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
