@@ -132,7 +132,7 @@ export async function getProfileById(userId: string) {
     console.error('Error fetching profile:', serializeError(error));
     const fallback = await supabase
       .from('marketplace_profiles')
-      .select('id, full_name, avatar_url, phone_number, badge_type, verification_status, role, email_verified, created_at')
+      .select('id, full_name, avatar_url, phone_number, badge_type, verification_status, created_at')
       .eq('id', userId)
       .maybeSingle();
 
