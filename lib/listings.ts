@@ -127,7 +127,7 @@ async function enrichListings(rows: ListingRow[]) {
     const emailPrefix = profile?.email?.split('@')[0] || null;
     const badgeType = business?.verification_status === 'verified'
       ? 'gold'
-      : profile?.role === 'admin'
+      : profile?.badge_type === 'admin'
         ? 'admin'
         : profile?.verification_status === 'verified' || profile?.badge_type === 'verified' || profile?.badge_type === 'blue'
           ? 'blue'
@@ -214,7 +214,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
   try {
     const query = supabase
       .from('listings')
-      .select('id, title, price, category, listing_type, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, created_at, seller_id, business_id')
       .eq('status', 'active');
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
@@ -230,8 +230,11 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       return { listings: [] as Listing[], error: GENERIC_ERROR };
     }
 
-    const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow) as Listing[];
-    return { listings: liveListings, error: null };
+    const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
+    // The feed uses description, negotiable, and sellerType in its filters.
+    // Enrich seller metadata as well so verified/business badges are accurate;
+    // the deadline fallback keeps listing cards visible on a slow profile query.
+    return { listings: await enrichListingsWithDeadline(liveListings), error: null };
   } catch (err) {
     console.error('Unexpected error fetching listings:', err);
     return { listings: [] as Listing[], error: GENERIC_ERROR };
@@ -453,18 +456,35 @@ export async function updateListingLifecycleStatus(
     return { error: GENERIC_ERROR };
   }
 
-  const { error } = await supabase
-    .from('listings')
-    .update({ status })
-    .eq('id', listingId)
-    .eq('seller_id', sellerId);
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .update({ status })
+      .eq('id', listingId)
+      .eq('user_id', sellerId)
+      .eq('seller_id', sellerId)
+      .select('id, status')
+      .maybeSingle();
 
-  if (error) {
-    logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
+    if (error) {
+      logSupabaseError('Error updating listing lifecycle status:', error, { listingId, sellerId, status });
+      if (error.code === '42501') {
+        return { error: 'We could not update this listing. Refresh your profile and try again.' };
+      }
+      return { error: GENERIC_ERROR };
+    }
+
+    // PostgREST can return no error when row-level security silently matches
+    // zero rows. Do not report success until the seller-owned row is returned.
+    if (!data || data.id !== listingId || data.status !== status) {
+      return { error: 'This listing was not updated. Refresh your profile and try again.' };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error('Unexpected error updating listing lifecycle status:', err);
     return { error: GENERIC_ERROR };
   }
-
-  return { error: null };
 }
 
 export async function updateListing(

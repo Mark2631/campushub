@@ -77,32 +77,37 @@ alter table if exists public.conversations
   add column if not exists hidden_for uuid[] not null default '{}';
 
 drop view if exists public.marketplace_profiles;
-create view public.marketplace_profiles as
+create view public.marketplace_profiles
+  with (security_invoker = false, security_barrier = true)
+as
 select
-  id,
-  full_name,
-  avatar_url,
+  p.id,
+  p.full_name,
+  p.avatar_url,
   NULL::text AS phone_number,
-  badge_type,
-  verification_status,
-  role,
-  email_verified,
-  created_at
-from public.profiles
-where coalesce(account_status, 'active') = 'active';
+  p.badge_type,
+  p.verification_status,
+  p.created_at
+from public.profiles p
+where coalesce(p.account_status, 'active') = 'active';
 
 drop view if exists public.marketplace_businesses;
-create view public.marketplace_businesses as
+create view public.marketplace_businesses
+  with (security_invoker = false, security_barrier = true)
+as
 select
-  id,
-  business_name,
-  verification_status,
-  badge_type
-from public.businesses
-where coalesce(status, 'active') = 'active';
+  b.id,
+  b.business_name,
+  b.verification_status,
+  b.badge_type
+from public.businesses b
+where coalesce(b.status, 'active') = 'active';
 
-comment on view public.marketplace_profiles is 'Public-safe profile projection. phone_number is intentionally masked.';
+comment on view public.marketplace_profiles is 'Public-safe seller projection only. Phone number is intentionally masked.';
+comment on view public.marketplace_businesses is 'Public-safe business projection restricted to active business records.';
 
+revoke all on public.marketplace_profiles from public;
+revoke all on public.marketplace_businesses from public;
 grant select on public.marketplace_profiles to anon, authenticated;
 grant select on public.marketplace_businesses to anon, authenticated;
 
