@@ -55,7 +55,27 @@ export async function getItemRequests(limit = 10, institution?: string, adminMod
       return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
     }
 
-    return { requests: (data || []) as ItemRequest[], error: null };
+    let rows = (data || []) as ItemRequest[];
+    if (!adminMode) {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData.user) {
+        // Keep the author's own requests visible even if they are older than the public carousel
+        // or have since been closed. RLS still decides which rows this user may read.
+        const { data: ownRows, error: ownError } = await supabase
+          .from('item_requests')
+          .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, created_at, updated_at')
+          .eq('user_id', authData.user.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (!ownError && ownRows?.length) {
+          const byId = new Map<string, ItemRequest>();
+          [...(ownRows as ItemRequest[]), ...rows].forEach((row) => byId.set(row.id, row));
+          rows = [...byId.values()].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      }
+    }
+
+    return { requests: rows, error: null };
   } catch (err) {
     console.error('Unexpected error fetching item requests:', err);
     return { requests: [] as ItemRequest[], error: GENERIC_ERROR };
