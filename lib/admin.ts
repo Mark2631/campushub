@@ -353,28 +353,23 @@ export async function setBusinessVerificationStatus(businessId: string, status: 
 
 export async function updateListingStatus(listingId: string, status: 'hidden' | 'reported') {
   if (!isValidUuid(listingId)) return invalidAdminAction();
-  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user?.id) return invalidAdminAction();
 
-  const { error } = await supabase
-    .from('listings')
-    .update({ status })
-    .eq('id', listingId);
-
-  if (error) console.error('Error updating listing status:', error);
-  return { error: error ? 'Something went wrong. Try again.' : null };
+  return runAdminListingAction(
+    listingId,
+    authData.user.id,
+    status === 'hidden' ? 'hide' : 'report',
+    `Marked as ${status} by admin`
+  );
 }
 
 export async function deleteListing(listingId: string) {
   if (!isValidUuid(listingId)) return invalidAdminAction();
-  if (!(await assertCurrentUserIsAdmin())) return invalidAdminAction();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user?.id) return invalidAdminAction();
 
-  const { error } = await supabase
-    .from('listings')
-    .update({ status: 'hidden' })
-    .eq('id', listingId);
-
-  if (error) console.error('Error hiding listing:', error);
-  return { error: error ? 'Something went wrong. Try again.' : null };
+  return runAdminListingAction(listingId, authData.user.id, 'delete', 'Deleted by admin');
 }
 
 export async function updateReportStatus(reportId: string, status: 'pending' | 'reviewed' | 'resolved') {
@@ -684,7 +679,7 @@ export async function terminateBusiness(businessId: string, adminId: string, rea
 // LISTING MODERATION
 // ============================================================================
 
-type AdminListingAction = 'hide' | 'restore' | 'delete';
+type AdminListingAction = 'hide' | 'restore' | 'delete' | 'report';
 
 async function runAdminListingAction(
   listingId: string,
@@ -718,7 +713,9 @@ async function runAdminListingAction(
           ? 'Could not delete this listing. Please retry.'
           : action === 'hide'
             ? 'Could not hide this listing. Please retry.'
-            : 'Could not restore this listing. Please retry.',
+            : action === 'restore'
+              ? 'Could not restore this listing. Please retry.'
+              : 'Could not mark this listing as reported. Please retry.',
       };
     }
 
