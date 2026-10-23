@@ -282,6 +282,7 @@ export default function AdminPage() {
   const confirmAction = async () => {
     if (!authUser?.id || workingId !== null) return;
     setWorkingId('modal-action');
+    setMessage(null);
 
     try {
       let error = null;
@@ -390,7 +391,14 @@ export default function AdminPage() {
       setModalState({ type: null });
       setMessage({ type: 'success', text: 'Action completed successfully.' });
       showToast({ type: 'success', message: 'Action completed successfully.' });
-      await loadDashboard();
+      try {
+        await loadDashboard();
+      } catch (refreshError) {
+        console.error('Admin action succeeded, but dashboard refresh failed:', refreshError);
+        const refreshMessage = 'Action completed, but the dashboard could not refresh. Reload the page to see the latest state.';
+        setMessage({ type: 'error', text: refreshMessage });
+        showToast({ type: 'error', message: refreshMessage });
+      }
     } catch (err) {
       console.error('Error in confirmAction:', err);
       setMessage({ type: 'error', text: 'The action failed unexpectedly. Your changes were not confirmed; retry or refresh the dashboard.' });
