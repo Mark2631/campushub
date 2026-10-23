@@ -14,16 +14,18 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
-as $$
+set search_path = pg_catalog, public, auth
+as $
   select exists (
     select 1
     from public.admins
     where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   );
-$$;
+$;
 
-grant execute on function public.is_admin() to anon, authenticated;
+-- Admin authorization is for signed-in users only; do not inherit the default PUBLIC grant.
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
 
 alter table if exists public.profiles
   add column if not exists email_verified boolean not null default false,
@@ -80,7 +82,7 @@ select
   id,
   full_name,
   avatar_url,
-  phone_number,
+  NULL::text AS phone_number,
   badge_type,
   verification_status,
   role,
@@ -98,6 +100,8 @@ select
   badge_type
 from public.businesses
 where coalesce(status, 'active') = 'active';
+
+comment on view public.marketplace_profiles is 'Public-safe profile projection. phone_number is intentionally masked.';
 
 grant select on public.marketplace_profiles to anon, authenticated;
 grant select on public.marketplace_businesses to anon, authenticated;
