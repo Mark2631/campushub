@@ -172,7 +172,7 @@ export default function Home() {
       if (mounted) setLoadingRequests(true);
       const { requests, error } = await getItemRequests(isAdmin ? 100 : 30, institution, isAdmin);
       if (!mounted) return;
-      setStudentRequests(isAdmin ? requests : requests.slice(0, 6));
+      setStudentRequests(requests);
       setRequestError(error);
       setLoadingRequests(false);
     };
@@ -556,7 +556,7 @@ export default function Home() {
                   <p className="font-semibold">{request.title}</p>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
                   <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
-                  {isAdmin && request.status !== 'open' ? <span className="mt-2 inline-block rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{request.status}</span> : null}
+                  {(isAdmin || user?.id === request.user_id) && request.status !== 'open' ? <span className="mt-2 inline-block rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{request.status}</span> : null}
                   <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">{isAdmin ? 'Review request →' : 'View request & message →'}</span>
                 </button>
               ))}
