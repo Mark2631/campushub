@@ -80,37 +80,89 @@ export async function ensureProfile(user: User) {
   const fullName =
     user.user_metadata?.full_name || user.user_metadata?.fullName || user.user_metadata?.name || '';
   const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar || null;
-  const emailVerified = Boolean(user.email_confirmed_at);
   const existing = await getProfileById(user.id);
   const current = existing.profile;
-  const isAdmin = user.email?.toLowerCase() === 'mwanginewton107@gmail.com' || current?.role === 'admin' || current?.badge_type === 'admin';
-  const accountStatus = current?.account_status && ['suspended', 'banned'].includes(current.account_status)
-    ? current.account_status
-    : current?.account_status || 'active';
 
-  const { data, error } = await safeUpsert('profiles', {
+  if (current) {
+    // Never upsert institution fields for an existing profile. PostgreSQL runs
+    // a BEFORE INSERT trigger for an upsert before resolving its conflict; a
+    // stale campus label could otherwise make routine sync fail every time.
+    // An UPDATE of only editable fields preserves the original signup campus
+    // and cannot accidentally change a user's role or verification state.
+    const patch: Record<string, string | null> = {};
+    if (user.email && current.email !== user.email) patch.email = user.email;
+    if (!current.full_name && fullName) patch.full_name = fullName;
+    if (!current.avatar_url && avatarUrl) patch.avatar_url = avatarUrl;
+
+    if (Object.keys(patch).length === 0) {
+      return { profile: current as ProfileRecord, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(patch)
+      .eq('id', user.id)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Existing profile sync failed:', serializeError(error));
+      return { profile: current as ProfileRecord, error: GENERIC_ERROR };
+    }
+
+    return { profile: (data || current) as ProfileRecord, error: null };
+  }
+
+  // Match the database trigger's signup metadata precedence exactly. New
+  // non-admin profiles use table defaults for privileged fields.
+  const rawInstitution =
+    user.user_metadata?.institution_code ||
+    user.user_metadata?.institution ||
+    DEFAULT_CAMPUS;
+  const institutionCode = normalizeInstitution(rawInstitution);
+
+  let institutionId: string | null = null;
+  try {
+    institutionId = await getInstitutionIdForCode(institutionCode);
+  } catch (err) {
+    console.error('Profile institution lookup failed:', err);
+  }
+
+  if (!institutionId) {
+    return {
+      profile: null,
+      error: 'Choose a supported institution before finishing account setup.',
+    };
+  }
+
+  const isKnownAdminEmail = user.email?.toLowerCase() === 'mwanginewton107@gmail.com';
+  const payload: Record<string, unknown> = {
     id: user.id,
     email: user.email || null,
-    full_name: current?.full_name || fullName,
-    avatar_url: current?.avatar_url || avatarUrl,
-    verification_status: isAdmin ? 'verified' : current?.verification_status || 'unverified',
-    badge_type: isAdmin ? 'admin' : current?.badge_type || null,
-    account_status: accountStatus,
-    role: isAdmin ? 'admin' : current?.role || 'user',
-    phone_number: current?.phone_number || user.user_metadata?.phone_number || null,
-    email_verified: current?.email_verified || emailVerified,
-    campus: normalizeInstitution(user.user_metadata?.institution || current?.campus || DEFAULT_CAMPUS),
-    ...(await (async () => {
-      try {
-        const id = await getInstitutionIdForCode(normalizeInstitution(user.user_metadata?.institution || current?.campus || DEFAULT_CAMPUS));
-        return id ? { institution_id: id } : {};
-      } catch {
-        return {};
-      }
-    })()),
-  });
+    full_name: fullName,
+    avatar_url: avatarUrl,
+    campus: institutionCode,
+    institution_id: institutionId,
+  };
 
-  return { profile: (data || null) as ProfileRecord | null, error };
+  // The database remains the source of truth for admin membership. These
+  // values are included only for the existing bootstrap admin; trigger-level
+  // admin verification rejects equivalent attempts by ordinary users.
+  if (isKnownAdminEmail) {
+    payload.role = 'admin';
+    payload.verification_status = 'verified';
+    payload.badge_type = 'admin';
+    payload.account_status = 'active';
+    payload.email_verified = Boolean(user.email_confirmed_at);
+  }
+
+  const { data, error } = await safeUpsert('profiles', payload);
+  if (error) {
+    console.error('New profile creation failed:', serializeError(error));
+    return { profile: null, error };
+  }
+
+  return { profile: (data || null) as ProfileRecord | null, error: null };
 }
 
 export async function upsertProfile(user: User) {
