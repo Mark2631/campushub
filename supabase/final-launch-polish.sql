@@ -313,3 +313,26 @@ on storage.objects
 for select
 to public
 using (bucket_id = 'community-media');
+
+
+
+-- Public request discovery: signed-out visitors may read open requests
+-- only when they belong to an active institution. Keep the grant and RLS
+-- policy together: one controls API reachability; the other controls rows.
+alter table public.item_requests enable row level security;
+grant select on table public.item_requests to anon;
+drop policy if exists hardening_requests_anon_deny on public.item_requests;
+drop policy if exists item_requests_public_open_read on public.item_requests;
+create policy item_requests_public_open_read
+on public.item_requests
+for select
+to anon
+using (
+  status = 'open'
+  and exists (
+    select 1
+    from public.institutions i
+    where i.id = item_requests.institution_id
+      and i.status = 'active'
+  )
+);
