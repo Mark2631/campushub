@@ -15,13 +15,13 @@ language sql
 stable
 security definer
 set search_path = pg_catalog, public, auth
-as $
+as $$
   select exists (
     select 1
     from public.admins
     where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   );
-$;
+$$;
 
 -- Admin authorization is for signed-in users only; do not inherit the default PUBLIC grant.
 revoke execute on function public.is_admin() from public, anon;
