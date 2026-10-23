@@ -127,7 +127,7 @@ async function enrichListings(rows: ListingRow[]) {
     const emailPrefix = profile?.email?.split('@')[0] || null;
     const badgeType = business?.verification_status === 'verified'
       ? 'gold'
-      : profile?.role === 'admin'
+      : profile?.badge_type === 'admin'
         ? 'admin'
         : profile?.verification_status === 'verified' || profile?.badge_type === 'verified' || profile?.badge_type === 'blue'
           ? 'blue'
