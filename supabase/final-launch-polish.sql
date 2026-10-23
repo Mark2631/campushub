@@ -14,7 +14,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = pg_catalog, public, auth
 as $$
   select exists (
     select 1
@@ -23,7 +23,9 @@ as $$
   );
 $$;
 
-grant execute on function public.is_admin() to anon, authenticated;
+-- Admin authorization is for signed-in users only; do not inherit the default PUBLIC grant.
+revoke execute on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
 
 alter table if exists public.profiles
   add column if not exists email_verified boolean not null default false,
@@ -80,7 +82,7 @@ select
   id,
   full_name,
   avatar_url,
-  phone_number,
+  NULL::text AS phone_number,
   badge_type,
   verification_status,
   role,
@@ -98,6 +100,8 @@ select
   badge_type
 from public.businesses
 where coalesce(status, 'active') = 'active';
+
+comment on view public.marketplace_profiles is 'Public-safe profile projection. phone_number is intentionally masked.';
 
 grant select on public.marketplace_profiles to anon, authenticated;
 grant select on public.marketplace_businesses to anon, authenticated;
@@ -309,3 +313,26 @@ on storage.objects
 for select
 to public
 using (bucket_id = 'community-media');
+
+
+
+-- Public request discovery: signed-out visitors may read open requests
+-- only when they belong to an active institution. Keep the grant and RLS
+-- policy together: one controls API reachability; the other controls rows.
+alter table public.item_requests enable row level security;
+grant select on table public.item_requests to anon;
+drop policy if exists hardening_requests_anon_deny on public.item_requests;
+drop policy if exists item_requests_public_open_read on public.item_requests;
+create policy item_requests_public_open_read
+on public.item_requests
+for select
+to anon
+using (
+  status = 'open'
+  and exists (
+    select 1
+    from public.institutions i
+    where i.id = item_requests.institution_id
+      and i.status = 'active'
+  )
+);
