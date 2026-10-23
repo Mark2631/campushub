@@ -1,8 +1,7 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import type { Listing } from '../lib/listings';
 
@@ -18,14 +17,14 @@ export default function ListingCard({ listing }: { listing: Listing }) {
       aria-label={`View ${listing.title}`}
       className="group block min-h-full touch-manipulation overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
         {showImage ? (
-          <img
+          <Image
             src={firstImage || '/placeholder-image.png'}
             alt={listing.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 48vw, 180px"
+            className="object-cover transition group-hover:scale-105"
             onError={() => setImageFailed(true)}
           />
         ) : (
