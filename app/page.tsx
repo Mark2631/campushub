@@ -503,9 +503,7 @@ export default function Home() {
                 <p className="mx-auto mt-2 max-w-md text-sm">
                   {listings.length === 0
                     ? 'Start with an item, service, or campus deal that students can inspect before paying.'
-                    : activeBrowseTab === 'Requests'
-                      ? 'Post a request from the Sell tab so nearby students can respond.'
-                      : 'Try another section, clear filters, or post what you need from the Sell tab.'}
+                    : 'Try another section, clear filters, or post what you need from the Sell tab.'}
                 </p>
                 <div className="mt-4 flex justify-center">
                     <Link href={activeBrowseTab === 'Requests' ? '/sell?mode=request' : '/sell'} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
