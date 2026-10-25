@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "type-check": "tsc --noEmit",
-    "ci": "npm test && npm run lint && npm run type-check && npm run build",
-    "test": "node --test"
+    "ci": "npm test && npm run lint && npm run type-check && npm run build && npm run smoke",
+    "test": "node --test",
+    "smoke": "node tests/smoke-http.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
