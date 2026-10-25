@@ -7,7 +7,6 @@ import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import useUser from '../../../hooks/useUser';
 import { getItemRequestById, type ItemRequest } from '../../../lib/itemRequests';
-import { findOrCreateConversation } from '../../../lib/conversations';
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +31,7 @@ export default function RequestDetailPage() {
   async function messageRequester() {
     if (!request || !user || starting || user.id === request.user_id) return;
     setStarting(true);
-    const result = await findOrCreateConversationForRequest(request.id, user.id, request.user_id);
+    const result = await findOrCreateConversationForRequest(request.id);
     setStarting(false);
     if (result.error || !result.conversation) {
       setError(result.error || 'Unable to start a conversation.');
@@ -65,7 +64,7 @@ export default function RequestDetailPage() {
   </div>;
 }
 
-async function findOrCreateConversationForRequest(requestId: string, senderId: string, requesterId: string) {
+async function findOrCreateConversationForRequest(requestId: string) {
   // Request conversations are stored without a listing association.
   // Dedicated RPC enforces the request's institution and authenticated sender.
   const { supabase } = await import('../../../lib/supabase');

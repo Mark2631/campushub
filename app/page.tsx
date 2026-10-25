@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
@@ -76,8 +77,12 @@ function ListingSkeletons() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { user, institution } = useUser();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const userId = user?.id;
+  const hasUser = Boolean(userId);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const isAdmin = Boolean(userId && adminUserId === userId);
   const [deletingRequest, setDeletingRequest] = useState(false);
   const [showingMeruFallback, setShowingMeruFallback] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -116,7 +121,7 @@ export default function Home() {
 
     const loadListings = async (options?: { initial?: boolean }) => {
       if (isMounted && options?.initial) setLoadingListings(true);
-      const primaryInstitution = user ? institution : 'MUST';
+      const primaryInstitution = hasUser ? institution : 'MUST';
       // Never leave pilot users staring at skeletons indefinitely on a stalled network.
       const result = await Promise.race([
         getListings(listingsPageSize, 0, primaryInstitution),
@@ -152,19 +157,16 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, [institution, user?.id]);
+  }, [institution, hasUser]);
 
   useEffect(() => {
+    if (!userId) return;
     let mounted = true;
-    if (!user) {
-      setIsAdmin(false);
-      return () => { mounted = false; };
-    }
     void supabase.rpc('is_admin').then(({ data, error }) => {
-      if (mounted) setIsAdmin(!error && data === true);
+      if (mounted) setAdminUserId(!error && data === true ? userId : null);
     });
     return () => { mounted = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   useEffect(() => {
     let mounted = true;
@@ -316,14 +318,14 @@ export default function Home() {
         .or(`and(buyer_id.eq.${user.id},seller_id.eq.${selectedRequest.user_id}),and(buyer_id.eq.${selectedRequest.user_id},seller_id.eq.${user.id})`)
         .limit(1).maybeSingle();
       if (lookupError) throw lookupError;
-      if (existing) { window.location.assign(`/messages/${existing.id}`); return; }
+      if (existing) { router.push(`/messages/${existing.id}`); return; }
       const { data: conversation, error: createError } = await supabase.from('conversations')
         .insert({ listing_id: null, buyer_id: user.id, seller_id: selectedRequest.user_id })
         .select('id').single();
       if (createError || !conversation) throw createError || new Error('Conversation could not be created');
       const { error: sendError } = await sendMessage(conversation.id, user.id, `Hi, I’m interested in your request: ${selectedRequest.title}. Is this still needed?`);
       if (sendError) console.warn('Request conversation created, but initial message failed:', sendError);
-      window.location.assign(`/messages/${conversation.id}`);
+      router.push(`/messages/${conversation.id}`);
     } catch (err) {
       console.error('Could not start request conversation:', err);
       setRequestMessageError('Could not start a conversation. Please try again.');

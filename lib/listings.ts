@@ -526,19 +526,11 @@ export async function updateListing(
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
     ...(data.status ? { status: data.status } : {}),
-    ...(data.campus ? { campus: normalizeInstitution(data.campus) } : {}),
-    ...(await (async () => {
-      try {
-        const id = data.campus ? await getInstitutionIdForCode(normalizeInstitution(data.campus)) : null;
-        return id ? { institution_id: id } : {};
-      } catch {
-        return {};
-      }
-    })()),
+    // Institution identity is immutable in the database. Never resend campus or institution_id on edit.
     updated_at: new Date().toISOString(),
   };
 
-  let { data: updated, error } = await withTimeout(
+  const { data: updated, error } = await withTimeout(
     supabase
       .from('listings')
       .update(payload)
@@ -549,22 +541,6 @@ export async function updateListing(
     15000,
     'Saving listing timed out. Please try again.'
   );
-
-  if (error && isMissingColumnError(error, 'listings', 'campus')) {
-    const { campus, ...legacyPayload } = payload;
-    void campus;
-    ({ data: updated, error } = await withTimeout(
-      supabase
-        .from('listings')
-        .update(legacyPayload)
-        .eq('id', listingId)
-        .eq('seller_id', sellerId)
-        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-        .single(),
-      15000,
-      'Saving listing timed out. Please try again.'
-    ));
-  }
 
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);

@@ -204,10 +204,11 @@ export async function deleteItemRequest(requestId: string) {
   }
 
   try {
-    const { error } = await supabase
+    const { data: deletedRows, error } = await supabase
       .from('item_requests')
       .delete()
-      .eq('id', requestId);
+      .eq('id', requestId)
+      .select('id');
 
     if (error) {
       console.error('Error deleting item request:', serializeError(error));
@@ -216,6 +217,10 @@ export async function deleteItemRequest(requestId: string) {
           ? 'You can only delete your own requests unless you are an administrator.'
           : 'Could not delete this request. Please try again.',
       };
+    }
+
+    if (!deletedRows?.some((row) => row.id === requestId)) {
+      return { error: 'Request was not deleted. It may have already been removed or you may not have permission.' };
     }
 
     return { error: null };
