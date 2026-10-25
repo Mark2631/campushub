@@ -74,3 +74,10 @@ test('authenticated checkout is granted the order RPC while anonymous access sta
   assert.match(sql, /revoke execute on function public\.create_marketplace_order\(\s*uuid,\s*integer,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text\s*\)\s+from public,\s*anon/i);
   assert.match(sql, /grant execute on function public\.create_marketplace_order\(\s*uuid,\s*integer,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text\s*\)\s+to authenticated/i);
 });
+
+test('database performance migration covers previously unindexed foreign keys', async () => {
+  const sql = await read('../supabase/migrations/20261025081452_index_unindexed_foreign_keys_20261025.sql');
+  assert.match(sql, /CREATE INDEX IF NOT EXISTS institution_code_aliases_institution_id_idx/i);
+  assert.match(sql, /CREATE INDEX IF NOT EXISTS manual_order_releases_admin_id_idx/i);
+  assert.match(sql, /CREATE INDEX IF NOT EXISTS payment_attempts_verified_by_idx/i);
+});
