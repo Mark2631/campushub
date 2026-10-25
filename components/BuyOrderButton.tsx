@@ -1,20 +1,18 @@
 'use client';
 
-import { Clock3, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 
-export default function BuyOrderButton({ listingId: _listingId }: { listingId: string }) {
+export default function BuyOrderButton({ listingId }: { listingId: string }) {
   return (
-    <div
-      role="status"
-      aria-label="Buy or order coming soon"
-      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-400/40 bg-blue-600/80 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/20"
+    <Link
+      href={`/orders/new?listing=${encodeURIComponent(listingId)}`}
+      aria-label="Continue to order"
+      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-400/40 bg-blue-600/90 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
     >
       <ShieldCheck className="h-4 w-4" aria-hidden="true" />
       <span>Buy / order</span>
-      <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-blue-50">
-        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-        Coming soon
-      </span>
-    </div>
+      <ArrowRight className="ml-auto h-4 w-4" aria-hidden="true" />
+    </Link>
   );
 }
