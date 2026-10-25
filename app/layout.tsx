@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://campus-trader.vercel.app'),
-  title: 'CampusTrader | Inter-Institutional Marketplace',
-  description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
+  title: 'CampusTrader | Buy & Sell on Campus in Kenya',
+  description: 'CampusTrader is a student marketplace in Kenya. Explore campus listings, buy and sell products, discover services and connect with students across colleges and universities.',
   keywords: [
     'CampusTrader',
     'Campus Trader',
@@ -62,9 +62,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/campustrader-icon-192-v2.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/campustrader-icon-512-v2.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
@@ -91,6 +91,18 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full overflow-x-hidden flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "CampusTrader",
+            alternateName: ["Campus Trader", "campus-trader.vercel.app"],
+            url: "https://campus-trader.vercel.app/",
+            description: "Student marketplace for buying and selling on campus in Kenya",
+            inLanguage: "en-KE",
+          }) }}
+        />
         <AppProvider>
           {children}
           <PWAInstallPrompt />
