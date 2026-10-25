@@ -68,3 +68,9 @@ test('application pins the patched Next.js release and matching ESLint integrati
   assert.equal(packageJson.dependencies.next, '16.4.3');
   assert.equal(packageJson.devDependencies['eslint-config-next'], '16.4.3');
 });
+
+test('authenticated checkout is granted the order RPC while anonymous access stays denied', async () => {
+  const sql = await read('../supabase/migrations/20261025080659_grant_authenticated_marketplace_order_rpc_20261025.sql');
+  assert.match(sql, /revoke execute on function public\.create_marketplace_order\(\s*uuid,\s*integer,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text\s*\)\s+from public,\s*anon/i);
+  assert.match(sql, /grant execute on function public\.create_marketplace_order\(\s*uuid,\s*integer,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text,\s*text\s*\)\s+to authenticated/i);
+});

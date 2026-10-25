@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, 'fix/production-hardening-20261025']
+    branches: [master, 'fix/**']
   pull_request:
     branches: [master]
   workflow_dispatch: {}
