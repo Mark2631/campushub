@@ -530,7 +530,7 @@ export async function updateListing(
     updated_at: new Date().toISOString(),
   };
 
-  let { data: updated, error } = await withTimeout(
+  const { data: updated, error } = await withTimeout(
     supabase
       .from('listings')
       .update(payload)
