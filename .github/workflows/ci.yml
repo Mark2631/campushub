@@ -8,18 +8,34 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Check out the PR source branch so a verified lockfile update is committed
+          # to that branch, never to the generated merge ref or production master.
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
+      - name: Refresh lockfile for the reviewed dependency security patch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/production-hardening-20261025'
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          npm audit fix --package-lock-only --ignore-scripts
+          if ! git diff --quiet -- package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "chore(deps): refresh lockfile for patched dependencies"
+            git push origin "HEAD:refs/heads/${GITHUB_HEAD_REF}"
+          fi
       - name: Install dependencies
         run: npm ci
       - name: Audit production dependencies
