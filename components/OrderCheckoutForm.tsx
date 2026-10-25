@@ -102,7 +102,16 @@ export default function OrderCheckoutForm({ listingId, sellerId, listingPrice, l
   return <form onSubmit={submit} onKeyDown={handleKeyDown} className="mt-5 space-y-4 rounded-2xl border border-slate-200 p-4 dark:border-zinc-800 sm:p-5">
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="text-sm font-semibold" htmlFor="order-quantity">Quantity<input id="order-quantity" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} type="number" min={1} max={config.max_quantity_per_order} step={1} className="mt-2 w-full rounded-xl border border-slate-200 bg-transparent px-3 py-3 dark:border-zinc-700" disabled={Boolean(order)} /></label>
-      <div className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-zinc-950"><p className="font-semibold">Item total</p><p className="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300">{formatKes(subtotal)}</p></div>
+      <div className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-zinc-950">
+        <p className="font-semibold">Estimated total</p>
+        <p className="mt-1 text-lg font-bold text-blue-600 dark:text-blue-300">{formatKes(subtotal + protectionFee + deliveryFee)}</p>
+        <div className="mt-2 space-y-1 border-t border-slate-200 pt-2 text-xs text-slate-600 dark:border-zinc-800 dark:text-zinc-400">
+          <p className="flex justify-between gap-2"><span>Items</span><span>{formatKes(subtotal)}</span></p>
+          {protectionFee > 0 ? <p className="flex justify-between gap-2"><span>Protected transaction fee</span><span>{formatKes(protectionFee)}</span></p> : null}
+          {deliveryOption === 'pickup' ? <p className="flex justify-between gap-2"><span>Delivery</span><span>Pickup</span></p> : <p className="flex justify-between gap-2"><span>Delivery</span><span>{selectedZone ? formatKes(deliveryFee) : 'Choose a zone'}</span></p>}
+        </div>
+        <p className="mt-2 text-[11px] text-slate-500 dark:text-zinc-500">The server confirms the final amount when the order is created.</p>
+      </div>
     </div>
 
     <fieldset><legend className="text-sm font-semibold">How would you like to transact?</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">
