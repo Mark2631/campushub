@@ -542,22 +542,6 @@ export async function updateListing(
     'Saving listing timed out. Please try again.'
   );
 
-  if (error && isMissingColumnError(error, 'listings', 'campus')) {
-    const { campus, ...legacyPayload } = payload;
-    void campus;
-    ({ data: updated, error } = await withTimeout(
-      supabase
-        .from('listings')
-        .update(legacyPayload)
-        .eq('id', listingId)
-        .eq('seller_id', sellerId)
-        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-        .single(),
-      15000,
-      'Saving listing timed out. Please try again.'
-    ));
-  }
-
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);
     return { listing: null, error: GENERIC_ERROR };
