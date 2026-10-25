@@ -62,3 +62,9 @@ test('administrator can read inactive listings needed for moderation', async () 
   assert.match(source, /FOR SELECT TO authenticated/);
   assert.match(source, /public\.is_admin\(\)/);
 });
+
+test('application pins the patched Next.js release and matching ESLint integration', async () => {
+  const packageJson = JSON.parse(await read('../package.json'));
+  assert.equal(packageJson.dependencies.next, '16.4.3');
+  assert.equal(packageJson.devDependencies['eslint-config-next'], '16.4.3');
+});
