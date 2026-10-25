@@ -71,7 +71,7 @@ test('application pins the patched Next.js release and matching ESLint integrati
 
 test('authenticated checkout is granted the order RPC while anonymous access stays denied', async () => {
   const sql = await read('../supabase/migrations/20261025080659_grant_authenticated_marketplace_order_rpc_20261025.sql');
-  const normalizedSql = sql.replace(/\\s+/g, ' ');
-  assert.match(normalizedSql, /REVOKE EXECUTE ON FUNCTION public\\.create_marketplace_order\\(\\s*uuid, integer, text, text, text, text, text, text, text\\s*\\) FROM PUBLIC, anon/i);
-  assert.match(normalizedSql, /GRANT EXECUTE ON FUNCTION public\\.create_marketplace_order\\(\\s*uuid, integer, text, text, text, text, text, text, text\\s*\\) TO authenticated/i);
+  const normalizedSql = sql.replace(/\s+/g, ' ');
+  assert.match(normalizedSql, /REVOKE EXECUTE ON FUNCTION public\.create_marketplace_order\(\s*uuid, integer, text, text, text, text, text, text, text\s*\) FROM PUBLIC, anon/i);
+  assert.match(normalizedSql, /GRANT EXECUTE ON FUNCTION public\.create_marketplace_order\(\s*uuid, integer, text, text, text, text, text, text, text\s*\) TO authenticated/i);
 });
