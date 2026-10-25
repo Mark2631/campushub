@@ -526,15 +526,7 @@ export async function updateListing(
     media_urls: data.mediaUrls || [],
     video_url: data.videoUrl || null,
     ...(data.status ? { status: data.status } : {}),
-    ...(data.campus ? { campus: normalizeInstitution(data.campus) } : {}),
-    ...(await (async () => {
-      try {
-        const id = data.campus ? await getInstitutionIdForCode(normalizeInstitution(data.campus)) : null;
-        return id ? { institution_id: id } : {};
-      } catch {
-        return {};
-      }
-    })()),
+    // Institution identity is immutable in the database. Never resend campus or institution_id on edit.
     updated_at: new Date().toISOString(),
   };
 
