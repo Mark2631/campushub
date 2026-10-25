@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
@@ -76,6 +77,7 @@ function ListingSkeletons() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { user, institution } = useUser();
   const userId = user?.id;
   const hasUser = Boolean(userId);
@@ -316,14 +318,14 @@ export default function Home() {
         .or(`and(buyer_id.eq.${user.id},seller_id.eq.${selectedRequest.user_id}),and(buyer_id.eq.${selectedRequest.user_id},seller_id.eq.${user.id})`)
         .limit(1).maybeSingle();
       if (lookupError) throw lookupError;
-      if (existing) { window.location.assign(`/messages/${existing.id}`); return; }
+      if (existing) { router.push(`/messages/${existing.id}`); return; }
       const { data: conversation, error: createError } = await supabase.from('conversations')
         .insert({ listing_id: null, buyer_id: user.id, seller_id: selectedRequest.user_id })
         .select('id').single();
       if (createError || !conversation) throw createError || new Error('Conversation could not be created');
       const { error: sendError } = await sendMessage(conversation.id, user.id, `Hi, I’m interested in your request: ${selectedRequest.title}. Is this still needed?`);
       if (sendError) console.warn('Request conversation created, but initial message failed:', sendError);
-      window.location.assign(`/messages/${conversation.id}`);
+      router.push(`/messages/${conversation.id}`);
     } catch (err) {
       console.error('Could not start request conversation:', err);
       setRequestMessageError('Could not start a conversation. Please try again.');
