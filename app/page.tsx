@@ -77,7 +77,10 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user, institution } = useUser();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const userId = user?.id;
+  const hasUser = Boolean(userId);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const isAdmin = Boolean(userId && adminUserId === userId);
   const [deletingRequest, setDeletingRequest] = useState(false);
   const [showingMeruFallback, setShowingMeruFallback] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -116,7 +119,7 @@ export default function Home() {
 
     const loadListings = async (options?: { initial?: boolean }) => {
       if (isMounted && options?.initial) setLoadingListings(true);
-      const primaryInstitution = user ? institution : 'MUST';
+      const primaryInstitution = hasUser ? institution : 'MUST';
       // Never leave pilot users staring at skeletons indefinitely on a stalled network.
       const result = await Promise.race([
         getListings(listingsPageSize, 0, primaryInstitution),
@@ -152,19 +155,16 @@ export default function Home() {
       isMounted = false;
       window.removeEventListener('campustrader:listings-refresh', refreshListings);
     };
-  }, [institution, user?.id]);
+  }, [institution, hasUser]);
 
   useEffect(() => {
+    if (!userId) return;
     let mounted = true;
-    if (!user) {
-      setIsAdmin(false);
-      return () => { mounted = false; };
-    }
     void supabase.rpc('is_admin').then(({ data, error }) => {
-      if (mounted) setIsAdmin(!error && data === true);
+      if (mounted) setAdminUserId(!error && data === true ? userId : null);
     });
     return () => { mounted = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   useEffect(() => {
     let mounted = true;
