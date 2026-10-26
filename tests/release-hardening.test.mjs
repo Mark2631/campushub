@@ -244,3 +244,13 @@ test('Google favicon discovery has one explicit brand icon rather than a file-ba
   await assert.rejects(read('../app/favicon.ico'));
   await assert.rejects(read('../public/sitemap.xml'));
 });
+
+
+test('homepage contains useful crawlable marketplace guidance with public internal links', async () => {
+  const source = await read('../app/page.tsx');
+  assert.ok(source.includes('A marketplace built around campus life in Kenya'));
+  assert.ok(source.includes('second-hand electronics, books, fashion, furniture, food, and services'));
+  assert.ok(source.includes('href="/help"'));
+  assert.ok(source.includes('href="/sell"'));
+  assert.ok(source.includes('Listings are user-submitted.'));
+});
