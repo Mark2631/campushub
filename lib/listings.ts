@@ -558,7 +558,7 @@ export async function updateListing(
       .update(payload)
       .eq('id', listingId)
       .eq('seller_id', sellerId)
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
       .single(),
     15000,
     'Saving listing timed out. Please try again.'
