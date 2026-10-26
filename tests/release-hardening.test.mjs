@@ -248,13 +248,16 @@ test('seller and sign-in routes declare intentional search metadata', async () =
 test('Google favicon links use the same crawlable PNG artwork as the installed PWA', async () => {
   const layout = await read('../app/layout.tsx');
   const iconHref = "/pwa-icon/192";
-  assert.ok(layout.includes("icon: [{ url: '" + iconHref + "'"));
-  assert.ok(layout.includes("shortcut: ['" + iconHref + "']"));
+  assert.ok(layout.includes("url: '" + iconHref + "'"));
+  assert.ok(layout.includes("shortcut: ['/favicon.png']"));
   assert.ok(!layout.includes("shortcut: ['/favicon.svg']"));
   assert.ok(!layout.includes("shortcut: ['/favicon.ico']"));
   const iconRoute = await read('../app/pwa-icon/192/route.tsx');
   assert.match(iconRoute, /contentType = 'image\/png'/);
   assert.match(iconRoute, /renderPwaIcon\(192\)/);
+  const faviconRoute = await read('../app/favicon.png/route.tsx');
+  assert.match(faviconRoute, /contentType = 'image\\/png'/);
+  assert.match(faviconRoute, /renderPwaIcon\\(192\\)/);
   await assert.rejects(read('../app/favicon.ico'));
   await assert.rejects(read('../public/sitemap.xml'));
 });
