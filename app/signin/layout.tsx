@@ -4,6 +4,10 @@ import type { ReactNode } from 'react';
 export const metadata: Metadata = {
   title: 'Sign In | CampusTrader',
   description: 'Create or access your CampusTrader account.',
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function SignInLayout({ children }: { children: ReactNode }) {
