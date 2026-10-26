@@ -1,7 +1,13 @@
-// Cache only a small, versioned set of stable offline assets. Never cache Next.js
-// JS/CSS bundles or application pages: stale bundles can break deployed updates.
-const CACHE_NAME = 'campustrader-offline-v2';
-const OFFLINE_ASSETS = ['/favicon.svg', '/manifest.webmanifest'];
+// Cache only stable, versioned offline assets. Never cache Next.js bundles
+// or application pages: stale code can break an otherwise healthy deployment.
+const CACHE_NAME = 'campustrader-offline-v3';
+const OFFLINE_ASSETS = [
+  '/favicon.svg',
+  '/manifest.webmanifest',
+  '/pwa-icon/180',
+  '/pwa-icon/192',
+  '/pwa-icon/512',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_ASSETS)).catch(() => undefined));
