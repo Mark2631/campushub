@@ -612,15 +612,18 @@ export async function updateCommunityStatus(communityId: string, adminId: string
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community status update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community status could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community status was not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
@@ -632,15 +635,18 @@ export async function updateCommunityCoverUrl(communityId: string, adminId: stri
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ cover_url: cleanText(coverUrl, 1000), updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community cover update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community cover could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community cover was not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
@@ -657,15 +663,18 @@ export async function updateCommunityPostingMode(
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ posting_mode: postingMode, updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community posting mode update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community posting settings could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community settings were not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
