@@ -14,7 +14,7 @@ import {
   normalizeInstitution,
   parseOptionalNumber,
 } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export interface Listing {
   id: string;
@@ -348,6 +348,14 @@ export async function insertListing(
       return { listing: null, error: validated.error || GENERIC_ERROR };
     }
 
+    const institutionId = await getInstitutionIdForUser(userId);
+    if (!institutionId) {
+      return {
+        listing: null,
+        error: "Your account isn't linked to an active institution. Refresh your profile or sign in again, then retry.",
+      };
+    }
+
     const listingToInsert: Record<string, unknown> = {
       user_id: userId,
       seller_id: userId,
@@ -363,15 +371,9 @@ export async function insertListing(
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
       campus: normalizeInstitution(data.campus ?? DEFAULT_CAMPUS),
-      // optionally set institution_id when we can resolve it
-      ...(await (async () => {
-        try {
-          const id = await getInstitutionIdForCode(normalizeInstitution(data.campus ?? DEFAULT_CAMPUS));
-          return id ? { institution_id: id } : {};
-        } catch {
-          return {};
-        }
-      })()),
+      // Use the authenticated profile's tenant ID; the database trigger
+      // normalizes the display campus from this authoritative identifier.
+      institution_id: institutionId,
     };
 
     const insertQuery = supabase
