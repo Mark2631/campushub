@@ -537,6 +537,9 @@ export async function updateListing(
     title: validated.value.title,
     description: validated.value.description,
     category: validated.value.category,
+    listing_type: validated.value.condition === 'service'
+      ? 'SERVICE_ENQUIRY'
+      : 'PHYSICAL_PRODUCT',
     price: validated.value.price == null ? null : Number(validated.value.price),
     negotiable: Boolean(data.negotiable),
     condition: validated.value.condition,
