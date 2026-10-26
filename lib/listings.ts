@@ -302,11 +302,13 @@ function validateListingInput(data: {
   const title = cleanText(data.title, 120);
   const category = normalizeCategory(data.category);
   const condition = normalizeListingCondition(data.condition, category);
-  const price = parseOptionalNumber(data.price);
+  const parsedPrice = parseOptionalNumber(data.price);
+  // Zero means "not provided" in this marketplace, never a free item.
+  const price = parsedPrice === 0 ? null : parsedPrice;
 
   if (!title) return { error: 'Title is required.' as const };
   if (!isAllowedValue(condition, allowedListingConditions)) return { error: GENERIC_ERROR };
-  if (Number.isNaN(price) || (price != null && price < 0)) return { error: 'Price must be a valid number.' as const };
+  if (Number.isNaN(parsedPrice) || (parsedPrice != null && parsedPrice < 0)) return { error: 'Price must be a valid number.' as const };
 
   return {
     error: null,
@@ -533,6 +535,26 @@ export async function updateListing(
     return { listing: null, error: validated.error || GENERIC_ERROR };
   }
 
+  // Preserve current media when an edit caller does not explicitly provide a replacement.
+  // The select is scoped to both the listing and authenticated owner via the following update/RLS.
+  const { data: currentMedia, error: currentMediaError } = await supabase
+    .from('listings')
+    .select('media_urls, video_url')
+    .eq('id', listingId)
+    .eq('seller_id', sellerId)
+    .maybeSingle();
+
+  if (currentMediaError || !currentMedia) {
+    if (currentMediaError) logSupabaseError('Error loading existing listing media before update:', currentMediaError, { listingId });
+    return { listing: null, error: 'Listing could not be loaded for editing. Refresh and try again.' };
+  }
+
+  const existingMedia = Array.isArray(currentMedia.media_urls)
+    ? currentMedia.media_urls.filter((url: unknown): url is string => typeof url === 'string' && url.trim().length > 0)
+    : [];
+  const mediaUrls = data.mediaUrls === undefined ? existingMedia : data.mediaUrls;
+  const videoUrl = data.videoUrl === undefined ? (currentMedia.video_url as string | null) : data.videoUrl;
+
   const payload = {
     title: validated.value.title,
     description: validated.value.description,
@@ -545,8 +567,8 @@ export async function updateListing(
     condition: validated.value.condition,
     location: validated.value.location,
     business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
-    media_urls: data.mediaUrls || [],
-    video_url: data.videoUrl || null,
+    media_urls: mediaUrls,
+    video_url: videoUrl ?? null,
     ...(data.status ? { status: data.status } : {}),
     // Institution identity is immutable in the database. Never resend campus or institution_id on edit.
     updated_at: new Date().toISOString(),

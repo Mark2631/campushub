@@ -254,6 +254,44 @@ export function normalizeKenyanPhone(value: string) {
   return null;
 }
 
+export async function saveProfileName(userId: string, fullName: string) {
+  if (!isValidUuid(userId)) {
+    return { fullName: null, error: GENERIC_ERROR };
+  }
+
+  const normalized = cleanText(fullName, 80);
+  if (normalized.length < 2) {
+    return { fullName: null, error: 'Enter a name with at least 2 characters.' };
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ full_name: normalized })
+    .eq('id', userId)
+    .select('id, full_name')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Profile name save failed:', serializeError(error));
+    return { fullName: null, error: GENERIC_ERROR };
+  }
+  if (!data) {
+    return { fullName: null, error: 'Profile could not be updated. Refresh and try again.' };
+  }
+
+  try {
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { full_name: normalized } });
+    if (metadataError) {
+      console.warn('Auth display-name metadata could not be refreshed after profile save.');
+    }
+  } catch {
+    // The profiles row is already saved; a transient metadata-sync error should not report a false save failure.
+    console.warn('Auth display-name metadata could not be refreshed after profile save.');
+  }
+
+  return { fullName: (data as { full_name?: string | null }).full_name || normalized, error: null };
+}
+
 export async function saveProfilePhone(userId: string, phoneNumber: string) {
   if (!isValidUuid(userId)) {
     return { phoneNumber: null, error: GENERIC_ERROR };

@@ -50,6 +50,7 @@ function SellPageContent() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [postWithoutMediaReady, setPostWithoutMediaReady] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [editDataLoadedId, setEditDataLoadedId] = useState<string | null>(null);
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([]);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
   const [sellerProfile, setSellerProfile] = useState<ProfileRecord | null>(null);
@@ -98,6 +99,7 @@ function SellPageContent() {
         return;
       }
 
+      setEditDataLoadedId(null);
       setLoadingEdit(true);
       const { listing, error } = await getListingById(editListingId);
       setLoadingEdit(false);
@@ -116,7 +118,7 @@ function SellPageContent() {
       setFormData({
         title: listing.title,
         category: listing.category,
-        price: listing.price?.toString() || '',
+        price: listing.price != null && listing.price > 0 ? listing.price.toString() : '',
         negotiable: listing.negotiable,
         condition: normalizeListingCondition(listing.condition, listing.category),
         description: listing.description || '',
@@ -125,6 +127,7 @@ function SellPageContent() {
       setCreatedListingId(listing.id);
       setExistingMediaUrls(listing.media_urls || []);
       setExistingVideoUrl(listing.video_url || null);
+      setEditDataLoadedId(listing.id);
     };
 
     void loadEditListing();
@@ -303,7 +306,15 @@ function SellPageContent() {
         showToast({ type: 'error', message: errors.join(' ') });
       }
 
-      setImages((prev) => [...prev, ...validImages].slice(0, 10));
+      const availableSlots = Math.max(0, 10 - existingMediaUrls.length - images.length);
+      const acceptedImages = validImages.slice(0, availableSlots);
+      validImages.slice(availableSlots).forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      if (acceptedImages.length < validImages.length) {
+        const text = 'A listing can include up to 10 photos, including photos already attached.';
+        setMessage({ type: 'error', text });
+        showToast({ type: 'error', message: text });
+      }
+      setImages((prev) => [...prev, ...acceptedImages]);
       e.currentTarget.value = '';
     }
   };
@@ -341,6 +352,10 @@ function SellPageContent() {
     });
   };
 
+  const removeExistingImage = (index: number) => {
+    setExistingMediaUrls((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  };
+
   const removeVideo = () => {
     if (videoPreview) {
       URL.revokeObjectURL(videoPreview.previewUrl);
@@ -372,6 +387,7 @@ function SellPageContent() {
     if (!formData.title.trim()) return 'Title is required.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
     if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
+    if (formData.price.trim() && Number(formData.price) === 0) return 'Leave the price blank if buyers should contact you to agree on a price.';
     return null;
   };
 
@@ -444,6 +460,12 @@ function SellPageContent() {
 
   const submitListing = async (options?: { skipMedia?: boolean }) => {
     if (isSubmitting) {
+      return;
+    }
+    if (editListingId && (loadingEdit || editDataLoadedId !== editListingId)) {
+      const text = 'Listing details are still loading. Wait a moment, then try again.';
+      setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
       return;
     }
 
@@ -778,6 +800,30 @@ function SellPageContent() {
               <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
             </label>
 
+            {existingMediaUrls.length > 0 ? (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Photos already on this listing</p>
+                <p className="mb-3 text-xs text-gray-600 dark:text-zinc-400">These photos stay attached when you save. Remove any you no longer want.</p>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                  {existingMediaUrls.map((url, index) => (
+                    <div key={url + '-' + index} className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800">
+                      <Image src={url} alt={'Existing listing photo ' + (index + 1)} width={320} height={160} unoptimized className="h-28 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(index)}
+                        aria-label={'Remove existing photo ' + (index + 1)}
+                        className="absolute right-1 top-1 rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white shadow"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : editListingId && loadingEdit ? (
+              <p className="mt-3 text-xs text-gray-500 dark:text-zinc-400">Loading existing photos…</p>
+            ) : null}
+
             {/* Image Previews */}
             {images.length > 0 && (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -807,7 +853,7 @@ function SellPageContent() {
                 </ul>
               </div>
             ) : null}
-            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-2">{images.length}/10 images uploaded</p>
+            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-2">{existingMediaUrls.length + images.length}/10 photos attached</p>
           </div>
 
           {/* Single Video Upload */}
@@ -827,6 +873,19 @@ function SellPageContent() {
                 <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 15MB</p>
               </div>
             </label>
+
+            {existingVideoUrl && !videoPreview ? (
+              <div className="relative mt-4 overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-zinc-700">
+                <video src={existingVideoUrl} controls className="max-h-64 w-full bg-black" />
+                <button
+                  type="button"
+                  onClick={() => setExistingVideoUrl(null)}
+                  className="absolute right-2 top-2 rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow"
+                >
+                  Remove existing video
+                </button>
+              </div>
+            ) : null}
 
             {/* Video Preview */}
             {videoPreview && (
@@ -890,12 +949,12 @@ function SellPageContent() {
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="Leave blank to discuss"
-                min="0"
+                placeholder="Leave blank to ask seller"
+                min="1"
                 step="1"
                 className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
-              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you for a quote. Enter 0 for a free item.</span>
+              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
               <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>
@@ -989,7 +1048,7 @@ function SellPageContent() {
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{normalizeListingCondition(formData.condition, formData.category)}</span>
                     {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">Negotiable</span> : null}
                   </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price ? `KSh ${Number(formData.price).toLocaleString()}` : 'Add price'}</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price.trim() && Number(formData.price) > 0 ? `KSh ${Number(formData.price).toLocaleString()}` : 'Ask seller for price'}</p>
                   <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
                   <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
@@ -1006,10 +1065,10 @@ function SellPageContent() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
             className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
-            {isSubmitting ? uploadStatus || 'Posting...' : isNewBusinessPost ? 'Send for review' : 'Post Listing'}
+            {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : isNewBusinessPost ? 'Send for review' : 'Post Listing'}
           </button>
           {isSubmitting && uploadStatus ? (
             <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>

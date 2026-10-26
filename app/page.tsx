@@ -233,7 +233,7 @@ export default function Home() {
         normalizedCategory.toLowerCase().includes(normalizedQuery) ||
         listing.description?.toLowerCase().includes(normalizedQuery) ||
         listing.location?.toLowerCase().includes(normalizedQuery);
-      const numericPrice = typeof listing.price === 'number' ? listing.price : null;
+      const numericPrice = typeof listing.price === 'number' && listing.price > 0 ? listing.price : null;
       const matchesMinPrice = !filters.minPrice || (numericPrice != null && numericPrice >= Number(filters.minPrice));
       const matchesMaxPrice = !filters.maxPrice || (numericPrice != null && numericPrice <= Number(filters.maxPrice));
       const matchesCondition = filters.condition === 'all' || listing.condition.toLowerCase() === filters.condition.toLowerCase();

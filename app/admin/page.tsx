@@ -884,7 +884,7 @@ export default function AdminPage() {
                           <StatusPill status={listing.status} />
                         </div>
                         <p className="mt-2 text-sm text-zinc-400">
-                          {listing.price ? `KSh ${listing.price}` : 'No price'} · {listing.location || 'No location'}
+                          {listing.price != null && listing.price > 0 ? `KSh ${listing.price}` : 'Ask seller for price'} · {listing.location || 'No location'}
                         </p>
                         <p className="mt-1 text-xs text-zinc-600">Seller: {listing.seller_id}</p>
                         <p className="mt-1 text-xs text-zinc-600">{formatDate(listing.created_at)}</p>

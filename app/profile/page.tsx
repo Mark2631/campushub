@@ -24,6 +24,7 @@ import {
   getLatestVerificationRequest,
   getProfileById,
   saveProfileAvatar,
+  saveProfileName,
   saveProfilePhone,
   submitVerificationRequest,
   uploadVerificationDocument,
@@ -73,6 +74,9 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(helpRequested);
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -120,6 +124,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     ]);
 
     setProfile(syncedProfile);
+    setNameInput(syncedProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '');
     setPhoneInput(syncedProfile?.phone_number || '');
     setBusinesses(userBusinesses);
     setUserListings(listings);
@@ -185,6 +190,27 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     if (refreshedProfile) setProfile(refreshedProfile);
     setMessage({ type: 'success', text: 'Profile photo updated.' });
     showToast({ type: 'success', message: 'Profile photo updated.' });
+  };
+
+  const handleNameSave = async () => {
+    if (!user || nameSaving) return;
+    setNameSaving(true);
+    try {
+      const { fullName, error } = await saveProfileName(user.id, nameInput);
+      if (error || !fullName) {
+        setCleanError(error || 'Profile name could not be saved. Please retry.');
+        return;
+      }
+      setNameInput(fullName);
+      setProfile((current) => current ? { ...current, full_name: fullName } : current);
+      setMessage({ type: 'success', text: 'Name updated.' });
+      showToast({ type: 'success', message: 'Name updated.' });
+    } catch (error) {
+      console.error('Profile name save failed:', error);
+      setCleanError('Profile name could not be saved. Please retry.');
+    } finally {
+      setNameSaving(false);
+    }
   };
 
   const handlePhoneSave = async () => {
@@ -418,7 +444,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(false); }} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                  <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(false); }} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                     Edit profile
                   </button>
@@ -458,12 +484,12 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                 ) : verificationStatus === 'rejected' ? (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-semibold text-red-700 dark:text-red-200">Verification rejected</p>
-                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="text-sm font-bold text-blue-600 dark:text-blue-300">View verification</button>
+                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="text-sm font-bold text-blue-600 dark:text-blue-300">View verification</button>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Verify to earn a trusted badge</p>
-                    <button type="button" onClick={() => { setSettingsOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
+                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
                   </div>
                 )}
               </div>
@@ -471,7 +497,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
             <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
               <div className="flex items-center justify-between gap-4">
-                <div><p className="text-sm font-bold text-blue-950 dark:text-blue-100">Payments & orders</p><p className="mt-1 text-xs text-blue-800 dark:text-blue-200/80">Track protected purchases, sales, and delivery.</p></div>
+                <div><p className="text-sm font-bold text-blue-950 dark:text-blue-100">Orders & sales</p><p className="mt-1 text-xs text-blue-800 dark:text-blue-200/80">Review purchase and sales activity in one place.</p></div>
                 <Link href="/orders" className="shrink-0 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white">View orders</Link>
               </div>
             </section>
@@ -547,64 +573,63 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
         )}
       </main>
 
-      {settingsOpen && user ? (
-        <div id="settings" className="fixed inset-0 z-50 bg-slate-950/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8" onClick={() => setSettingsOpen(false)}>
-          <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
+{profileEditOpen && user ? (
+        <div className="fixed inset-0 z-[60] bg-slate-950/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8" onClick={() => setProfileEditOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="edit-profile-title" className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold">Manage</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Orders, verification, business profile, institution, payments, and support.</p>
+                <h2 id="edit-profile-title" className="text-xl font-bold">Edit profile</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your name, contact details, institution and verification.</p>
               </div>
-              <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
+              <button type="button" aria-label="Close Edit Profile" onClick={() => setProfileEditOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-
-            <div className="space-y-5">
+            <div className="space-y-4">
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Account</h3>
-                <div className="mt-4 flex flex-wrap gap-3">
+                <h3 className="font-bold">Profile photo</h3>
+                <div className="mt-3 flex items-center gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-800 text-xl font-bold text-white">
+                    {avatarPreview || profile?.avatar_url ? (
+                      <Image src={avatarPreview || profile?.avatar_url || ''} alt="Profile photo preview" width={64} height={64} className="h-full w-full object-cover" />
+                    ) : displayName.charAt(0).toUpperCase()}
+                  </div>
                   <label className="inline-flex cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    {avatarUploading ? 'Uploading...' : 'Upload profile photo'}
+                    {avatarUploading ? 'Uploading…' : 'Change photo'}
                     <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
                   </label>
-                  <button type="button" onClick={toggleTheme} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                    {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
-                  </button>
-                  {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
                 </div>
-              </section>
-
-              <section aria-label="Manage areas" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Manage areas</h3>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Orders</Link>
-                  <Link href="/orders?view=buying" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Purchases</Link>
-                  <Link href="/orders?view=selling" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Sales</Link>
-                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Payments / transactions</Link>
-                  <a href="#manage-verification" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Verification</a>
-                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Business profile</a>
-                  <a href="#manage-institution" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Institution</a>
-                  <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help</a>
-                </div>
-              </section>
-
-              <section id="manage-institution" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Institution</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Current institution: <span className="font-semibold text-slate-900 dark:text-white">{profile?.campus || 'MUST'}</span></p>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-500">Orders remain associated with the institution on their listing.</p>
               </section>
 
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-  <h3 className="font-bold">WhatsApp</h3>
-  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your signup WhatsApp number is already used here. Only edit it if you need to change it.</p>
-  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="Optional: 07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
-  <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Update number</button>
-  </div>
+                <h3 className="font-bold">Personal details</h3>
+                <label className="mt-3 block space-y-2 text-sm">
+                  <span className="font-medium">Name</span>
+                  <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} autoComplete="name" maxLength={80} placeholder="Your name" className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+                </label>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Email: {profile?.email || user.email || 'Not available'}</p>
+                <button type="button" onClick={() => void handleNameSave()} disabled={nameSaving || nameInput.trim().length < 2} className="mt-3 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                  {nameSaving ? 'Saving name…' : 'Save name'}
+                </button>
               </section>
 
-              <section id="manage-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">WhatsApp number</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Buyers use this number to contact you about listings.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+                  <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Save number</button>
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Institution</h3>
+                <p className="mt-2 font-semibold text-slate-900 dark:text-white">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Institution identity is linked to your account and existing listings. To correct a mistake, contact support so it can be reviewed safely.</p>
+                <Link href="/profile?manage=help#manage-help" onClick={() => setProfileEditOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-600 underline dark:text-blue-300">Request an institution correction</Link>
+              </section>
+
+              <section id="edit-profile-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-bold">Verification</h3>
@@ -637,6 +662,43 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                   </form>
                 ) : null}
               </section>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+            {settingsOpen && user ? (
+        <div id="settings" className="fixed inset-0 z-50 bg-slate-950/60 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-8" onClick={() => setSettingsOpen(false)}>
+          <div className="mx-auto max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">Manage</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Orders, selling profile, preferences, and support.</p>
+              </div>
+              <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Preferences</h3>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button type="button" onClick={toggleTheme} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                    {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
+                  </button>
+                  {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
+                </div>
+              </section>
+
+              <section aria-label="Manage areas" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <h3 className="font-bold">Manage areas</h3>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Orders</Link>
+                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Selling profile</a>
+                  <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help &amp; support</a>
+                </div>
+              </section>
 
               <section id="manage-business-profile" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Selling Profile</h3>
@@ -662,11 +724,14 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
               <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Help &amp; support</h3>
-                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                <div className="mt-3 space-y-2">
                   {transactionHelpTopics.map((topic) => (
-                    <li key={topic.title}><span className="font-semibold text-slate-800 dark:text-slate-200">{topic.title}:</span> {topic.content}</li>
+                    <details key={topic.title} className="rounded-xl border border-slate-200 px-3 py-3 dark:border-slate-800">
+                      <summary className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">{topic.title}</summary>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{topic.content}</p>
+                    </details>
                   ))}
-                </ul>
+                </div>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
