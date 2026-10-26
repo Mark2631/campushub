@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const { listing } = isValidUuid(id)
     ? await getListingById(id)
-    : { listing: null, error: null };
+    : { listing: null };
 
   if (!listing) {
     return {
