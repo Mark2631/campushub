@@ -59,6 +59,7 @@ try {
     '/help',
     '/explore',
     '/manifest.webmanifest',
+    '/favicon.png',
     '/pwa-icon/180',
     '/pwa-icon/192',
     '/pwa-icon/512',
