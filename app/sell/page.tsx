@@ -369,6 +369,7 @@ function SellPageContent() {
     if (!user) return 'Sign in to post a listing.';
     if (!formData.title.trim()) return 'Title is required.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
+    if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
     return null;
   };
 
