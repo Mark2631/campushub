@@ -256,3 +256,66 @@ $function$;
 
 revoke all on function public.hide_conversation_for_user(uuid) from public, anon;
 grant execute on function public.hide_conversation_for_user(uuid) to authenticated;
+
+
+-- Conversations remain readable/removable by their participants after the
+-- linked listing is sold, hidden, or soft-deleted. Only creation of a new
+-- listing conversation requires an active, safe listing.
+drop policy if exists hardening_conversations_institution on public.conversations;
+create policy hardening_conversations_institution
+  on public.conversations
+  as restrictive
+  for all to authenticated
+  using (
+    (buyer_id = (select auth.uid()) or seller_id = (select auth.uid()))
+    and (select private.shares_current_active_institution(buyer_id))
+    and (select private.shares_current_active_institution(seller_id))
+    and (
+      listing_id is null
+      or exists (
+        select 1
+        from public.listings l
+        where l.id = conversations.listing_id
+          and l.seller_id = conversations.seller_id
+          and l.institution_id = (select private.current_active_institution_id())
+      )
+    )
+  )
+  with check (
+    (buyer_id = (select auth.uid()) or seller_id = (select auth.uid()))
+    and (select private.shares_current_active_institution(buyer_id))
+    and (select private.shares_current_active_institution(seller_id))
+    and (
+      listing_id is null
+      or exists (
+        select 1
+        from public.listings l
+        where l.id = conversations.listing_id
+          and l.seller_id = conversations.seller_id
+          and l.institution_id = (select private.current_active_institution_id())
+      )
+    )
+  );
+
+drop policy if exists hardening_conversations_insert_active_listing on public.conversations;
+create policy hardening_conversations_insert_active_listing
+  on public.conversations
+  as restrictive
+  for insert to authenticated
+  with check (
+    (buyer_id = (select auth.uid()) or seller_id = (select auth.uid()))
+    and (select private.shares_current_active_institution(buyer_id))
+    and (select private.shares_current_active_institution(seller_id))
+    and listing_id is not null
+    and exists (
+      select 1
+      from public.listings l
+      where l.id = conversations.listing_id
+        and l.seller_id = conversations.seller_id
+        and l.institution_id = (select private.current_active_institution_id())
+        and l.status = 'active'::public.listing_status
+        and l.deleted_at is null
+        and l.hidden_at is null
+        and l.moderation_status = 'safe'
+    )
+  );
