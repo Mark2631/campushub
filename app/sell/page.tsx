@@ -369,6 +369,7 @@ function SellPageContent() {
     if (!user) return 'Sign in to post a listing.';
     if (!formData.title.trim()) return 'Title is required.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
+    if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
     return null;
   };
 
@@ -467,7 +468,9 @@ function SellPageContent() {
 
       if (error) {
         console.error('Listing save failed:', error);
-        const text = 'Something went wrong. Try again.';
+        const text = typeof error === 'string' && error.trim()
+          ? error
+          : 'We could not save this listing. Check your details and try again.';
         setMessage({ type: 'error', text });
         showToast({ type: 'error', message: text });
         return;
@@ -877,16 +880,18 @@ function SellPageContent() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Price (KSh)</span>
+              <span className="font-medium text-gray-900 dark:text-white">Price (KSh, optional)</span>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="0"
+                placeholder="Leave blank to discuss"
+                min="0"
                 step="1"
                 className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
+              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you for a quote. Enter 0 for a free item.</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
               <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>

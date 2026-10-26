@@ -6,7 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import Header from '../../components/Header';
 import useUser from '../../hooks/useUser';
 import { sendPasswordResetEmail, signInWithPassword, signUpWithPassword } from '../../lib/auth';
-import { ensureProfile, normalizeKenyanPhone } from '../../lib/profiles';
+import { normalizeKenyanPhone } from '../../lib/profiles';
 import { institutionLabel, SUPPORTED_INSTITUTIONS, type Institution } from '../../lib/validation';
 
 type AuthMode = 'signup' | 'signin';
@@ -154,7 +154,10 @@ function SignInPageContent() {
   };
 
   const completeAuth = async (message: string, destination = next) => {
-    await refreshSession();
+    // Supabase has already persisted the session before these handlers call
+    // completeAuth. Let the global auth listener refresh React state in the
+    // background rather than holding the user on the form for another request.
+    void refreshSession();
     setNotice({ tone: 'success', message });
     router.replace(message === 'Welcome to CampusTrader.' ? appendWelcome(destination) : destination);
     router.refresh();
@@ -211,7 +214,6 @@ function SignInPageContent() {
     }
 
     if (signup.data.session) {
-      await ensureProfile(signup.data.session.user);
       window.localStorage.setItem('campustrader-institution', signupForm.institution);
       setSignupPending(false);
       showToast({ type: 'success', message: 'Welcome to CampusTrader.' });
@@ -247,7 +249,6 @@ function SignInPageContent() {
       return;
     }
 
-    await ensureProfile(data.session.user);
     showToast({ type: 'success', message: 'Signed in successfully.' });
     await completeAuth('Signed in successfully.', next);
   };

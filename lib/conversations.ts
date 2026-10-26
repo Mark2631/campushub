@@ -299,34 +299,27 @@ export async function hideConversationForUser(conversationId: string, userId: st
     return { error: GENERIC_ERROR };
   }
 
-  const { data, error } = await supabase
-    .from('conversations')
-    .select('id, buyer_id, seller_id, hidden_for')
-    .eq('id', conversationId)
-    .maybeSingle();
+  try {
+    // The database validates auth.uid() and participant ownership, and appends
+    // hidden_for atomically. This still works for a conversation whose listing
+    // has since been sold, hidden, or removed from active discovery.
+    const { data, error } = await supabase.rpc('hide_conversation_for_user', {
+      p_conversation_id: conversationId,
+    });
 
-  if (error || !data) {
-    if (error) console.error('Conversation hide fetch failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    if (error) {
+      console.error('Conversation hide failed:', serializeError(error));
+      return { error: 'Could not remove this conversation. Please refresh and try again.' };
+    }
+    if (data !== true) {
+      return { error: 'Conversation not found or you do not have permission to remove it.' };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error('Unexpected conversation hide failure:', error);
+    return { error: 'Could not remove this conversation. Please refresh and try again.' };
   }
-
-  const row = data as ConversationRow;
-  if (row.buyer_id !== userId && row.seller_id !== userId) {
-    return { error: PERMISSION_ERROR };
-  }
-
-  const hiddenFor = Array.from(new Set([...(row.hidden_for || []), userId]));
-  const { error: updateError } = await supabase
-    .from('conversations')
-    .update({ hidden_for: hiddenFor })
-    .eq('id', conversationId);
-
-  if (updateError) {
-    console.error('Conversation hide failed:', serializeError(updateError));
-    return { error: GENERIC_ERROR };
-  }
-
-  return { error: null };
 }
 
 export async function sendMessage(conversationId: string, senderId: string, content: string) {

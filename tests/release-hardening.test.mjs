@@ -81,3 +81,88 @@ test('database performance migration covers previously unindexed foreign keys', 
   assert.match(sql, /CREATE INDEX IF NOT EXISTS manual_order_releases_admin_id_idx/i);
   assert.match(sql, /CREATE INDEX IF NOT EXISTS payment_attempts_verified_by_idx/i);
 });
+
+
+test('community request inserts include the institution required by tenant RLS', async () => {
+  const source = await read('../lib/community.ts');
+  const start = source.indexOf('export async function createCommunityRequest(');
+  const end = source.indexOf('export async function createCommunity(', start);
+  assert.ok(start >= 0 && end > start, 'community request function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /getInstitutionIdForUser\(args\.userId\)/);
+  assert.match(fn, /institution_id: institutionId/);
+  assert.match(fn, /status: 'pending'/);
+});
+
+test('community and conversation policy migration preserves safe buyer/admin access', async () => {
+  const sql = await read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql');
+  assert.match(sql, /users_can_request_communities/i);
+  assert.match(sql, /created_by = \(select auth\.uid\(\)\)/i);
+  assert.match(sql, /admins_can_delete_communities/i);
+  assert.match(sql, /coalesce\(public\.is_admin\(\), false\)[\s\S]*institution_id = \(select private\.current_active_institution_id\(\)\)/i);
+  assert.match(sql, /create or replace function public\.hide_conversation_for_user/i);
+  assert.match(sql, /buyer_id = v_user_id or seller_id = v_user_id/i);
+  assert.match(sql, /revoke all on function public\.hide_conversation_for_user\(uuid\) from public, anon/i);
+  assert.match(sql, /grant execute on function public\.hide_conversation_for_user\(uuid\) to authenticated/i);
+});
+
+test('saved listing control uses the account database instead of only local storage', async () => {
+  const source = await read('../components/SaveListingButton.tsx');
+  assert.match(source, /from\('saved_listings'\)/);
+  assert.match(source, /\.insert\(\{ user_id: user\.id, listing_id: listingId \}\)/);
+  assert.match(source, /\.delete\(\)/);
+  assert.doesNotMatch(source, /campustrader-saved-listings/);
+});
+
+test('conversation hide is delegated to a participant-validated database RPC', async () => {
+  const [source, migration] = await Promise.all([
+    read('../lib/conversations.ts'),
+    read('../supabase/migrations/20261026042206_hide_conversation_invoker_20261026.sql'),
+  ]);
+  const start = source.indexOf('export async function hideConversationForUser(');
+  const end = source.indexOf('export async function sendMessage(', start);
+  assert.ok(start >= 0 && end > start, 'conversation hide function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /supabase\.rpc\('hide_conversation_for_user'/);
+  assert.doesNotMatch(fn, /\.update\(\{ hidden_for/);
+  assert.match(migration, /alter function public\.hide_conversation_for_user\(uuid\) security invoker/i);
+});
+
+test('profile sync failures can retry and successful auth no longer waits on duplicate profile/session round trips', async () => {
+  const [provider, signin] = await Promise.all([
+    read('../components/AppProvider.tsx'),
+    read('../app/signin/page.tsx'),
+  ]);
+  assert.match(provider, /const syncingProfileIds = new Set<string>\(\)/);
+  assert.match(provider, /if \(error \|\| !profile\)[\s\S]*?syncedProfileIds\.delete\(userId\)/);
+  assert.doesNotMatch(signin, /await ensureProfile\(/);
+  assert.match(signin, /void refreshSession\(\)/);
+});
+
+
+test('new seller listings include the required listing_type and use the verified tenant ID', async () => {
+  const source = await read('../lib/listings.ts');
+  const start = source.indexOf('export async function insertListing(');
+  const end = source.indexOf('export async function getListingById(', start);
+  assert.ok(start >= 0 && end > start, 'insertListing function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /listing_type:\s*validated\.value\.condition === 'service'/);
+  assert.match(fn, /institution_id:\s*institutionId/);
+  assert.match(fn, /price:\s*validated\.value\.price == null \? null/);
+});
+
+test('listing schema migration allows contact-for-price listings without bypassing checkout safeguards', async () => {
+  const [sql, orders] = await Promise.all([
+    read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql'),
+    read('../lib/orders.ts'),
+  ]);
+  assert.match(sql, /alter table public\.listings alter column price drop not null/i);
+  assert.match(orders, /Number\(listing\.price\) > 0/);
+  assert.match(orders, /PHYSICAL_PRODUCT/);
+});
+
+test('auth signup trigger assigns campus from the institution instead of the table default', async () => {
+  const sql = await read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql');
+  assert.match(sql, /set campus = case when upper\(i\.code\) = 'MUKIRIA TTI' then 'MUKIRIA' else i\.code end/i);
+  assert.match(sql, /phone_number, campus,[\s\S]*v_phone, v_campus_code/);
+});

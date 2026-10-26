@@ -11,7 +11,7 @@ import {
   normalizeInstitution,
   parseOptionalNumber,
 } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export interface ItemRequest {
   id: string;
@@ -139,6 +139,14 @@ export async function createItemRequest(
     return { request: null as ItemRequest | null, error: 'Minimum budget cannot be higher than maximum budget.' };
   }
 
+  const institutionId = await getInstitutionIdForUser(userId);
+  if (!institutionId) {
+    return {
+      request: null as ItemRequest | null,
+      error: "Your account isn't linked to an active institution. Refresh your profile or sign in again, then retry.",
+    };
+  }
+
   const payload: Record<string, unknown> = {
     user_id: userId,
     title,
@@ -150,14 +158,7 @@ export async function createItemRequest(
     interested_count: 0,
     status: 'open',
     campus: normalizeInstitution(institution),
-    ...(await (async () => {
-      try {
-        const id = await getInstitutionIdForCode(normalizeInstitution(institution));
-        return id ? { institution_id: id } : {};
-      } catch {
-        return {};
-      }
-    })()),
+    institution_id: institutionId,
   };
 
   try {

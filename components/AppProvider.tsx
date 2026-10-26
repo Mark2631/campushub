@@ -48,6 +48,7 @@ type Toast = {
 
 const AppContext = createContext<AppContextValue | null>(null);
 const syncedProfileIds = new Set<string>();
+const syncingProfileIds = new Set<string>();
 const loggedProfileErrors = new Set<string>();
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -106,13 +107,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     const syncProfile = async (userToSync: User | null) => {
-      if (!userToSync || syncedProfileIds.has(userToSync.id)) return;
-      syncedProfileIds.add(userToSync.id);
-      const { profile, error } = await ensureProfile(userToSync);
-      if (isMounted && profile?.campus) setInstitutionState(normalizeInstitution(profile.campus));
-      if (error && !loggedProfileErrors.has(error)) {
-        loggedProfileErrors.add(error);
-        console.error('Profile sync error:', error);
+      if (!userToSync || syncedProfileIds.has(userToSync.id) || syncingProfileIds.has(userToSync.id)) return;
+
+      const userId = userToSync.id;
+      syncingProfileIds.add(userId);
+      try {
+        const { profile, error } = await ensureProfile(userToSync);
+        if (error || !profile) {
+          syncedProfileIds.delete(userId);
+          if (error && !loggedProfileErrors.has(error)) {
+            loggedProfileErrors.add(error);
+            console.error('Profile sync error:', error);
+          }
+          return;
+        }
+
+        syncedProfileIds.add(userId);
+        if (isMounted && profile.campus) {
+          setInstitutionState(normalizeInstitution(profile.campus));
+        }
+      } catch (error) {
+        syncedProfileIds.delete(userId);
+        const message = error instanceof Error ? error.message : String(error);
+        if (!loggedProfileErrors.has(message)) {
+          loggedProfileErrors.add(message);
+          console.error('Profile sync error:', error);
+        }
+      } finally {
+        syncingProfileIds.delete(userId);
       }
     };
 

@@ -14,7 +14,7 @@ import {
   normalizeInstitution,
   parseOptionalNumber,
 } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export interface Listing {
   id: string;
@@ -275,7 +275,7 @@ export async function getListingsByUser(userId: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
 
@@ -348,6 +348,14 @@ export async function insertListing(
       return { listing: null, error: validated.error || GENERIC_ERROR };
     }
 
+    const institutionId = await getInstitutionIdForUser(userId);
+    if (!institutionId) {
+      return {
+        listing: null,
+        error: "Your account isn't linked to an active institution. Refresh your profile or sign in again, then retry.",
+      };
+    }
+
     const listingToInsert: Record<string, unknown> = {
       user_id: userId,
       seller_id: userId,
@@ -355,6 +363,11 @@ export async function insertListing(
       title: validated.value.title,
       description: validated.value.description,
       category: validated.value.category,
+      // The database requires a listing_type. The current sell form supports
+      // products and services; keep checkout limited to priced physical goods.
+      listing_type: validated.value.condition === 'service'
+        ? 'SERVICE_ENQUIRY'
+        : 'PHYSICAL_PRODUCT',
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
@@ -363,21 +376,15 @@ export async function insertListing(
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
       campus: normalizeInstitution(data.campus ?? DEFAULT_CAMPUS),
-      // optionally set institution_id when we can resolve it
-      ...(await (async () => {
-        try {
-          const id = await getInstitutionIdForCode(normalizeInstitution(data.campus ?? DEFAULT_CAMPUS));
-          return id ? { institution_id: id } : {};
-        } catch {
-          return {};
-        }
-      })()),
+      // Use the authenticated profile's tenant ID; the database trigger
+      // normalizes the display campus from this authoritative identifier.
+      institution_id: institutionId,
     };
 
     const insertQuery = supabase
         .from('listings')
         .insert(listingToInsert)
-        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
         .single();
 
     let { data: newListing, error } = await withTimeout(
@@ -393,7 +400,7 @@ export async function insertListing(
         supabase
           .from('listings')
           .insert(legacyPayload)
-          .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+          .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
           .single(),
         15000,
         'Creating listing timed out. Please try again.'
@@ -403,7 +410,19 @@ export async function insertListing(
     if (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       logSupabaseError('Error inserting listing:', error, { listingToInsert });
-      return { listing: null, error: GENERIC_ERROR };
+      if (error.code === '42501') {
+        return {
+          listing: null,
+          error: "We couldn't publish this listing because your account's institution could not be verified. Refresh your profile and try again.",
+        };
+      }
+      if (error.code === '23502') {
+        return {
+          listing: null,
+          error: 'A required listing detail is missing. Check the title, category, and price, then try again.',
+        };
+      }
+      return { listing: null, error: 'We could not publish this listing. Check your details and connection, then try again.' };
     }
 
     const [listing] = await enrichListings([newListing as ListingRow]);
@@ -518,6 +537,9 @@ export async function updateListing(
     title: validated.value.title,
     description: validated.value.description,
     category: validated.value.category,
+    listing_type: validated.value.condition === 'service'
+      ? 'SERVICE_ENQUIRY'
+      : 'PHYSICAL_PRODUCT',
     price: validated.value.price == null ? null : Number(validated.value.price),
     negotiable: Boolean(data.negotiable),
     condition: validated.value.condition,
@@ -536,7 +558,7 @@ export async function updateListing(
       .update(payload)
       .eq('id', listingId)
       .eq('seller_id', sellerId)
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
       .single(),
     15000,
     'Saving listing timed out. Please try again.'

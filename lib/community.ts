@@ -13,7 +13,7 @@ import {
   isValidUuid,
   normalizeInstitution,
 } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export type Community = {
   id: string;
@@ -200,7 +200,9 @@ export async function getCommunities(viewerId?: string | null, institution: stri
 
   if (!includeArchived) query = query.eq('status', 'active');
 
-  if (institution) {
+  // Admin management must include archived and cross-institution communities.
+  // RLS still restricts non-admin users to their own institution and requests.
+  if (institution && !includeArchived) {
     const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
     if (instId) query = query.eq('institution_id', instId);
     else query = query.eq('campus', normalizeInstitution(institution));
@@ -516,15 +518,39 @@ export async function createCommunityRequest(args: {
   const category = cleanText(args.category, 80) || 'General';
   if (!name || !description) return { community: null as Community | null, error: 'Name and description are required.' };
 
+  const campus = normalizeInstitution(args.campus || DEFAULT_CAMPUS);
+  const institutionId = await getInstitutionIdForUser(args.userId);
+  if (!institutionId) {
+    return {
+      community: null as Community | null,
+      error: "We couldn't identify your institution. Check your profile's institution and try again.",
+    };
+  }
+
   const { data, error } = await supabase
     .from('communities')
-    .insert({ campus: args.campus || DEFAULT_CAMPUS, name, description, category, is_official: false, posting_mode: 'everyone', status: 'pending', created_by: args.userId })
-    .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
+    .insert({
+      campus,
+      institution_id: institutionId,
+      name,
+      description,
+      category,
+      is_official: false,
+      posting_mode: 'everyone',
+      status: 'pending',
+      created_by: args.userId,
+      approved_by: null,
+      approved_at: null,
+    })
+    .select('id, campus, institution_id, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
     .single();
 
   if (error) {
     console.error('Community request failed:', serializeError(error));
-    return { community: null as Community | null, error: error.message || 'Community request could not be created.' };
+    return {
+      community: null as Community | null,
+      error: 'Community request could not be submitted. Check your connection and try again.',
+    };
   }
   return { community: data as Community, error: null };
 }
@@ -588,15 +614,18 @@ export async function updateCommunityStatus(communityId: string, adminId: string
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community status update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community status could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community status was not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
@@ -608,15 +637,18 @@ export async function updateCommunityCoverUrl(communityId: string, adminId: stri
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ cover_url: cleanText(coverUrl, 1000), updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community cover update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community cover could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community cover was not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
@@ -633,15 +665,18 @@ export async function updateCommunityPostingMode(
 
   if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('communities')
     .update({ posting_mode: postingMode, updated_at: new Date().toISOString() })
-    .eq('id', communityId);
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
 
   if (error) {
     console.error('Community posting mode update failed:', serializeError(error));
-    return { error: GENERIC_ERROR };
+    return { error: 'Community posting settings could not be updated. Refresh and try again.' };
   }
+  if (!data?.id) return { error: 'Community settings were not changed. Check admin access and refresh.' };
 
   return { error: null };
 }
@@ -701,6 +736,33 @@ export async function moderateCommunityComment(commentId: string, adminId: strin
   if (error) {
     console.error('Community comment moderation failed:', serializeError(error));
     return { error: GENERIC_ERROR };
+  }
+
+  return { error: null };
+}
+
+
+/** Permanently remove an official community after confirming the caller is an admin. */
+export async function deleteCommunity(communityId: string, adminId: string, adminEmail: string | null | undefined) {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId)) {
+    return { error: GENERIC_ERROR };
+  }
+
+  if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
+
+  const { data, error } = await supabase
+    .from('communities')
+    .delete()
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Community delete failed:', serializeError(error));
+    return { error: 'Community could not be deleted. Refresh and try again.' };
+  }
+  if (!data?.id) {
+    return { error: 'Community was not deleted. You may not have permission, or it was already removed.' };
   }
 
   return { error: null };
