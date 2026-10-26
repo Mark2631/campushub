@@ -50,9 +50,9 @@ export const metadata: Metadata = {
     images: ['/opengraph-image'],
   },
   icons: {
-    icon: [{ url: '/campustrader-icon-192-v2.png', sizes: '192x192', type: 'image/png' }],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-    shortcut: ['/campustrader-icon-192-v2.png'],
+    icon: [{ url: '/pwa-icon/192', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/pwa-icon/180', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.svg'],
   },
 };
 
@@ -98,7 +98,7 @@ export default function RootLayout({
                 url: "https://campus-trader.vercel.app/",
                 logo: {
                   "@type": "ImageObject",
-                  url: "https://campus-trader.vercel.app/campustrader-icon-512-v2.png",
+                  url: "https://campus-trader.vercel.app/pwa-icon/512",
                   width: 512,
                   height: 512
                 }
