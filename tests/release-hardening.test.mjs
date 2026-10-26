@@ -123,9 +123,9 @@ test('conversation hide is delegated to a participant-validated database RPC', a
   const end = source.indexOf('export async function sendMessage(', start);
   assert.ok(start >= 0 && end > start, 'conversation hide function should exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /supabase\\.rpc\\('hide_conversation_for_user'/);
-  assert.doesNotMatch(fn, /\\.update\\(\\{ hidden_for/);
-  assert.match(migration, /alter function public\\.hide_conversation_for_user\\(uuid\\) security invoker/i);
+  assert.match(fn, /supabase\.rpc\('hide_conversation_for_user'/);
+  assert.doesNotMatch(fn, /\.update\(\{ hidden_for/);
+  assert.match(migration, /alter function public\.hide_conversation_for_user\(uuid\) security invoker/i);
 });
 
 test('profile sync failures can retry and successful auth no longer waits on duplicate profile/session round trips', async () => {
