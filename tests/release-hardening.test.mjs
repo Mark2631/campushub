@@ -236,3 +236,11 @@ test('seller and sign-in routes declare intentional search metadata', async () =
   assert.ok(sell.includes('canonical: \'https://campus-trader.vercel.app/sell\''));
   assert.ok(signin.includes('index: false'));
 });
+
+
+test('Google favicon discovery has one explicit brand icon rather than a file-based override', async () => {
+  const layout = await read('../app/layout.tsx');
+  assert.ok(layout.includes("icon: [{ url: '/campustrader-icon-192-v2.png'"));
+  await assert.rejects(read('../app/favicon.ico'));
+  await assert.rejects(read('../public/sitemap.xml'));
+});
