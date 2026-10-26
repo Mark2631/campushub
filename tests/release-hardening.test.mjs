@@ -166,3 +166,9 @@ test('auth signup trigger assigns campus from the institution instead of the tab
   assert.match(sql, /set campus = case when upper\(i\.code\) = 'MUKIRIA TTI' then 'MUKIRIA' else i\.code end/i);
   assert.match(sql, /phone_number, campus,[\s\S]*v_phone, v_campus_code/);
 });
+
+
+test('legacy community request policy cannot bypass pending request restrictions', async () => {
+  const sql = await read('../supabase/migrations/20261026042828_harden_community_request_policy_20261026.sql');
+  assert.match(sql, /drop policy if exists "Verified users can submit pending communities"/i);
+});
