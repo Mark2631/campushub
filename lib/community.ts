@@ -13,7 +13,7 @@ import {
   isValidUuid,
   normalizeInstitution,
 } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export type Community = {
   id: string;
@@ -517,7 +517,7 @@ export async function createCommunityRequest(args: {
   if (!name || !description) return { community: null as Community | null, error: 'Name and description are required.' };
 
   const campus = normalizeInstitution(args.campus || DEFAULT_CAMPUS);
-  const institutionId = await getInstitutionIdForCode(campus);
+  const institutionId = await getInstitutionIdForUser(args.userId);
   if (!institutionId) {
     return {
       community: null as Community | null,
