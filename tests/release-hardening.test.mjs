@@ -224,8 +224,8 @@ test('homepage exposes consistent CampusTrader site identity and a branded PNG f
   assert.ok(source.includes('name: "CampusTrader"'));
   assert.ok(source.includes('https://campus-trader.vercel.app/'));
   assert.ok(source.includes('"@type": "Organization"'));
-  assert.ok(source.includes('campustrader-icon-512-v2.png'));
-  assert.ok(source.includes('campustrader-icon-192-v2.png'));
+  assert.ok(source.includes('https://campus-trader.vercel.app/pwa-icon/512'));
+  assert.ok(source.includes("url: '/pwa-icon/192'"));
 });
 
 test('community metadata uses the product-wide name rather than a single campus', async () => {
@@ -292,7 +292,7 @@ test('homepage search and social metadata consistently describe CampusTrader', a
 });
 
 test('official CampusTrader mark is reused across header, favicon, manifest and generated PWA icons', async () => {
-  const [logo, mark, favicon, layout, manifestText, serviceWorker, icon192, icon512, appleIcon] = await Promise.all([
+  const [logo, mark, favicon, layout, manifestText, serviceWorker, icon192, icon512, appleIcon, renderer] = await Promise.all([
     read('../components/Logo.tsx'),
     read('../components/BrandMark.tsx'),
     read('../public/favicon.svg'),
@@ -302,6 +302,7 @@ test('official CampusTrader mark is reused across header, favicon, manifest and 
     read('../app/pwa-icon/192/route.tsx'),
     read('../app/pwa-icon/512/route.tsx'),
     read('../app/pwa-icon/180/route.tsx'),
+    read('../lib/pwaIcon.tsx'),
   ]);
   const manifest = JSON.parse(manifestText);
   assert.match(logo, /BrandMark/);
@@ -316,9 +317,10 @@ test('official CampusTrader mark is reused across header, favicon, manifest and 
   assert.equal(manifest.icons.find((icon) => icon.sizes === '512x512')?.src, '/pwa-icon/512');
   assert.ok(serviceWorker.includes('campustrader-offline-v3'));
   assert.ok(serviceWorker.includes("'/pwa-icon/192'"));
-  assert.match(icon192, /ImageResponse/);
-  assert.match(icon512, /ImageResponse/);
-  assert.match(appleIcon, /ImageResponse/);
+  assert.match(icon192, /renderPwaIcon\(192\)/);
+  assert.match(icon512, /renderPwaIcon\(512\)/);
+  assert.match(appleIcon, /renderPwaIcon\(180\)/);
+  assert.match(renderer, /ImageResponse/);
 });
 
 test('social preview uses the official CampusTrader brand mark', async () => {
