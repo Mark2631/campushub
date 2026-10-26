@@ -51,3 +51,32 @@ export async function getInstitutionIdForCode(code: string) {
     return null;
   }
 }
+
+/**
+ * Read the current user's tenant ID from their protected profile. This is the
+ * authoritative source for writes; UI campus state can be stale on first load
+ * or after a user changes devices.
+ */
+export async function getInstitutionIdForUser(userId: string) {
+  if (!userId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('institution_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Could not resolve the account institution:', error);
+      return null;
+    }
+
+    return typeof data?.institution_id === 'string' && data.institution_id
+      ? data.institution_id
+      : null;
+  } catch (error) {
+    console.error('Could not resolve the account institution:', error);
+    return null;
+  }
+}
