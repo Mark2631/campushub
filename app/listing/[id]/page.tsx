@@ -41,7 +41,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const rawDescription = typeof listing.description === 'string'
     ? listing.description.split(String.fromCharCode(10)).join(' ').split(String.fromCharCode(13)).join(' ').split(String.fromCharCode(9)).join(' ').trim()
     : '';
-  const description = (rawDescription || `View this ${listing.category.toLowerCase()} listing on CampusTrader.`).slice(0, 160);
+  const listingDetails = [
+    typeof listing.condition === 'string' ? listing.condition.toLowerCase() : '',
+    typeof listing.category === 'string' ? listing.category.toLowerCase() : '',
+    typeof listing.location === 'string' && listing.location.trim() ? `in ${listing.location.trim()}` : 'on campus in Kenya',
+    listing.price != null && Number.isFinite(Number(listing.price))
+      ? `KSh ${Number(listing.price).toLocaleString('en-KE')}`
+      : '',
+  ].filter(Boolean).join(' · ');
+  const fallbackDescription = `${listing.title}: ${listingDetails}. Listed on CampusTrader.`;
+  const description = (rawDescription || fallbackDescription).slice(0, 160);
   const url = `${siteUrl}/listing/${listing.id}`;
   const images = Array.isArray(listing.media_urls)
     ? listing.media_urls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://'))).slice(0, 4)
@@ -49,8 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const socialImages = images.length
     ? images.map((url) => ({ url, alt: listing.title }))
     : [{ url: `${siteUrl}/opengraph-image`, alt: 'CampusTrader student marketplace in Kenya' }];
-  const hasSubstantialDescription = rawDescription.length >= 40;
-  const indexable = listing.status === 'active' && listing.title.trim().length >= 4 && hasSubstantialDescription;
+  const indexable = listing.status === 'active' && listing.title.trim().length >= 4;
 
   return {
     title,
