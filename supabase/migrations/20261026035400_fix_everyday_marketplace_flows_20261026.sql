@@ -306,16 +306,18 @@ create policy hardening_conversations_insert_active_listing
     (buyer_id = (select auth.uid()) or seller_id = (select auth.uid()))
     and (select private.shares_current_active_institution(buyer_id))
     and (select private.shares_current_active_institution(seller_id))
-    and listing_id is not null
-    and exists (
-      select 1
-      from public.listings l
-      where l.id = conversations.listing_id
-        and l.seller_id = conversations.seller_id
-        and l.institution_id = (select private.current_active_institution_id())
-        and l.status = 'active'::public.listing_status
-        and l.deleted_at is null
-        and l.hidden_at is null
-        and l.moderation_status = 'safe'
+    and (
+      listing_id is null
+      or exists (
+        select 1
+        from public.listings l
+        where l.id = conversations.listing_id
+          and l.seller_id = conversations.seller_id
+          and l.institution_id = (select private.current_active_institution_id())
+          and l.status = 'active'::public.listing_status
+          and l.deleted_at is null
+          and l.hidden_at is null
+          and l.moderation_status = 'safe'
+      )
     )
   );
