@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, title, description, status, updated_at')
+      .select('id, title, status, updated_at')
       .eq('status', 'active')
       .order('updated_at', { ascending: false })
       .limit(1000);
@@ -30,11 +30,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const listingPages: MetadataRoute.Sitemap = (data ?? []).flatMap((listing) => {
       const title = typeof listing.title === 'string' ? listing.title.trim() : '';
-      const description = typeof listing.description === 'string' ? listing.description.trim() : '';
       if (
         typeof listing.id !== 'string' ||
         title.length < 4 ||
-        description.length < 40 ||
         listing.status !== 'active'
       ) {
         return [];

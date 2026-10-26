@@ -213,7 +213,7 @@ test('SEO sitemap includes canonical pages and only indexable active listings', 
   assert.ok(source.includes("export const dynamic = 'force-dynamic'"));
   assert.ok(source.includes(".eq('status', 'active')"));
   assert.ok(source.includes("title.length < 4"));
-  assert.ok(source.includes("description.length < 40"));
+  assert.ok(!source.includes('description.length' + ' < 40'));
   assert.ok(source.includes("`${siteUrl}/listing/${listing.id}`"));
   assert.ok(source.includes('entry.lastModified = new Date(updatedAt)'));
   assert.ok(!source.includes('lastModified = new Date()'));
@@ -274,7 +274,10 @@ test('public listings have unique canonical metadata and product markup only for
   assert.ok(source.includes('export async function generateMetadata'));
   assert.ok(source.includes('alternates: { canonical: url }'));
   assert.ok(source.includes('robots: { index: indexable, follow: true }'));
-  assert.ok(source.includes("const indexable = listing.status === 'active'"));
+  assert.ok(source.includes("const indexable = listing.status === 'active' && listing.title.trim().length >= 4"));
+  assert.ok(!source.includes('hasSubstantialDescription'));
+  assert.ok(source.includes('const fallbackDescription ='));
+  assert.ok(source.includes('Number(listing.price).toLocaleString'));
   assert.ok(source.includes("'@type': 'Product'"));
   assert.ok(source.includes("priceCurrency: 'KES'"));
   assert.ok(source.includes("availability: 'https://schema.org/InStock'"));
