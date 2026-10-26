@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     typeof listing.condition === 'string' ? listing.condition.toLowerCase() : '',
     typeof listing.category === 'string' ? listing.category.toLowerCase() : '',
     typeof listing.location === 'string' && listing.location.trim() ? `in ${listing.location.trim()}` : 'on campus in Kenya',
-    listing.price != null && Number.isFinite(Number(listing.price))
+    listing.price != null && Number.isFinite(Number(listing.price)) && Number(listing.price) > 0
       ? `KSh ${Number(listing.price).toLocaleString('en-KE')}`
       : '',
   ].filter(Boolean).join(' · ');
@@ -204,7 +204,7 @@ export default async function ListingPage({ params }: Props) {
                 <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6 dark:border-zinc-800 dark:from-blue-900/30 dark:to-blue-800/20">
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Price</p>
                   <p className="mt-3 text-3xl font-bold text-blue-600 sm:text-4xl dark:text-blue-400">
-                    {listing.price != null ? `KSh ${listing.price.toLocaleString()}` : 'Free'}
+                    {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
                   </p>
                   {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-blue-700 dark:text-blue-200">Negotiable</p> : null}
                 </div>
