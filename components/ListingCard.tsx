@@ -38,7 +38,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
       <div className="p-2.5 sm:p-3">
         <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-bold leading-5 text-slate-950 sm:text-sm dark:text-slate-50">{listing.title}</h3>
         <p className="mt-1 text-sm font-extrabold text-blue-700 sm:text-base dark:text-cyan-300">
-          {listing.price != null ? `KSh ${listing.price.toLocaleString()}` : 'Free'}
+          {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
         </p>
         <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-300">{listing.location || 'Campus location'}</p>
         <div className="mt-2 flex min-h-5 items-center gap-1.5">
