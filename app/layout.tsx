@@ -50,11 +50,13 @@ export const metadata: Metadata = {
     images: ['/opengraph-image'],
   },
   icons: {
-    icon: [{ url: '/pwa-icon/192', sizes: '192x192', type: 'image/png' }],
+    // Keep a stable, raster PNG endpoint dedicated to Search crawlers.
+    icon: [
+      { url: '/favicon.png', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa-icon/192', sizes: '192x192', type: 'image/png' },
+    ],
     apple: [{ url: '/pwa-icon/180', sizes: '180x180', type: 'image/png' }],
-    // Google Search's favicon crawler supports raster formats such as PNG; use the same
-    // stable, generated artwork as the PWA instead of pointing shortcut-icon at SVG.
-    shortcut: ['/pwa-icon/192'],
+    shortcut: ['/favicon.png'],
   },
 };
 
