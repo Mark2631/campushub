@@ -203,13 +203,14 @@ test('listing insert confirmation is not blocked by unbounded seller enrichment'
 });
 
 
-test('SEO sitemap includes public discovery pages and excludes account-only destinations', async () => {
+test('SEO sitemap includes canonical public pages without inaccurate modification timestamps', async () => {
   const source = await read('../app/sitemap.ts');
   assert.ok(source.includes('${siteUrl}/community'));
   assert.ok(source.includes('${siteUrl}/help'));
   assert.ok(source.includes('${siteUrl}/sell'));
   assert.ok(!source.includes('${siteUrl}/signin'));
   assert.ok(!source.includes('${siteUrl}/admin'));
+  assert.ok(!source.includes('lastModified = new Date()'));
 });
 
 test('homepage exposes consistent CampusTrader site identity and a branded PNG favicon', async () => {
@@ -260,4 +261,23 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
   assert.ok(help.includes('Buying and selling basics'));
   assert.ok(help.includes('Post a listing'));
   assert.ok(help.includes('Post a request'));
+});
+
+test('public listings have unique canonical metadata and product markup only for active priced products', async () => {
+  const source = await read('../app/listing/[id]/page.tsx');
+  assert.ok(source.includes('export async function generateMetadata'));
+  assert.ok(source.includes('alternates: { canonical: url }'));
+  assert.ok(source.includes('robots: { index: indexable, follow: true }'));
+  assert.ok(source.includes("const indexable = listing.status === 'active'"));
+  assert.ok(source.includes("'@type': 'Product'"));
+  assert.ok(source.includes("priceCurrency: 'KES'"));
+  assert.ok(source.includes("availability: 'https://schema.org/InStock'"));
+});
+
+test('homepage search and social metadata consistently describe CampusTrader', async () => {
+  const source = await read('../app/layout.tsx');
+  assert.ok(source.includes("title: 'CampusTrader | Student Marketplace in Kenya'"));
+  assert.ok(!source.includes('Inter-Institutional Marketplace'));
+  assert.ok(!source.includes('keywords: ['));
+  assert.ok(source.includes("card: 'summary_large_image'"));
 });
