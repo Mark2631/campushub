@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     'student deals',
   ],
   alternates: {
-    canonical: 'https://campus-trader.vercel.app',
+    canonical: 'https://campus-trader.vercel.app/',
   },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'CampusTrader | Inter-Institutional Marketplace',
     description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
-    url: 'https://campus-trader.vercel.app',
+    url: 'https://campus-trader.vercel.app/',
     siteName: 'CampusTrader',
     images: [
       {
@@ -61,14 +61,9 @@ export const metadata: Metadata = {
     images: ['/opengraph-image'],
   },
   icons: {
-    icon: [
-      { url: '/campustrader-icon-192-v2.png', sizes: '192x192', type: 'image/png' },
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/campustrader-icon-512-v2.png', sizes: '512x512', type: 'image/png' },
-    ],
+    icon: [{ url: '/campustrader-icon-192-v2.png', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-    shortcut: ['/favicon.ico'],
+    shortcut: ['/campustrader-icon-192-v2.png'],
   },
 };
 
@@ -95,12 +90,31 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "CampusTrader",
-            alternateName: ["Campus Trader", "campus-trader.vercel.app"],
-            url: "https://campus-trader.vercel.app/",
-            description: "Student marketplace for buying and selling on campus in Kenya",
-            inLanguage: "en-KE",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                "@id": "https://campus-trader.vercel.app/#website",
+                name: "CampusTrader",
+                alternateName: ["Campus Trader", "campus-trader.vercel.app"],
+                url: "https://campus-trader.vercel.app/",
+                description: "A student marketplace in Kenya for buying and selling products, discovering services, and connecting with campus communities.",
+                inLanguage: "en-KE",
+                publisher: { "@id": "https://campus-trader.vercel.app/#organization" }
+              },
+              {
+                "@type": "Organization",
+                "@id": "https://campus-trader.vercel.app/#organization",
+                name: "CampusTrader",
+                alternateName: "Campus Trader",
+                url: "https://campus-trader.vercel.app/",
+                logo: {
+                  "@type": "ImageObject",
+                  url: "https://campus-trader.vercel.app/campustrader-icon-512-v2.png",
+                  width: 512,
+                  height: 512
+                }
+              }
+            ]
           }) }}
         />
         <AppProvider>
