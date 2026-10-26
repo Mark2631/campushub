@@ -275,7 +275,7 @@ export async function getListingsByUser(userId: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
 
@@ -363,6 +363,11 @@ export async function insertListing(
       title: validated.value.title,
       description: validated.value.description,
       category: validated.value.category,
+      // The database requires a listing_type. The current sell form supports
+      // products and services; keep checkout limited to priced physical goods.
+      listing_type: validated.value.condition === 'service'
+        ? 'SERVICE_ENQUIRY'
+        : 'PHYSICAL_PRODUCT',
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
@@ -405,7 +410,19 @@ export async function insertListing(
     if (error) {
       console.error('Listing post failed:', JSON.stringify(error, null, 2));
       logSupabaseError('Error inserting listing:', error, { listingToInsert });
-      return { listing: null, error: GENERIC_ERROR };
+      if (error.code === '42501') {
+        return {
+          listing: null,
+          error: "We couldn't publish this listing because your account's institution could not be verified. Refresh your profile and try again.",
+        };
+      }
+      if (error.code === '23502') {
+        return {
+          listing: null,
+          error: 'A required listing detail is missing. Check the title, category, and price, then try again.',
+        };
+      }
+      return { listing: null, error: 'We could not publish this listing. Check your details and connection, then try again.' };
     }
 
     const [listing] = await enrichListings([newListing as ListingRow]);
