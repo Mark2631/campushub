@@ -50,6 +50,7 @@ function SellPageContent() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [postWithoutMediaReady, setPostWithoutMediaReady] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [editDataLoadedId, setEditDataLoadedId] = useState<string | null>(null);
   const [existingMediaUrls, setExistingMediaUrls] = useState<string[]>([]);
   const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
   const [sellerProfile, setSellerProfile] = useState<ProfileRecord | null>(null);
@@ -98,6 +99,7 @@ function SellPageContent() {
         return;
       }
 
+      setEditDataLoadedId(null);
       setLoadingEdit(true);
       const { listing, error } = await getListingById(editListingId);
       setLoadingEdit(false);
@@ -116,7 +118,7 @@ function SellPageContent() {
       setFormData({
         title: listing.title,
         category: listing.category,
-        price: listing.price?.toString() || '',
+        price: listing.price != null && listing.price > 0 ? listing.price.toString() : '',
         negotiable: listing.negotiable,
         condition: normalizeListingCondition(listing.condition, listing.category),
         description: listing.description || '',
@@ -125,6 +127,7 @@ function SellPageContent() {
       setCreatedListingId(listing.id);
       setExistingMediaUrls(listing.media_urls || []);
       setExistingVideoUrl(listing.video_url || null);
+      setEditDataLoadedId(listing.id);
     };
 
     void loadEditListing();
@@ -384,6 +387,7 @@ function SellPageContent() {
     if (!formData.title.trim()) return 'Title is required.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
     if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
+    if (formData.price.trim() && Number(formData.price) === 0) return 'Leave the price blank if buyers should contact you to agree on a price.';
     return null;
   };
 
@@ -458,7 +462,7 @@ function SellPageContent() {
     if (isSubmitting) {
       return;
     }
-    if (editListingId && (loadingEdit || createdListingId !== editListingId)) {
+    if (editListingId && (loadingEdit || editDataLoadedId !== editListingId)) {
       const text = 'Listing details are still loading. Wait a moment, then try again.';
       setMessage({ type: 'error', text });
       showToast({ type: 'error', message: text });
@@ -946,11 +950,11 @@ function SellPageContent() {
                 value={formData.price}
                 onChange={handleChange}
                 placeholder="Leave blank to ask seller"
-                min="0"
+                min="1"
                 step="1"
                 className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
-              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you for a quote. Enter 0 for a free item.</span>
+              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
               <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>
@@ -1061,7 +1065,7 @@ function SellPageContent() {
 
           <button
             type="submit"
-            disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && createdListingId !== editListingId)}
+            disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
             className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
             {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : isNewBusinessPost ? 'Send for review' : 'Post Listing'}
