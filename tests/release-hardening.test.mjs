@@ -95,7 +95,7 @@ test('community request inserts include the institution required by tenant RLS',
 });
 
 test('community and conversation policy migration preserves safe buyer/admin access', async () => {
-  const sql = await read('../supabase/migrations/20261026035400_fix_everyday_marketplace_flows_20261026.sql');
+  const sql = await read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql');
   assert.match(sql, /users_can_request_communities/i);
   assert.match(sql, /created_by = \(select auth\.uid\(\)\)/i);
   assert.match(sql, /admins_can_delete_communities/i);
@@ -149,7 +149,7 @@ test('new seller listings include the required listing_type and use the verified
 
 test('listing schema migration allows contact-for-price listings without bypassing checkout safeguards', async () => {
   const [sql, orders] = await Promise.all([
-    read('../supabase/migrations/20261026035400_fix_everyday_marketplace_flows_20261026.sql'),
+    read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql'),
     read('../lib/orders.ts'),
   ]);
   assert.match(sql, /alter table public\.listings alter column price drop not null/i);
@@ -158,7 +158,7 @@ test('listing schema migration allows contact-for-price listings without bypassi
 });
 
 test('auth signup trigger assigns campus from the institution instead of the table default', async () => {
-  const sql = await read('../supabase/migrations/20261026035400_fix_everyday_marketplace_flows_20261026.sql');
+  const sql = await read('../supabase/migrations/20261026041944_fix_everyday_marketplace_flows_20261026.sql');
   assert.match(sql, /set campus = case when upper\(i\.code\) = 'MUKIRIA TTI' then 'MUKIRIA' else i\.code end/i);
   assert.match(sql, /phone_number, campus,[\s\S]*v_phone, v_campus_code/);
 });
