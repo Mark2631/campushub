@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${listing.title} | CampusTrader`;
   const rawDescription = typeof listing.description === 'string'
-    ? listing.description.replaceAll('\\n', ' ').replaceAll('\\r', ' ').replaceAll('\\t', ' ').trim()
+    ? listing.description.split(String.fromCharCode(10)).join(' ').split(String.fromCharCode(13)).join(' ').split(String.fromCharCode(9)).join(' ').trim()
     : '';
   const description = (rawDescription || `View this ${listing.category.toLowerCase()} listing on CampusTrader.`).slice(0, 160);
   const url = `${siteUrl}/listing/${listing.id}`;
