@@ -69,7 +69,7 @@ try {
   for (const route of routes) {
     const response = await getResponse(route);
     if (route.startsWith('/pwa-icon/') || route === '/opengraph-image') {
-      assert.match(response.headers.get('content-type') || '', /image\\/png/i, `${route} should return a PNG image`);
+      assert.match(response.headers.get('content-type') || '', /image\/png/i, `${route} should return a PNG image`);
     }
     results.push(`${response.status} ${route}`);
   }
