@@ -335,3 +335,62 @@ test('social preview uses the official CampusTrader brand mark', async () => {
   assert.match(source, /BrandMark/);
   assert.match(source, /Discover\. Connect\. Trade\./);
 });
+
+
+test('listing edit keeps existing photos and videos unless the seller removes them', async () => {
+  const [sell, listings] = await Promise.all([
+    read('../app/sell/page.tsx'),
+    read('../lib/listings.ts'),
+  ]);
+  assert.ok(sell.includes('Photos already on this listing'));
+  assert.ok(sell.includes('removeExistingImage'));
+  assert.ok(sell.includes('editDataLoadedId !== editListingId'));
+  assert.ok(listings.includes('const mediaUrls = data.mediaUrls === undefined ? existingMedia : data.mediaUrls;'));
+  assert.ok(listings.includes('const videoUrl = data.videoUrl === undefined'));
+});
+
+test('zero and missing listing prices are never presented as free', async () => {
+  const [sell, listings, card, detail, home, admin] = await Promise.all([
+    read('../app/sell/page.tsx'),
+    read('../lib/listings.ts'),
+    read('../components/ListingCard.tsx'),
+    read('../app/listing/[id]/page.tsx'),
+    read('../app/page.tsx'),
+    read('../app/admin/page.tsx'),
+  ]);
+  assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
+  assert.ok(sell.includes('Leave it blank if buyers should contact you to agree on a price.'));
+  for (const source of [card, detail]) {
+    assert.ok(source.includes('Ask seller for price'));
+    assert.ok(!source.includes("'Free'"));
+  }
+  assert.ok(home.includes("typeof listing.price === 'number' && listing.price > 0"));
+  assert.ok(admin.includes('Ask seller for price'));
+});
+
+test('Edit Profile is separated from Manage and includes identity fields', async () => {
+  const [profile, profiles] = await Promise.all([
+    read('../app/profile/page.tsx'),
+    read('../lib/profiles.ts'),
+  ]);
+  assert.ok(profile.includes('const [profileEditOpen, setProfileEditOpen]'));
+  assert.ok(profile.includes('id="edit-profile-title" className="text-xl font-bold">Edit profile'));
+  assert.ok(profile.includes('Request an institution correction'));
+  assert.ok(profile.includes('WhatsApp number'));
+  assert.ok(profile.includes('edit-profile-verification'));
+  assert.ok(profile.includes('Manage areas'));
+  assert.ok(profile.includes('<details key={topic.title}'));
+  assert.ok(profiles.includes('export async function saveProfileName'));
+});
+
+test('Google favicon uses the stable PNG endpoint and remains crawlable by HTTP smoke test', async () => {
+  const [layout, route, smoke] = await Promise.all([
+    read('../app/layout.tsx'),
+    read('../app/favicon.png/route.tsx'),
+    read('../tests/smoke-http.mjs'),
+  ]);
+  assert.ok(layout.includes("url: '/favicon.png'"));
+  assert.ok(layout.includes("shortcut: ['/favicon.png']"));
+  assert.ok(route.includes('renderPwaIcon(192)'));
+  assert.ok(smoke.includes("'/favicon.png'"));
+});
