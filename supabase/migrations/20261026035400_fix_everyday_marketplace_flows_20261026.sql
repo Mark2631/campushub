@@ -1,3 +1,7 @@
+-- The seller form intentionally supports contact-for-price listings. Checkout
+-- remains restricted to a positive, finite price by the order creation flow.
+alter table public.listings alter column price drop not null;
+
 -- Correct stale display-campus values for existing profiles using the immutable
 -- institution foreign key. MUKIRIA is the app's normalized display label.
 update public.profiles p
