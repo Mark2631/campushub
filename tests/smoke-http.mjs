@@ -59,11 +59,18 @@ try {
     '/help',
     '/explore',
     '/manifest.webmanifest',
+    '/pwa-icon/180',
+    '/pwa-icon/192',
+    '/pwa-icon/512',
+    '/opengraph-image',
     '/sw.js',
   ];
   const results = [];
   for (const route of routes) {
     const response = await getResponse(route);
+    if (route.startsWith('/pwa-icon/') || route === '/opengraph-image') {
+      assert.match(response.headers.get('content-type') || '', /image\/png/i, `${route} should return a PNG image`);
+    }
     results.push(`${response.status} ${route}`);
   }
   console.log('Production HTTP smoke test passed:', results.join(', '));

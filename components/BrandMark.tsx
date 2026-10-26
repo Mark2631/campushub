@@ -1,0 +1,45 @@
+type BrandMarkProps = {
+  size?: number;
+  className?: string;
+  title?: string;
+};
+
+export default function BrandMark({ size = 44, className, title }: BrandMarkProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      className={className}
+      role={title ? 'img' : undefined}
+      aria-label={title}
+      aria-hidden={title ? undefined : true}
+      focusable="false"
+    >
+      {title ? <title>{title}</title> : null}
+      <defs>
+        <linearGradient id="campustrader-mark-gradient" x1="80" y1="84" x2="432" y2="438" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#29a9c2" />
+          <stop offset="0.44" stopColor="#0967b8" />
+          <stop offset="1" stopColor="#071747" />
+        </linearGradient>
+        <clipPath id="campustrader-case-clip">
+          <path d="M111 198H401c21 0 38 17 38 38v151c0 23-18 41-41 41H114c-23 0-41-18-41-41V236c0-21 17-38 38-38Z" />
+        </clipPath>
+      </defs>
+      <rect width="512" height="512" fill="#070b14" />
+      <rect x="70" y="70" width="372" height="372" rx="88" fill="url(#campustrader-mark-gradient)" />
+      <path d="M148 207v-37c0-26 21-47 47-47h122c26 0 47 21 47 47v37h-38v-25c0-6-5-11-11-11H197c-6 0-11 5-11 11v25Z" fill="#f4f5f1" />
+      <path d="M111 198H401c21 0 38 17 38 38v151c0 23-18 41-41 41H114c-23 0-41-18-41-41V236c0-21 17-38 38-38Z" fill="#f4f5f1" />
+      <g clipPath="url(#campustrader-case-clip)">
+        <rect x="72" y="247" width="368" height="43" fill="#a6b8c9" />
+        <path d="M183 197h146v58c0 14-11 25-25 25h-96c-14 0-25-11-25-25Z" fill="#075da8" />
+      </g>
+      <path d="m256 209 101 47-101 43-101-43Z" fill="#071020" />
+      <path d="M192 276 256 303l64-27v47c0 20-29 39-64 39s-64-19-64-39Z" fill="#071020" />
+      <path d="M356 258v59" stroke="#071020" strokeWidth="20" strokeLinecap="round" />
+      <circle cx="356" cy="337" r="18" fill="#071020" />
+    </svg>
+  );
+}
