@@ -516,15 +516,39 @@ export async function createCommunityRequest(args: {
   const category = cleanText(args.category, 80) || 'General';
   if (!name || !description) return { community: null as Community | null, error: 'Name and description are required.' };
 
+  const campus = normalizeInstitution(args.campus || DEFAULT_CAMPUS);
+  const institutionId = await getInstitutionIdForCode(campus);
+  if (!institutionId) {
+    return {
+      community: null as Community | null,
+      error: "We couldn't identify your institution. Check your profile's institution and try again.",
+    };
+  }
+
   const { data, error } = await supabase
     .from('communities')
-    .insert({ campus: args.campus || DEFAULT_CAMPUS, name, description, category, is_official: false, posting_mode: 'everyone', status: 'pending', created_by: args.userId })
-    .select('id, campus, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
+    .insert({
+      campus,
+      institution_id: institutionId,
+      name,
+      description,
+      category,
+      is_official: false,
+      posting_mode: 'everyone',
+      status: 'pending',
+      created_by: args.userId,
+      approved_by: null,
+      approved_at: null,
+    })
+    .select('id, campus, institution_id, name, description, category, cover_url, is_official, posting_mode, status, created_by, created_at, updated_at')
     .single();
 
   if (error) {
     console.error('Community request failed:', serializeError(error));
-    return { community: null as Community | null, error: error.message || 'Community request could not be created.' };
+    return {
+      community: null as Community | null,
+      error: 'Community request could not be submitted. Check your connection and try again.',
+    };
   }
   return { community: data as Community, error: null };
 }
@@ -701,6 +725,33 @@ export async function moderateCommunityComment(commentId: string, adminId: strin
   if (error) {
     console.error('Community comment moderation failed:', serializeError(error));
     return { error: GENERIC_ERROR };
+  }
+
+  return { error: null };
+}
+
+
+/** Permanently remove an official community after confirming the caller is an admin. */
+export async function deleteCommunity(communityId: string, adminId: string, adminEmail: string | null | undefined) {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId)) {
+    return { error: GENERIC_ERROR };
+  }
+
+  if (!(await assertAdmin(adminId, adminEmail))) return { error: PERMISSION_ERROR };
+
+  const { data, error } = await supabase
+    .from('communities')
+    .delete()
+    .eq('id', communityId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Community delete failed:', serializeError(error));
+    return { error: 'Community could not be deleted. Refresh and try again.' };
+  }
+  if (!data?.id) {
+    return { error: 'Community was not deleted. You may not have permission, or it was already removed.' };
   }
 
   return { error: null };
