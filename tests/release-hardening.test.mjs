@@ -115,13 +115,17 @@ test('saved listing control uses the account database instead of only local stor
 });
 
 test('conversation hide is delegated to a participant-validated database RPC', async () => {
-  const source = await read('../lib/conversations.ts');
+  const [source, migration] = await Promise.all([
+    read('../lib/conversations.ts'),
+    read('../supabase/migrations/20261026042206_hide_conversation_invoker_20261026.sql'),
+  ]);
   const start = source.indexOf('export async function hideConversationForUser(');
   const end = source.indexOf('export async function sendMessage(', start);
   assert.ok(start >= 0 && end > start, 'conversation hide function should exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /supabase\.rpc\('hide_conversation_for_user'/);
-  assert.doesNotMatch(fn, /\.update\(\{ hidden_for/);
+  assert.match(fn, /supabase\\.rpc\\('hide_conversation_for_user'/);
+  assert.doesNotMatch(fn, /\\.update\\(\\{ hidden_for/);
+  assert.match(migration, /alter function public\\.hide_conversation_for_user\\(uuid\\) security invoker/i);
 });
 
 test('profile sync failures can retry and successful auth no longer waits on duplicate profile/session round trips', async () => {
