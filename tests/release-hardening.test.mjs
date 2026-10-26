@@ -134,3 +134,31 @@ test('profile sync failures can retry and successful auth no longer waits on dup
   assert.doesNotMatch(signin, /await ensureProfile\(/);
   assert.match(signin, /void refreshSession\(\)/);
 });
+
+
+test('new seller listings include the required listing_type and use the verified tenant ID', async () => {
+  const source = await read('../lib/listings.ts');
+  const start = source.indexOf('export async function insertListing(');
+  const end = source.indexOf('export async function getListingById(', start);
+  assert.ok(start >= 0 && end > start, 'insertListing function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /listing_type:\s*validated\.value\.condition === 'service'/);
+  assert.match(fn, /institution_id:\s*institutionId/);
+  assert.match(fn, /price:\s*validated\.value\.price == null \? null/);
+});
+
+test('listing schema migration allows contact-for-price listings without bypassing checkout safeguards', async () => {
+  const [sql, orders] = await Promise.all([
+    read('../supabase/migrations/20261026035400_fix_everyday_marketplace_flows_20261026.sql'),
+    read('../lib/orders.ts'),
+  ]);
+  assert.match(sql, /alter table public\.listings alter column price drop not null/i);
+  assert.match(orders, /Number\(listing\.price\) > 0/);
+  assert.match(orders, /PHYSICAL_PRODUCT/);
+});
+
+test('auth signup trigger assigns campus from the institution instead of the table default', async () => {
+  const sql = await read('../supabase/migrations/20261026035400_fix_everyday_marketplace_flows_20261026.sql');
+  assert.match(sql, /set campus = case when upper\(i\.code\) = 'MUKIRIA TTI' then 'MUKIRIA' else i\.code end/i);
+  assert.match(sql, /phone_number, campus,[\s\S]*v_phone, v_campus_code/);
+});
