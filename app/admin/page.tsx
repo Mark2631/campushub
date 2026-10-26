@@ -208,7 +208,7 @@ export default function AdminPage() {
     const loadInitialDashboard = async () => {
       const [data, communityData] = await Promise.all([
         getAdminDashboardData(),
-        getCommunities(authUser?.id),
+        getCommunities(authUser?.id, undefined, true),
         ]);
       if (isMounted) {
         setDashboard(data);
