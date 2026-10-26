@@ -203,13 +203,19 @@ test('listing insert confirmation is not blocked by unbounded seller enrichment'
 });
 
 
-test('SEO sitemap includes canonical public pages without inaccurate modification timestamps', async () => {
+test('SEO sitemap includes canonical pages and only indexable active listings', async () => {
   const source = await read('../app/sitemap.ts');
   assert.ok(source.includes('${siteUrl}/community'));
   assert.ok(source.includes('${siteUrl}/help'));
   assert.ok(source.includes('${siteUrl}/sell'));
   assert.ok(!source.includes('${siteUrl}/signin'));
   assert.ok(!source.includes('${siteUrl}/admin'));
+  assert.ok(source.includes("export const dynamic = 'force-dynamic'"));
+  assert.ok(source.includes(".eq('status', 'active')"));
+  assert.ok(source.includes("title.length < 4"));
+  assert.ok(source.includes("description.length < 40"));
+  assert.ok(source.includes("`${siteUrl}/listing/${listing.id}`"));
+  assert.ok(source.includes('entry.lastModified = new Date(updatedAt)'));
   assert.ok(!source.includes('lastModified = new Date()'));
 });
 
