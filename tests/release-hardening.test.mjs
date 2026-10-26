@@ -246,11 +246,18 @@ test('Google favicon discovery has one explicit brand icon rather than a file-ba
 });
 
 
-test('homepage contains useful crawlable marketplace guidance with public internal links', async () => {
-  const source = await read('../app/page.tsx');
-  assert.ok(source.includes('A marketplace built around campus life in Kenya'));
+test('homepage keeps concise crawlable marketplace context and moves detailed guidance to Help', async () => {
+  const [source, help] = await Promise.all([
+    read('../app/page.tsx'),
+    read('../app/help/page.tsx'),
+  ]);
+  assert.ok(source.includes('CampusTrader: buy and sell on campus in Kenya'));
   assert.ok(source.includes('second-hand electronics, books, fashion, furniture, food, and services'));
   assert.ok(source.includes('href="/help"'));
-  assert.ok(source.includes('href="/sell"'));
-  assert.ok(source.includes('Listings are user-submitted.'));
+  assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
+  assert.ok(!source.includes('Looking to buy?'));
+  assert.ok(!source.includes('Have something to sell?'));
+  assert.ok(help.includes('Buying and selling basics'));
+  assert.ok(help.includes('Post a listing'));
+  assert.ok(help.includes('Post a request'));
 });
