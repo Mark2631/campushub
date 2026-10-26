@@ -400,7 +400,7 @@ export async function insertListing(
         supabase
           .from('listings')
           .insert(legacyPayload)
-          .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+          .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
           .single(),
         15000,
         'Creating listing timed out. Please try again.'
