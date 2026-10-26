@@ -10,22 +10,24 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
   const [message, setMessage] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [savedRecord, setSavedRecord] = useState<{ userId: string; listingId: string; saved: boolean } | null>(null);
-  const [checkingSaved, setCheckingSaved] = useState(false);
+  const [checkedRecord, setCheckedRecord] = useState<{ userId: string; listingId: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const isSaved = Boolean(user?.id && savedRecord?.userId === user.id && savedRecord.listingId === listingId && savedRecord.saved);
+  const checkingSaved = Boolean(user?.id && (checkedRecord?.userId !== user.id || checkedRecord.listingId !== listingId));
 
   useEffect(() => {
     if (!user?.id || !listingId) return;
 
     let mounted = true;
-    setCheckingSaved(true);
-    void supabase
-      .from('saved_listings')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('listing_id', listingId)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    const loadSavedState = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('saved_listings')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('listing_id', listingId)
+          .maybeSingle();
+
         if (!mounted) return;
         if (error) {
           console.error('Saved listing lookup failed:', error);
@@ -33,11 +35,16 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
         } else {
           setSavedRecord({ userId: user.id, listingId, saved: Boolean(data) });
         }
-      })
-      .finally(() => {
-        if (mounted) setCheckingSaved(false);
-      });
+      } catch (error) {
+        if (!mounted) return;
+        console.error('Saved listing lookup failed:', error);
+        setMessage('Saved items could not be loaded. Try refreshing.');
+      } finally {
+        if (mounted) setCheckedRecord({ userId: user.id, listingId });
+      }
+    };
 
+    void loadSavedState();
     return () => {
       mounted = false;
     };
