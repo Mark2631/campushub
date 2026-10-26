@@ -328,3 +328,24 @@ test('social preview uses the official CampusTrader brand mark', async () => {
   assert.match(source, /BrandMark/);
   assert.match(source, /Discover\. Connect\. Trade\./);
 });
+
+test('auth callback never puts bearer tokens in query parameters and rejects unsafe redirects', async () => {
+  const source = await read('../app/auth/callback/route.ts');
+  assert.ok(source.includes('redirectUrl.hash = sessionFragment.toString()'));
+  assert.ok(source.includes('access_token: data.session.access_token'));
+  assert.ok(source.includes("getSafeRedirectPath(requestUrl.searchParams.get('next'), requestUrl.origin)"));
+  assert.ok(source.includes("decoded.startsWith('//')"));
+  assert.ok(source.includes("decoded.includes('\\\\\\\\')"));
+  assert.doesNotMatch(source, /redirectUrl\\.searchParams\\.set\\(['"]access_token['"]/);
+  assert.doesNotMatch(source, /redirectUrl\\.searchParams\\.set\\(['"]refresh_token['"]/);
+});
+
+test('client auth callback accepts fragment tokens and cleans callback credentials from the URL', async () => {
+  const source = await read('../components/AppProvider.tsx');
+  assert.ok(source.includes('new URLSearchParams(hash)'));
+  assert.ok(source.includes('hashParams.get(\'access_token\')'));
+  assert.ok(source.includes('hashParams.get(\'refresh_token\')'));
+  assert.ok(source.includes('cleanAuthCallbackUrl()'));
+  assert.ok(source.includes("cleanUrl.searchParams.delete('access_token')"));
+  assert.ok(source.includes("cleanUrl.searchParams.delete('refresh_token')"));
+});
