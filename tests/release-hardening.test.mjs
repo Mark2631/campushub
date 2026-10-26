@@ -172,3 +172,15 @@ test('legacy community request policy cannot bypass pending request restrictions
   const sql = await read('../supabase/migrations/20261026042828_harden_community_request_policy_20261026.sql');
   assert.match(sql, /drop policy if exists "Verified users can submit pending communities"/i);
 });
+
+
+test('conversation history and hide remain available after listing deletion without widening participant access', async () => {
+  const sql = await read('../supabase/migrations/20261026045000_recover_conversation_history_20261026.sql');
+  assert.match(sql, /drop policy if exists hardening_conversations_institution/i);
+  assert.match(sql, /buyer_id = \(select auth\.uid\(\)\) or seller_id = \(select auth\.uid\(\)\)/i);
+  assert.match(sql, /shares_current_active_institution\(buyer_id\)/i);
+  assert.match(sql, /shares_current_active_institution\(seller_id\)/i);
+  assert.doesNotMatch(sql, /using \([\s\S]*?exists \([\s\S]*?from public\.listings/i);
+  assert.match(sql, /return found;/i);
+  assert.match(sql, /grant execute on function public\.hide_conversation_for_user\(uuid\) to authenticated/i);
+});
