@@ -256,8 +256,8 @@ test('Google favicon links use the same crawlable PNG artwork as the installed P
   assert.match(iconRoute, /contentType = 'image\/png'/);
   assert.match(iconRoute, /renderPwaIcon\(192\)/);
   const faviconRoute = await read('../app/favicon.png/route.tsx');
-  assert.match(faviconRoute, /contentType = 'image\\/png'/);
-  assert.match(faviconRoute, /renderPwaIcon\\(192\\)/);
+  assert.ok(faviconRoute.includes("contentType = 'image/png'"));
+  assert.ok(faviconRoute.includes("renderPwaIcon(192)"));
   await assert.rejects(read('../app/favicon.ico'));
   await assert.rejects(read('../public/sitemap.xml'));
 });
