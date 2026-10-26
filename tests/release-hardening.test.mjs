@@ -89,7 +89,7 @@ test('community request inserts include the institution required by tenant RLS',
   const end = source.indexOf('export async function createCommunity(', start);
   assert.ok(start >= 0 && end > start, 'community request function should exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /getInstitutionIdForCode\(campus\)/);
+  assert.match(fn, /getInstitutionIdForUser\(args\.userId\)/);
   assert.match(fn, /institution_id: institutionId/);
   assert.match(fn, /status: 'pending'/);
 });
