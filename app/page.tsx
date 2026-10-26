@@ -565,6 +565,25 @@ export default function Home() {
             </div>
           ) : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-600 dark:border-zinc-700 dark:text-zinc-400">No open requests are visible for this campus yet. Post the first request.</p>}
         </section>
+        <section aria-labelledby="about-campus-trader" className="mb-10 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-7">
+          <h2 id="about-campus-trader" className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">A marketplace built around campus life in Kenya</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-600 dark:text-zinc-300">
+            CampusTrader helps students and campus businesses discover products, second-hand electronics, books, fashion, furniture, food, and services. Browse listings, contact sellers, or post what you need when you cannot find it. The marketplace is designed for university, college, and technical-institution communities.
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <article className="rounded-xl bg-slate-50 p-4 dark:bg-slate-950">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Looking to buy?</h3>
+              <p className="mt-1 text-sm leading-6 text-gray-600 dark:text-zinc-400">Ask sellers questions, check item details, and agree on the purchase before paying.</p>
+              <Link href="/help" className="mt-3 inline-flex text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">Buyer and payment guidance</Link>
+            </article>
+            <article className="rounded-xl bg-slate-50 p-4 dark:bg-slate-950">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Have something to sell?</h3>
+              <p className="mt-1 text-sm leading-6 text-gray-600 dark:text-zinc-400">Post a clear listing with a fair price and genuine photos, or publish a request so students can respond.</p>
+              <Link href="/sell" className="mt-3 inline-flex text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">List a product or service</Link>
+            </article>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-gray-500 dark:text-zinc-500">Listings are user-submitted. Verify the item and seller details independently before completing a transaction.</p>
+        </section>
       </main>
 
       {selectedRequest ? (
