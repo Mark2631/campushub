@@ -52,7 +52,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/pwa-icon/192', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/pwa-icon/180', sizes: '180x180', type: 'image/png' }],
-    shortcut: ['/favicon.svg'],
+    // Google Search's favicon crawler supports raster formats such as PNG; use the same
+    // stable, generated artwork as the PWA instead of pointing shortcut-icon at SVG.
+    shortcut: ['/pwa-icon/192'],
   },
 };
 
