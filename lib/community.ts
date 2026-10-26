@@ -200,7 +200,9 @@ export async function getCommunities(viewerId?: string | null, institution: stri
 
   if (!includeArchived) query = query.eq('status', 'active');
 
-  if (institution) {
+  // Admin management must include archived and cross-institution communities.
+  // RLS still restricts non-admin users to their own institution and requests.
+  if (institution && !includeArchived) {
     const instId = await getInstitutionIdForCode(normalizeInstitution(institution));
     if (instId) query = query.eq('institution_id', instId);
     else query = query.eq('campus', normalizeInstitution(institution));
