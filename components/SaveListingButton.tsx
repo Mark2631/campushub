@@ -9,15 +9,13 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
   const { user, loading } = useUser();
   const [message, setMessage] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [savedRecord, setSavedRecord] = useState<{ userId: string; listingId: string; saved: boolean } | null>(null);
   const [checkingSaved, setCheckingSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const isSaved = Boolean(user?.id && savedRecord?.userId === user.id && savedRecord.listingId === listingId && savedRecord.saved);
 
   useEffect(() => {
-    if (!user?.id || !listingId) {
-      setIsSaved(false);
-      return;
-    }
+    if (!user?.id || !listingId) return;
 
     let mounted = true;
     setCheckingSaved(true);
@@ -33,7 +31,7 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
           console.error('Saved listing lookup failed:', error);
           setMessage('Saved items could not be loaded. Try refreshing.');
         } else {
-          setIsSaved(Boolean(data));
+          setSavedRecord({ userId: user.id, listingId, saved: Boolean(data) });
         }
       })
       .finally(() => {
@@ -65,7 +63,7 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
           .eq('listing_id', listingId);
 
         if (error) throw error;
-        setIsSaved(false);
+        setSavedRecord({ userId: user.id, listingId, saved: false });
         setMessage('Removed from saved listings.');
       } else {
         const { error } = await supabase
@@ -75,7 +73,7 @@ export default function SaveListingButton({ listingId }: { listingId: string }) 
         // A double tap or a second device may have saved it first. Treat the
         // unique-key response as saved; do not report a false failure.
         if (error && error.code !== '23505') throw error;
-        setIsSaved(true);
+        setSavedRecord({ userId: user.id, listingId, saved: true });
         setMessage('Saved to your account.');
       }
     } catch (error) {
