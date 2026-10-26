@@ -10,6 +10,7 @@ import {
   Community,
   CommunityPost,
   createCommunity,
+  deleteCommunity,
   createCommunityPost,
   getCommunities,
   getCommunityPosts,
@@ -514,11 +515,17 @@ export default function AdminPage() {
 
     setMessage({ type: 'success', text: successText });
     showToast({ type: 'success', message: successText });
-    const [{ communities }, { posts }] = await Promise.all([
-      getCommunities(authUser?.id, undefined, true),
-      selectedCommunityId ? getCommunityPosts(selectedCommunityId, authUser?.id) : Promise.resolve({ posts: [] as CommunityPost[], error: null }),
-    ]);
-    setCommunities(communities);
+    const { communities: refreshedCommunities } = await getCommunities(authUser?.id, undefined, true);
+    setCommunities(refreshedCommunities);
+
+    // A deleted selection must not leave the manager pointing at a stale ID.
+    const nextSelectedId = refreshedCommunities.some((community) => community.id === selectedCommunityId)
+      ? selectedCommunityId
+      : refreshedCommunities[0]?.id || '';
+    setSelectedCommunityId(nextSelectedId);
+    const { posts } = nextSelectedId
+      ? await getCommunityPosts(nextSelectedId, authUser?.id)
+      : { posts: [] as CommunityPost[] };
     setCommunityPosts(posts);
   };
 
@@ -1173,6 +1180,23 @@ export default function AdminPage() {
                           className="rounded-xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60"
                         >
                           {community.posting_mode === 'admin_only' ? 'Allow everyone' : 'Admin-only'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={communityWorking}
+                          onClick={() => {
+                            const confirmed = window.confirm(
+                              `Permanently delete “${community.name}” and all of its posts and memberships? This cannot be undone.`
+                            );
+                            if (!confirmed) return;
+                            void runCommunityAction(
+                              () => deleteCommunity(community.id, authUser!.id, authUser!.email),
+                              'Community deleted.'
+                            );
+                          }}
+                          className="rounded-xl border border-red-800 bg-red-950/50 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-900 disabled:opacity-60"
+                        >
+                          Delete
                         </button>
                       </div>
                     </article>
