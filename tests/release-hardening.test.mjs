@@ -247,7 +247,7 @@ test('seller and sign-in routes declare intentional search metadata', async () =
 
 test('Google favicon discovery has one explicit brand icon rather than a file-based override', async () => {
   const layout = await read('../app/layout.tsx');
-  assert.ok(layout.includes("icon: [{ url: '/campustrader-icon-192-v2.png'"));
+  assert.ok(layout.includes("icon: [{ url: '/pwa-icon/192'"));
   await assert.rejects(read('../app/favicon.ico'));
   await assert.rejects(read('../public/sitemap.xml'));
 });
@@ -289,4 +289,40 @@ test('homepage search and social metadata consistently describe CampusTrader', a
   assert.ok(!source.includes('Inter-Institutional Marketplace'));
   assert.ok(!source.includes('keywords: ['));
   assert.ok(source.includes("card: 'summary_large_image'"));
+});
+
+test('official CampusTrader mark is reused across header, favicon, manifest and generated PWA icons', async () => {
+  const [logo, mark, favicon, layout, manifestText, serviceWorker, icon192, icon512, appleIcon] = await Promise.all([
+    read('../components/Logo.tsx'),
+    read('../components/BrandMark.tsx'),
+    read('../public/favicon.svg'),
+    read('../app/layout.tsx'),
+    read('../public/manifest.webmanifest'),
+    read('../public/sw.js'),
+    read('../app/pwa-icon/192/route.tsx'),
+    read('../app/pwa-icon/512/route.tsx'),
+    read('../app/pwa-icon/180/route.tsx'),
+  ]);
+  const manifest = JSON.parse(manifestText);
+  assert.match(logo, /BrandMark/);
+  assert.doesNotMatch(logo, /ShoppingBag|GraduationCap/);
+  assert.match(mark, /campustrader-mark-gradient/);
+  assert.match(mark, /M111 198H401/);
+  assert.match(favicon, /campustrader-mark-gradient/);
+  assert.ok(layout.includes("url: '/pwa-icon/192'"));
+  assert.ok(layout.includes("url: '/pwa-icon/180'"));
+  assert.ok(layout.includes('https://campus-trader.vercel.app/pwa-icon/512'));
+  assert.equal(manifest.icons.find((icon) => icon.sizes === '192x192')?.src, '/pwa-icon/192');
+  assert.equal(manifest.icons.find((icon) => icon.sizes === '512x512')?.src, '/pwa-icon/512');
+  assert.ok(serviceWorker.includes('campustrader-offline-v3'));
+  assert.ok(serviceWorker.includes("'/pwa-icon/192'"));
+  assert.match(icon192, /ImageResponse/);
+  assert.match(icon512, /ImageResponse/);
+  assert.match(appleIcon, /ImageResponse/);
+});
+
+test('social preview uses the official CampusTrader brand mark', async () => {
+  const source = await read('../app/opengraph-image.tsx');
+  assert.match(source, /BrandMark/);
+  assert.match(source, /Discover\. Connect\. Trade\./);
 });
