@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import BrandMark from './BrandMark';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -71,9 +71,7 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
       <div className="flex items-center gap-3">
-        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-          <Download className="h-5 w-5" aria-hidden="true" />
-        </div>
+        <BrandMark size={40} title="CampusTrader" className="h-10 w-10 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-950 dark:text-white">Install CampusTrader</p>
           <p className="text-xs text-slate-600 dark:text-slate-400">Add the marketplace to your home screen.</p>
