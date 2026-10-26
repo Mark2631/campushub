@@ -175,7 +175,7 @@ test('legacy community request policy cannot bypass pending request restrictions
 
 
 test('conversation history and hide remain available after listing deletion without widening participant access', async () => {
-  const sql = await read('../supabase/migrations/20261026045000_recover_conversation_history_20261026.sql');
+  const sql = await read('../supabase/migrations/20261026045512_recover_conversation_history_20261026.sql');
   assert.match(sql, /drop policy if exists hardening_conversations_institution/i);
   assert.match(sql, /buyer_id = \(select auth\.uid\(\)\) or seller_id = \(select auth\.uid\(\)\)/i);
   assert.match(sql, /shares_current_active_institution\(buyer_id\)/i);
