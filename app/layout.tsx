@@ -16,19 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://campus-trader.vercel.app'),
-  title: 'CampusTrader | Buy & Sell on Campus in Kenya',
-  description: 'CampusTrader is a student marketplace in Kenya. Explore campus listings, buy and sell products, discover services and connect with students across colleges and universities.',
-  keywords: [
-    'CampusTrader',
-    'Campus Trader',
-    'campus marketplace',
-    'student marketplace Kenya',
-    'Meru campus marketplace',
-    'MUST marketplace',
-    'buy and sell campus',
-    'student services',
-    'student deals',
-  ],
+  title: 'CampusTrader | Student Marketplace in Kenya',
+  description: 'Buy and sell electronics, books, fashion, furniture, food and services on campus in Kenya. Browse student listings or post a request on CampusTrader.',
   alternates: {
     canonical: 'https://campus-trader.vercel.app/',
   },
@@ -39,8 +28,8 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
   },
   openGraph: {
-    title: 'CampusTrader | Inter-Institutional Marketplace',
-    description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
+    title: 'CampusTrader | Student Marketplace in Kenya',
+    description: 'Buy and sell electronics, books, fashion, furniture, food and services on campus in Kenya. Browse student listings or post a request on CampusTrader.',
     url: 'https://campus-trader.vercel.app/',
     siteName: 'CampusTrader',
     images: [
@@ -55,9 +44,9 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary',
-    title: 'CampusTrader | Inter-Institutional Marketplace',
-    description: 'Discover products, services and businesses across universities, colleges and technical institutions. Buy, sell and connect with your campus community.',
+    card: 'summary_large_image',
+    title: 'CampusTrader | Student Marketplace in Kenya',
+    description: 'Buy and sell electronics, books, fashion, furniture, food and services on campus in Kenya. Browse student listings or post a request on CampusTrader.',
     images: ['/opengraph-image'],
   },
   icons: {
