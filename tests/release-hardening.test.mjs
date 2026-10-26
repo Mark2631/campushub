@@ -201,3 +201,38 @@ test('listing insert confirmation is not blocked by unbounded seller enrichment'
   const insert = source.slice(source.indexOf('export async function insertListing('), source.indexOf('export async function getListingById('));
   assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as ListingRow\]\)/);
 });
+
+
+test('SEO sitemap includes public discovery pages and excludes account-only destinations', async () => {
+  const source = await read('../app/sitemap.ts');
+  assert.ok(source.includes('${siteUrl}/community'));
+  assert.ok(source.includes('${siteUrl}/help'));
+  assert.ok(source.includes('${siteUrl}/sell'));
+  assert.ok(!source.includes('${siteUrl}/signin'));
+  assert.ok(!source.includes('${siteUrl}/admin'));
+});
+
+test('homepage exposes consistent CampusTrader site identity and a branded PNG favicon', async () => {
+  const source = await read('../app/layout.tsx');
+  assert.ok(source.includes('name: "CampusTrader"'));
+  assert.ok(source.includes('https://campus-trader.vercel.app/'));
+  assert.ok(source.includes('"@type": "Organization"'));
+  assert.ok(source.includes('campustrader-icon-512-v2.png'));
+  assert.ok(source.includes('campustrader-icon-192-v2.png'));
+});
+
+test('community metadata uses the product-wide name rather than a single campus', async () => {
+  const source = await read('../app/community/layout.tsx');
+  assert.ok(source.includes('Campus Communities | CampusTrader'));
+  assert.ok(!source.includes('MUST Communities | CampusTrader'));
+});
+
+test('seller and sign-in routes declare intentional search metadata', async () => {
+  const [sell, signin] = await Promise.all([
+    read('../app/sell/layout.tsx'),
+    read('../app/signin/layout.tsx'),
+  ]);
+  assert.ok(sell.includes('Sell on CampusTrader | Student Marketplace Kenya'));
+  assert.ok(sell.includes('canonical: \'https://campus-trader.vercel.app/sell\''));
+  assert.ok(signin.includes('index: false'));
+});
