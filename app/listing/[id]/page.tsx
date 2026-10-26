@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '../../../components/Header';
@@ -20,6 +21,55 @@ type Props = {
     id: string;
   }>;
 };
+
+const siteUrl = 'https://campus-trader.vercel.app';
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const { listing } = isValidUuid(id)
+    ? await getListingById(id)
+    : { listing: null, error: null };
+
+  if (!listing) {
+    return {
+      title: 'Listing unavailable | CampusTrader',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = `${listing.title} | CampusTrader`;
+  const rawDescription = typeof listing.description === 'string'
+    ? listing.description.replace(/\\s+/g, ' ').trim()
+    : '';
+  const description = (rawDescription || `View this ${listing.category.toLowerCase()} listing on CampusTrader.`).slice(0, 160);
+  const url = `${siteUrl}/listing/${listing.id}`;
+  const images = Array.isArray(listing.media_urls)
+    ? listing.media_urls.filter((item): item is string => typeof item === 'string' && /^https?:\\/\\//i.test(item)).slice(0, 4)
+    : [];
+  const hasSubstantialDescription = rawDescription.length >= 40;
+  const indexable = listing.status === 'active' && listing.title.trim().length >= 4 && hasSubstantialDescription;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: { index: indexable, follow: true },
+    openGraph: {
+      type: 'website',
+      url,
+      title,
+      description,
+      siteName: 'CampusTrader',
+      ...(images.length ? { images } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(images.length ? { images } : {}),
+    },
+  };
+}
 
 export default async function ListingPage({ params }: Props) {
   const { id } = await params;
@@ -51,6 +101,34 @@ export default async function ListingPage({ params }: Props) {
     day: 'numeric',
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
+  const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && /^https?:\\/\\//i.test(item));
+  const conditionUrl = listing.condition === 'new'
+    ? 'https://schema.org/NewCondition'
+    : listing.condition === 'refurbished'
+      ? 'https://schema.org/RefurbishedCondition'
+      : 'https://schema.org/UsedCondition';
+  const productStructuredData = listing.status === 'active'
+    && listing.listing_type === 'PHYSICAL_PRODUCT'
+    && typeof listing.price === 'number'
+    && Number.isFinite(listing.price)
+    && listing.price >= 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: listing.title,
+        description: listing.description || `${listing.title} listed on CampusTrader.`,
+        category: listing.category,
+        ...(productImages.length ? { image: productImages } : {}),
+        offers: {
+          '@type': 'Offer',
+          url: `${siteUrl}/listing/${listing.id}`,
+          price: listing.price,
+          priceCurrency: 'KES',
+          availability: 'https://schema.org/InStock',
+          itemCondition: conditionUrl,
+        },
+      }
+    : null;
   const canStartOrder = isDirectPurchaseListing(listing);
   const fallbackPanel = (
     <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-700 to-slate-900 p-8 text-center text-white dark:border-zinc-800">
@@ -64,6 +142,12 @@ export default async function ListingPage({ params }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+      {productStructuredData ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productStructuredData).replace(/</g, '\\u003c') }}
+        />
+      ) : null}
       <Header />
       <main className="flex-1 px-4 py-6 sm:py-8">
         <div className="mx-auto max-w-5xl space-y-8">
