@@ -245,9 +245,16 @@ test('seller and sign-in routes declare intentional search metadata', async () =
 });
 
 
-test('Google favicon discovery has one explicit brand icon rather than a file-based override', async () => {
+test('Google favicon links use the same crawlable PNG artwork as the installed PWA', async () => {
   const layout = await read('../app/layout.tsx');
-  assert.ok(layout.includes("icon: [{ url: '/pwa-icon/192'"));
+  const iconHref = "/pwa-icon/192";
+  assert.ok(layout.includes("icon: [{ url: '" + iconHref + "'"));
+  assert.ok(layout.includes("shortcut: ['" + iconHref + "']"));
+  assert.ok(!layout.includes("shortcut: ['/favicon.svg']"));
+  assert.ok(!layout.includes("shortcut: ['/favicon.ico']"));
+  const iconRoute = await read('../app/pwa-icon/192/route.tsx');
+  assert.match(iconRoute, /contentType = 'image\/png'/);
+  assert.match(iconRoute, /renderPwaIcon\(192\)/);
   await assert.rejects(read('../app/favicon.ico'));
   await assert.rejects(read('../public/sitemap.xml'));
 });
