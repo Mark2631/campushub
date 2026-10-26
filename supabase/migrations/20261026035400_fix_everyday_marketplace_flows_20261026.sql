@@ -1,3 +1,66 @@
+-- Correct stale display-campus values for existing profiles using the immutable
+-- institution foreign key. MUKIRIA is the app's normalized display label.
+update public.profiles p
+set campus = case when upper(i.code) = 'MUKIRIA TTI' then 'MUKIRIA' else i.code end,
+    updated_at = now()
+from public.institutions i
+where i.id = p.institution_id
+  and p.campus is distinct from case when upper(i.code) = 'MUKIRIA TTI' then 'MUKIRIA' else i.code end;
+
+-- The auth trigger must populate campus from the resolved institution instead of
+-- letting a table default label a Mukiria account as MUST.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'pg_catalog', 'public', 'auth'
+as $function$
+declare
+  v_institution_id uuid;
+  v_institution_code text;
+  v_campus_code text;
+  v_phone text;
+begin
+  v_institution_code := coalesce(
+    nullif(btrim(new.raw_user_meta_data->>'institution_code'), ''),
+    nullif(btrim(new.raw_user_meta_data->>'institution'), '')
+  );
+  v_institution_id := public.resolve_institution_code(v_institution_code);
+
+  if v_institution_id is not null then
+    select case when upper(i.code) = 'MUKIRIA TTI' then 'MUKIRIA' else i.code end
+      into v_campus_code
+    from public.institutions i
+    where i.id = v_institution_id and i.status = 'active';
+  end if;
+
+  v_campus_code := coalesce(v_campus_code, nullif(btrim(v_institution_code), ''), 'MUST');
+  v_phone := coalesce(
+    nullif(btrim(new.raw_user_meta_data->>'phone_number'), ''),
+    nullif(btrim(new.phone), '')
+  );
+
+  insert into public.profiles (
+    id, email, full_name, avatar_url, phone_number, campus,
+    verification_status, badge_type, role, institution_id
+  )
+  values (
+    new.id, new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', ''),
+    coalesce(new.raw_user_meta_data->>'avatar_url', ''),
+    v_phone, v_campus_code, 'unverified', 'none', 'user', v_institution_id
+  )
+  on conflict (id) do update
+  set email = excluded.email,
+      full_name = excluded.full_name,
+      avatar_url = excluded.avatar_url,
+      phone_number = coalesce(public.profiles.phone_number, excluded.phone_number),
+      updated_at = now();
+
+  return new;
+end;
+$function$;
+
 -- Restore everyday buyer/seller flows while keeping all writes institution-scoped.
 -- Admin access is explicit and user-controlled requests remain pending until review.
 
