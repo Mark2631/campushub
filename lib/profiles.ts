@@ -279,8 +279,13 @@ export async function saveProfileName(userId: string, fullName: string) {
     return { fullName: null, error: 'Profile could not be updated. Refresh and try again.' };
   }
 
-  const { error: metadataError } = await supabase.auth.updateUser({ data: { full_name: normalized } });
-  if (metadataError) {
+  try {
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { full_name: normalized } });
+    if (metadataError) {
+      console.warn('Auth display-name metadata could not be refreshed after profile save.');
+    }
+  } catch {
+    // The profiles row is already saved; a transient metadata-sync error should not report a false save failure.
     console.warn('Auth display-name metadata could not be refreshed after profile save.');
   }
 
