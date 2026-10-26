@@ -37,15 +37,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `${listing.title} | CampusTrader`;
+  const title = ${listing.title} | CampusTrader\`;
   const rawDescription = typeof listing.description === 'string'
-    ? listing.description.replace(/\\s+/g, ' ').trim()
+    ? listing.description.replaceAll('\n', ' ').replaceAll('\r', ' ').replaceAll('\t', ' ').trim()
     : '';
-  const description = (rawDescription || `View this ${listing.category.toLowerCase()} listing on CampusTrader.`).slice(0, 160);
-  const url = `${siteUrl}/listing/${listing.id}`;
+  const description = (rawDescription || \`View this ${listing.category.toLowerCase()} listing on CampusTrader.\`).slice(0, 160);
+  const url = \`${siteUrl}/listing/${listing.id}\`;
   const images = Array.isArray(listing.media_urls)
-    ? listing.media_urls.filter((item): item is string => typeof item === 'string' && /^https?:\\/\\//i.test(item)).slice(0, 4)
+    ? listing.media_urls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://'))).slice(0, 4)
     : [];
+  const socialImages = images.length
+    ? images.map((url) => ({ url, alt: listing.title }))
+    : [{ url: \`${siteUrl}/opengraph-image\`, alt: 'CampusTrader student marketplace in Kenya' }];
   const hasSubstantialDescription = rawDescription.length >= 40;
   const indexable = listing.status === 'active' && listing.title.trim().length >= 4 && hasSubstantialDescription;
 
@@ -60,13 +63,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       siteName: 'CampusTrader',
-      ...(images.length ? { images } : {}),
+      images: socialImages,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(images.length ? { images } : {}),
+      images: socialImages.map((image) => image.url),
     },
   };
 }
@@ -101,7 +104,7 @@ export default async function ListingPage({ params }: Props) {
     day: 'numeric',
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
-  const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && /^https?:\\/\\//i.test(item));
+  const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
   const conditionUrl = listing.condition === 'new'
     ? 'https://schema.org/NewCondition'
     : listing.condition === 'refurbished'
