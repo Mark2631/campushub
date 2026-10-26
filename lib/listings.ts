@@ -384,7 +384,7 @@ export async function insertListing(
     const insertQuery = supabase
         .from('listings')
         .insert(listingToInsert)
-        .select('id, user_id, business_id, seller_id, title, description, category, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
         .single();
 
     let { data: newListing, error } = await withTimeout(
