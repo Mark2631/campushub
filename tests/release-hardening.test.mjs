@@ -184,3 +184,20 @@ test('conversation history and hide remain available after listing deletion with
   assert.match(sql, /return found;/i);
   assert.match(sql, /grant execute on function public\.hide_conversation_for_user\(uuid\) to authenticated/i);
 });
+
+
+test('a completed seller listing or item request is not blocked by notification delivery', async () => {
+  const source = await read('../app/sell/page.tsx');
+  const postRequest = source.slice(source.indexOf('const handleRequestSubmit ='), source.indexOf('const handleImageUpload ='));
+  const postListing = source.slice(source.indexOf('const submitListing ='), source.indexOf('const handleSubmit ='));
+  assert.doesNotMatch(postRequest, /await pushNotification\(/);
+  assert.doesNotMatch(postListing, /await pushNotification\(/);
+  assert.match(postRequest, /Promise\.resolve\(pushNotification\(/);
+  assert.match(postListing, /Promise\.resolve\(pushNotification\(/);
+});
+
+test('listing insert confirmation is not blocked by unbounded seller enrichment', async () => {
+  const source = await read('../lib/listings.ts');
+  const insert = source.slice(source.indexOf('export async function insertListing('), source.indexOf('export async function getListingById('));
+  assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as ListingRow\]\)/);
+});

@@ -251,10 +251,12 @@ function SellPageContent() {
 
       setRequestMessage({ type: 'success', text: 'Request posted. Sellers can now reply fast.' });
       showToast({ type: 'success', message: 'Request posted.' });
-      await pushNotification({
+      void Promise.resolve(pushNotification({
         type: 'item request',
         title: 'Request posted',
         body: `${request.title} is now visible in Requests.`,
+      })).catch((notificationError) => {
+        console.warn('Request notification delivery failed:', notificationError);
       });
       setRequestForm({
         title: '',
@@ -480,10 +482,12 @@ function SellPageContent() {
       const successText = editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.';
       setMessage({ type: 'success', text: successText });
       showToast({ type: 'success', message: successText });
-      await pushNotification({
+      void Promise.resolve(pushNotification({
         type: editListingId ? 'listing updated' : isNewBusinessPost ? 'business post review' : 'listing posted',
         title: editListingId ? 'Listing updated' : isNewBusinessPost ? 'Business post in review' : 'Listing posted successfully',
         body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
+      })).catch((notificationError) => {
+        console.warn('Listing notification delivery failed:', notificationError);
       });
       resetForm();
       window.dispatchEvent(new CustomEvent('campustrader:listing-created', {

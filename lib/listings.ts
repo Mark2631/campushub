@@ -425,7 +425,7 @@ export async function insertListing(
       return { listing: null, error: 'We could not publish this listing. Check your details and connection, then try again.' };
     }
 
-    const [listing] = await enrichListings([newListing as ListingRow]);
+    const [listing] = await enrichListingsWithDeadline([newListing as ListingRow]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error inserting listing:', err);
