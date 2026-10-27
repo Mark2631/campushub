@@ -202,7 +202,8 @@ function SignInPageContent() {
     setSignupPending(true);
     persistEmail(email);
 
-    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next, signupForm.institution);
+    const signup = await signUpWithPassword(email, signupForm.password, fullName, signupForm.phone, next, signupForm.institution).catch((requestError: unknown) => { console.error('Signup request failed:', requestError); setSignupPending(false); const message = 'We could not create your account just now. Check your connection and try again.'; showToast({ type: 'error', message }); setNotice({ tone: 'error', message }); return null; });
+    if (!signup) return;
 
     if (signup.error) {
       setSignupPending(false);
@@ -238,7 +239,9 @@ function SignInPageContent() {
     const email = signinForm.email.trim();
     persistEmail(email);
 
-    const { data, error } = await signInWithPassword(email, signinForm.password);
+    const signInResult = await signInWithPassword(email, signinForm.password).catch((requestError: unknown) => { console.error('Sign-in request failed:', requestError); setSigninPending(false); const message = 'Sign-in could not complete. Check your connection and try again.'; showToast({ type: 'error', message }); setNotice({ tone: 'error', message }); return null; });
+    if (!signInResult) return;
+    const { data, error } = signInResult;
     setSigninPending(false);
 
     if (error || !data.session) {
@@ -268,7 +271,9 @@ function SignInPageContent() {
 
     setResetPending(true);
     persistEmail(email);
-    const { error } = await sendPasswordResetEmail(email);
+    const resetResult = await sendPasswordResetEmail(email).catch((requestError: unknown) => { console.error('Password reset request failed:', requestError); setResetPending(false); const message = 'Password reset could not be sent. Check your connection and try again.'; showToast({ type: 'error', message }); setNotice({ tone: 'error', message }); return null; });
+    if (!resetResult) return;
+    const { error } = resetResult;
     setResetPending(false);
 
     if (error) {
