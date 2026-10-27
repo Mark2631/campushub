@@ -667,7 +667,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold">Manage</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Orders, selling profile, preferences, and support.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Selling profile, preferences and support.</p>
               </div>
               <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -688,7 +688,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
               <section aria-label="Manage areas" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Manage areas</h3>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Link href="/orders" onClick={() => setSettingsOpen(false)} className="rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Orders</Link>
+                  <span aria-disabled="true" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-3 text-center text-sm font-semibold text-slate-500 dark:bg-slate-800">Orders · Soon</span>
                   <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Selling profile</a>
                   <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help &amp; support</a>
                 </div>
@@ -733,14 +733,8 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
               <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Help &amp; support</h3>
-                <div className="mt-3 space-y-2">
-                  {transactionHelpTopics.map((topic) => (
-                    <details key={topic.title} className="rounded-xl border border-slate-200 px-3 py-3 dark:border-slate-800">
-                      <summary className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">{topic.title}</summary>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{topic.content}</p>
-                    </details>
-                  ))}
-                </div>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Need help creating a listing, verifying your account or arranging delivery? See our simple step-by-step guide.</p>
+                <Link href="/help" onClick={() => setSettingsOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-300">How CampusTrader works</Link>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
