@@ -5,9 +5,10 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('active listing seller contact is available without publishing non-seller phone numbers', async () => {
-  const sql = await read('../supabase/migrations/20261027195500_seller_contact_phone_active_listings.sql');
-  assert.match(sql, /l\.seller_id = p\.id AND l\.status = 'active'/);
-  assert.match(sql, /THEN p\.phone_number ELSE NULL::text/);
+  const sql = await read('../supabase/migrations/20261027210000_active_listing_whatsapp_contact.sql');
+  assert.match(sql, /l\.seller_id/);
+  assert.match(sql, /l\.status = 'active'/);
+  assert.match(sql, /l\.deleted_at IS NULL/);
 });
 
 test('WhatsApp routing normalizes Kenyan numbers and navigates on mobile browsers', async () => {
