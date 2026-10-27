@@ -325,7 +325,6 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
   const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.currentTarget.files || []);
-    event.currentTarget.value = '';
     documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
 
     const maxFiles = verificationType === 'business' ? 2 : 1;
@@ -340,7 +339,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     }
 
     setDocumentFiles(nextFiles);
-    setDocumentPreviews(nextFiles.map((file) => URL.createObjectURL(file)));
+    setDocumentPreviews(nextFiles.map((file) => file.type.startsWith('image/') ? URL.createObjectURL(file) : ''));
   };
 
   const handleVerificationSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
