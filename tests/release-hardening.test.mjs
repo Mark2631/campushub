@@ -274,9 +274,9 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
   assert.ok(!source.includes('Have something to sell?'));
-  assert.ok(help.includes('Buying and selling basics'));
+  assert.ok(help.includes('How to get started'));
   assert.ok(help.includes('Post a listing'));
-  assert.ok(help.includes('Post a request'));
+  assert.ok(help.includes('Talk to the seller'));
 });
 
 test('public listings have unique canonical metadata and product markup only for active priced products', async () => {
@@ -382,7 +382,7 @@ test('Edit Profile is separated from Manage and includes identity fields', async
   assert.ok(profile.includes('WhatsApp number'));
   assert.ok(profile.includes('edit-profile-verification'));
   assert.ok(profile.includes('Manage areas'));
-  assert.ok(profile.includes('<details key={topic.title}'));
+  assert.ok(profile.includes('How CampusTrader works'));
   assert.ok(profiles.includes('export async function saveProfileName'));
 });
 

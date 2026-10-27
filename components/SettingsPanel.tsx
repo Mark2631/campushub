@@ -67,9 +67,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
               Manage account
             </Link>
 
-            <Link href="/orders" onClick={onClose} className="block rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm font-semibold text-blue-800 transition hover:border-blue-300 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
-              Orders & transactions
-            </Link>
+            <div aria-disabled="true" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-500 dark:border-slate-800 dark:bg-slate-900">Orders · Coming soon</div>
 
             <Link href="/help" onClick={onClose} className="block rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-900 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
               Help &amp; support

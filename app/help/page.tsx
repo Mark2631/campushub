@@ -3,70 +3,41 @@ import Link from 'next/link';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import HelpContactAction from '../../components/HelpContactAction';
-import { transactionHelpTopics } from '../../lib/transactionHelp';
 
 export const metadata: Metadata = {
-  title: 'Help & Support | CampusTrader',
-  description: 'Learn how CampusTrader orders, M-PESA payment confirmation, pickup, D-Delivery, receipt confirmation, disputes, and support work.',
+  title: 'Getting Started & Help | CampusTrader',
+  description: 'Simple steps to browse, message sellers, post listings, verify your account and request support on CampusTrader.',
 };
+
+const steps = [
+  { title: 'Create your account', text: 'Sign up with your name, email and institution. You can browse listings without signing in.', href: '/signin', action: 'Sign up' },
+  { title: 'Find something you like', text: 'Open Home, browse listings and tap any photo or the blue View listing button to see full details.', href: '/', action: 'Explore listings' },
+  { title: 'Talk to the seller', text: 'Open a listing and choose Message seller or Continue on WhatsApp. Agree on the item, price and collection before paying.', href: '/', action: 'Browse sellers' },
+  { title: 'Set up your seller profile', text: 'Go to Profile → Edit profile. Add your WhatsApp number so buyers can contact you. You can also request a trusted badge using your student or national ID.', href: '/profile', action: 'Open profile' },
+  { title: 'Post your first listing', text: 'Open Sell, add clear photos, a price and a description, then tap Post listing. If you sell as a business, create a business profile in Profile first.', href: '/sell', action: 'Post a listing' },
+];
 
 export default function HelpPage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <Header />
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 sm:py-8">
-        <header className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Manage · Help &amp; support</p>
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Help &amp; support</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Guidance for buying, payments, delivery, and order follow-up on CampusTrader.
-          </p>
-        </header>
-
-        <section aria-labelledby="buy-sell-basics-heading" className="mt-6">
-          <h2 id="buy-sell-basics-heading" className="text-xl font-bold">Buying and selling basics</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <article className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="font-semibold">Buying safely</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Review photos and item details, message the seller to confirm the condition and collection arrangements, and agree on the terms before paying. Never share your M-PESA PIN or rely on a payment screenshot alone.
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Read the payment, pickup, delivery and dispute guidance below before completing a transaction.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="font-semibold">Listing something</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                Use a clear title, accurate description, genuine photos, a fair price and the right campus or location. If you cannot find what you need, post a request so students can respond.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
-                <Link href="/sell" className="text-blue-700 hover:underline dark:text-blue-300">Post a listing</Link>
-                <Link href="/sell?mode=request" className="text-blue-700 hover:underline dark:text-blue-300">Post a request</Link>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section aria-labelledby="contact-support-heading" className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30">
-          <h2 id="contact-support-heading" className="font-semibold">Still need help?</h2>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 pb-28 sm:py-8">
+        <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-300">CampusTrader guide</p>
+        <h1 className="mt-2 text-2xl font-bold sm:text-3xl">How to get started</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">Browse, connect and trade in a few simple steps.</p>
+        <div className="mt-6 space-y-3">
+          {steps.map((step, index) => <section key={step.title} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">{index + 1}</span>
+            <div className="min-w-0 flex-1"><h2 className="font-semibold">{step.title}</h2><p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{step.text}</p><Link href={step.href} className="mt-2 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-300">{step.action}</Link></div>
+          </section>)}
+        </div>
+        <section className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-900 dark:bg-blue-950/20">
+          <h2 className="font-bold">Need help with an item or delivery?</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Buyers and sellers can contact CampusTrader management for assistance checking an item, arranging collection or finding a delivery rider. Delivery is arranged individually and is not an automatic checkout.</p>
           <HelpContactAction />
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-            Use CampusTrader&apos;s existing report issue form. Include the order number when you have one, and never include a PIN or password.
-          </p>
         </section>
-
-        <section aria-label="Transaction help" className="mt-6 grid gap-3 sm:grid-cols-2">
-          {transactionHelpTopics.map((topic) => (
-            <article key={topic.title} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="font-semibold">{topic.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{topic.content}</p>
-            </article>
-          ))}
-        </section>
+        <p className="mt-5 text-xs leading-5 text-slate-500 dark:text-slate-400">For your safety, check an item&apos;s condition and confirm the seller before paying. Never share account passwords or PINs.</p>
       </main>
-
       <BottomNav />
     </div>
   );

@@ -61,6 +61,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           ) : null}
           <span className="truncate text-[10px] text-gray-500 dark:text-zinc-500">{listing.category}</span>
         </div>
+        <span className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition group-hover:bg-blue-700">View listing</span>
       </div>
     </Link>
   );

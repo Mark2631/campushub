@@ -505,8 +505,8 @@ function SellPageContent() {
       setMessage({ type: 'success', text: successText });
       showToast({ type: 'success', message: successText });
       void Promise.resolve(pushNotification({
-        type: editListingId ? 'listing updated' : isNewBusinessPost ? 'business post review' : 'listing posted',
-        title: editListingId ? 'Listing updated' : isNewBusinessPost ? 'Business post in review' : 'Listing posted successfully',
+        type: editListingId ? 'listing updated' : 'listing posted',
+        title: editListingId ? 'Listing updated' : 'Listing posted successfully',
         body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
       })).catch((notificationError) => {
         console.warn('Listing notification delivery failed:', notificationError);
@@ -1068,7 +1068,7 @@ function SellPageContent() {
             disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
             className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
-            {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : isNewBusinessPost ? 'Send for review' : 'Post Listing'}
+            {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : 'Post listing'}
           </button>
           {isSubmitting && uploadStatus ? (
             <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>
