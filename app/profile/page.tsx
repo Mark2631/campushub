@@ -275,7 +275,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
     setBusinessSubmitting(true);
     setMessage(null);
-    const { business, error } = await createBusinessProfile(user.id, businessForm);
+    const { business, error } = await createBusinessProfile(user.id, businessForm).catch((requestError: unknown) => { console.error('Business profile request failed:', requestError); return { business: null, error: 'Business profile could not be created. Check your connection and try again.' }; });
     setBusinessSubmitting(false);
 
     if (error || !business) {
@@ -711,14 +711,14 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                 </div>
 
                 <form onSubmit={handleBusinessSubmit} className="mt-4 grid gap-3">
-                  <input name="business_name" value={businessForm.business_name} onChange={(event) => setBusinessForm((current) => ({ ...current, business_name: event.target.value }))} placeholder="Business name" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <input name="business_name" value={businessForm.business_name} onChange={(event) => setBusinessForm((current) => ({ ...current, business_name: event.target.value }))} placeholder="Business name" maxLength={120} required className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <div className="grid gap-3 sm:grid-cols-2">
                     <select name="category" value={businessForm.category} onChange={(event) => setBusinessForm((current) => ({ ...current, category: event.target.value }))} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
                       {businessCategories.map((category) => <option key={category} value={category}>{category}</option>)}
                     </select>
-                    <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                    <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" maxLength={120} required className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   </div>
-                  <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} placeholder="Description" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} maxLength={1000} placeholder="Description" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   <fieldset className="rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
                     <legend className="px-1 text-sm font-semibold">Delivery</legend>
                     <div className="grid gap-2 sm:grid-cols-2">
