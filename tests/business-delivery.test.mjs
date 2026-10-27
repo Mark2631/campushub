@@ -50,7 +50,7 @@ test('manual delivery requests are separately stored and protected by institutio
   assert.match(button, /No rider has been booked and no payment has been made/);
   assert.match(adminQueue, /Private coordination notes/);
   assert.match(sql, /delivery_service_request_admin_notes_admin_select/);
-  assert.match(sql, /CREATE TABLE IF NOT EXISTS public\\.delivery_service_request_admin_notes/);
+  assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.delivery_service_request_admin_notes'));
   assert.match(adminPage, /tab === 'service-delivery' && <ManualDeliveryRequests \/>/);
 });
 
