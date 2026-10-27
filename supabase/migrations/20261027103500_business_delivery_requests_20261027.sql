@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS public.delivery_service_requests (
   notes text,
   status text NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'contacted', 'rider_assigned', 'completed', 'cancelled')),
-  admin_notes text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -42,6 +41,39 @@ CREATE INDEX IF NOT EXISTS delivery_service_requests_requester_created_idx
   ON public.delivery_service_requests (requester_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS delivery_service_requests_institution_idx
   ON public.delivery_service_requests (institution_id);
+
+-- Keep internal rider/price coordination notes out of the requester-readable row.
+CREATE TABLE IF NOT EXISTS public.delivery_service_request_admin_notes (
+  request_id uuid PRIMARY KEY REFERENCES public.delivery_service_requests(id) ON DELETE CASCADE,
+  note text NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.delivery_service_request_admin_notes ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE ON public.delivery_service_request_admin_notes TO authenticated;
+
+DROP POLICY IF EXISTS delivery_service_request_admin_notes_admin_select
+  ON public.delivery_service_request_admin_notes;
+CREATE POLICY delivery_service_request_admin_notes_admin_select
+  ON public.delivery_service_request_admin_notes
+  FOR SELECT TO authenticated
+  USING (COALESCE(public.is_admin(), false));
+
+DROP POLICY IF EXISTS delivery_service_request_admin_notes_admin_insert
+  ON public.delivery_service_request_admin_notes;
+CREATE POLICY delivery_service_request_admin_notes_admin_insert
+  ON public.delivery_service_request_admin_notes
+  FOR INSERT TO authenticated
+  WITH CHECK (COALESCE(public.is_admin(), false));
+
+DROP POLICY IF EXISTS delivery_service_request_admin_notes_admin_update
+  ON public.delivery_service_request_admin_notes;
+CREATE POLICY delivery_service_request_admin_notes_admin_update
+  ON public.delivery_service_request_admin_notes
+  FOR UPDATE TO authenticated
+  USING (COALESCE(public.is_admin(), false))
+  WITH CHECK (COALESCE(public.is_admin(), false));
+
 
 ALTER TABLE public.delivery_service_requests ENABLE ROW LEVEL SECURITY;
 
@@ -66,7 +98,6 @@ CREATE POLICY delivery_service_requests_insert_valid_request
     requester_id = (SELECT auth.uid())
     AND institution_id = (SELECT private.current_active_institution_id())
     AND status = 'pending'
-    AND admin_notes IS NULL
     AND requester_role = CASE
       WHEN EXISTS (
         SELECT 1 FROM public.listings l
