@@ -16,7 +16,7 @@ export default function GettingStartedChecklist() {
 
   useEffect(() => {
     let active = true;
-    if (!user) return;
+    if (!user) { return () => { active = false; }; }
     void Promise.all([getProfileById(user.id), getListingsByUser(user.id)]).then(([{ profile }, { listings }]) => {
       if (!active) return;
       setPhoneReady(Boolean(profile?.phone_number));
