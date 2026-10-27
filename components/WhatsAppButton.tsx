@@ -6,7 +6,8 @@ import { normalizeKenyanPhone } from '../lib/phoneValidation';
 import { supabase } from '../lib/supabase';
 
 export default function WhatsAppButton({ listingId, label = 'Continue on WhatsApp', phoneNumber }: {
-  listingId: string;
+  listingId?: string;
+  userId?: string; // Legacy message threads still pass the other participant.
   label?: string;
   phoneNumber?: string | null;
 }) {
@@ -18,6 +19,11 @@ export default function WhatsAppButton({ listingId, label = 'Continue on WhatsAp
     const supplied = normalizeKenyanPhone(phoneNumber || '');
     if (supplied) {
       window.location.assign(`https://wa.me/${supplied.replace(/[^0-9]/g, '')}`);
+      return;
+    }
+
+    if (!listingId) {
+      showToast({ type: 'info', message: 'Open the listing to contact its seller on WhatsApp.' });
       return;
     }
 
