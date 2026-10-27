@@ -13,7 +13,7 @@ import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
 import { signOut } from '../../lib/auth';
 import { createComplaint } from '../../lib/complaints';
-import { transactionHelpTopics } from '../../lib/transactionHelp';
+import GettingStartedChecklist from '../../components/GettingStartedChecklist';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import {
   BusinessRecord,
