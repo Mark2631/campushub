@@ -646,7 +646,8 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                     </select>
                     <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                     {documentFiles.length > 0 ? (
-                      <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                      <div role="status" aria-live="polite" className="space-y-2 text-sm text-emerald-700 dark:text-emerald-300">
+                        <p className="font-semibold">{documentFiles.length} document{documentFiles.length === 1 ? "" : "s"} selected</p>
                         {documentFiles.map((file) => <p key={`${file.name}-${file.size}`} className="truncate">{file.name}</p>)}
                       </div>
                     ) : null}
