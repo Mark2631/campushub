@@ -150,7 +150,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 
   useEffect(() => {
     return () => {
-      documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
+      documentPreviews.filter(Boolean).forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
     };
   }, [documentPreviews]);
 
@@ -321,6 +321,8 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     documentPreviews.forEach((previewUrl) => URL.revokeObjectURL(previewUrl));
     setDocumentFiles([]);
     setDocumentPreviews([]);
+    const fileInput = document.getElementById('verification-document-upload') as HTMLInputElement | null;
+    if (fileInput) fileInput.value = '';
   };
 
   const handleDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -644,7 +646,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                     <select value={verificationType} onChange={(event) => setVerificationType(event.target.value as (typeof verificationTypes)[number]['value'])} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900">
                       {verificationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
                     </select>
-                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                    <input id="verification-document-upload" type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                     {documentFiles.length > 0 ? (
                       <div role="status" aria-live="polite" className="space-y-2 text-sm text-emerald-700 dark:text-emerald-300">
                         <p className="font-semibold">{documentFiles.length} document{documentFiles.length === 1 ? "" : "s"} selected</p>
