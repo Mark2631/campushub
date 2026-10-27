@@ -17,7 +17,6 @@ type DeliveryServiceRequest = {
   contact_phone: string;
   notes: string | null;
   status: RequestStatus;
-  admin_notes: string | null;
   created_at: string;
 };
 type Draft = { status: RequestStatus; admin_notes: string };
@@ -47,7 +46,7 @@ export default function ManualDeliveryRequests() {
   const loadRequests = useCallback(async () => {
     const { data, error } = await supabase
       .from('delivery_service_requests')
-      .select('id, requester_role, business_id, listing_id, item_description, pickup_location, dropoff_location, contact_name, contact_phone, notes, status, admin_notes, created_at')
+      .select('id, requester_role, business_id, listing_id, item_description, pickup_location, dropoff_location, contact_name, contact_phone, notes, status, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -57,11 +56,26 @@ export default function ManualDeliveryRequests() {
       setMessage({ type: 'error', text: 'The delivery request queue could not load. Check that the database migration has been applied.' });
     } else {
       const next = (data || []) as DeliveryServiceRequest[];
+      let noteByRequest: Record<string, string> = {};
+      let noteLoadMessage: string | null = null;
+      if (next.length > 0) {
+        const { data: privateNotes, error: privateNotesError } = await supabase
+          .from('delivery_service_request_admin_notes')
+          .select('request_id, note')
+          .in('request_id', next.map((request) => request.id));
+        if (privateNotesError) {
+          console.error('Private delivery coordination notes failed to load:', privateNotesError);
+          noteLoadMessage = 'Requests loaded, but private coordination notes could not be loaded.';
+        } else {
+          noteByRequest = Object.fromEntries((privateNotes || []).map((row: { request_id: string; note: string }) => [row.request_id, row.note || '']));
+        }
+      }
       setRequests(next);
       setDrafts(Object.fromEntries(next.map((request) => [
         request.id,
-        { status: request.status, admin_notes: request.admin_notes || '' },
+        { status: request.status, admin_notes: noteByRequest[request.id] || '' },
       ])));
+      if (noteLoadMessage) setMessage({ type: 'error', text: noteLoadMessage });
     }
     setLoading(false);
   }, []);
@@ -84,24 +98,37 @@ export default function ManualDeliveryRequests() {
       .from('delivery_service_requests')
       .update({
         status: draft.status,
-        admin_notes: draft.admin_notes.trim() || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', requestId)
-      .select('id, status, admin_notes')
+      .select('id, status')
       .single();
 
-    setBusyId(null);
     if (error || !data) {
+      setBusyId(null);
       console.error('Delivery request update failed:', error);
-      setMessage({ type: 'error', text: 'Could not save this update. Refresh the queue and try again.' });
+      setMessage({ type: 'error', text: 'Could not save the status. Refresh the queue and try again.' });
       return;
     }
 
+    const { error: noteError } = await supabase
+      .from('delivery_service_request_admin_notes')
+      .upsert({
+        request_id: requestId,
+        note: draft.admin_notes.trim(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'request_id' });
+
+    setBusyId(null);
     setRequests((current) => current.map((request) => request.id === requestId
-      ? { ...request, status: data.status as RequestStatus, admin_notes: data.admin_notes }
+      ? { ...request, status: data.status as RequestStatus }
       : request));
-    setMessage({ type: 'success', text: 'Delivery request updated.' });
+    if (noteError) {
+      console.error('Private delivery note update failed:', noteError);
+      setMessage({ type: 'error', text: 'Status saved, but the private coordination note could not be saved.' });
+      return;
+    }
+    setMessage({ type: 'success', text: 'Delivery request and private coordination note updated.' });
   };
 
   return (
@@ -154,7 +181,7 @@ export default function ManualDeliveryRequests() {
                   </select>
                 </label>
                 <label className="text-sm">
-                  <span className="mb-1 block font-medium text-zinc-300">Internal admin notes</span>
+                  <span className="mb-1 block font-medium text-zinc-300">Private coordination notes</span>
                   <textarea value={draft.admin_notes} onChange={(event) => updateDraft(request.id, { admin_notes: event.target.value })} rows={2} maxLength={1200} placeholder="Rider contacted, quoted fee, agreed time…" className="w-full resize-y rounded-xl border border-zinc-700 bg-black px-3 py-3 text-sm text-white" />
                 </label>
               </div>
