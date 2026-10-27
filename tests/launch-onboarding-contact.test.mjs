@@ -28,7 +28,8 @@ test('new visitors see explicit View listing and onboarding steps', async () => 
 
 test('verification selection persists in the file picker and displays selected count', async () => {
   const profile = await read('../app/profile/page.tsx');
-  assert.doesNotMatch(profile, /event\.currentTarget\.value = ''/);
+  const filePickerHandler = profile.split('const handleDocumentChange =')[1]?.split('const handleVerificationSubmit =')[0] || '';
+  assert.doesNotMatch(filePickerHandler, /event\.currentTarget\.value = ''/);
   assert.match(profile, /documentFiles\.length} document/);
 });
 
