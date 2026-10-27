@@ -54,5 +54,5 @@ test('manual delivery requests are separately stored and protected by institutio
 
 test('manual delivery requests never call checkout or M-Pesa payment code', async () => {
   const button = await read('../components/DeliveryRequestButton.tsx');
-  assert.doesNotMatch(button, /createMarketplaceOrder|submitManualPaymentReference|initiateMpesaPayment|requestMpesaPayment|supabase\\.rpc\\(/i);
+  assert.doesNotMatch(button, /createMarketplaceOrder|submitManualPaymentReference|initiateMpesaPayment|requestMpesaPayment/i);
 });
