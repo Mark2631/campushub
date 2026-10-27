@@ -147,7 +147,7 @@ export default function ManualDeliveryRequests() {
       {!loading && requests.length === 0 ? <div className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-400">No delivery requests yet.</div> : null}
       <div className="space-y-4">
         {requests.map((request) => {
-          const draft = drafts[request.id] || { status: request.status, admin_notes: request.admin_notes || '' };
+          const draft = drafts[request.id] || { status: request.status, admin_notes: '' };
           return (
             <article key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
