@@ -5,8 +5,8 @@ import useUser from '../hooks/useUser';
 import { normalizeKenyanPhone } from '../lib/phoneValidation';
 import { supabase } from '../lib/supabase';
 
-export default function WhatsAppButton({ userId, label = 'Continue on WhatsApp', phoneNumber }: {
-  userId: string;
+export default function WhatsAppButton({ listingId, label = 'Continue on WhatsApp', phoneNumber }: {
+  listingId: string;
   label?: string;
   phoneNumber?: string | null;
 }) {
@@ -23,15 +23,15 @@ export default function WhatsAppButton({ userId, label = 'Continue on WhatsApp',
 
     setBusy(true);
     try {
-      // Contact is available through the public view only for active sellers.
-      const { data, error } = await supabase.from('marketplace_profiles')
-        .select('phone_number').eq('id', userId).maybeSingle();
+      // Only a currently active, visible listing can expose the seller's
+      // voluntary contact number through this restricted lookup.
+      const { data, error } = await supabase.rpc('get_listing_seller_whatsapp', { p_listing_id: listingId });
       if (error) {
         console.error('Seller WhatsApp lookup failed:', error);
         showToast({ type: 'error', message: 'WhatsApp contact is unavailable right now. You can message the seller here.' });
         return;
       }
-      const number = normalizeKenyanPhone(data?.phone_number || '');
+      const number = normalizeKenyanPhone(typeof data === 'string' ? data : '');
       if (!number) {
         showToast({ type: 'info', message: 'This seller has not added a WhatsApp number. Use in-app messages.' });
         return;
