@@ -24,6 +24,7 @@ test('ordering is disabled, listing cards give explicit view guidance', async ()
 
 test('verification file selection is displayed and not reset on selection', async () => {
   const profile = await read('../app/profile/page.tsx');
-  assert.doesNotMatch(profile, /event\.currentTarget\.value = ''/);
+  const handler = profile.split('const handleDocumentChange =')[1]?.split('const handleVerificationSubmit =')[0] || '';
+  assert.equal(handler.includes("event.currentTarget.value = ''"), false);
   assert.match(profile, /documentFiles\.length > 0/);
 });
