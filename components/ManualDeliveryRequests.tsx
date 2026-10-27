@@ -165,7 +165,7 @@ export default function ManualDeliveryRequests() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Contact</p>
                   <p className="mt-1 font-semibold text-white">{request.contact_name}</p>
                   <a href={`tel:${request.contact_phone}`} className="mt-1 block text-sm text-zinc-200 underline underline-offset-2">{request.contact_phone}</a>
-                  <a href={`https://wa.me/${request.contact_phone.replace(/\\D/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-emerald-300 underline underline-offset-2">Message on WhatsApp</a>
+                  <a href={`https://wa.me/${request.contact_phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-emerald-300 underline underline-offset-2">Message on WhatsApp</a>
                 </div>
                 <div className="rounded-xl bg-black/50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Route</p>
