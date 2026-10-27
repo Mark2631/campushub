@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import useUser from '../hooks/useUser';
 import { getInstitutionIdForUser } from '../lib/institutions';
 import { normalizeKenyanPhone } from '../lib/phoneValidation';
@@ -23,7 +22,6 @@ export default function DeliveryRequestButton({
   sellerId,
   pickupLocation,
 }: Props) {
-  const router = useRouter();
   const { user, loading, showToast } = useUser();
   const [open, setOpen] = useState(false);
   const [needsSignIn, setNeedsSignIn] = useState(false);
