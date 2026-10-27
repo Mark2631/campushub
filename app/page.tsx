@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
+import GettingStartedChecklist from '../components/GettingStartedChecklist';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
@@ -342,6 +343,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
       <Header />
       <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 pb-32 sm:px-4 sm:py-6">
+        <GettingStartedChecklist />
         <header className="mb-4 sm:mb-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{greeting}</p>
           <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
@@ -570,7 +572,7 @@ export default function Home() {
           <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-600 dark:text-zinc-400">
             CampusTrader is a campus marketplace in Kenya where students and nearby businesses can buy and sell second-hand electronics, books, fashion, furniture, food, and services. Browse listings or post a request across participating universities, colleges, and technical institutions.
           </p>
-          <Link href="/help" className="mt-2 inline-flex text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">Buying, selling and payment guidance</Link>
+          <Link href="/help" className="mt-2 inline-flex text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">How CampusTrader works</Link>
         </section>
       </main>
 
