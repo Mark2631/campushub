@@ -4,23 +4,33 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import useUser from '../hooks/useUser';
-import { getProfileById } from '../lib/profiles';
+import { getProfileById, getBusinessProfiles } from '../lib/profiles';
+import { supabase } from '../lib/supabase';
 
 export default function GettingStartedChecklist() {
   const { user, loading } = useUser();
   const [phoneReady, setPhoneReady] = useState(false);
   const [verificationStarted, setVerificationStarted] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [listingReady, setListingReady] = useState(false);
+  const [businessReady, setBusinessReady] = useState(false);
+  const [sellerMode, setSellerMode] = useState(false);
 
   useEffect(() => {
     let active = true;
     if (!user) return;
-    void getProfileById(user.id).then(({ profile }) => {
+    void Promise.all([
+      getProfileById(user.id),
+      supabase.from('listings').select('id', { head: true, count: 'exact' }).eq('seller_id', user.id),
+      getBusinessProfiles(user.id),
+    ]).then(([{ profile }, listingResult, { businesses }]) => {
       if (!active) return;
       setPhoneReady(Boolean(profile?.phone_number));
+      setListingReady((listingResult.count || 0) > 0);
+      setBusinessReady(businesses.length > 0);
       setVerificationStarted(Boolean(profile?.verification_status && profile.verification_status !== 'unverified' && profile.verification_status !== 'none'));
       setChecked(true);
-    });
+    }).catch(() => { if (active) setChecked(true); });
     return () => { active = false; };
   }, [user]);
 
@@ -28,7 +38,9 @@ export default function GettingStartedChecklist() {
   const steps = [
     { title: 'Create your account', done: true, href: '/profile', detail: 'You are signed in.' },
     { title: 'Add your WhatsApp number', done: phoneReady, href: '/profile', detail: 'Let interested buyers reach you.' },
-    { title: 'Start profile verification', done: verificationStarted, href: '/profile', detail: 'Submit a student ID or national ID for review.' },
+    { title: 'Post your first listing', done: listingReady, href: '/sell', detail: 'Help buyers discover what you sell.' },
+    ...(sellerMode ? [{ title: 'Create your business profile', done: businessReady, href: '/profile', detail: 'Show buyers your business details.' }] : []),
+    { title: 'Request verification', done: verificationStarted, href: '/profile', detail: 'Optional: apply for a trusted seller badge.' },
   ];
   const doneCount = steps.filter((step) => step.done).length;
   return (
@@ -37,6 +49,7 @@ export default function GettingStartedChecklist() {
         <div><p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-300">Your CampusTrader setup</p><h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">Get ready to trade</h2></div>
         <span className="shrink-0 text-sm font-bold text-blue-700 dark:text-blue-300">{checked ? Math.round(doneCount / steps.length * 100) : '…'}%</span>
       </div>
+      <div className="mt-3 flex gap-2 text-xs font-semibold"><button type="button" onClick={() => setSellerMode(false)} aria-pressed={!sellerMode} className={`rounded-full px-3 py-2 ${!sellerMode ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>Individual</button><button type="button" onClick={() => setSellerMode(true)} aria-pressed={sellerMode} className={`rounded-full px-3 py-2 ${sellerMode ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>Business</button></div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: checked ? `${doneCount / steps.length * 100}%` : '0%' }} /></div>
       <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
         {steps.map((step) => <Link key={step.title} href={step.href} className="flex items-center gap-3 py-3">
@@ -45,7 +58,7 @@ export default function GettingStartedChecklist() {
           <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
         </Link>)}
       </div>
-      <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">You can browse and message sellers before verification is complete. Selling as a business? Create a business profile in Profile.</p>
+      <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">You can browse and message sellers before verification is complete. Verification is optional; complete the steps relevant to you.</p>
       <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold"><Link href="/sell" className="rounded-xl bg-blue-600 px-4 py-2.5 text-white">Post a listing</Link><Link href="/help" className="rounded-xl border border-slate-200 px-4 py-2.5 text-blue-700 dark:border-slate-700 dark:text-blue-300">How it works</Link></div>
     </section>
   );
