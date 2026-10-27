@@ -45,8 +45,6 @@ export default function ManualDeliveryRequests() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadRequests = useCallback(async () => {
-    setLoading(true);
-    setMessage(null);
     const { data, error } = await supabase
       .from('delivery_service_requests')
       .select('id, requester_role, business_id, listing_id, item_description, pickup_location, dropoff_location, contact_name, contact_phone, notes, status, admin_notes, created_at')
@@ -113,7 +111,7 @@ export default function ManualDeliveryRequests() {
           <h2 className="text-xl font-bold text-white">Service delivery requests</h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">Requests from buyers or sellers for manual delivery coordination. Contact the person, check whether a rider is available, then record the agreed status here.</p>
         </div>
-        <button type="button" onClick={() => void loadRequests()} disabled={loading} className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-zinc-100 disabled:opacity-60">
+        <button type="button" onClick={() => { setLoading(true); setMessage(null); void loadRequests(); }} disabled={loading} className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-zinc-100 disabled:opacity-60">
           {loading ? 'Refreshing…' : 'Refresh requests'}
         </button>
       </header>
