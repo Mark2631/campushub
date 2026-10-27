@@ -36,7 +36,7 @@ export default function HelpPage() {
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Buyers and sellers can contact CampusTrader management for assistance checking an item, arranging collection or finding a delivery rider. Delivery is arranged individually and is not an automatic checkout.</p>
           <HelpContactAction />
         </section>
-        <p className="mt-5 text-xs leading-5 text-slate-500 dark:text-slate-400">For your safety, check an item's condition and confirm the seller before paying. Never share account passwords or PINs.</p>
+        <p className="mt-5 text-xs leading-5 text-slate-500 dark:text-slate-400">For your safety, check an item&apos;s condition and confirm the seller before paying. Never share account passwords or PINs.</p>
       </main>
       <BottomNav />
     </div>
