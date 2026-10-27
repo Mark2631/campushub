@@ -97,6 +97,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     category: businessCategories[0],
     location: '',
     description: '',
+    delivery_available: false,
   });
 
   const displayName = useMemo(() => {
@@ -284,7 +285,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
     }
 
     setBusinesses((current) => [business, ...current]);
-    setBusinessForm({ business_name: '', category: businessCategories[0], location: '', description: '' });
+    setBusinessForm({ business_name: '', category: businessCategories[0], location: '', description: '', delivery_available: false });
     setMessage({ type: 'success', text: 'Business profile created.' });
     showToast({ type: 'success', message: 'Business profile created.' });
   };
@@ -718,6 +719,21 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                     <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
                   </div>
                   <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} placeholder="Description" className="resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
+                  <fieldset className="rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
+                    <legend className="px-1 text-sm font-semibold">Delivery</legend>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${!businessForm.delivery_available ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-slate-700'}`}>
+                        <input type="radio" name="delivery_available" checked={!businessForm.delivery_available} onChange={() => setBusinessForm((current) => ({ ...current, delivery_available: false }))} className="mt-1" />
+                        <span><span className="block font-semibold">Pickup only</span><span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Customers collect from the business.</span></span>
+                      </label>
+                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${businessForm.delivery_available ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-slate-200 dark:border-slate-700'}`}>
+                        <input type="radio" name="delivery_available" checked={businessForm.delivery_available} onChange={() => setBusinessForm((current) => ({ ...current, delivery_available: true }))} className="mt-1" />
+                        <span><span className="block font-semibold">Delivery can be arranged</span><span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">CampusTrader will confirm a rider, fee and timing separately.</span></span>
+                      </label>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">Selecting delivery does not book a rider or take payment.</p>
+                  </fieldset>
+
                   <button type="submit" disabled={businessSubmitting} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{businessSubmitting ? 'Creating...' : 'Create business profile'}</button>
                 </form>
               </section>
@@ -748,7 +764,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="font-bold">{business.business_name}</p>
-                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{business.category} · {business.location} · {statusLabel(business.verification_status)}</p>
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{business.category} · {business.location} · {statusLabel(business.verification_status)} · {business.delivery_available ? 'Delivery can be arranged' : 'Pickup only'}</p>
                           </div>
                           <ReportButton targetType="business" targetId={business.id} label="Report" />
                         </div>
