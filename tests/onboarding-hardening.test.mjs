@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('legacy business creation derives a missing institution from the authenticated active account', async () => {
-  const sql = await read('../supabase/migrations/20261027165000_business_institution_compatibility_20261027.sql');
+  const sql = await read('../supabase/migrations/20261027150100_business_institution_compatibility_20261027.sql');
   assert.match(sql, /IF NEW\.institution_id IS NULL THEN[\s\S]*?NEW\.institution_id := private\.current_active_institution_id\(\)/);
   assert.match(sql, /NEW\.owner_id <> auth\.uid\(\)/);
   assert.match(sql, /USING ERRCODE = '42501'/);
