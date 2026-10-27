@@ -80,7 +80,7 @@ export default function ManualDeliveryRequests() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { void loadRequests(); }, [loadRequests]);
+  useEffect(() => { void Promise.resolve().then(() => loadRequests()); }, [loadRequests]);
 
   const updateDraft = (id: string, patch: Partial<Draft>) => {
     setDrafts((current) => ({
