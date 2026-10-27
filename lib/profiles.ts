@@ -2,7 +2,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { safeFileName, storageBuckets, uploadPublicFile, validateUploadFile } from './storage';
 import { DEFAULT_CAMPUS, GENERIC_ERROR, UPLOAD_ERROR, cleanMultilineText, cleanText, isAllowedValue, isValidUuid, normalizeInstitution } from './validation';
-import { getInstitutionIdForCode } from './institutions';
+import { getInstitutionIdForCode, getInstitutionIdForUser } from './institutions';
 
 export interface ProfileRecord {
   id: string;
@@ -30,6 +30,8 @@ export interface BusinessRecord {
   description: string;
   verification_status: string;
   badge_type?: string | null;
+  institution_id?: string;
+  delivery_available?: boolean;
   created_at?: string;
 }
 
@@ -342,6 +344,7 @@ export async function createBusinessProfile(userId: string, business: {
   category: string;
   location: string;
   description: string;
+  delivery_available?: boolean;
 }) {
   if (!isValidUuid(userId)) {
     return { business: null, error: GENERIC_ERROR };
@@ -356,47 +359,48 @@ export async function createBusinessProfile(userId: string, business: {
     return { business: null, error: 'Business name and location are required.' };
   }
 
-  const modernPayload = {
+  // Institution identity must come from the signed-in account's protected profile,
+  // never from client-provided form values. The database RLS policy checks this.
+  const institutionId = await getInstitutionIdForUser(userId);
+  if (!institutionId) {
+    return {
+      business: null,
+      error: 'Your account is missing an institution link. Please contact CampusTrader support.',
+    };
+  }
+
+  const payload = {
     owner_id: userId,
+    user_id: userId,
+    institution_id: institutionId,
     business_name: businessName,
     category,
     location,
     description,
     verification_status: 'unverified',
     badge_type: 'none',
+    delivery_available: business.delivery_available === true,
   };
 
-  let { data, error } = await supabase
+  const { data, error } = await supabase
     .from('businesses')
-    .insert(modernPayload)
+    .insert(payload)
     .select('*')
     .single();
 
-  if (error) {
-    console.error('Error creating business profile with owner_id:', serializeError(error), modernPayload);
-    const legacyPayload = {
-      user_id: userId,
-      business_name: businessName,
-      category,
-      location,
-      description,
-      verification_status: 'unverified',
-      badge_type: 'none',
-    };
-
-    const legacyResponse = await supabase
-      .from('businesses')
-      .insert(legacyPayload)
-      .select('*')
-      .single();
-
-    data = legacyResponse.data;
-    error = legacyResponse.error;
-
-    if (error) {
-      console.error('Error creating legacy business profile:', serializeError(error), legacyPayload);
-      return { business: null, error: GENERIC_ERROR };
+  if (error || !data) {
+    console.error('Error creating business profile:', serializeError(error || new Error('No business row returned')), {
+      businessName,
+      institutionId,
+      code: error?.code,
+    });
+    if (error?.code === '42501' || error?.code === '23514') {
+      return { business: null, error: 'Business profile could not be saved for this account. Refresh your session and try again.' };
     }
+    if (error?.code === '23503') {
+      return { business: null, error: 'Your institution or account details need attention. Please refresh and try again.' };
+    }
+    return { business: null, error: GENERIC_ERROR };
   }
 
   return { business: data as BusinessRecord, error: null };
@@ -409,7 +413,7 @@ export async function getBusinessProfiles(userId: string) {
 
   let { data, error } = await supabase
     .from('businesses')
-    .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, created_at')
+    .select('id, owner_id, user_id, institution_id, business_name, category, location, description, verification_status, badge_type, delivery_available, created_at')
     .eq('owner_id', userId)
     .order('created_at', { ascending: false });
 
@@ -417,7 +421,7 @@ export async function getBusinessProfiles(userId: string) {
     console.error('Error fetching businesses by owner_id:', serializeError(error));
     const legacyResponse = await supabase
       .from('businesses')
-      .select('id, owner_id, user_id, business_name, category, location, description, verification_status, badge_type, created_at')
+      .select('id, owner_id, user_id, institution_id, business_name, category, location, description, verification_status, badge_type, delivery_available, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 

@@ -41,6 +41,7 @@ export interface Listing {
   sellerSince?: string | null;
   sellerAvatarUrl?: string | null;
   sellerPhoneNumber?: string | null;
+  businessDeliveryAvailable?: boolean;
 }
 
 type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
@@ -62,6 +63,7 @@ type BusinessRow = {
   business_name: string;
   verification_status: string | null;
   badge_type?: string | null;
+  delivery_available?: boolean | null;
 };
 
 
@@ -85,7 +87,7 @@ async function fetchPublicBusinesses(businessIds: string[]) {
 
   const publicResponse = await supabase
     .from('marketplace_businesses')
-    .select('id, business_name, verification_status, badge_type')
+    .select('id, business_name, verification_status, badge_type, delivery_available')
     .in('id', businessIds);
 
   if (!publicResponse.error) {
@@ -143,6 +145,7 @@ async function enrichListings(rows: ListingRow[]) {
       sellerSince: profile?.created_at || null,
       sellerAvatarUrl: profile?.avatar_url || null,
       sellerPhoneNumber: profile?.phone_number || null,
+      businessDeliveryAvailable: Boolean(business?.delivery_available),
     };
   });
 }

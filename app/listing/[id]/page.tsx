@@ -10,6 +10,7 @@ import ReportButton from '../../../components/ReportButton';
 import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
+import DeliveryRequestButton from '../../../components/DeliveryRequestButton';
 import { getListingById } from '../../../lib/listings';
 import { isDirectPurchaseListing } from '../../../lib/orders';
 import { isValidUuid } from '../../../lib/validation';
@@ -293,6 +294,9 @@ export default async function ListingPage({ params }: Props) {
                       )}
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                       <WhatsAppButton userId={listing.seller_id} phoneNumber={listing.sellerPhoneNumber} />
+                      {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
+                        <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
+                      ) : null}
                       <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                     </>
                   )}
