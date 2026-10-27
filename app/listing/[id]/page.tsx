@@ -285,7 +285,7 @@ export default async function ListingPage({ params }: Props) {
                     <>
                       <BuyOrderButton listingId={listing.id} />
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
-                      <WhatsAppButton userId={listing.seller_id} />
+                      <WhatsAppButton listingId={listing.id} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
