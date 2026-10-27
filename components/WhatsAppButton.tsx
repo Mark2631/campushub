@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import useUser from '../hooks/useUser';
 import { getProfileById } from '../lib/profiles';
+import { normalizeKenyanPhone } from '../lib/phoneValidation';
 
 export default function WhatsAppButton({
   userId,
@@ -17,8 +18,9 @@ export default function WhatsAppButton({
   const [busy, setBusy] = useState(false);
 
   const openWhatsApp = async () => {
-    if (phoneNumber) {
-      window.open(`https://wa.me/${phoneNumber}`, '_blank', 'noopener,noreferrer');
+    const suppliedNumber = normalizeKenyanPhone(phoneNumber || '');
+    if (suppliedNumber) {
+      window.location.assign(`https://wa.me/${suppliedNumber.replace(/[^0-9]/g, '')}`);
       return;
     }
 
@@ -31,12 +33,15 @@ export default function WhatsAppButton({
       return;
     }
 
-    if (!profile?.phone_number) {
+    const sellerNumber = normalizeKenyanPhone(profile?.phone_number || '');
+    if (!sellerNumber) {
       showToast({ type: 'info', message: 'Seller has not added a WhatsApp number yet. Use in-app messages.' });
       return;
     }
 
-    window.open(`https://wa.me/${profile.phone_number}`, '_blank', 'noopener,noreferrer');
+    // Navigation after the network request must not rely on a popup,
+    // which mobile browsers may block outside the original click event.
+    window.location.assign(`https://wa.me/${sellerNumber.replace(/[^0-9]/g, '')}`);
   };
 
   return (
