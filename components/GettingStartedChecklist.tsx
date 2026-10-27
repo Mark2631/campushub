@@ -5,19 +5,22 @@ import Link from 'next/link';
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import useUser from '../hooks/useUser';
 import { getProfileById } from '../lib/profiles';
+import { getListingsByUser } from '../lib/listings';
 
 export default function GettingStartedChecklist() {
   const { user, loading } = useUser();
   const [phoneReady, setPhoneReady] = useState(false);
   const [verificationStarted, setVerificationStarted] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [listingReady, setListingReady] = useState(false);
 
   useEffect(() => {
     let active = true;
     if (!user) return;
-    void getProfileById(user.id).then(({ profile }) => {
+    void Promise.all([getProfileById(user.id), getListingsByUser(user.id)]).then(([{ profile }, { listings }]) => {
       if (!active) return;
       setPhoneReady(Boolean(profile?.phone_number));
+      setListingReady(listings.length > 0);
       setVerificationStarted(Boolean(profile?.verification_status && profile.verification_status !== 'unverified' && profile.verification_status !== 'none'));
       setChecked(true);
     });
@@ -28,7 +31,8 @@ export default function GettingStartedChecklist() {
   const steps = [
     { title: 'Create your account', done: true, href: '/profile', detail: 'You are signed in.' },
     { title: 'Add your WhatsApp number', done: phoneReady, href: '/profile', detail: 'Let interested buyers reach you.' },
-    { title: 'Start profile verification', done: verificationStarted, href: '/profile', detail: 'Submit a student ID or national ID for review.' },
+    { title: 'Post your first listing', done: listingReady, href: '/sell', detail: 'Show buyers what you are selling.' },
+    { title: 'Start profile verification', done: verificationStarted, href: '/profile', detail: 'Optional: apply for a trusted badge.' },
   ];
   const doneCount = steps.filter((step) => step.done).length;
   return (
