@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import AdminTransactionDesk from '../../components/AdminTransactionDesk';
+import ManualDeliveryRequests from '../../components/ManualDeliveryRequests';
 import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
 import {
@@ -160,7 +161,7 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'delivery' | 'verifications' | 'reports' | 'communities'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'delivery' | 'service-delivery' | 'verifications' | 'reports' | 'communities'>('overview');
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const [modalNotes, setModalNotes] = useState('');
   const [modalTitle, setModalTitle] = useState('');
@@ -624,7 +625,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-zinc-800 pb-0">
-          {(['overview', 'users', 'businesses', 'listings', 'payments', 'delivery', 'verifications', 'reports', 'communities'] as const).map((t) => (
+          {(['overview', 'users', 'businesses', 'listings', 'payments', 'delivery', 'service-delivery', 'verifications', 'reports', 'communities'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -632,7 +633,7 @@ export default function AdminPage() {
                 tab === t ? 'border-b-2 border-blue-500 text-blue-300' : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
-              {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : formatStatus(t)}
+              {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : t === 'service-delivery' ? 'Service delivery' : formatStatus(t)}
             </button>
           ))}
         </div>
@@ -1293,6 +1294,8 @@ export default function AdminPage() {
         {tab === 'payments' && <AdminTransactionDesk mode="escrow" />}
 
   {tab === 'delivery' && <AdminTransactionDesk mode="delivery" />}
+
+  {tab === 'service-delivery' && <ManualDeliveryRequests />}
 
   {/* Backend audit data remains loaded for troubleshooting, but is intentionally not a visible admin navigation section. */}
   {false && (
