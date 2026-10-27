@@ -101,7 +101,6 @@ export default function DeliveryRequestButton({
           contact_phone: normalizedPhone,
           notes: notes.trim() || null,
           status: 'pending',
-          admin_notes: null,
         })
         .select('id')
         .single();
