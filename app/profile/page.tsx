@@ -65,7 +65,7 @@ function listingEmptyText(filter: ListingFilter) {
   return 'No hidden listings';
 }
 
-function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
+function ProfilePageContent({ helpRequested, setupRequested }: { helpRequested: boolean; setupRequested: string | null }) {
   const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -136,6 +136,12 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!setupRequested || !user) return;
+    setProfileEditOpen(true);
+    setVerificationFormOpen(setupRequested === 'verification');
+  }, [setupRequested, user]);
 
   useEffect(() => {
     if (!settingsOpen || !helpRequested || !user) return;
@@ -778,8 +784,9 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 function ProfileRoute() {
   const searchParams = useSearchParams();
   const helpRequested = searchParams.get('manage') === 'help';
+  const setupRequested = searchParams.get('setup');
 
-  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} />;
+  return <ProfilePageContent key={helpRequested ? 'manage-help' : setupRequested || 'profile'} helpRequested={helpRequested} setupRequested={setupRequested} />;
 }
 
 function ProfileLoading() {
