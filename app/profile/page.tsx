@@ -65,7 +65,7 @@ function listingEmptyText(filter: ListingFilter) {
   return 'No hidden listings';
 }
 
-function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
+function ProfilePageContent({ helpRequested, setupTarget }: { helpRequested: boolean; setupTarget: 'phone' | 'verification' | null }) {
   const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -136,6 +136,22 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!user || !setupTarget) return;
+    setProfileEditOpen(true);
+    setVerificationFormOpen(setupTarget === 'verification');
+  }, [user, setupTarget]);
+
+  useEffect(() => {
+    if (!profileEditOpen || !setupTarget) return;
+    const elementId = setupTarget === 'phone' ? 'edit-profile-phone' : 'edit-profile-verification';
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(elementId)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (setupTarget === 'phone') document.getElementById('profile-whatsapp-input')?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [profileEditOpen, setupTarget]);
 
   useEffect(() => {
     if (!settingsOpen || !helpRequested || !user) return;
@@ -608,10 +624,10 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
               </section>
 
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">WhatsApp number</h3>
+                <h3 id="edit-profile-phone" className="font-bold">WhatsApp number</h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Buyers use this number to contact you about listings.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
+                  <input id="profile-whatsapp-input" value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
                   <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white">Save number</button>
                 </div>
               </section>
@@ -778,8 +794,10 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
 function ProfileRoute() {
   const searchParams = useSearchParams();
   const helpRequested = searchParams.get('manage') === 'help';
+  const setup = searchParams.get('setup');
+  const setupTarget = setup === 'phone' || setup === 'verification' ? setup : null;
 
-  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} />;
+  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} setupTarget={setupTarget} />;
 }
 
 function ProfileLoading() {
