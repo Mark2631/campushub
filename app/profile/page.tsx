@@ -78,6 +78,20 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   const [nameInput, setNameInput] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
+
+  // Open the exact profile editor section selected from the floating guide.
+  useEffect(() => {
+    const setup = new URLSearchParams(window.location.search).get('setup');
+    if (setup !== 'phone' && setup !== 'verification') return;
+    setProfileEditOpen(true);
+    setVerificationFormOpen(setup === 'verification');
+    const target = setup === 'verification' ? 'edit-profile-verification' : 'edit-profile-phone';
+    requestAnimationFrame(() => {
+      document.getElementById(target)?.scrollIntoView({ block: 'center' });
+      document.getElementById(target)?.querySelector('input, button')?.focus();
+    });
+  }, []);
+
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -608,7 +622,7 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
               </section>
 
               <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">WhatsApp number</h3>
+                <h3 id="edit-profile-phone" className="font-bold">WhatsApp number</h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Buyers use this number to contact you about listings.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                   <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900" />
