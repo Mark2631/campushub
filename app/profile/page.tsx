@@ -74,10 +74,10 @@ function ProfilePageContent({ helpRequested, setupRequested }: { helpRequested: 
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(helpRequested);
-  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [profileEditOpen, setProfileEditOpen] = useState(Boolean(setupRequested));
   const [nameInput, setNameInput] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
-  const [verificationFormOpen, setVerificationFormOpen] = useState(false);
+  const [verificationFormOpen, setVerificationFormOpen] = useState(setupRequested === 'verification');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -136,12 +136,6 @@ function ProfilePageContent({ helpRequested, setupRequested }: { helpRequested: 
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
-
-  useEffect(() => {
-    if (!setupRequested || !user) return;
-    setProfileEditOpen(true);
-    setVerificationFormOpen(setupRequested === 'verification');
-  }, [setupRequested, user]);
 
   useEffect(() => {
     if (!settingsOpen || !helpRequested || !user) return;
