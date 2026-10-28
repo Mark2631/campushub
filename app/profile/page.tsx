@@ -78,6 +78,20 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   const [nameInput, setNameInput] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
   const [verificationFormOpen, setVerificationFormOpen] = useState(false);
+
+  // Open the exact profile editor section selected from the floating guide.
+  useEffect(() => {
+    const setup = new URLSearchParams(window.location.search).get('setup');
+    if (setup !== 'phone' && setup !== 'verification') return;
+    setProfileEditOpen(true);
+    setVerificationFormOpen(setup === 'verification');
+    const target = setup === 'verification' ? 'edit-profile-verification' : 'edit-profile-phone';
+    requestAnimationFrame(() => {
+      document.getElementById(target)?.scrollIntoView({ block: 'center' });
+      document.getElementById(target)?.querySelector('input, button')?.focus();
+    });
+  }, []);
+
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
