@@ -13,7 +13,6 @@ import useTheme from '../../hooks/useTheme';
 import useUser from '../../hooks/useUser';
 import { signOut } from '../../lib/auth';
 import { createComplaint } from '../../lib/complaints';
-import GettingStartedChecklist from '../../components/GettingStartedChecklist';
 import { getListingsByUser, Listing, updateListingLifecycleStatus } from '../../lib/listings';
 import {
   BusinessRecord,
@@ -65,7 +64,7 @@ function listingEmptyText(filter: ListingFilter) {
   return 'No hidden listings';
 }
 
-function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
+function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boolean; setupAction: string | null }) {
   const { user, loading, isAdmin, profileContext, setProfileContext, showToast } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
@@ -136,6 +135,22 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
   useEffect(() => {
     void Promise.resolve().then(loadProfile);
   }, [loadProfile]);
+
+  useEffect(() => {
+    if (!user || !setupAction) return;
+    if (setupAction === 'contact' || setupAction === 'verification') {
+      void Promise.resolve().then(() => {
+        setProfileEditOpen(true);
+        setVerificationFormOpen(setupAction === 'verification');
+      });
+    }
+  }, [user, setupAction]);
+
+  useEffect(() => {
+    if (!profileEditOpen || setupAction !== 'verification') return;
+    const id = window.requestAnimationFrame(() => document.getElementById('edit-profile-verification')?.scrollIntoView({ block: 'nearest' }));
+    return () => window.cancelAnimationFrame(id);
+  }, [profileEditOpen, setupAction]);
 
   useEffect(() => {
     if (!settingsOpen || !helpRequested || !user) return;
@@ -495,7 +510,6 @@ function ProfilePageContent({ helpRequested }: { helpRequested: boolean }) {
               </div>
             </section>
 
-            <GettingStartedChecklist />
             <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -779,7 +793,8 @@ function ProfileRoute() {
   const searchParams = useSearchParams();
   const helpRequested = searchParams.get('manage') === 'help';
 
-  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} />;
+  const setupAction = searchParams.get('setup');
+  return <ProfilePageContent key={helpRequested ? 'manage-help' : 'profile'} helpRequested={helpRequested} setupAction={setupAction} />;
 }
 
 function ProfileLoading() {

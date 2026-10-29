@@ -23,7 +23,11 @@ test('new visitors see explicit View listing and onboarding steps', async () => 
   const profile = await read('../app/profile/page.tsx');
   assert.match(card, /View listing/);
   assert.match(home, /GettingStartedChecklist/);
-  assert.match(profile, /GettingStartedChecklist/);
+  assert.doesNotMatch(profile, /<GettingStartedChecklist \/>/);
+  assert.match(profile, /setupAction/);
+  const setup = await read('../components/GettingStartedChecklist.tsx');
+  assert.match(setup, /Dismiss CampusTrader setup/);
+  assert.ok(setup.includes('/profile?setup=verification'));
 });
 
 test('verification selection persists in the file picker and displays selected count', async () => {
