@@ -139,8 +139,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   useEffect(() => {
     if (!user || !setupAction) return;
     if (setupAction === 'contact' || setupAction === 'verification') {
-      setProfileEditOpen(true);
-      setVerificationFormOpen(setupAction === 'verification');
+      void Promise.resolve().then(() => {
+        setProfileEditOpen(true);
+        setVerificationFormOpen(setupAction === 'verification');
+      });
     }
   }, [user, setupAction]);
 
