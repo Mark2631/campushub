@@ -18,7 +18,9 @@ export default function GettingStartedChecklist() {
     if (!user) return;
     let active = true;
     const key = `campustrader-setup-dismissed:${user.id}`;
-    try { setDismissed(localStorage.getItem(key) === 'yes'); } catch { setDismissed(false); }
+    let previouslyDismissed = false;
+    try { previouslyDismissed = localStorage.getItem(key) === 'yes'; } catch { /* storage may be unavailable */ }
+    void Promise.resolve().then(() => { if (active) setDismissed(previouslyDismissed); });
     void getProfileById(user.id).then(({ profile }) => {
       if (!active) return;
       setPhoneReady(Boolean(profile?.phone_number));
