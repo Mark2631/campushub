@@ -27,7 +27,7 @@ test('new visitors see explicit View listing and onboarding steps', async () => 
   assert.match(profile, /setupAction/);
   const setup = await read('../components/GettingStartedChecklist.tsx');
   assert.match(setup, /Dismiss CampusTrader setup/);
-  assert.match(setup, /\/profile\\?setup=verification/);
+  assert.ok(setup.includes('/profile?setup=verification'));
 });
 
 test('verification selection persists in the file picker and displays selected count', async () => {
