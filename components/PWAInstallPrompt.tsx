@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Download, X } from 'lucide-react';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -9,90 +9,127 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const INSTALL_DISMISS_KEY = 'campustrader_install_dismissed';
-const INSTALL_DISMISS_TTL = 1000 * 60 * 60 * 24 * 7; // 7 days
+const INSTALL_DISMISS_TTL = 1000 * 60 * 60 * 24 * 7;
 
-function isDismissedRecently() {
-  if (typeof window === 'undefined') return true;
-  const stored = window.localStorage.getItem(INSTALL_DISMISS_KEY);
-  if (!stored) return false;
-  const timestamp = Number(stored);
-  return Number.isFinite(timestamp) && Date.now() - timestamp < INSTALL_DISMISS_TTL;
+function readDismissedRecently() {
+  try {
+    const stored = window.localStorage.getItem(INSTALL_DISMISS_KEY);
+    if (!stored) return false;
+    const timestamp = Number(stored);
+    return Number.isFinite(timestamp) && Date.now() - timestamp < INSTALL_DISMISS_TTL;
+  } catch {
+    return false;
+  }
 }
 
 function recordDismissed() {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+  try {
+    window.localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+  } catch {
+    // Installation remains available even when storage is blocked.
+  }
+}
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
 export default function PWAInstallPrompt() {
+  const [ready, setReady] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(() => isDismissedRecently());
-  const promptedThisSession = useRef(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [ios, setIos] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((error) => {
+        console.error('Service worker registration failed:', error);
+      });
+    }
 
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      console.error('Service worker registration failed:', error);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const userAgent = navigator.userAgent || '';
+    const iPadOS = /Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
+    setIos(/iPhone|iPad|iPod/i.test(userAgent) || iPadOS);
+    setInstalled(isStandalone());
+    setDismissed(readDismissedRecently());
+    setReady(true);
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      if (isDismissedRecently() || promptedThisSession.current) return;
       setInstallEvent(event as BeforeInstallPromptEvent);
-      promptedThisSession.current = true;
+    };
+    const handleInstalled = () => {
+      setInstalled(true);
+      setInstallEvent(null);
+      setManualOpen(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   const handleInstall = async () => {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    await installEvent.userChoice;
-    setInstallEvent(null);
-    setDismissed(true);
-    recordDismissed();
+    if (!installEvent) {
+      setManualOpen((current) => !current);
+      return;
+    }
+
+    try {
+      await installEvent.prompt();
+      const choice = await installEvent.userChoice;
+      if (choice.outcome === 'accepted') {
+        setInstalled(true);
+        setManualOpen(false);
+      }
+      setInstallEvent(null);
+    } catch (error) {
+      console.error('PWA install prompt failed:', error);
+      setManualOpen(true);
+    }
   };
 
   const handleDismiss = () => {
-    setInstallEvent(null);
     setDismissed(true);
+    setManualOpen(false);
     recordDismissed();
   };
 
-  if (!installEvent || dismissed) return null;
+  if (!ready || installed || dismissed) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
+    <aside className="fixed inset-x-3 bottom-24 z-[55] mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-slate-950" aria-label="Install CampusTrader">
       <div className="flex items-center gap-3">
         <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
           <Download className="h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-950 dark:text-white">Install CampusTrader</p>
-          <p className="text-xs text-slate-600 dark:text-slate-400">Add the marketplace to your home screen.</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Keep the marketplace one tap away.</p>
         </div>
-        <button
-          type="button"
-          onClick={handleInstall}
-          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
-        >
-          Install
+        <button type="button" onClick={handleInstall} className="min-h-10 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700">
+          {installEvent ? 'Install' : 'How to install'}
         </button>
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
-        >
-          Not now
+        <button type="button" onClick={handleDismiss} aria-label="Dismiss install prompt" className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
-    </div>
+      {manualOpen ? (
+        <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          <p className="font-semibold text-slate-900 dark:text-white">Add CampusTrader to your home screen</p>
+          {ios ? (
+            <p className="mt-1">Open this page in Safari, tap Share, then choose <strong>Add to Home Screen</strong>.</p>
+          ) : (
+            <p className="mt-1">Open your browser menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. On desktop, use the install control in the address bar when it appears.</p>
+          )}
+        </div>
+      ) : null}
+    </aside>
   );
 }
