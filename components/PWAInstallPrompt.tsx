@@ -31,17 +31,25 @@ function recordDismissed() {
 }
 
 function isStandalone() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
   return window.matchMedia('(display-mode: standalone)').matches
     || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+}
+
+function isIosDevice() {
+  if (typeof navigator === 'undefined') return false;
+  const userAgent = navigator.userAgent || '';
+  const iPadOS = /Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
+  return /iPhone|iPad|iPod/i.test(userAgent) || iPadOS;
 }
 
 export default function PWAInstallPrompt() {
   const [ready, setReady] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(readDismissedRecently);
+  const [installed, setInstalled] = useState(isStandalone);
   const [manualOpen, setManualOpen] = useState(false);
-  const [ios, setIos] = useState(false);
+  const [ios] = useState(isIosDevice);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
@@ -50,12 +58,7 @@ export default function PWAInstallPrompt() {
       });
     }
 
-    const userAgent = navigator.userAgent || '';
-    const iPadOS = /Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
-    setIos(/iPhone|iPad|iPod/i.test(userAgent) || iPadOS);
-    setInstalled(isStandalone());
-    setDismissed(readDismissedRecently());
-    setReady(true);
+    const readyFrame = window.requestAnimationFrame(() => setReady(true));
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -70,6 +73,7 @@ export default function PWAInstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
     return () => {
+      window.cancelAnimationFrame(readyFrame);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };
