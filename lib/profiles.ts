@@ -214,7 +214,7 @@ export async function saveProfileAvatar(userId: string, file: File) {
   const path = `${userId}/avatar-${Date.now()}-${safeFileName(file.name)}`;
   const { publicUrl, error: uploadError } = await uploadPublicFile(storageBuckets.profileMedia, userId, file, {
     timeoutMs: 25000,
-    upsert: true,
+    upsert: false,
     path,
   });
 
