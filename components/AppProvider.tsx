@@ -236,9 +236,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       void syncNotifications(nextSession?.user ?? null);
     });
 
+    let lastAdminRefreshAt = 0;
+    const refreshAdminAccess = async () => {
+      if (document.visibilityState !== 'visible' || Date.now() - lastAdminRefreshAt < 5000) return;
+      lastAdminRefreshAt = Date.now();
+      const { data } = await supabase.auth.getSession();
+      if (isMounted) void syncAdmin(data.session?.user ?? null);
+    };
+    window.addEventListener('focus', refreshAdminAccess);
+    document.addEventListener('visibilitychange', refreshAdminAccess);
+
     return () => {
       isMounted = false;
       listener.subscription.unsubscribe();
+      window.removeEventListener('focus', refreshAdminAccess);
+      document.removeEventListener('visibilitychange', refreshAdminAccess);
     };
   }, []);
 
