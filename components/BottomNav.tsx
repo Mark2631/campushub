@@ -36,10 +36,10 @@ export default function BottomNav() {
               }`;
               const content = (
                 <>
-                  <span className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 sm:h-8 sm:w-8 dark:bg-slate-900 dark:text-slate-200">
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                  <span className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 sm:h-10 sm:w-10 dark:bg-slate-900 dark:text-slate-200">
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                   </span>
-                  <p className="mt-1 text-[11px] font-medium sm:text-xs">{item.label}</p>
+                  <p className="mt-1 text-xs font-semibold sm:text-sm">{item.label}</p>
                 </>
               );
 

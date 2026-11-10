@@ -42,6 +42,8 @@ export interface Listing {
   sellerAvatarUrl?: string | null;
   sellerPhoneNumber?: string | null;
   businessDeliveryAvailable?: boolean;
+  sellerRatingAverage?: number | null;
+  sellerRatingCount?: number;
 }
 
 type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
@@ -64,6 +66,12 @@ type BusinessRow = {
   verification_status: string | null;
   badge_type?: string | null;
   delivery_available?: boolean | null;
+};
+
+type SellerRatingRow = {
+  seller_id: string;
+  average_rating: number | string | null;
+  review_count: number | null;
 };
 
 
@@ -108,9 +116,12 @@ async function enrichListings(rows: ListingRow[]) {
   const sellerIds = Array.from(new Set(rows.map((row) => row.seller_id).filter(Boolean)));
   const businessIds = Array.from(new Set(rows.map((row) => row.business_id).filter(Boolean))) as string[];
 
-  const [profilesResponse, businessesResponse] = await Promise.all([
+  const [profilesResponse, businessesResponse, ratingsResponse] = await Promise.all([
     fetchPublicProfiles(sellerIds),
     fetchPublicBusinesses(businessIds),
+    sellerIds.length
+      ? supabase.from('marketplace_seller_rating_summary').select('seller_id, average_rating, review_count').in('seller_id', sellerIds)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (profilesResponse?.error) {
@@ -119,13 +130,18 @@ async function enrichListings(rows: ListingRow[]) {
   if (businessesResponse?.error) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
+  if (ratingsResponse?.error) {
+    logSupabaseError('Error enriching seller ratings:', ratingsResponse.error);
+  }
 
   const profilesById = new Map((profilesResponse?.data || []).map((profile) => [profile.id, profile as ProfileRow]));
   const businessesById = new Map((businessesResponse?.data || []).map((business) => [business.id, business as BusinessRow]));
+  const ratingsBySeller = new Map(((ratingsResponse?.data || []) as SellerRatingRow[]).map((rating) => [rating.seller_id, rating]));
 
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
     const business = row.business_id ? businessesById.get(row.business_id) : null;
+    const sellerRating = ratingsBySeller.get(row.seller_id);
     const emailPrefix = profile?.email?.split('@')[0] || null;
     const badgeType = business?.verification_status === 'verified'
       ? 'gold'
@@ -146,6 +162,8 @@ async function enrichListings(rows: ListingRow[]) {
       sellerAvatarUrl: profile?.avatar_url || null,
       sellerPhoneNumber: profile?.phone_number || null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
+      sellerRatingAverage: sellerRating ? Number(sellerRating.average_rating || 0) : null,
+      sellerRatingCount: Number(sellerRating?.review_count || 0),
     };
   });
 }

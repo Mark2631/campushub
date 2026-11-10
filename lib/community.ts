@@ -607,7 +607,7 @@ export async function createCommunity(args: {
   return { community: data as Community, error: null };
 }
 
-export async function updateCommunityStatus(communityId: string, adminId: string, adminEmail: string | null | undefined, status: 'active' | 'archived' | 'hidden') {
+export async function updateCommunityStatus(communityId: string, adminId: string, adminEmail: string | null | undefined, status: 'pending' | 'active' | 'rejected' | 'archived') {
   if (!isValidUuid(communityId) || !isValidUuid(adminId) || !isAllowedValue(status, allowedCommunityStatuses)) {
     return { error: GENERIC_ERROR };
   }

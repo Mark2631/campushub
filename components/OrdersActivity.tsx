@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import useSWR from 'swr';
+import { getReviewsByReviewer, submitOrderReview } from '../lib/reviews';
 import {
   cancelMarketplaceOrder,
   confirmOrderReceipt,
@@ -68,6 +69,10 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const [disputeOrderId, setDisputeOrderId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState('ITEM_NOT_RECEIVED');
   const [disputeDescription, setDisputeDescription] = useState('');
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const cancellationKeys = useRef<Record<string, string>>({});
 
   const { data, error, isLoading, mutate } = useSWR(
@@ -77,8 +82,11 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
       if (queryError) throw queryError;
       const orders = (rows || []) as MarketplaceOrder[];
       const profileIds = orders.flatMap((order) => [order.buyer_id, order.seller_id]);
-      const { data: participantNames } = await getOrderParticipantNames(profileIds);
-      return { orders, participantNames };
+      const [{ data: participantNames }, submittedReviews] = await Promise.all([
+        getOrderParticipantNames(profileIds),
+        getReviewsByReviewer(userId),
+      ]);
+      return { orders, participantNames, submittedReviews };
     },
     {
       revalidateOnFocus: true,
@@ -98,6 +106,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
   const orders = (data?.orders || []).filter((order) => activeTab === 'buying' ? order.buyer_id === userId : order.seller_id === userId);
   const participantNames = data?.participantNames || {};
+  const submittedReviews = data?.submittedReviews || [];
   const expandedOrder = orders.find((order) => order.id === expandedOrderId);
   const canReadFulfillmentDetails = Boolean(expandedOrder && (
     expandedOrder.buyer_id === userId
@@ -179,6 +188,35 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
     }
   }
 
+  async function submitReview(order: MarketplaceOrder) {
+    if (!order.listing_id || reviewSubmitting || busyKey !== null) return;
+    setReviewSubmitting(true);
+    setFeedback(null);
+    try {
+      const result = await submitOrderReview({
+        reviewerId: userId,
+        sellerId: order.seller_id,
+        listingId: order.listing_id,
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+      if (result.error) {
+        setFeedback({ type: 'error', text: result.error });
+        return;
+      }
+      setFeedback({ type: 'success', text: 'Thank you. Your seller rating has been recorded.' });
+      setReviewOrderId(null);
+      setReviewRating(5);
+      setReviewComment('');
+      await mutate();
+    } catch (error) {
+      console.error('Seller review submit failed:', error);
+      setFeedback({ type: 'error', text: 'Your rating could not be submitted. Refresh and try again.' });
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
   async function submitDispute(order: MarketplaceOrder) {
     if (!disputeDescription.trim()) {
       setFeedback({ type: 'error', text: 'Describe the issue before opening a dispute.' });
@@ -243,6 +281,9 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
           && ['AWAITING_HANDOVER', 'SELLER_ACCEPTED', 'HANDED_OVER'].includes(orderState)
           && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const buyerReceiptState = normalizeState(order.buyer_receipt_state);
+        const hasRatedSeller = submittedReviews.some((review) => review.seller_id === order.seller_id && review.listing_id === order.listing_id);
+        const canRateSeller = isBuying && Boolean(order.listing_id) && orderState === 'COMPLETED' && buyerReceiptState === 'CONFIRMED' && !hasRatedSeller;
+        const existingReview = submittedReviews.find((review) => review.seller_id === order.seller_id && review.listing_id === order.listing_id);
         const canConfirmReceipt = isBuying && orderIsPaid(order)
           && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER', 'RECEIPT_CONFIRMED'].includes(orderState)
           && !['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState)
@@ -302,11 +343,40 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
               {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : 'Confirm receipt'}</button> : null}
               {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : 'Cancel unpaid order'}</button> : null}
               {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 disabled:opacity-50">Report a problem / dispute</button> : null}
+              {canRateSeller ? (
+                <button type="button" onClick={() => { setReviewOrderId(reviewOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={reviewSubmitting || busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-700 dark:border-amber-900/60 dark:text-amber-200 disabled:opacity-50">
+                  Rate seller
+                </button>
+              ) : null}
+              {existingReview ? <span className="self-center text-sm font-semibold text-amber-600 dark:text-amber-300" aria-label={`You rated this seller ${existingReview.rating} out of 5`}>Your rating: {'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</span> : null}
               <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">{isExpanded ? 'Hide order details' : 'View order details'}</button>
               {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">View listing</Link> : null}
             </div>
 
             {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-zinc-400">{isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'} Settlement status is shown when recorded by the backend.</p> : null}
+
+            {reviewOrderId === order.id && canRateSeller ? (
+              <form onSubmit={(event) => { event.preventDefault(); void submitReview(order); }} className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+                <h3 className="font-semibold text-slate-900 dark:text-white">Rate your experience with {personName}</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Rate the seller from one to five stars. Only completed transactions can be reviewed.</p>
+                <div className="mt-3 flex items-center gap-2" role="group" aria-label="Choose seller rating">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} type="button" aria-label={`${star} star`} aria-pressed={reviewRating === star} onClick={() => setReviewRating(star)} className={`min-h-11 min-w-11 rounded-lg text-2xl transition ${reviewRating >= star ? 'text-amber-500' : 'text-slate-300 dark:text-zinc-600'}`}>
+                      ★
+                    </button>
+                  ))}
+                  <span className="ml-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{reviewRating}/5</span>
+                </div>
+                <label className="mt-3 block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Comment (optional)
+                  <textarea value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} rows={3} maxLength={500} placeholder="Describe your experience with this seller." className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-amber-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white" />
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="submit" disabled={reviewSubmitting || busyKey !== null} className="min-h-10 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{reviewSubmitting ? 'Submitting…' : 'Submit rating'}</button>
+                  <button type="button" onClick={() => setReviewOrderId(null)} disabled={reviewSubmitting} className="min-h-10 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold dark:border-zinc-700">Cancel</button>
+                </div>
+              </form>
+            ) : null}
 
             {disputeOrderId === order.id ? (
               <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">

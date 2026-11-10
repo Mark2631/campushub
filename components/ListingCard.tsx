@@ -41,6 +41,11 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
         </p>
         <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-300">{listing.location || 'Campus location'}</p>
+        {listing.sellerRatingCount ? (
+          <p className="mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-300" aria-label={`Seller rating ${listing.sellerRatingAverage?.toFixed(1)} out of 5 from ${listing.sellerRatingCount} reviews`}>
+            ★ {listing.sellerRatingAverage?.toFixed(1)} <span className="font-normal text-slate-500 dark:text-zinc-400">({listing.sellerRatingCount})</span>
+          </p>
+        ) : null}
         <div className="mt-2 flex min-h-5 items-center gap-1.5">
           {listing.badgeType === 'gold' ? (
             <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">

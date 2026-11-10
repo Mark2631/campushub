@@ -51,11 +51,11 @@ export async function findOrCreateConversation(
   buyerId: string,
   sellerId: string
 ) {
-  if (!isValidUuid(listingId) || !isValidUuid(buyerId) || !isValidUuid(sellerId)) {
+  if (!isValidUuid(listingId) || !isValidUuid(buyerId) || !isValidUuid(sellerId) || buyerId === sellerId) {
     return { conversation: null, error: 'Unable to open conversation. Please try again.' };
   }
 
-  const { data: existing, error: fetchError } = await supabase
+  const findExisting = async () => supabase
     .from('conversations')
     .select('id, hidden_for')
     .eq('listing_id', listingId)
@@ -63,6 +63,7 @@ export async function findOrCreateConversation(
     .eq('seller_id', sellerId)
     .maybeSingle();
 
+  const { data: existing, error: fetchError } = await findExisting();
   if (fetchError) {
     console.error('Error fetching conversation:', serializeError(fetchError));
     return { conversation: null, error: GENERIC_ERROR };
@@ -77,7 +78,7 @@ export async function findOrCreateConversation(
         .eq('id', existing.id);
       if (unhideError) console.error('Conversation unhide failed:', serializeError(unhideError));
     }
-    return { conversation: existing, error: null };
+    return { conversation: { id: existing.id }, error: null };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -87,6 +88,13 @@ export async function findOrCreateConversation(
     .single();
 
   if (insertError) {
+    // Another tap/device may have created the same conversation between lookup and insert.
+    if (insertError.code === '23505') {
+      const { data: racedConversation, error: retryError } = await findExisting();
+      if (!retryError && racedConversation) {
+        return { conversation: { id: racedConversation.id }, error: null };
+      }
+    }
     console.error('Error creating conversation:', serializeError(insertError));
     return { conversation: null, error: GENERIC_ERROR };
   }

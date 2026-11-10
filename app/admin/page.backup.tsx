@@ -22,6 +22,7 @@ import {
 
 const emptyDashboard: AdminDashboardData = {
   verifications: [],
+  communityRequests: [],
   businesses: [],
   listings: [],
   users: [],
