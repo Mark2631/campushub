@@ -48,6 +48,7 @@ import {
 } from '../../lib/admin';
 const emptyDashboard: AdminDashboardData = {
   verifications: [],
+  communityRequests: [],
   businesses: [],
   listings: [],
   users: [],
@@ -195,9 +196,11 @@ export default function AdminPage() {
     setAuditEntries(auditData.data);
     setAuditError(auditData.error);
     setCommunities(communityData.communities);
-    if (!selectedCommunityId && communityData.communities[0]) {
-      setSelectedCommunityId(communityData.communities[0].id);
-    }
+    const activeCommunities = communityData.communities.filter((community) => community.status === 'active');
+    const nextSelectedId = activeCommunities.some((community) => community.id === selectedCommunityId)
+      ? selectedCommunityId
+      : activeCommunities[0]?.id || '';
+    setSelectedCommunityId(nextSelectedId);
     setLoadingDashboard(false);
   }, [authUser?.id, isAdmin, selectedCommunityId]);
 
@@ -214,8 +217,9 @@ export default function AdminPage() {
       if (isMounted) {
         setDashboard(data);
         setCommunities(communityData.communities);
-            if (communityData.communities[0]) {
-          setSelectedCommunityId((current) => current || communityData.communities[0].id);
+        const activeCommunities = communityData.communities.filter((community) => community.status === 'active');
+        if (activeCommunities[0]) {
+          setSelectedCommunityId((current) => activeCommunities.some((community) => community.id === current) ? current : activeCommunities[0].id);
         }
       }
     };
@@ -520,9 +524,10 @@ export default function AdminPage() {
     setCommunities(refreshedCommunities);
 
     // A deleted selection must not leave the manager pointing at a stale ID.
-    const nextSelectedId = refreshedCommunities.some((community) => community.id === selectedCommunityId)
+    const activeCommunities = refreshedCommunities.filter((community) => community.status === 'active');
+    const nextSelectedId = activeCommunities.some((community) => community.id === selectedCommunityId)
       ? selectedCommunityId
-      : refreshedCommunities[0]?.id || '';
+      : activeCommunities[0]?.id || '';
     setSelectedCommunityId(nextSelectedId);
     const { posts } = nextSelectedId
       ? await getCommunityPosts(nextSelectedId, authUser?.id)
@@ -1006,6 +1011,49 @@ export default function AdminPage() {
                 <EmptyState text="No pending verification requests." />
               )}
             </div>
+
+            <div className="space-y-3 border-t border-zinc-800 pt-6">
+              <div>
+                <h3 className="text-lg font-bold">Community requests ({dashboard.communityRequests.length} pending)</h3>
+                <p className="mt-1 text-sm text-zinc-400">Review student-created communities before they become visible.</p>
+              </div>
+              {dashboard.communityRequests.length > 0 ? dashboard.communityRequests.map((request) => {
+                const requester = request.created_by ? usersById.get(request.created_by) : null;
+                return (
+                  <article key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-white">{request.name}</p>
+                          <StatusPill status={request.status} />
+                        </div>
+                        <p className="mt-1 text-sm text-zinc-400">{request.category} · {request.campus}</p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{request.description}</p>
+                        <p className="mt-2 text-xs text-zinc-500">Requested by {requester?.full_name || requester?.email || 'CampusTrader user'} · {formatDate(request.created_at)}</p>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          disabled={workingId === request.id}
+                          onClick={() => runAction(request.id, () => updateCommunityStatus(request.id, authUser!.id, authUser!.email, 'active'), 'Community approved and published.')}
+                          className="min-h-10 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          disabled={workingId === request.id}
+                          onClick={() => runAction(request.id, () => updateCommunityStatus(request.id, authUser!.id, authUser!.email, 'rejected'), 'Community request rejected.')}
+                          className="min-h-10 rounded-xl border border-red-800 bg-red-950/40 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-60"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              }) : <EmptyState text="No pending community requests." />}
+            </div>
           </section>
         )}
 
@@ -1082,7 +1130,7 @@ export default function AdminPage() {
                 onChange={(event) => setSelectedCommunityId(event.target.value)}
                 className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
               >
-                {communities.map((community) => (
+                {communities.filter((community) => community.status === 'active').map((community) => (
                   <option key={community.id} value={community.id}>
                     {community.name}
                   </option>
@@ -1137,7 +1185,8 @@ export default function AdminPage() {
                 </form>
 
                 <div className="space-y-3">
-                  {communities.map((community) => (
+                  <h3 className="text-sm font-semibold text-zinc-300">Active communities ({communities.filter((community) => community.status === 'active').length})</h3>
+                  {communities.filter((community) => community.status === 'active').map((community) => (
                     <article key={community.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -1150,37 +1199,12 @@ export default function AdminPage() {
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
-                          onClick={() => {
-                            setSelectedCommunityId(community.id);
-                          }}
-                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-blue-500"
+                          type="button"
+                          onClick={() => setSelectedCommunityId(community.id)}
+                          aria-pressed={selectedCommunityId === community.id}
+                          className={`min-h-10 rounded-xl border px-4 py-2 text-sm font-semibold transition ${selectedCommunityId === community.id ? 'border-blue-500 bg-blue-600 text-white' : 'border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-blue-500'}`}
                         >
-                          Manage
-                        </button>
-                        <button
-                          disabled={communityWorking}
-                          onClick={() => runCommunityAction(
-                            () => updateCommunityStatus(community.id, authUser!.id, authUser!.email, community.status === 'active' ? 'archived' : 'active'),
-                            community.status === 'active' ? 'Community archived.' : 'Community restored.'
-                          )}
-                          className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
-                        >
-                          {community.status === 'active' ? 'Archive' : 'Restore'}
-                        </button>
-                        <button
-                          disabled={communityWorking}
-                          onClick={() => runCommunityAction(
-                            () => updateCommunityPostingMode(
-                              community.id,
-                              authUser!.id,
-                              authUser!.email,
-                              community.posting_mode === 'admin_only' ? 'everyone' : 'admin_only'
-                            ),
-                            community.posting_mode === 'admin_only' ? 'Everyone can post now.' : 'Posting is admin-only now.'
-                          )}
-                          className="rounded-xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60"
-                        >
-                          {community.posting_mode === 'admin_only' ? 'Allow everyone' : 'Admin-only'}
+                          {selectedCommunityId === community.id ? 'Managing' : 'Manage'}
                         </button>
                         <button
                           type="button"
@@ -1207,7 +1231,8 @@ export default function AdminPage() {
 
               <div className="space-y-6">
                 <form onSubmit={handleCommunityPostCreate} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                  <h3 className="font-bold text-white">Publish community post</h3>
+                  <h3 className="font-bold text-white">Manage community posts</h3>
+                  <p className="text-xs text-zinc-500">{communities.find((community) => community.id === selectedCommunityId)?.name || 'Select an active community'} · publish and moderate posts</p>
                   <textarea
                     value={communityPostForm.content}
                     onChange={(event) => setCommunityPostForm((current) => ({ ...current, content: event.target.value }))}
