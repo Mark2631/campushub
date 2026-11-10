@@ -181,7 +181,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = '';
-    if (!file || !user) return;
+    if (!file || !user || avatarUploading) return;
 
     const validationError = validateUploadFile(file, 'image', 5 * 1024 * 1024);
     if (validationError) {
@@ -194,22 +194,30 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     setAvatarUploading(true);
     setMessage(null);
 
-    const compressed = await compressImageFile(file, 1600);
-    const { avatarUrl, error } = await saveProfileAvatar(user.id, compressed);
-    setAvatarUploading(false);
+    try {
+      const compressed = await compressImageFile(file, 1600);
+      const { avatarUrl, error } = await saveProfileAvatar(user.id, compressed);
 
-    if (error || !avatarUrl) {
-      console.error('Profile avatar update failed:', error);
-      setCleanError(error || 'Upload failed. Please retry.');
-      return;
+      if (error || !avatarUrl) {
+        setAvatarPreview(null);
+        console.error('Profile avatar update failed:', error);
+        setCleanError(error || 'Upload failed. Please retry.');
+        return;
+      }
+
+      setAvatarPreview(null);
+      setProfile((current) => current ? { ...current, avatar_url: avatarUrl } : current);
+      const { profile: refreshedProfile } = await getProfileById(user.id);
+      if (refreshedProfile) setProfile(refreshedProfile);
+      setMessage({ type: 'success', text: 'Profile photo updated.' });
+      showToast({ type: 'success', message: 'Profile photo updated.' });
+    } catch (error) {
+      setAvatarPreview(null);
+      console.error('Unexpected profile avatar update failure:', error);
+      setCleanError('Profile photo could not be saved. Please retry.');
+    } finally {
+      setAvatarUploading(false);
     }
-
-    setAvatarPreview(null);
-    setProfile((current) => current ? { ...current, avatar_url: avatarUrl } : current);
-    const { profile: refreshedProfile } = await getProfileById(user.id);
-    if (refreshedProfile) setProfile(refreshedProfile);
-    setMessage({ type: 'success', text: 'Profile photo updated.' });
-    showToast({ type: 'success', message: 'Profile photo updated.' });
   };
 
   const handleNameSave = async () => {
