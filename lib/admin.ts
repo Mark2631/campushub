@@ -88,8 +88,20 @@ export async function getAdminAudit(limit = 20) {
   return { data: (data || []) as AdminAuditEntry[], error: error?.message || null };
 }
 
+export interface AdminCommunityRequest {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  campus: string;
+  status: string;
+  created_by: string | null;
+  created_at?: string;
+}
+
 export interface AdminDashboardData {
   verifications: AdminVerificationRequest[];
+  communityRequests: AdminCommunityRequest[];
   businesses: AdminBusiness[];
   listings: AdminListing[];
   users: AdminUser[];
@@ -202,6 +214,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
   const [
     verificationsResponse,
+    communityRequestsResponse,
     businessesResponse,
     listingsResponse,
     usersResponse,
@@ -227,6 +240,16 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
         document_urls: await signedVerificationUrls(request.document_urls),
       })));
       return { data: withSignedUrls, error: response.error };
+    }),
+    safeSection('community requests', [] as AdminCommunityRequest[], async () => {
+      const response = await supabase
+        .from('communities')
+        .select('id, name, description, category, campus, status, created_by, created_at')
+        .eq('status', 'pending')
+        .eq('is_official', false)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      return { data: (response.data || []) as AdminCommunityRequest[], error: response.error };
     }),
     safeSection('businesses', [] as AdminBusiness[], async () => {
       const response = await supabase
@@ -275,6 +298,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
   [
     verificationsResponse.error,
+    communityRequestsResponse.error,
     businessesResponse.error,
     listingsResponse.error,
     usersResponse.error,
@@ -293,6 +317,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
   return {
     verifications: verificationsResponse.data,
+    communityRequests: communityRequestsResponse.data,
     businesses: businessesResponse.data,
     listings: listingsResponse.data,
     users: usersResponse.data,
