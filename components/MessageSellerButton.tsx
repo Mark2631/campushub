@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useUser from '../hooks/useUser';
 import { findOrCreateConversation } from '../lib/conversations';
@@ -18,8 +18,10 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
   const [status, setStatus] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const handleClick = async () => {
+    if (busyRef.current) return;
     if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
       setStatus('This listing is unavailable for messaging.');
       return;
@@ -36,17 +38,25 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
       return;
     }
 
+    busyRef.current = true;
     setBusy(true);
-    const { conversation, error } = await findOrCreateConversation(listingId, user.id, sellerId);
-    setBusy(false);
+    try {
+      const { conversation, error } = await findOrCreateConversation(listingId, user.id, sellerId);
 
-    if (error || !conversation) {
+      if (error || !conversation) {
       if (error) console.error('Conversation open failed:', error);
-      setStatus('Unable to open conversation. Please try again.');
-      return;
-    }
+        setStatus('Unable to open conversation. Please try again.');
+        return;
+      }
 
-    router.push(`/messages/${conversation.id}`);
+      router.push(`/messages/${conversation.id}`);
+    } catch (error) {
+      console.error('Unexpected conversation navigation failure:', error);
+      setStatus('Unable to open conversation. Please try again.');
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   };
 
   if (loading) {
