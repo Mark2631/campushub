@@ -17,17 +17,18 @@ test('WhatsApp routing normalizes Kenyan numbers and navigates on mobile browser
   assert.doesNotMatch(button, /window\.open/);
 });
 
-test('new visitors see explicit View listing and onboarding steps', async () => {
+test('first-time marketplace flow offers direct browse, sell and request actions', async () => {
   const card = await read('../components/ListingCard.tsx');
   const home = await read('../app/page.tsx');
   const profile = await read('../app/profile/page.tsx');
   assert.match(card, /View listing/);
-  assert.match(home, /GettingStartedChecklist/);
-  assert.doesNotMatch(profile, /<GettingStartedChecklist \/>/);
+  assert.doesNotMatch(home, /GettingStartedChecklist/);
+  assert.match(home, /Browse items/);
+  assert.match(home, /href="\/sell"/);
+  assert.match(home, /href="\/sell\?mode=request"/);
+  assert.match(home, /href="#marketplace-search"/);
+  assert.match(home, /message the seller/i);
   assert.match(profile, /setupAction/);
-  const setup = await read('../components/GettingStartedChecklist.tsx');
-  assert.match(setup, /Dismiss CampusTrader setup/);
-  assert.ok(setup.includes('/profile?setup=verification'));
 });
 
 test('verification selection persists in the file picker and displays selected count', async () => {
