@@ -18,7 +18,6 @@ import {
   updateCommunityCoverUrl,
   updateCommunityPostPin,
   updateCommunityPostStatus,
-  updateCommunityPostingMode,
   updateCommunityStatus,
   uploadCommunityMedia,
 } from '../../lib/community';
