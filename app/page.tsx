@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
 import ListingCard from '../components/ListingCard';
-import GettingStartedChecklist from '../components/GettingStartedChecklist';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, Listing } from '../lib/listings';
@@ -343,7 +342,6 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
       <Header />
       <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 pb-32 sm:px-4 sm:py-6">
-        <GettingStartedChecklist />
         <header className="mb-4 sm:mb-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{greeting}</p>
           <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
