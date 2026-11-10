@@ -31,6 +31,7 @@ import {
 } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 import { institutionLabel, normalizeInstitution } from '../../lib/validation';
+import { getSellerRatingSummary, type SellerRatingSummary } from '../../lib/reviews';
 
 const verificationTypes = [
   { value: 'student', label: 'Student ID' },
@@ -71,6 +72,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
   const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
+  const [sellerRating, setSellerRating] = useState<SellerRatingSummary>({ averageRating: 0, reviewCount: 0, reviews: [] });
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(helpRequested);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
@@ -116,11 +118,12 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const loadProfile = useCallback(async () => {
     if (!user) return;
     setProfileLoading(true);
-    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }] = await Promise.all([
+    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }, ratingSummary] = await Promise.all([
       upsertProfile(user),
       getBusinessProfiles(user.id),
       getListingsByUser(user.id),
       getLatestVerificationRequest(user.id),
+      getSellerRatingSummary(user.id),
     ]);
 
     setProfile(syncedProfile);
@@ -129,6 +132,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     setBusinesses(userBusinesses);
     setUserListings(listings);
     setVerificationRequest(request);
+    setSellerRating(ratingSummary);
     setProfileLoading(false);
   }, [user]);
 
@@ -264,6 +268,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
           ? { ...listing, status, updated_at: new Date().toISOString() }
           : listing
       )));
+      const { listings: refreshedListings, error: refreshError } = await getListingsByUser(user.id);
+      if (!refreshError) setUserListings(refreshedListings);
 
       // The marketplace re-fetches active listings, so sold/hidden items stop
       // appearing to buyers after the database confirms the status change.
@@ -484,8 +490,34 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 ))}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-400">
-                Rating and reviews will appear here after more completed trades.
+              <div className="mt-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Seller rating</p>
+                    {sellerRating.reviewCount > 0 ? (
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        <span className="font-bold text-amber-600 dark:text-amber-300">★ {sellerRating.averageRating.toFixed(1)} / 5</span>
+                        <span className="ml-2 text-slate-500 dark:text-slate-400">{sellerRating.reviewCount} {sellerRating.reviewCount === 1 ? 'review' : 'reviews'}</span>
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">No ratings yet. Buyers can rate you after confirming a completed order.</p>
+                    )}
+                  </div>
+                  {sellerRating.reviewCount > 0 ? <p className="text-2xl font-bold text-amber-500" aria-label={`${sellerRating.averageRating} out of 5 stars`}>★</p> : null}
+                </div>
+                {sellerRating.reviews.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {sellerRating.reviews.slice(0, 3).map((review) => (
+                      <article key={review.id} className="border-t border-slate-100 pt-3 dark:border-slate-800">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-amber-600 dark:text-amber-300">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</p>
+                          <time className="text-xs text-slate-500 dark:text-slate-400">{new Date(review.created_at).toLocaleDateString('en-KE')}</time>
+                        </div>
+                        {review.comment ? <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{review.comment}</p> : <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">No written feedback.</p>}
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
