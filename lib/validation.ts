@@ -30,7 +30,7 @@ export const allowedListingConditions = ['new', 'used', 'refurbished', 'service'
 export const allowedVerificationStatuses = ['unverified', 'pending', 'verified', 'rejected'] as const;
 export const allowedRequestStatuses = ['open', 'closed', 'hidden'] as const;
 export const allowedBusinessStatuses = ['active', 'suspended', 'terminated'] as const;
-export const allowedCommunityStatuses = ['active', 'archived', 'hidden'] as const;
+export const allowedCommunityStatuses = ['pending', 'active', 'rejected', 'archived'] as const;
 export const allowedCommunityMediaTypes = ['none', 'image', 'video', 'mixed'] as const;
 
 type EnumValues<T extends readonly string[]> = T[number];
