@@ -351,11 +351,13 @@ export default function Home() {
   {showWelcome ? (
   <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-950 dark:bg-blue-950/30">
     <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Welcome to CampusTrader</p>
-    <div className="mt-3 grid gap-2 text-xs text-blue-900/80 sm:grid-cols-3 dark:text-blue-100/80">
-      <p><strong>1.</strong> Choose a section below to browse.</p>
-      <p><strong>2.</strong> Tap any card once to view details.</p>
-      <p><strong>3.</strong> Use Orders for your buying and selling activity.</p>
+    <p className="mt-1 text-sm text-blue-900/80 dark:text-blue-100/80">Choose what you came here to do. You can buy, sell or request something from the same marketplace.</p>
+    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <Link href="#marketplace-search" className="min-h-11 rounded-xl border border-blue-200 bg-white px-3 py-3 text-center text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-200">Browse items</Link>
+      <Link href="/sell" className="min-h-11 rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Sell an item</Link>
+      <Link href="/sell?mode=request" className="min-h-11 rounded-xl border border-blue-200 bg-white px-3 py-3 text-center text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-200">Request an item</Link>
     </div>
+    <p className="mt-3 text-xs text-blue-900/70 dark:text-blue-100/70">Open a listing to see its details, message the seller, and keep track of a purchase in Orders.</p>
   </section>
   ) : null}
 
@@ -378,7 +380,7 @@ export default function Home() {
           </section>
         ) : null}
 
-        <div className="mb-4">
+        <div id="marketplace-search" className="mb-4 scroll-mt-24">
           <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 sm:gap-3 sm:px-4 dark:border-zinc-700 dark:bg-zinc-900">
             <span className="text-lg text-gray-400 dark:text-zinc-500">⌕</span>
             <input
