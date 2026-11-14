@@ -17,15 +17,6 @@ import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normal
 
 const categories = STANDARD_CATEGORIES;
 const listingsPageSize = 24;
-const categorySections = [
-  { title: 'Electronics', category: 'Electronics' },
-  { title: 'Services', category: 'Services' },
-  { title: 'Fashion', category: 'Fashion' },
-  { title: 'Books', category: 'Books' },
-  { title: 'Refurbished Deals', category: 'Refurbished' },
-  { title: 'Food', category: 'Food' },
-  { title: 'Business', category: 'Business' },
-  { title: 'Other', category: 'Other' },
 ] as const;
 
 function getGreeting() {
@@ -37,22 +28,25 @@ function getGreeting() {
 
 function ListingSection({ title, listings }: { title: string; listings: Listing[] }) {
   return (
-    <section className="mb-8 sm:mb-10">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">{title}</h2>
+    <section className="mb-8">
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">{title}</h2>
+          <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+            {listings.length} {listings.length === 1 ? 'item' : 'items'} shown
+          </p>
+        </div>
       </div>
       {listings.length > 0 ? (
-        <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-          <div className="grid auto-cols-[minmax(140px,48vw)] grid-flow-col gap-2.5 pb-2 sm:auto-cols-[180px] lg:grid-flow-row lg:grid-cols-5 xl:grid-cols-6">
-            {listings.map((listing) => (
-              <ListingCard key={`${title}-${listing.id}`} listing={listing} />
-            ))}
-          </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {listings.map((listing) => (
+            <ListingCard key={listing.id} listing={listing} />
+          ))}
         </div>
       ) : (
-        <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-          <p className="font-semibold text-gray-900 dark:text-white">No listings yet in {title}.</p>
-          <p className="mt-1 text-sm">Post the first {title.toLowerCase().replace('recently posted', 'listing')}.</p>
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="font-semibold text-gray-900 dark:text-white">Nothing here yet.</p>
+          <p className="mt-1 text-sm">Try another category or search for something else.</p>
         </div>
       )}
     </section>
@@ -61,7 +55,7 @@ function ListingSection({ title, listings }: { title: string; listings: Listing[
 
 function ListingSkeletons() {
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {Array.from({ length: 10 }).map((_, index) => (
         <div key={index} className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
           <div className="aspect-square animate-pulse bg-gray-200 dark:bg-zinc-800" />
@@ -95,7 +89,7 @@ export default function Home() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [activeBrowseTab, setActiveBrowseTab] = useState('All');
+  const [activeBrowseTab, setActiveBrowseTab] = useState('Products');
   const [error, setError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -220,7 +214,7 @@ export default function Home() {
       if (activeBrowseTab === 'Requests') return /wanted|request|looking for|need /.test(text);
       if (activeBrowseTab === 'Room share') return /roommate|room share|bedsitter|shared room/.test(text);
       if (activeBrowseTab === 'Rentals') return /rent|rental|hostel|apartment|house/.test(text);
-      if (activeBrowseTab === 'Businesses') return listingBelongsToCategory(listing, 'Business') || /shop|restaurant|printing|repair/.test(text);
+      if (activeBrowseTab === 'Businesses') return listing.sellerType === 'business' || Boolean(listing.business_id);
       return listingBelongsToCategory(listing, activeBrowseTab);
     };
 
@@ -255,34 +249,9 @@ export default function Home() {
     });
   }, [activeBrowseTab, activeCategory, filters, listings, query]);
 
-  const sectionBuckets = useMemo(() => {
-    const twoDaysAgo = currentTime - 2 * 24 * 60 * 60 * 1000;
-
-    const recent = [...filteredListings]
-      .filter((listing) => {
-        const createdAt = new Date(listing.created_at).getTime();
-        return Number.isFinite(createdAt) && createdAt >= twoDaysAgo;
-      })
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 12);
-
-    const services = filteredListings
-      .filter((listing) => listingBelongsToCategory(listing, 'Services'))
-      .slice(0, 8);
-
-    const refurbished = filteredListings
-      .filter((listing) => listingBelongsToCategory(listing, 'Refurbished'))
-      .slice(0, 8);
-
-    return { recent, services, refurbished };
-  }, [currentTime, filteredListings]);
-
-  const greetingName = profileName || user?.email?.split('@')[0];
+  const greetingName =  const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
   const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
-  const visibleCategorySections = activeCategory === 'All'
-    ? categorySections
-    : categorySections.filter((section) => section.category === activeCategory);
 
   const removeSelectedRequest = async () => {
     if (!selectedRequest || !user || deletingRequest) return;
@@ -332,11 +301,6 @@ export default function Home() {
     } finally { setMessagingRequest(false); }
   };
 
-  const listingsForCategorySection = (category: string) => {
-    if (category === 'Services') return sectionBuckets.services;
-    if (category === 'Refurbished') return sectionBuckets.refurbished;
-    return filteredListings.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 8);
-  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
@@ -344,20 +308,21 @@ export default function Home() {
       <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 pb-32 sm:px-4 sm:py-6">
         <header className="mb-4 sm:mb-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{greeting}</p>
-          <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
+          <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find what you need on campus.</h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Products and services from students and nearby businesses, with CampusTrader helping you make the connection.</p>
+          <p className="mt-2 text-[11px] text-gray-500 dark:text-zinc-500">Find an item <span aria-hidden="true">→</span> Contact CampusTrader <span aria-hidden="true">→</span> Confirm details <span aria-hidden="true">→</span> Arrange collection or delivery.</p>
         </header>
 
   {showWelcome ? (
   <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-950 dark:bg-blue-950/30">
     <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Welcome to CampusTrader</p>
-    <p className="mt-1 text-sm text-blue-900/80 dark:text-blue-100/80">Choose what you came here to do. You can buy, sell or request something from the same marketplace.</p>
+    <p className="mt-1 text-sm text-blue-900/80 dark:text-blue-100/80">Browse products, contact CampusTrader about an item, or create a listing of your own.</p>
     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
       <Link href="#marketplace-search" className="min-h-11 rounded-xl border border-blue-200 bg-white px-3 py-3 text-center text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-200">Browse items</Link>
       <Link href="/sell" className="min-h-11 rounded-xl bg-blue-600 px-3 py-3 text-center text-sm font-semibold text-white">Sell an item</Link>
       <Link href="/sell?mode=request" className="min-h-11 rounded-xl border border-blue-200 bg-white px-3 py-3 text-center text-sm font-semibold text-blue-800 dark:border-blue-900 dark:bg-slate-950 dark:text-blue-200">Request an item</Link>
     </div>
-    <p className="mt-3 text-xs text-blue-900/70 dark:text-blue-100/70">Open a listing to see its details, message the seller, and keep track of a purchase in Orders.</p>
+    <p className="mt-3 text-xs text-blue-900/70 dark:text-blue-100/70">Open a listing, ask CampusTrader to confirm availability, then agree on the next step before paying.</p>
   </section>
   ) : null}
 
@@ -401,7 +366,7 @@ export default function Home() {
 
         <div className="mb-5 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
-            {['All', 'Products', 'Room share', 'Rentals', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
+            {['All', 'Products', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -487,27 +452,10 @@ export default function Home() {
               </div>
             )) : (
               <>
-                {!hasActiveBrowseFilter && (sectionBuckets.recent.length > 0 ? (
-                  <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
-                ) : (
-                  <section className="mb-8 sm:mb-10">
-                    <h2 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl dark:text-white">Recently Posted</h2>
-                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                      <p className="font-semibold text-gray-900 dark:text-white">No fresh listings from the last 2 days.</p>
-                    </div>
-                  </section>
-                ))}
-                {hasActiveBrowseFilter ? (
-                  <ListingSection title={activeBrowseTab !== 'All' ? activeBrowseTab : activeCategory} listings={filteredListings} />
-                ) : (
-                  visibleCategorySections.map((section) => (
-                    <ListingSection
-                      key={section.category}
-                      title={section.title}
-                      listings={listingsForCategorySection(section.category)}
-                    />
-                  ))
-                )}
+                <ListingSection
+                  title={activeCategory !== 'All' ? activeCategory : activeBrowseTab === 'All' ? 'All listings' : activeBrowseTab}
+                  listings={filteredListings}
+                />
                 {hasMoreListings ? (
                   <div className="mb-10 flex justify-center">
                     <button
