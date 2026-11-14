@@ -283,13 +283,13 @@ export default async function ListingPage({ params }: Props) {
                     </button>
                   ) : (
                     <>
-                      <BuyOrderButton listingId={listing.id} />
+                      <WhatsAppButton listingId={listing.id} listingTitle={listing.title} label="Contact CampusTrader on WhatsApp" />
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
-                      <WhatsAppButton listingId={listing.id} />
+                      <BuyOrderButton listingId={listing.id} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
-                      <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                      <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">WhatsApp opens CampusTrader management, not the individual seller. We can help confirm availability and guide the handoff. Inspect the item and agree on the details before paying.</p>
                     </>
                   )}
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
