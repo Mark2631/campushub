@@ -274,7 +274,7 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
   assert.ok(!source.includes('Have something to sell?'));
-  assert.ok(help.includes('How to get started'));
+  assert.ok(help.includes('How CampusTrader works'));
   assert.ok(help.includes('Post a listing'));
   assert.ok(help.includes('Contact CampusTrader'));
 });
@@ -364,7 +364,7 @@ test('zero and missing listing prices are never presented as free', async () => 
   assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
   assert.ok(sell.includes('Leave it blank if buyers should contact you to agree on a price.'));
   for (const source of [card, detail]) {
-    assert.ok(source.includes('Ask seller for price'));
+    assert.ok(source.includes('Ask CampusTrader for price'));
     assert.ok(!source.includes("'Free'"));
   }
   assert.ok(home.includes("typeof listing.price === 'number' && listing.price > 0"));
