@@ -100,7 +100,6 @@ export default function Home() {
     if (typeof window === 'undefined') return false;
     return new URLSearchParams(window.location.search).get('welcome') === '1';
   });
-  const [currentTime] = useState(() => Date.now());
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
