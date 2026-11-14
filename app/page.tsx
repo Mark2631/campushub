@@ -88,7 +88,7 @@ export default function Home() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [activeBrowseTab, setActiveBrowseTab] = useState('Products');
+  const [activeBrowseTab, setActiveBrowseTab] = useState('All');
   const [error, setError] = useState<string | null>(null);
   const [loadingListings, setLoadingListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
