@@ -258,7 +258,7 @@ export default function ConversationPage({ params }: Props) {
               {conversation?.otherUser.id ? (
                 <div className="mt-3">
                   <WhatsAppButton listingId={conversation.listingId || undefined} label="Contact CampusTrader on WhatsApp" />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">This opens CampusTrader management, not the other participant's private number. Ask the team to confirm the product and coordinate the next step.</p>
+                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">This opens CampusTrader management, not a private seller contact. Ask the team to confirm the product and coordinate the next step.</p>
                 </div>
               ) : null}
             </div>
