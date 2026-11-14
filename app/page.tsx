@@ -249,7 +249,6 @@ export default function Home() {
 
   const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
-  const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
 
   const removeSelectedRequest = async () => {
     if (!selectedRequest || !user || deletingRequest) return;
