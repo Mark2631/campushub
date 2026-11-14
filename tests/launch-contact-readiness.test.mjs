@@ -7,6 +7,7 @@ test('buyer WhatsApp enquiries go to CampusTrader, not individual seller numbers
   const migration = await read('../supabase/migrations/20261114090000_centralize_campustrader_whatsapp_contact.sql');
   const button = await read('../components/WhatsAppButton.tsx');
   const listing = await read('../app/listing/[id]/page.tsx');
+  const conversations = await read('../lib/conversations.ts');
   assert.match(migration, /get_campustrader_whatsapp/);
   assert.match(migration, /NULL::text AS phone_number/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_listing_seller_whatsapp\(uuid\) FROM PUBLIC, anon, authenticated/);
@@ -14,6 +15,7 @@ test('buyer WhatsApp enquiries go to CampusTrader, not individual seller numbers
   assert.doesNotMatch(button, /get_listing_seller_whatsapp|phoneNumber/);
   assert.match(button, /encodeURIComponent\(message\)/);
   assert.match(listing, /listingTitle=\{listing\.title\}/);
+  assert.doesNotMatch(conversations, /phone_number|\.select\([^\n]*phone/);
 });
 
 test('catalogue cards support vertical browsing and expose product context', async () => {
