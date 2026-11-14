@@ -276,7 +276,7 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
   assert.ok(!source.includes('Have something to sell?'));
   assert.ok(help.includes('How to get started'));
   assert.ok(help.includes('Post a listing'));
-  assert.ok(help.includes('Talk to the seller'));
+  assert.ok(help.includes('Contact CampusTrader'));
 });
 
 test('public listings have unique canonical metadata and product markup only for active priced products', async () => {
