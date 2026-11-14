@@ -258,8 +258,8 @@ export default function ConversationPage({ params }: Props) {
               ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
               {conversation?.otherUser.id ? (
                 <div className="mt-3">
-                  <WhatsAppButton userId={conversation.otherUser.id} phoneNumber={conversation.otherUser.phone_number} />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                  <WhatsAppButton listingId={conversation.listingId || undefined} label="Contact CampusTrader on WhatsApp" />
+                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">This opens CampusTrader management, not the other participant's private number. Ask the team to confirm the product and coordinate the next step.</p>
                 </div>
               ) : null}
             </div>
