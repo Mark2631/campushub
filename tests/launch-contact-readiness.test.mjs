@@ -22,6 +22,7 @@ test('catalogue cards support vertical browsing and expose product context', asy
   const home = await read('../app/page.tsx');
   const card = await read('../components/ListingCard.tsx');
   assert.match(home, /grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4/);
+  assert.match(home, /useState\('All'\)/);
   assert.doesNotMatch(home, /grid-flow-col|auto-cols/);
   assert.match(card, /listing\.description/);
   assert.match(card, /View listing/);
