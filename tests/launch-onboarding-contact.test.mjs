@@ -4,17 +4,19 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('active listing seller contact is available without publishing non-seller phone numbers', async () => {
-  const sql = await read('../supabase/migrations/20261027195500_seller_contact_phone_active_listings.sql');
-  assert.match(sql, /l\.seller_id = p\.id AND l\.status = 'active'/);
-  assert.match(sql, /THEN p\.phone_number ELSE NULL::text/);
+test('seller phone numbers remain private while CampusTrader exposes its official contact', async () => {
+  const sql = await read('../supabase/migrations/20261114090000_centralize_campustrader_whatsapp_contact.sql');
+  assert.match(sql, /NULL::text AS phone_number/);
+  assert.match(sql, /JOIN public\.profiles AS p ON lower\(p\.email\) = lower\(a\.email\)/);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.get_campustrader_whatsapp\(\) TO anon, authenticated/i);
 });
 
 test('WhatsApp routing normalizes Kenyan numbers and navigates on mobile browsers', async () => {
   const button = await read('../components/WhatsAppButton.tsx');
   assert.match(button, /normalizeKenyanPhone/);
   assert.match(button, /window\.location\.assign/);
-  assert.doesNotMatch(button, /window\.open/);
+  assert.match(button, /get_campustrader_whatsapp/);
+  assert.doesNotMatch(button, /get_listing_seller_whatsapp|window\.open/);
 });
 
 test('first-time marketplace flow offers direct browse, sell and request actions', async () => {
@@ -27,7 +29,7 @@ test('first-time marketplace flow offers direct browse, sell and request actions
   assert.match(home, /href="\/sell"/);
   assert.match(home, /href="\/sell\?mode=request"/);
   assert.match(home, /href="#marketplace-search"/);
-  assert.match(home, /message the seller/i);
+  assert.match(home, /Contact CampusTrader/);
   assert.match(profile, /setupAction/);
 });
 
@@ -42,6 +44,6 @@ test('order checkout is disabled during launch', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const order = await read('../app/orders/new/page.tsx');
   assert.match(buy, /disabled aria-disabled="true"/);
-  assert.match(order, /Orders coming soon/);
+  assert.match(order, /Orders are being prepared/);
   assert.doesNotMatch(order, /OrderCheckoutForm/);
 });
