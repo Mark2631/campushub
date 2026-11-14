@@ -17,7 +17,6 @@ import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normal
 
 const categories = STANDARD_CATEGORIES;
 const listingsPageSize = 24;
-] as const;
 
 function getGreeting() {
   const hour = new Date().getHours();
