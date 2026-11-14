@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 test('seller phone numbers remain private while CampusTrader exposes its official contact', async () => {
   const sql = await read('../supabase/migrations/20261114090000_centralize_campustrader_whatsapp_contact.sql');
   assert.match(sql, /NULL::text AS phone_number/);
-  assert.match(sql, /JOIN public\.profiles AS p ON lower\(p\.email\) = lower\(a\.email\)/);
+  assert.match(sql, /JOIN public\.profiles AS p\s+ON lower\(p\.email\) = lower\(a\.email\)/);
   assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.get_campustrader_whatsapp\(\) TO anon, authenticated/i);
 });
 
