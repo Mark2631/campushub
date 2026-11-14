@@ -247,7 +247,7 @@ export default function Home() {
     });
   }, [activeBrowseTab, activeCategory, filters, listings, query]);
 
-  const greetingName =  const greetingName = profileName || user?.email?.split('@')[0];
+  const greetingName = profileName || user?.email?.split('@')[0];
   const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
   const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
 
