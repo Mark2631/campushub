@@ -40,7 +40,6 @@ export interface Listing {
   badgeType?: 'none' | 'blue' | 'gold' | 'admin';
   sellerSince?: string | null;
   sellerAvatarUrl?: string | null;
-  sellerPhoneNumber?: string | null;
   businessDeliveryAvailable?: boolean;
   sellerRatingAverage?: number | null;
   sellerRatingCount?: number;
@@ -56,7 +55,6 @@ type ProfileRow = {
   verification_status: string | null;
   role: string | null;
   avatar_url?: string | null;
-  phone_number?: string | null;
   created_at: string | null;
 };
 
@@ -80,7 +78,7 @@ async function fetchPublicProfiles(sellerIds: string[]) {
 
   const publicResponse = await supabase
     .from('marketplace_profiles')
-    .select('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at')
+    .select('id, full_name, avatar_url, badge_type, verification_status, created_at')
     .in('id', sellerIds);
 
   if (!publicResponse.error) {
@@ -160,7 +158,6 @@ async function enrichListings(rows: ListingRow[]) {
       badgeType: badgeType as Listing['badgeType'],
       sellerSince: profile?.created_at || null,
       sellerAvatarUrl: profile?.avatar_url || null,
-      sellerPhoneNumber: profile?.phone_number || null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
       sellerRatingAverage: sellerRating ? Number(sellerRating.average_rating || 0) : null,
       sellerRatingCount: Number(sellerRating?.review_count || 0),
