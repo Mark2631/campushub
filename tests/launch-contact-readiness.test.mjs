@@ -3,16 +3,26 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 const read = async (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('seller WhatsApp lookup is scoped to active listings, not public profiles', async () => {
-  const sql = await read('../supabase/migrations/20261027210000_active_listing_whatsapp_contact.sql');
+test('buyer WhatsApp enquiries go to CampusTrader, not individual seller numbers', async () => {
+  const migration = await read('../supabase/migrations/20261114090000_centralize_campustrader_whatsapp_contact.sql');
   const button = await read('../components/WhatsAppButton.tsx');
   const listing = await read('../app/listing/[id]/page.tsx');
-  assert.match(sql, /l\.status = 'active'/);
-  assert.match(sql, /l\.deleted_at IS NULL/);
-  assert.match(sql, /REVOKE ALL ON FUNCTION .* FROM PUBLIC/);
-  assert.match(button, /rpc\('get_listing_seller_whatsapp'/);
-  assert.match(button, /window\.location\.assign/);
-  assert.match(listing, /<WhatsAppButton listingId=\{listing\.id\}/);
+  assert.match(migration, /get_campustrader_whatsapp/);
+  assert.match(migration, /NULL::text AS phone_number/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_listing_seller_whatsapp\(uuid\) FROM PUBLIC, anon, authenticated/);
+  assert.match(button, /rpc\('get_campustrader_whatsapp'/);
+  assert.doesNotMatch(button, /get_listing_seller_whatsapp|phoneNumber/);
+  assert.match(button, /encodeURIComponent\(message\)/);
+  assert.match(listing, /listingTitle=\{listing\.title\}/);
+});
+
+test('catalogue cards support vertical browsing and expose product context', async () => {
+  const home = await read('../app/page.tsx');
+  const card = await read('../components/ListingCard.tsx');
+  assert.match(home, /grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4/);
+  assert.doesNotMatch(home, /grid-flow-col|auto-cols/);
+  assert.match(card, /listing\.description/);
+  assert.match(card, /View listing/);
 });
 
 test('ordering is disabled, listing cards give explicit view guidance', async () => {
