@@ -331,7 +331,7 @@ export default function Home() {
                         <h3 className="text-base font-bold text-slate-950 dark:text-white">Campus businesses</h3>
                         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Products from local campus shops</p>
                       </div>
-                      <Link href="/profile#manage-business-profile" className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">Promote a business</Link>
+                      <Link href="/profile?setup=business" className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">Promote a business</Link>
                     </div>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                       {campusBusinessProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
