@@ -194,10 +194,6 @@ export default function AdminPage() {
   const contactsById = useMemo(() => {
     return new Map(dashboard.contacts.map((contact) => [contact.id, contact]));
   }, [dashboard.contacts]);
-  const usersById = useMemo(() => {
-    return new Map(dashboard.users.map((user) => [user.id, user]));
-  }, [dashboard.users]);
-
   const loadDashboard = useCallback(async () => {
     if (!isAdmin) return;
 
