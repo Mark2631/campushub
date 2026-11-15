@@ -326,10 +326,20 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       if (response.error && isMissingColumnError(response.error, 'communities', 'created_by')) {
         response = await fetchRequests(false) as typeof response;
       }
-      return { data: (response.data || []).map((row) => ({
-        ...row,
-        created_by: 'created_by' in row && typeof row.created_by === 'string' ? row.created_by : null,
-      })) as AdminCommunityRequest[], error: response.error };
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      return {
+        data: rows.map((row) => ({
+          id: String(row.id || ''),
+          name: String(row.name || 'Untitled community'),
+          description: String(row.description || ''),
+          category: typeof row.category === 'string' ? row.category : 'General',
+          campus: typeof row.campus === 'string' ? row.campus : '',
+          status: String(row.status || 'pending'),
+          created_by: typeof row.created_by === 'string' ? row.created_by : null,
+          created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+        })) as AdminCommunityRequest[],
+        error: response.error,
+      };
     }),
     safeSection('businesses', [] as AdminBusiness[], async () => {
       const fetchBusinesses = (includeOwnerId: boolean, includeUserId: boolean) => {
@@ -452,7 +462,20 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       if (response.error && isMissingColumnError(response.error, 'reports', 'details')) {
         response = await fetchReports(false) as typeof response;
       }
-      return { data: (response.data || []) as AdminReport[], error: response.error };
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      return {
+        data: rows.map((row) => ({
+          id: String(row.id || ''),
+          reporter_id: typeof row.reporter_id === 'string' ? row.reporter_id : null,
+          target_type: typeof row.target_type === 'string' ? row.target_type : null,
+          target_id: typeof row.target_id === 'string' ? row.target_id : null,
+          reason: typeof row.reason === 'string' ? row.reason : null,
+          details: typeof row.details === 'string' ? row.details : null,
+          status: String(row.status || 'pending'),
+          created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+        })) as AdminReport[],
+        error: response.error,
+      };
     }),
     safeSection('buyer item requests', [] as AdminItemRequest[], async () => {
       const fetchItemRequests = (includeInterest: boolean, includeCampus: boolean, includeInstitution: boolean) => {
