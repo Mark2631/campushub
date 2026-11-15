@@ -88,9 +88,17 @@ BEGIN
     v_owner_lifecycle_update :=
       auth.uid() = OLD.user_id
       AND auth.uid() = OLD.seller_id
-      AND NEW.status IS DISTINCT FROM OLD.status
-      AND NEW.status::text IN ('active', 'sold', 'hidden')
-      AND (to_jsonb(NEW) - 'status' - 'updated_at') = (to_jsonb(OLD) - 'status' - 'updated_at');
+      AND (
+        (
+          NEW.status IS DISTINCT FROM OLD.status
+          AND NEW.status::text IN ('active', 'sold', 'hidden')
+          AND (to_jsonb(NEW) - 'status' - 'updated_at') = (to_jsonb(OLD) - 'status' - 'updated_at')
+        )
+        OR (
+          NEW.status = 'hidden'::public.listing_status
+          AND NEW.moderation_status = 'pending_review'
+        )
+      );
 
     IF NOT v_owner_lifecycle_update THEN
       RAISE EXCEPTION 'active institution required; only the listing owner may change lifecycle status across campus context' USING errcode = '42501';
