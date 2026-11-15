@@ -70,12 +70,6 @@ type BusinessRow = {
   delivery_available?: boolean | null;
 };
 
-type SellerRatingRow = {
-  seller_id: string;
-  average_rating: number | string | null;
-  review_count: number | null;
-};
-
 
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
@@ -492,7 +486,7 @@ export async function updateListingLifecycleStatus(
   try {
     const { data, error } = await supabase
       .from('listings')
-      .update({ status, ...(status === 'hidden' ? { moderation_status: 'pending_review', reviewed_by: null, reviewed_at: null, moderation_reason: null } : {}) })
+      .update({ status })
       .eq('id', listingId)
       .eq('user_id', sellerId)
       .eq('seller_id', sellerId)
