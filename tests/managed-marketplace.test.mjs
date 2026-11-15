@@ -13,7 +13,8 @@ test('homepage uses product departments, a business shelf and a clear request pa
   assert.match(home, /categoryShelves/);
   assert.match(home, /Campus businesses/);
   assert.match(home, /All campuses/);
-  assert.match(home, /browseScope === 'all' \? '' : feedInstitution/);
+  assert.match(home, /browseScope === 'all' \? '' : isSignedIn \? institution : 'MUST'/);
+  assert.match(home, /feedInstitution === 'ALL' \? '' : feedInstitution/);
   assert.match(home, /Promote a business/);
   assert.match(home, /\/sell\?mode=request/);
   assert.match(card, /listing\.category/);
