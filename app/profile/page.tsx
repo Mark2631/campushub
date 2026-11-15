@@ -563,8 +563,18 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         <div className="min-w-0">
                           <p className="truncate font-bold">{listing.title}</p>
                           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                            {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'No price set'} · {listing.location || 'MUST'} · {listing.moderation_status === 'pending_review' ? 'Awaiting management review' : listing.moderation_status === 'rejected' ? 'Changes requested' : statusLabel(listing.status)}
+                            {listing.moderation_status === 'pending_review' && listing.price != null && listing.price > 0
+                              ? `Suggested: KSh ${listing.price.toLocaleString()}`
+                              : listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'No public price yet'} · {listing.location || 'MUST'} · {listing.moderation_status === 'pending_review' ? 'Awaiting management review' : listing.moderation_status === 'rejected' ? 'Changes requested' : statusLabel(listing.status)}
                           </p>
+                          {listing.moderation_status === 'pending_review' ? (
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Management checks the item and sets the final price before publishing.</p>
+                          ) : null}
+                          {listing.moderation_status === 'rejected' && listing.moderation_reason ? (
+                            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                              Management note: {listing.moderation_reason}
+                            </p>
+                          ) : null}
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                           {listing.status === 'active' || listing.status === 'sold' ? (
