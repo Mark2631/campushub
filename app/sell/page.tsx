@@ -717,8 +717,8 @@ function SellPageContent() {
             {message.type === 'success' && (
               <div className="mt-2 flex flex-wrap gap-3 text-sm">
                 {createdListingId ? (
-                  <Link href={`/listing/${createdListingId}`} className="font-semibold underline hover:no-underline">
-                    View submission
+                  <Link href="/profile#my-listings" className="font-semibold underline hover:no-underline">
+                    View submission status
                   </Link>
                 ) : null}
                 <Link href="/" className="font-semibold underline hover:no-underline">
