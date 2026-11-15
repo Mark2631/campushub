@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ShieldCheck, UserRound, X } from 'lucide-react';
+import { UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -47,13 +47,6 @@ function statusLabel(status?: string | null) {
   if (status === 'pending') return 'Verification under review';
   if (status === 'rejected') return 'Verification rejected';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function statusClass(status?: string | null) {
-  if (status === 'verified') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200';
-  if (status === 'pending') return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200';
-  if (status === 'rejected') return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200';
-  return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
 }
 
 type ListingFilter = 'active' | 'pending_review' | 'sold' | 'hidden';
