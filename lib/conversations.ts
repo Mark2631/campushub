@@ -34,11 +34,6 @@ type ConversationRow = {
   hidden_for?: string[] | null;
 };
 
-type ListingTitleRow = {
-  id: string;
-  title: string;
-};
-
 type ProfileRow = ConversationUser;
 
 function serializeError(error: unknown) {
@@ -172,29 +167,6 @@ async function fetchProfiles(userIds: string[]) {
   return { profiles, error: null };
 }
 
-async function fetchListingTitles(listingIds: string[]) {
-  const validListingIds = listingIds.filter(isValidUuid);
-  if (validListingIds.length === 0) return { titles: {} as Record<string, string>, error: null };
-
-  const { data, error } = await supabase
-    .from('listings')
-    .select('id, title')
-    .in('id', validListingIds);
-
-  if (error) {
-    console.error('Error fetching listing titles:', serializeError(error));
-    return { titles: {} as Record<string, string>, error: GENERIC_ERROR };
-  }
-
-  const titles = (data || []).reduce<Record<string, string>>((acc, row) => {
-    const listing = row as ListingTitleRow;
-    acc[listing.id] = listing.title;
-    return acc;
-  }, {});
-
-  return { titles, error: null };
-}
-
 export async function getUserConversations(userId: string) {
   if (!isValidUuid(userId)) {
     return { conversations: [], error: null };
@@ -217,16 +189,14 @@ export async function getUserConversations(userId: string) {
   }
 
   const conversationIds = rows.map((row) => row.id);
-  const listingIds = rows.map((row) => row.listing_id).filter(Boolean) as string[];
   const otherUserIds = rows.map((row) => (row.buyer_id === userId ? row.seller_id : row.buyer_id)).filter(Boolean);
 
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
+  const [{ messagesByConversation, error: messagesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages(conversationIds),
-    fetchListingTitles(Array.from(new Set(listingIds))),
     fetchProfiles(Array.from(new Set(otherUserIds))),
   ]);
 
-  const derivedError = messagesError || titlesError || profilesError;
+  const derivedError = messagesError || profilesError;
 
   const conversations = rows.map((conversation) => {
     const messages = messagesByConversation[conversation.id] || [];
@@ -281,13 +251,12 @@ export async function getConversationById(conversationId: string, userId: string
   }
 
   const otherUserId = data.buyer_id === userId ? data.seller_id : data.buyer_id;
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
+  const [{ messagesByConversation, error: messagesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages([data.id]),
-    fetchListingTitles(data.listing_id ? [data.listing_id] : []),
     fetchProfiles([otherUserId]),
   ]);
 
-  const derivedError = messagesError || titlesError || profilesError;
+  const derivedError = messagesError || profilesError;
 
   return {
     conversation: {
