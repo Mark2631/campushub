@@ -9,7 +9,7 @@ export interface AdminVerificationRequest {
   business_id?: string | null;
   request_type: string;
   type?: string | null;
-  document_name: string | null;
+  document_name?: string | null;
   document_urls?: string[] | null;
   admin_note?: string | null;
   status: string;
@@ -77,6 +77,7 @@ export interface PlatformStats {
   activeListings: number;
   reportedListings: number;
   pendingBusinesses: number;
+  openRequests: number;
 }
 
 export interface AdminAuditEntry {
@@ -108,9 +109,34 @@ export interface AdminCommunityRequest {
   created_at?: string;
 }
 
+export interface AdminItemRequest {
+  id: string;
+  user_id: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  min_price: number | null;
+  max_price: number | null;
+  location: string | null;
+  interested_count: number;
+  status: string;
+  campus?: string | null;
+  institution_id?: string | null;
+  created_at?: string;
+}
+
+export interface AdminContact {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+}
+
 export interface AdminDashboardData {
   verifications: AdminVerificationRequest[];
   communityRequests: AdminCommunityRequest[];
+  itemRequests: AdminItemRequest[];
+  contacts: AdminContact[];
   businesses: AdminBusiness[];
   listings: AdminListing[];
   users: AdminUser[];
@@ -228,6 +254,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     listingsResponse,
     usersResponse,
     reportsResponse,
+    itemRequestsResponse,
     usersCount,
     listingsCount,
     businessesCount,
@@ -235,15 +262,50 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     complaintsCount,
     activeListingsCount,
     reportedListingsCount,
+    openRequestsCount,
     complaintsResponse,
   ] = await Promise.all([
     safeSection('verification requests', [] as AdminVerificationRequest[], async () => {
-      const response = await supabase
-        .from('verification_requests')
-        .select('id, user_id, business_id, type, request_type, document_name, document_urls, admin_note, status, created_at')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-      const requests = (response.data || []) as AdminVerificationRequest[];
+      const fetchRequests = (includeRequestType: boolean, includeDocumentName: boolean) => {
+        const columns = [
+          'id',
+          'user_id',
+          'business_id',
+          'type',
+          ...(includeRequestType ? ['request_type'] : []),
+          ...(includeDocumentName ? ['document_name'] : []),
+          'document_urls',
+          'admin_note',
+          'status',
+          'created_at',
+        ].join(', ');
+        return supabase.from('verification_requests').select(columns)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+      };
+
+      let response = await fetchRequests(true, true);
+      if (response.error && isMissingColumnError(response.error, 'verification_requests', 'request_type')) {
+        response = await fetchRequests(false, true) as typeof response;
+      }
+      if (response.error && isMissingColumnError(response.error, 'verification_requests', 'document_name')) {
+        response = await fetchRequests(false, false) as typeof response;
+      }
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      const requests = rows.map((row) => ({
+        id: String(row.id || ''),
+        user_id: String(row.user_id || ''),
+        business_id: typeof row.business_id === 'string' ? row.business_id : null,
+        type: typeof row.type === 'string' ? row.type : null,
+        request_type: typeof row.request_type === 'string'
+          ? row.request_type
+          : typeof row.type === 'string' ? row.type : 'identity',
+        document_name: typeof row.document_name === 'string' ? row.document_name : null,
+        document_urls: Array.isArray(row.document_urls) ? row.document_urls.filter((url): url is string => typeof url === 'string') : [],
+        admin_note: typeof row.admin_note === 'string' ? row.admin_note : null,
+        status: String(row.status || 'pending'),
+        created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+      })) satisfies AdminVerificationRequest[];
       const withSignedUrls = await Promise.all(requests.map(async (request) => ({
         ...request,
         document_urls: await signedVerificationUrls(request.document_urls),
@@ -251,52 +313,151 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       return { data: withSignedUrls, error: response.error };
     }),
     safeSection('community requests', [] as AdminCommunityRequest[], async () => {
-      const response = await supabase
+      const fetchRequests = (includeCreator: boolean) => supabase
         .from('communities')
-        .select('id, name, description, category, campus, status, created_by, created_at')
+        .select(includeCreator
+          ? 'id, name, description, category, campus, status, created_by, created_at'
+          : 'id, name, description, category, campus, status, created_at')
         .eq('status', 'pending')
         .eq('is_official', false)
         .order('created_at', { ascending: false })
         .limit(50);
-      return { data: (response.data || []) as AdminCommunityRequest[], error: response.error };
+      let response = await fetchRequests(true);
+      if (response.error && isMissingColumnError(response.error, 'communities', 'created_by')) {
+        response = await fetchRequests(false) as typeof response;
+      }
+      return { data: (response.data || []).map((row) => ({
+        ...row,
+        created_by: 'created_by' in row && typeof row.created_by === 'string' ? row.created_by : null,
+      })) as AdminCommunityRequest[], error: response.error };
     }),
     safeSection('businesses', [] as AdminBusiness[], async () => {
-      const response = await supabase
-        .from('businesses')
-        .select('id, owner_id, user_id, business_name, category, location, description, verification_status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      return { data: (response.data || []) as AdminBusiness[], error: response.error };
+      const fetchBusinesses = (includeOwnerId: boolean, includeUserId: boolean) => {
+        const columns = [
+          'id',
+          ...(includeOwnerId ? ['owner_id'] : []),
+          ...(includeUserId ? ['user_id'] : []),
+          'business_name',
+          'category',
+          'location',
+          'description',
+          'verification_status',
+          'created_at',
+        ].join(', ');
+        return supabase.from('businesses').select(columns)
+          .order('created_at', { ascending: false })
+          .limit(100);
+      };
+      let response = await fetchBusinesses(true, true);
+      if (response.error && isMissingColumnError(response.error, 'businesses', 'owner_id')) {
+        response = await fetchBusinesses(false, true) as typeof response;
+      }
+      if (response.error && isMissingColumnError(response.error, 'businesses', 'user_id')) {
+        response = await fetchBusinesses(true, false) as typeof response;
+      }
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      return {
+        data: rows.map((row) => {
+          const ownerId = typeof row.owner_id === 'string' ? row.owner_id : null;
+          const userId = typeof row.user_id === 'string' ? row.user_id : ownerId;
+          return {
+            id: String(row.id || ''),
+            owner_id: ownerId || userId,
+            user_id: userId || ownerId || '',
+            business_name: String(row.business_name || 'Unnamed business'),
+            category: typeof row.category === 'string' ? row.category : '',
+            location: typeof row.location === 'string' ? row.location : '',
+            description: typeof row.description === 'string' ? row.description : null,
+            verification_status: typeof row.verification_status === 'string' ? row.verification_status : 'unverified',
+            created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+          };
+        }) as AdminBusiness[],
+        error: response.error,
+      };
     }),
     safeSection('listings', [] as AdminListing[], async () => {
-      const fetchListings = (includeModerationReason: boolean) => supabase
-        .from('listings')
-        .select(includeModerationReason
-          ? 'id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, moderation_reason, media_urls, business_id, location, created_at'
-          : 'id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, media_urls, business_id, location, created_at')
-        .or('status.in.(active,reported),moderation_status.eq.pending_review')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      let response = await fetchListings(true);
+      const fetchListings = (includeModerationReason: boolean, includeModerationStatus: boolean) => {
+        const columns = [
+          'id',
+          'seller_id',
+          'title',
+          'description',
+          'category',
+          'condition',
+          'price',
+          'negotiable',
+          'status',
+          ...(includeModerationStatus ? ['moderation_status'] : []),
+          ...(includeModerationReason ? ['moderation_reason'] : []),
+          'media_urls',
+          'business_id',
+          'location',
+          'created_at',
+        ].join(', ');
+        const query = supabase.from('listings').select(columns);
+        return (includeModerationStatus
+          ? query.or('status.in.(active,reported),moderation_status.eq.pending_review')
+          : query.in('status', ['active', 'reported']))
+          .order('created_at', { ascending: false })
+          .limit(100);
+      };
+      let response = await fetchListings(true, true);
       if (response.error && isMissingColumnError(response.error, 'listings', 'moderation_reason')) {
-        response = await fetchListings(false);
+        response = await fetchListings(false, true) as typeof response;
+      }
+      if (response.error && isMissingColumnError(response.error, 'listings', 'moderation_status')) {
+        response = await fetchListings(false, false) as typeof response;
       }
       return { data: (response.data || []) as unknown as AdminListing[], error: response.error };
     }),
     safeSection('users', [] as AdminUser[], async () => {
-      const response = await supabase
+      const fetchUsers = (includePhone: boolean) => supabase
         .from('profiles')
-        .select('id, email, full_name, phone_number, verification_status, role, created_at')
+        .select(includePhone
+          ? 'id, email, full_name, phone_number, verification_status, role, created_at'
+          : 'id, email, full_name, verification_status, role, created_at')
         .order('created_at', { ascending: false })
-        .limit(80);
-      return { data: (response.data || []) as AdminUser[], error: response.error };
+        .limit(100);
+      let response = await fetchUsers(true);
+      if (response.error && isMissingColumnError(response.error, 'profiles', 'phone_number')) {
+        response = await fetchUsers(false) as typeof response;
+      }
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      return {
+        data: rows.map((row) => ({
+          id: String(row.id || ''),
+          email: typeof row.email === 'string' ? row.email : null,
+          full_name: typeof row.full_name === 'string' ? row.full_name : null,
+          phone_number: typeof row.phone_number === 'string' ? row.phone_number : null,
+          verification_status: typeof row.verification_status === 'string' ? row.verification_status : null,
+          role: typeof row.role === 'string' ? row.role : null,
+          created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+        })) as AdminUser[],
+        error: response.error,
+      };
     }),
     safeSection('reports', [] as AdminReport[], async () => {
-      const response = await supabase
+      const fetchReports = (includeDetails: boolean) => supabase
         .from('reports')
-        .select('id, reporter_id, target_type, target_id, reason, details, status, created_at')
-        .order('created_at', { ascending: false });
+        .select(includeDetails
+          ? 'id, reporter_id, target_type, target_id, reason, details, status, created_at'
+          : 'id, reporter_id, target_type, target_id, reason, status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      let response = await fetchReports(true);
+      if (response.error && isMissingColumnError(response.error, 'reports', 'details')) {
+        response = await fetchReports(false) as typeof response;
+      }
       return { data: (response.data || []) as AdminReport[], error: response.error };
+    }),
+    safeSection('buyer item requests', [] as AdminItemRequest[], async () => {
+      const response = await supabase
+        .from('item_requests')
+        .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, campus, institution_id, created_at')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      return { data: (response.data || []) as AdminItemRequest[], error: response.error };
     }),
     safeCount('users', () => supabase.from('profiles').select('id', { count: 'exact', head: true })),
     safeCount('listings', () => supabase.from('listings').select('id', { count: 'exact', head: true })),
@@ -305,11 +466,44 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     safeCount('complaints', () => supabase.from('complaints').select('id', { count: 'exact', head: true })),
     safeCount('active listings', () => supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'active')),
     safeCount('reported listings', () => supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'reported')),
+    safeCount('open item requests', () => supabase.from('item_requests').select('id', { count: 'exact', head: true }).eq('status', 'open')),
     getComplaints().catch((error) => {
       console.error('Complaints error:', error);
       return { complaints: [] as ComplaintRecord[], error: 'Could not load complaints.' };
     }),
   ]);
+
+  const contactIds = Array.from(new Set([
+    ...verificationsResponse.data.map((row) => row.user_id),
+    ...businessesResponse.data.map((row) => row.owner_id || row.user_id),
+    ...listingsResponse.data.map((row) => row.seller_id),
+    ...usersResponse.data.map((row) => row.id),
+    ...reportsResponse.data.map((row) => row.reporter_id || ''),
+    ...itemRequestsResponse.data.map((row) => row.user_id || ''),
+  ])).filter((id): id is string => isValidUuid(id));
+
+  const contactsResponse = await safeSection('contact details', [] as AdminContact[], async () => {
+    if (contactIds.length === 0) return { data: [] as AdminContact[], error: null };
+    const fetchContacts = (includePhone: boolean) => supabase
+      .from('profiles')
+      .select(includePhone ? 'id, full_name, email, phone_number' : 'id, full_name, email')
+      .in('id', contactIds)
+      .limit(300);
+    let response = await fetchContacts(true);
+    if (response.error && isMissingColumnError(response.error, 'profiles', 'phone_number')) {
+      response = await fetchContacts(false) as typeof response;
+    }
+    const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+    return {
+      data: rows.map((row) => ({
+        id: String(row.id || ''),
+        full_name: typeof row.full_name === 'string' ? row.full_name : null,
+        email: typeof row.email === 'string' ? row.email : null,
+        phone_number: typeof row.phone_number === 'string' ? row.phone_number : null,
+      })) as AdminContact[],
+      error: response.error,
+    };
+  });
 
   [
     verificationsResponse.error,
@@ -318,6 +512,8 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     listingsResponse.error,
     usersResponse.error,
     reportsResponse.error,
+    itemRequestsResponse.error,
+    contactsResponse.error,
     usersCount.error,
     listingsCount.error,
     businessesCount.error,
@@ -325,6 +521,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     complaintsCount.error,
     activeListingsCount.error,
     reportedListingsCount.error,
+    openRequestsCount.error,
     complaintsResponse.error ? 'Could not load complaints.' : null,
   ].forEach((message) => {
     if (message) errors.push(message);
@@ -333,6 +530,8 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   return {
     verifications: verificationsResponse.data,
     communityRequests: communityRequestsResponse.data,
+    itemRequests: itemRequestsResponse.data,
+    contacts: contactsResponse.data,
     businesses: businessesResponse.data,
     listings: listingsResponse.data,
     users: usersResponse.data,
@@ -348,6 +547,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       activeListings: activeListingsCount.count,
       reportedListings: reportedListingsCount.count,
       pendingBusinesses: businessesResponse.data.filter((business) => ['unverified', 'pending'].includes(business.verification_status)).length,
+      openRequests: openRequestsCount.count,
     },
     errors,
   };
