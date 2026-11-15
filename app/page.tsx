@@ -141,7 +141,10 @@ export default function Home() {
   const campusBusinessProducts = useMemo(() => availableProducts.filter((listing) => listing.sellerType === 'business').slice(0, 4), [availableProducts]);
   const categoryShelves = useMemo(() => productCategories.slice(1).map((category) => ({
     category,
-    listings: availableProducts.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 4),
+    listings: availableProducts
+      .filter((listing) => !campusBusinessProducts.some((businessListing) => businessListing.id === listing.id))
+      .filter((listing) => listingBelongsToCategory(listing, category))
+      .slice(0, 4),
   })).filter((section) => section.listings.length > 0), [availableProducts]);
   const showCategoryShelves = activeFilterCount === 0;
 
