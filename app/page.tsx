@@ -42,6 +42,7 @@ export default function Home() {
   const isSignedIn = Boolean(user?.id);
   const [listings, setListings] = useState<Listing[]>([]);
   const [feedInstitution, setFeedInstitution] = useState('MUST');
+  const [browseScope, setBrowseScope] = useState<'campus' | 'all'>('campus');
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
@@ -61,7 +62,7 @@ export default function Home() {
     const loadFirstPage = async () => {
       setLoading(true);
       setError(null);
-      const primaryInstitution = isSignedIn ? institution : 'MUST';
+      const primaryInstitution = browseScope === 'all' ? '' : isSignedIn ? institution : 'MUST';
       const result = await Promise.race([
         getListings(pageSize, 0, primaryInstitution),
         new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
@@ -69,24 +70,12 @@ export default function Home() {
         }),
       ]);
 
-      let finalResult = result;
-      let effectiveInstitution = primaryInstitution;
-      if (!result.error && result.listings.length === 0 && primaryInstitution !== 'MUST') {
-        finalResult = await Promise.race([
-          getListings(pageSize, 0, 'MUST'),
-          new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
-            window.setTimeout(() => resolve({ listings: [], error: 'The catalogue took too long to respond. Please retry.' }), 10000);
-          }),
-        ]);
-        effectiveInstitution = 'MUST';
-      }
-
       if (!active) return;
-      setFeedInstitution(effectiveInstitution);
-      setListings(finalResult.listings);
-      setOffset(finalResult.listings.length);
-      setHasMore(finalResult.listings.length === pageSize);
-      setError(finalResult.error);
+      setFeedInstitution(browseScope === 'all' ? 'ALL' : primaryInstitution);
+      setListings(result.listings);
+      setOffset(result.listings.length);
+      setHasMore(result.listings.length === pageSize);
+      setError(result.error);
       setLoading(false);
     };
 
@@ -96,7 +85,7 @@ export default function Home() {
       active = false;
       window.removeEventListener('campustrader:listings-refresh', loadFirstPage);
     };
-  }, [institution, isSignedIn]);
+  }, [browseScope, institution, isSignedIn]);
 
   const availableProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -112,6 +101,7 @@ export default function Home() {
         listing.description || '',
         listing.category,
         listing.location || '',
+        listing.campus || '',
         listing.sellerName || '',
       ].join(' ').toLowerCase();
       const searchMatch = !normalizedQuery || text.includes(normalizedQuery);
@@ -138,6 +128,16 @@ export default function Home() {
 
   const activeFilterCount = Number(Boolean(query.trim())) + Number(activeCategory !== 'All') + Number(Boolean(minPrice.trim())) + Number(Boolean(maxPrice.trim())) + Number(condition !== 'all');
 
+  const campusBusinessProducts = useMemo(() => availableProducts.filter((listing) => listing.sellerType === 'business').slice(0, 4), [availableProducts]);
+  const categoryShelves = useMemo(() => productCategories.slice(1).map((category) => ({
+    category,
+    listings: availableProducts
+      .filter((listing) => !campusBusinessProducts.some((businessListing) => businessListing.id === listing.id))
+      .filter((listing) => listingBelongsToCategory(listing, category))
+      .slice(0, 4),
+  })).filter((section) => section.listings.length > 0), [availableProducts, campusBusinessProducts]);
+  const showCategoryShelves = activeFilterCount === 0;
+
   const clearFilters = () => {
     setMinPrice('');
     setMaxPrice('');
@@ -148,7 +148,7 @@ export default function Home() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const result = await getListings(pageSize, offset, feedInstitution);
+      const result = await getListings(pageSize, offset, feedInstitution === 'ALL' ? '' : feedInstitution);
       if (result.error) {
         setError(result.error);
         return;
@@ -180,9 +180,35 @@ export default function Home() {
             Good finds, closer to campus.
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base dark:text-slate-300">
-            From books and gadgets to fashion and room essentials, discover products listed by students and nearby businesses in one campus marketplace.
+            Find products from students and campus businesses across participating campuses.
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Browse</span>
+            <button
+              type="button"
+              aria-pressed={browseScope === 'campus'}
+              onClick={() => setBrowseScope('campus')}
+              className={browseScope === 'campus'
+                ? 'min-h-9 rounded-lg border border-blue-600 bg-blue-50 px-3 text-xs font-semibold text-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+                : 'min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}
+            >
+              {isSignedIn ? 'My campus' : 'MUST'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={browseScope === 'all'}
+              onClick={() => setBrowseScope('all')}
+              className={browseScope === 'all'
+                ? 'min-h-9 rounded-lg border border-blue-600 bg-blue-50 px-3 text-xs font-semibold text-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+                : 'min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}
+            >
+              All campuses
+            </button>
+            {browseScope === 'all' ? (
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Items show their campus on each card</span>
+            ) : null}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Browse products</span>
             <span aria-hidden="true">/</span>
             <span>Ask a question</span>
@@ -219,22 +245,34 @@ export default function Home() {
           </div>
         </section>
 
-        <nav aria-label="Product categories" className="mt-4 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-          <div className="flex min-w-max gap-2 pb-1">
-            {productCategories.map((category) => (
+        <nav aria-label="Shop by category" className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {productCategories.slice(1).map((category) => {
+            const details: Record<string, string> = {
+              Electronics: 'Phones, laptops, gadgets',
+              Fashion: 'Clothes and accessories',
+              Furniture: 'Room and home essentials',
+              Books: 'Textbooks and study material',
+              Food: 'Meals and snacks',
+              Refurbished: 'Restored and renewed',
+              Services: 'Repairs and campus help',
+              Business: 'Products from local shops',
+              Other: 'More campus finds',
+            };
+            return (
               <button
                 key={category}
                 type="button"
                 aria-pressed={activeCategory === category}
                 onClick={() => setActiveCategory(category)}
                 className={activeCategory === category
-                  ? 'rounded-full border border-blue-600 bg-blue-600 px-4 py-2 text-xs font-semibold text-white'
-                  : 'rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'}
+                  ? 'min-h-[76px] rounded-xl border border-blue-600 bg-blue-50 px-3 py-3 text-left dark:bg-blue-950/30'
+                  : 'min-h-[76px] rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900'}
               >
-                {category}
+                <span className="block text-xs font-bold text-slate-900 dark:text-white">{category}</span>
+                <span className="mt-1 block text-[10px] leading-4 text-slate-500 dark:text-slate-400">{details[category] || 'Explore products'}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </nav>
 
         {(query.trim() || activeCategory !== 'All' || minPrice.trim() || maxPrice.trim() || condition !== 'all') ? (
@@ -305,21 +343,69 @@ export default function Home() {
           {loading ? (
             <ListingSkeletons />
           ) : availableProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-              {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
-            </div>
+            showCategoryShelves ? (
+              <div className="space-y-8">
+                {campusBusinessProducts.length > 0 ? (
+                  <section>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-950 dark:text-white">Campus businesses</h3>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Products from local campus shops</p>
+                      </div>
+                      <Link href="/profile?setup=business" className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">Promote a business</Link>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                      {campusBusinessProducts.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
+                    </div>
+                  </section>
+                ) : null}
+                {categoryShelves.map(({ category, listings: sectionListings }) => (
+                  <section key={category}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-950 dark:text-white">{category}</h3>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Recent products in this department</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCategory(category)}
+                        className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                      {sectionListings.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
+              </div>
+            )
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center dark:border-slate-700 dark:bg-slate-900">
               <PackageSearch className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
               <h3 className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
-                {listings.length === 0 ? 'The catalogue is just getting started.' : 'No matching products found.'}
+                {listings.length === 0
+                  ? browseScope === 'campus' && isSignedIn ? 'No products listed at your campus yet.' : 'The catalogue is just getting started.'
+                  : 'No matching products found.'}
               </h3>
               <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
                 {listings.length === 0
-                  ? 'New products will appear here as students and campus businesses list what they have available.'
-                  : 'Try another search, choose a different category or clear your filters.'}
+                  ? browseScope === 'campus' && isSignedIn
+                    ? 'There are no reviewed products at this campus yet. Browse all participating campuses or request the product you need.'
+                    : 'Products appear here after CampusTrader management reviews the details and sets the public price.'
+                  : "Try another search or category. Can't find it? Send a product request and management can check with campus sellers."}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {browseScope === 'campus' && isSignedIn && listings.length === 0 ? (
+                  <button type="button" onClick={() => setBrowseScope('all')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                    Browse all campuses
+                  </button>
+                ) : null}
                 {activeFilterCount > 0 || query || activeCategory !== 'All' ? (
                   <button type="button" onClick={() => { setQuery(''); setActiveCategory('All'); clearFilters(); }} className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
                     Clear search and filters
@@ -348,12 +434,15 @@ export default function Home() {
 
         <section className="mt-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-slate-800 dark:bg-slate-900">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">List an item for your campus</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">List an item for students around your campus to discover.</p>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Advertise your campus business</h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Send us your item details. Management checks the listing and sets the public price before it goes live.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
-              Start selling
+            <Link href="/profile?setup=business" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
+              Business profile
+            </Link>
+            <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+              Submit an item
             </Link>
             <Link href="/help" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
               How it works

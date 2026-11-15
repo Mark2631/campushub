@@ -197,18 +197,29 @@ export default async function ListingPage({ params }: Props) {
 
               <div className="space-y-6">
                 {listing.status === 'sold' ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                    This listing has been marked as sold.
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">This item has been marked as sold.</p>
+                    <p className="mt-1 text-xs leading-5 text-amber-800 dark:text-amber-200">You can browse other products or ask management to help find a similar item.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link href="/" className="rounded-lg bg-amber-800 px-3 py-2 text-xs font-semibold text-white dark:bg-amber-200 dark:text-amber-950">Browse products</Link>
+                      <Link href="/sell?mode=request" className="rounded-lg border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-700 dark:text-amber-100">Request a similar item</Link>
+                    </div>
                   </div>
                 ) : null}
 
                 <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6 dark:border-zinc-800 dark:from-blue-900/30 dark:to-blue-800/20">
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Price</p>
                   <p className="mt-3 text-3xl font-bold text-blue-600 sm:text-4xl dark:text-blue-400">
-                    {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
+                    {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Price on enquiry'}
                   </p>
-                  {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-blue-700 dark:text-blue-200">Negotiable</p> : null}
+                  {listing.price != null && listing.price > 0 ? <p className="mt-2 text-sm font-semibold text-blue-700 dark:text-blue-200">{listing.negotiable ? 'Negotiable' : 'Fixed price'}</p> : null}
                 </div>
+
+                {listing.reviewed_at ? (
+                  <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
+                    Product details reviewed by CampusTrader management
+                  </p>
+                ) : null}
 
                 <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
                   <div>
@@ -245,32 +256,10 @@ export default async function ListingPage({ params }: Props) {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader seller'}</p>
-                        {listing.badgeType === 'gold' ? (
-                          <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-                            Gold tick
-                          </span>
-                        ) : listing.badgeType === 'admin' ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                            Admin
-                          </span>
-                        ) : listing.badgeType === 'blue' ? (
-                          <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-                            Verified
-                          </span>
-                        ) : null}
-                      </div>
+                      <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader member'}</p>
                       <p className="text-sm text-gray-600 dark:text-zinc-400">
-                        {listing.sellerType === 'business'
-                          ? 'Nearby campus business'
-                          : listing.badgeType === 'blue' || listing.badgeType === 'admin'
-                            ? 'Verified CampusTrader seller'
-                            : 'CampusTrader seller'}
+                        {listing.sellerType === 'business' ? 'Campus business' : 'CampusTrader member'}
                       </p>
-                      {listing.sellerSince ? (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
-                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -284,8 +273,8 @@ export default async function ListingPage({ params }: Props) {
                   ) : (
                     <>
                       <BuyOrderButton listingId={listing.id} />
-                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
-                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">Your product enquiry goes to CampusTrader management. The item details are added to your message automatically.</p>
+                      <MessageSellerButton listingId={listing.id} listingTitle={listing.title} sellerId={listing.seller_id} />
+                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">Message the seller in CampusTrader. The WhatsApp option below connects you to CampusTrader management.</p>
                       <WhatsAppButton listingId={listing.id} listingTitle={listing.title} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />

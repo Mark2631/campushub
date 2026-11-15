@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ShieldCheck, UserRound, X } from 'lucide-react';
+import { UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -43,25 +43,18 @@ const businessCategories = ['Campus Services', 'Food', 'Electronics', 'Fashion',
 
 function statusLabel(status?: string | null) {
   if (!status || status === 'unverified') return 'Not verified';
-  if (status === 'verified') return 'Verified seller';
+  if (status === 'verified') return 'Verified business';
   if (status === 'pending') return 'Verification under review';
   if (status === 'rejected') return 'Verification rejected';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function statusClass(status?: string | null) {
-  if (status === 'verified') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200';
-  if (status === 'pending') return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200';
-  if (status === 'rejected') return 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200';
-  return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
-}
-
-type ListingFilter = 'active' | 'sold' | 'hidden' | 'pending_payment';
+type ListingFilter = 'active' | 'pending_review' | 'sold' | 'hidden';
 
 function listingEmptyText(filter: ListingFilter) {
   if (filter === 'active') return 'No active listings';
   if (filter === 'sold') return 'No sold listings';
-  if (filter === 'pending_payment') return 'No pending listings';
+  if (filter === 'pending_review') return 'No items waiting for review';
   return 'No hidden listings';
 }
 
@@ -109,9 +102,11 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const activeListingsCount = userListings.filter((listing) => listing.status === 'active').length;
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
-  const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
-  const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
-  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
+  const pendingListingsCount = userListings.filter((listing) => listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')).length;
+  const filteredListings = userListings.filter((listing) => listingFilter === 'pending_review'
+    ? listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')
+    : listing.status === listingFilter && !(listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')));
+  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : setupAction ? `/profile?setup=${encodeURIComponent(setupAction)}` : '/profile';
   const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
   const signInHref = `/signin?mode=signin&next=${encodeURIComponent(authNextPath)}`;
 
@@ -142,6 +137,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
   useEffect(() => {
     if (!user || !setupAction) return;
+    if (setupAction === 'business') {
+      void Promise.resolve().then(() => setSettingsOpen(true));
+      return;
+    }
     if (setupAction === 'contact' || setupAction === 'verification') {
       void Promise.resolve().then(() => {
         setProfileEditOpen(true);
@@ -149,6 +148,14 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
       });
     }
   }, [user, setupAction]);
+
+  useEffect(() => {
+    if (setupAction !== 'business' || !settingsOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('manage-business-profile')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [setupAction, settingsOpen]);
 
   useEffect(() => {
     if (!profileEditOpen || setupAction !== 'verification') return;
@@ -255,7 +262,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     showToast({ type: 'success', message: 'WhatsApp number saved.' });
   };
 
-  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
+  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden') => {
     if (!user || listingActionId) return;
 
     setListingActionId(listingId);
@@ -286,9 +293,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         type: 'success',
         message: status === 'sold'
           ? 'Marked as sold and removed from the marketplace.'
-          : status === 'hidden'
-            ? 'Listing hidden from the marketplace.'
-            : 'Listing restored to the marketplace.',
+          : 'Listing hidden from the marketplace.',
       });
     } catch (err) {
       console.error('Unexpected listing status update failure:', err);
@@ -431,7 +436,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         <header className="mb-6">
           <Logo />
           <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your CampusTrader account and marketplace activity.</p>
         </header>
 
         {loading || profileLoading ? (
@@ -460,8 +465,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="truncate text-xl font-bold sm:text-2xl">{displayName}</h2>
-                      <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(verificationStatus)}`}>
-                        {statusLabel(verificationStatus)}
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                        CampusTrader member
                       </span>
                       {isAdmin ? (
                         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin</span>
@@ -501,14 +506,14 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mt-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Seller rating</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Buyer feedback</p>
                     {sellerRating.reviewCount > 0 ? (
                       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         <span className="font-bold text-amber-600 dark:text-amber-300">★ {sellerRating.averageRating.toFixed(1)} / 5</span>
                         <span className="ml-2 text-slate-500 dark:text-slate-400">{sellerRating.reviewCount} {sellerRating.reviewCount === 1 ? 'review' : 'reviews'}</span>
                       </p>
                     ) : (
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">No ratings yet. Buyers can rate you after confirming a completed order.</p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Feedback appears here after a buyer confirms a completed handover.</p>
                     )}
                   </div>
                   {sellerRating.reviewCount > 0 ? <p className="text-2xl font-bold text-amber-500" aria-label={`${sellerRating.averageRating} out of 5 stars`}>★</p> : null}
@@ -528,41 +533,24 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 ) : null}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                {verificationStatus === 'verified' ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-200">
-                    <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                    Verified seller
-                  </div>
-                ) : verificationStatus === 'pending' ? (
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">Verification under review</p>
-                ) : verificationStatus === 'rejected' ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-200">Verification rejected</p>
-                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="text-sm font-bold text-blue-600 dark:text-blue-300">View verification</button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Verify to earn a trusted badge</p>
-                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
-                  </div>
-                )}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                CampusTrader reviews each product before it appears in the catalogue. Your account remains a regular member account.
               </div>
             </section>
 
             <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold">My Listings</h2>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, pending, sold, and hidden listings.</p>
+                  <h2 className="text-xl font-bold">My products</h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Track items waiting for review and manage the products already on the marketplace.</p>
                 </div>
-                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
+                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Submit an item</Link>
               </div>
 
               <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
+                {(['active', 'pending_review', 'sold', 'hidden'] as const).map((status) => (
                   <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                    {status === 'pending_payment' ? 'Pending' : status}
+                    {status === 'pending_review' ? 'In review' : status}
                   </button>
                 ))}
               </div>
@@ -575,26 +563,34 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         <div className="min-w-0">
                           <p className="truncate font-bold">{listing.title}</p>
                           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                            {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
+                            {listing.moderation_status === 'pending_review' && listing.price != null && listing.price > 0
+                              ? `Suggested: KSh ${listing.price.toLocaleString()}`
+                              : listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'No public price yet'} · {listing.location || 'MUST'} · {listing.moderation_status === 'pending_review' ? 'Awaiting management review' : listing.moderation_status === 'rejected' ? 'Changes requested' : statusLabel(listing.status)}
                           </p>
+                          {listing.moderation_status === 'pending_review' ? (
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Management checks the item and sets the final price before publishing.</p>
+                          ) : null}
+                          {listing.moderation_status === 'rejected' && listing.moderation_reason ? (
+                            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                              Management note: {listing.moderation_reason}
+                            </p>
+                          ) : null}
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                          {listing.status === 'active' || listing.status === 'sold' ? (
+                            <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                          ) : null}
                           <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
-                          {listing.status !== 'sold' ? (
+                          {listing.status === 'active' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Sold'}
                             </button>
                           ) : null}
-                          {listing.status !== 'hidden' ? (
+                          {listing.status === 'active' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Hide'}
                             </button>
-                          ) : (
-                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                              {listingActionId === listing.id ? 'Saving…' : 'Restore'}
-                            </button>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </article>
@@ -611,7 +607,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-2xl font-bold">{helpRequested ? 'Sign in to contact support.' : 'Sign in to continue.'}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
-              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to post, message, verify, and manage listings.'}
+              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to submit products, message buyers and sellers, and manage your activity.'}
             </p>
             <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
               <Link href={createAccountHref} className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
@@ -627,7 +623,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 id="edit-profile-title" className="text-xl font-bold">Edit profile</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your name, contact details, institution and verification.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your name, contact details and institution.</p>
               </div>
               <button type="button" aria-label="Close Edit Profile" onClick={() => setProfileEditOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -677,7 +673,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <Link href="/profile?manage=help#manage-help" onClick={() => setProfileEditOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-600 underline dark:text-blue-300">Request an institution correction</Link>
               </section>
 
-              <section id="edit-profile-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <section id="edit-profile-verification" className="hidden">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-bold">Verification</h3>
@@ -722,7 +718,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold">Manage</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Selling profile, preferences and support.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Business profile, preferences and support.</p>
               </div>
               <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -744,13 +740,13 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h3 className="font-bold">Manage areas</h3>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <span aria-disabled="true" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-3 text-center text-sm font-semibold text-slate-500 dark:bg-slate-800">Orders · Soon</span>
-                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Selling profile</a>
+                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Business profile</a>
                   <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help &amp; support</a>
                 </div>
               </section>
 
               <section id="manage-business-profile" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Selling Profile</h3>
+                <h3 className="font-bold">Business profile</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>Personal</button>
                   {businesses.map((business) => (
@@ -788,7 +784,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
               <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Help &amp; support</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Need help creating a listing, verifying your account or arranging delivery? See our simple step-by-step guide.</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Need help submitting an item, promoting a campus business or arranging delivery? See our step-by-step guide.</p>
                 <Link href="/help" onClick={() => setSettingsOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-300">How CampusTrader works</Link>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
@@ -799,7 +795,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
               {businesses.length > 0 ? (
                 <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                  <h3 className="font-bold">Business Profiles</h3>
+                  <h3 className="font-bold">Business profiles & advertising</h3>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create your business profile, then submit each product. Management reviews the item and sets the public price before it is advertised.</p>
                   <div className="mt-3 space-y-3">
                     {businesses.map((business) => (
                       <article key={business.id} className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">

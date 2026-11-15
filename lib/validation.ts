@@ -79,7 +79,11 @@ export function cleanErrorForUser(error?: unknown, fallback = GENERIC_ERROR) {
 export function isMissingColumnError(error: unknown, table: string, column: string) {
   if (!error || typeof error !== 'object' || !('message' in error)) return false;
   const message = String((error as { message?: unknown }).message || '');
-  return new RegExp(`column\\s+${table}\\.${column}\\s+does not exist`, 'i').test(message);
+  const postgresMissingColumn = new RegExp(`column\\s+${table}\\.${column}\\s+does not exist`, 'i').test(message);
+  const postgrestMissingColumn = /could not find|schema cache/i.test(message)
+    && message.toLowerCase().includes(column.toLowerCase())
+    && message.toLowerCase().includes(table.toLowerCase());
+  return postgresMissingColumn || postgrestMissingColumn;
 }
 
 /**

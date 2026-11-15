@@ -21,7 +21,9 @@ test('message-thread WhatsApp actions also go to management without reading sell
     read('../app/messages/[id]/page.tsx'),
     read('../lib/conversations.ts'),
   ]);
-  assert.match(page, /WhatsAppButton listingId=\{conversation\.listingId\} listingTitle=\{conversation\.listingTitle\}/);
+  assert.doesNotMatch(page, /WhatsAppButton/);
+  const listing = await read('../app/listing/[id]/page.tsx');
+  assert.match(listing, /WhatsAppButton listingId=\{listing\.id\} listingTitle=\{listing\.title\}/);
   assert.doesNotMatch(page, /otherUser\.phone_number/);
   assert.doesNotMatch(conversations, /select\('id, full_name, avatar_url, phone_number'\)/);
 });
