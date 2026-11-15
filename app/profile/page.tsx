@@ -578,7 +578,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                             <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
                           ) : null}
                           <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
-                          {listing.status !== 'sold' ? (
+                          {listing.status === 'active' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Sold'}
                             </button>
