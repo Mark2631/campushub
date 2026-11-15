@@ -91,6 +91,7 @@ test('one direct conversation is reused per buyer-seller pair across products', 
   const migration = await read('../supabase/migrations/20261115103000_managed_marketplace_and_conversations.sql');
   assert.match(conversations, /and\(buyer_id\.eq\.\$\{buyerId\},seller_id\.eq\.\$\{sellerId\}\),and\(buyer_id\.eq\.\$\{sellerId\},seller_id\.eq\.\$\{buyerId\}\)/);
   assert.match(conversations, /\.limit\(1\)[\s\S]*?\.maybeSingle\(\)/);
+  assert.equal((conversations.match(/filter\(\(id: string\) => id !== buyerId && id !== sellerId\)/g) || []).length, 2);
   assert.match(messageButton, /\?item=\$\{encodeURIComponent\(listingTitle\)\}&listing=\$\{encodeURIComponent\(listingId\)\}/);
   assert.match(migration, /UPDATE public\.messages AS message[\s\S]*?SET conversation_id = merge\.keep_id/i);
   assert.match(migration, /DROP CONSTRAINT IF EXISTS conversations_listing_id_buyer_id_seller_id_key/i);
