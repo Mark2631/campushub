@@ -55,7 +55,7 @@ test('management sets the final price and can reject with a reason', async () =>
   assert.match(page, /Final public price \(KSh\)/);
   assert.match(page, /Approve & publish/);
   assert.match(page, /Reject submission/);
-  assert.match(page, /Seller's suggested price/);
+  assert.match(page, /Seller&apos;s suggested price/);
 });
 
 test('seller account is an ordinary member and review status is visible', async () => {
