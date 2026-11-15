@@ -66,6 +66,8 @@ test('seller account is an ordinary member and review status is visible', async 
   assert.match(profile, /CampusTrader member/);
   assert.match(profile, /Awaiting management review/);
   assert.match(profile, /Changes requested/);
+  assert.match(profile, /Management note: \{listing\.moderation_reason\}/);
+  assert.match(profile, /Suggested: KSh/);
   assert.match(profile, /listing\.status === 'active'/);
   assert.doesNotMatch(profile, /Verified seller/);
   assert.match(card, /CampusTrader member/);
