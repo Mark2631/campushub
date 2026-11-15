@@ -54,12 +54,13 @@ export async function findOrCreateConversation(
     return { conversation: null, error: 'Unable to open conversation. Please try again.' };
   }
 
+  // One conversation belongs to the two people, not to an individual listing.
+  // Keep the original listing_id for the insert-time RLS check, then reuse this
+  // thread for every later product between the same pair.
   const findExisting = async () => supabase
     .from('conversations')
     .select('id, hidden_for')
-    .eq('listing_id', listingId)
-    .eq('buyer_id', buyerId)
-    .eq('seller_id', sellerId)
+    .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
     .maybeSingle();
 
   const { data: existing, error: fetchError } = await findExisting();
@@ -91,6 +92,10 @@ export async function findOrCreateConversation(
     if (insertError.code === '23505') {
       const { data: racedConversation, error: retryError } = await findExisting();
       if (!retryError && racedConversation) {
+        const hiddenFor = (racedConversation.hidden_for || []).filter((id) => id !== buyerId);
+        if (hiddenFor.length !== (racedConversation.hidden_for || []).length) {
+          await supabase.from('conversations').update({ hidden_for: hiddenFor }).eq('id', racedConversation.id);
+        }
         return { conversation: { id: racedConversation.id }, error: null };
       }
     }
