@@ -61,6 +61,8 @@ export async function findOrCreateConversation(
     .from('conversations')
     .select('id, hidden_for')
     .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+    .order('updated_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   const { data: existing, error: fetchError } = await findExisting();
