@@ -463,7 +463,7 @@ export async function insertListing(
       return { listing: null, error: 'We could not publish this listing. Check your details and connection, then try again.' };
     }
 
-    const [listing] = await enrichListingsWithDeadline([newListing as ListingRow]);
+    const [listing] = await enrichListingsWithDeadline([newListing as unknown as ListingRow]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error inserting listing:', err);
@@ -499,7 +499,7 @@ export async function getListingById(id: string) {
       return { listing: null, error: null };
     }
 
-    const [listing] = await enrichListingsWithDeadline([normalizeListingRow(data as ListingRow)]);
+    const [listing] = await enrichListingsWithDeadline([normalizeListingRow(data as unknown as ListingRow)]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listing by id:', err);
@@ -650,7 +650,7 @@ export async function updateListing(
     return { listing: null, error: GENERIC_ERROR };
   }
 
-  const [listing] = await enrichListings([updated as ListingRow]);
+  const [listing] = await enrichListings([updated as unknown as ListingRow]);
   return { listing: listing || null, error: null };
 }
 
