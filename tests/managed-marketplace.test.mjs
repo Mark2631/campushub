@@ -7,6 +7,8 @@ const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 test('homepage uses product departments, a business shelf and a clear request path', async () => {
   const home = await read('../app/page.tsx');
   const card = await read('../components/ListingCard.tsx');
+  const bottomNav = await read('../components/BottomNav.tsx');
+  assert.match(bottomNav, /label: 'Submit'/);
   assert.match(home, /Shop by category/);
   assert.match(home, /categoryShelves/);
   assert.match(home, /Campus businesses/);
