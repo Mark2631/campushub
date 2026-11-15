@@ -7,6 +7,7 @@ import AuthPromptModal from '../../../components/AuthPromptModal';
 import BottomNav from '../../../components/BottomNav';
 import Header from '../../../components/Header';
 import useUser from '../../../hooks/useUser';
+import { institutionLabel, normalizeInstitution } from '../../../lib/validation';
 import {
   Community,
   CommunityPost,
@@ -420,7 +421,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  {community.memberCount || 0} followers · {community.postCount || posts.length} posts · MUST
+                  {community.memberCount || 0} followers · {community.postCount || posts.length} posts · {institutionLabel(normalizeInstitution(community.campus))}
                 </p>
               </div>
               <button
