@@ -67,7 +67,7 @@ export async function findOrCreateConversation(
   }
 
   if (existing) {
-    const hiddenFor = ((existing as { hidden_for?: string[] | null }).hidden_for || []).filter((id) => id !== buyerId);
+    const hiddenFor = ((existing as { hidden_for?: string[] | null }).hidden_for || []).filter((id: string) => id !== buyerId);
     if (hiddenFor.length !== ((existing as { hidden_for?: string[] | null }).hidden_for || []).length) {
       const { error: unhideError } = await supabase
         .from('conversations')
