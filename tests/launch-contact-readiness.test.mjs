@@ -16,6 +16,16 @@ test('admin contact RPC exposes only the intentional CampusTrader WhatsApp endpo
   assert.doesNotMatch(button, /get_listing_seller_whatsapp/);
 });
 
+test('message-thread WhatsApp actions also go to management without reading seller phone numbers', async () => {
+  const [page, conversations] = await Promise.all([
+    read('../app/messages/[id]/page.tsx'),
+    read('../lib/conversations.ts'),
+  ]);
+  assert.match(page, /WhatsAppButton listingId=\{conversation\.listingId\} listingTitle=\{conversation\.listingTitle\}/);
+  assert.doesNotMatch(page, /otherUser\.phone_number/);
+  assert.doesNotMatch(conversations, /select\('id, full_name, avatar_url, phone_number'\)/);
+});
+
 test('ordering is disabled and listing cards provide a clear way to open product details', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const card = await read('../components/ListingCard.tsx');
