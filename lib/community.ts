@@ -2,6 +2,8 @@ import { supabase } from './supabase';
 import { safeFileName, storageBuckets, uploadPublicFile, validateUploadFile } from './storage';
 import {
   DEFAULT_CAMPUS,
+  SUPPORTED_INSTITUTIONS,
+  Institution,
   GENERIC_ERROR,
   PERMISSION_ERROR,
   UPLOAD_ERROR,
@@ -561,6 +563,7 @@ export async function createCommunity(args: {
   name: string;
   description: string;
   category: string;
+  campus?: Institution;
   postingMode?: 'admin_only';
 }) {
   if (!isValidUuid(args.adminId)) return { community: null as Community | null, error: GENERIC_ERROR };
@@ -569,6 +572,10 @@ export async function createCommunity(args: {
   const name = cleanText(args.name, 120);
   const description = cleanMultilineText(args.description, 700);
   const category = cleanText(args.category, 80) || 'General';
+  const campus = SUPPORTED_INSTITUTIONS.includes(args.campus || DEFAULT_CAMPUS)
+    ? (args.campus || DEFAULT_CAMPUS)
+    : DEFAULT_CAMPUS;
+  const institutionId = await getInstitutionIdForCode(normalizeInstitution(campus));
 
   if (!name || !description) {
     return { community: null as Community | null, error: 'Name and description are required.' };
@@ -577,15 +584,8 @@ export async function createCommunity(args: {
   const { data, error } = await supabase
     .from('communities')
     .insert({
-      campus: DEFAULT_CAMPUS,
-      ...(await (async () => {
-        try {
-          const id = await getInstitutionIdForCode(normalizeInstitution(DEFAULT_CAMPUS));
-          return id ? { institution_id: id } : {};
-        } catch {
-          return {};
-        }
-      })()),
+      campus,
+      institution_id: institutionId,
       name,
       description,
       category,
@@ -659,7 +659,7 @@ export async function updateCommunityPostingMode(
   adminEmail: string | null | undefined,
   postingMode: 'admin_only'
 ) {
-  if (!isValidUuid(communityId) || !isValidUuid(adminId) || postingMode !== 'admin_only') {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId)) {
     return { error: GENERIC_ERROR };
   }
 
