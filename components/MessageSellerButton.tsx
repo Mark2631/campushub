@@ -50,7 +50,7 @@ export default function MessageSellerButton({ listingId, sellerId, listingTitle 
         return;
       }
 
-      const context = listingTitle ? `?item=${encodeURIComponent(listingTitle)}` : '';
+      const context = listingTitle ? `?item=${encodeURIComponent(listingTitle)}&listing=${encodeURIComponent(listingId)}` : '';
       router.push(`/messages/${conversation.id}${context}`);
     } catch (error) {
       console.error('Unexpected conversation navigation failure:', error);
