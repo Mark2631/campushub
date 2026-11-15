@@ -29,6 +29,8 @@ export interface Listing {
   negotiable: boolean;
   condition: string;
   status: string;
+  moderation_status?: string | null;
+  reviewed_at?: string | null;
   location: string | null;
   media_urls: string[];
   video_url: string | null;
@@ -116,12 +118,9 @@ async function enrichListings(rows: ListingRow[]) {
   const sellerIds = Array.from(new Set(rows.map((row) => row.seller_id).filter(Boolean)));
   const businessIds = Array.from(new Set(rows.map((row) => row.business_id).filter(Boolean))) as string[];
 
-  const [profilesResponse, businessesResponse, ratingsResponse] = await Promise.all([
+  const [profilesResponse, businessesResponse] = await Promise.all([
     fetchPublicProfiles(sellerIds),
     fetchPublicBusinesses(businessIds),
-    sellerIds.length
-      ? supabase.from('marketplace_seller_rating_summary').select('seller_id, average_rating, review_count').in('seller_id', sellerIds)
-      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (profilesResponse?.error) {
@@ -130,40 +129,26 @@ async function enrichListings(rows: ListingRow[]) {
   if (businessesResponse?.error) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
-  if (ratingsResponse?.error) {
-    logSupabaseError('Error enriching seller ratings:', ratingsResponse.error);
-  }
-
   const profilesById = new Map((profilesResponse?.data || []).map((profile) => [profile.id, profile as ProfileRow]));
   const businessesById = new Map((businessesResponse?.data || []).map((business) => [business.id, business as BusinessRow]));
-  const ratingsBySeller = new Map(((ratingsResponse?.data || []) as SellerRatingRow[]).map((rating) => [rating.seller_id, rating]));
 
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
     const business = row.business_id ? businessesById.get(row.business_id) : null;
-    const sellerRating = ratingsBySeller.get(row.seller_id);
     const emailPrefix = profile?.email?.split('@')[0] || null;
-    const badgeType = business?.verification_status === 'verified'
-      ? 'gold'
-      : profile?.badge_type === 'admin'
-        ? 'admin'
-        : profile?.verification_status === 'verified' || profile?.badge_type === 'verified' || profile?.badge_type === 'blue'
-          ? 'blue'
-          : profile
-            ? 'none'
-            : 'none';
+
 
     return {
       ...row,
       sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader seller',
       sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
-      badgeType: badgeType as Listing['badgeType'],
+      badgeType: 'none' as Listing['badgeType'],
       sellerSince: profile?.created_at || null,
       sellerAvatarUrl: profile?.avatar_url || null,
-      sellerPhoneNumber: profile?.phone_number || null,
+      sellerPhoneNumber: null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
-      sellerRatingAverage: sellerRating ? Number(sellerRating.average_rating || 0) : null,
-      sellerRatingCount: Number(sellerRating?.review_count || 0),
+      sellerRatingAverage: null,
+      sellerRatingCount: 0,
     };
   });
 }
@@ -219,6 +204,8 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     campus: row.campus || DEFAULT_CAMPUS,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+    moderation_status: row.moderation_status ?? null,
+    reviewed_at: row.reviewed_at ?? null,
   };
 }
 
@@ -235,7 +222,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
   try {
     const query = supabase
       .from('listings')
-      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id')
       .eq('status', 'active');
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
@@ -296,7 +283,7 @@ export async function getListingsByUser(userId: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
 
@@ -394,7 +381,11 @@ export async function insertListing(
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
-      status: data.status || 'active',
+      status: 'hidden',
+      moderation_status: 'pending_review',
+      reviewed_by: null,
+      reviewed_at: null,
+      moderation_reason: null,
       location: validated.value.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
@@ -407,7 +398,7 @@ export async function insertListing(
     const insertQuery = supabase
         .from('listings')
         .insert(listingToInsert)
-        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url')
         .single();
 
     let { data: newListing, error } = await withTimeout(
@@ -464,7 +455,7 @@ export async function getListingById(id: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, campus, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, campus, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
       .maybeSingle();
 
@@ -488,20 +479,20 @@ export async function getListingById(id: string) {
 export async function updateListingLifecycleStatus(
   listingId: string,
   sellerId: string,
-  status: 'sold' | 'hidden' | 'active'
+  status: 'sold' | 'hidden'
 ) {
   if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
     return { error: 'Listing not found.' };
   }
 
-  if (!isAllowedValue(status, ['sold', 'hidden', 'active'] as const)) {
+  if (!isAllowedValue(status, ['sold', 'hidden'] as const)) {
     return { error: GENERIC_ERROR };
   }
 
   try {
     const { data, error } = await supabase
       .from('listings')
-      .update({ status })
+      .update({ status, ...(status === 'hidden' ? { moderation_status: 'pending_review', reviewed_by: null, reviewed_at: null, moderation_reason: null } : {}) })
       .eq('id', listingId)
       .eq('user_id', sellerId)
       .eq('seller_id', sellerId)
@@ -590,7 +581,11 @@ export async function updateListing(
     business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
     media_urls: mediaUrls,
     video_url: videoUrl ?? null,
-    ...(data.status ? { status: data.status } : {}),
+    status: 'hidden' as const,
+    moderation_status: 'pending_review',
+    reviewed_by: null,
+    reviewed_at: null,
+    moderation_reason: null,
     // Institution identity is immutable in the database. Never resend campus or institution_id on edit.
     updated_at: new Date().toISOString(),
   };
