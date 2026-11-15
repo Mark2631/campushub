@@ -1,15 +1,13 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, Send, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
-import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, hideConversationForUser, sendMessage } from '../../../lib/conversations';
 import { createMessageNotificationRecord } from '../../../lib/notifications';
@@ -49,7 +47,7 @@ export default function ConversationPage({ params }: Props) {
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
-  const [interestPrefilled, setInterestPrefilled] = useState(false);
+  const [lastPrefilledTitle, setLastPrefilledTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -59,10 +57,10 @@ export default function ConversationPage({ params }: Props) {
   const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
 
   useEffect(() => {
-    if (!interestTitle || interestPrefilled) return;
+    if (!interestTitle || interestTitle === lastPrefilledTitle) return;
     setMessageText((current) => current.trim() ? current : `Hi, I'm interested in ${interestTitle}. Is it still available?`);
-    setInterestPrefilled(true);
-  }, [interestTitle, interestPrefilled]);
+    setLastPrefilledTitle(interestTitle);
+  }, [interestTitle, lastPrefilledTitle]);
 
   useEffect(() => {
     const load = async () => {
