@@ -40,44 +40,31 @@ export interface Listing {
   updated_at: string;
   sellerName?: string;
   sellerType?: 'student' | 'business';
-  badgeType?: 'none' | 'blue' | 'gold' | 'admin';
-  sellerSince?: string | null;
   sellerAvatarUrl?: string | null;
-  sellerPhoneNumber?: string | null;
   businessDeliveryAvailable?: boolean;
-  sellerRatingAverage?: number | null;
-  sellerRatingCount?: number;
 }
 
-type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
+type ListingRow = Omit<Listing, 'sellerName' | 'sellerType'>;
 
 type ProfileRow = {
   id: string;
   full_name: string | null;
-  email?: string | null;
-  badge_type: string | null;
-  verification_status: string | null;
-  role: string | null;
   avatar_url?: string | null;
-  phone_number?: string | null;
   created_at: string | null;
 };
 
 type BusinessRow = {
   id: string;
   business_name: string;
-  verification_status: string | null;
-  badge_type?: string | null;
   delivery_available?: boolean | null;
 };
-
 
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
 
   const publicResponse = await supabase
     .from('marketplace_profiles')
-    .select('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at')
+    .select('id, full_name, avatar_url, created_at')
     .in('id', sellerIds);
 
   if (!publicResponse.error) {
@@ -92,7 +79,7 @@ async function fetchPublicBusinesses(businessIds: string[]) {
 
   const publicResponse = await supabase
     .from('marketplace_businesses')
-    .select('id, business_name, verification_status, badge_type, delivery_available')
+    .select('id, business_name, delivery_available')
     .in('id', businessIds);
 
   if (!publicResponse.error) {
@@ -135,15 +122,10 @@ async function enrichListings(rows: ListingRow[]) {
 
     return {
       ...row,
-      sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader seller',
+      sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader member',
       sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
-      badgeType: 'none' as Listing['badgeType'],
-      sellerSince: profile?.created_at || null,
       sellerAvatarUrl: profile?.avatar_url || null,
-      sellerPhoneNumber: null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
-      sellerRatingAverage: null,
-      sellerRatingCount: 0,
     };
   });
 }
