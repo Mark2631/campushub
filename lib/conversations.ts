@@ -239,7 +239,7 @@ export async function getUserConversations(userId: string) {
 
     return {
       id: conversation.id,
-      listingTitle: conversation.listing_id ? titles[conversation.listing_id] || 'Listing unavailable' : 'General conversation',
+      listingTitle: 'CampusTrader chat',
       lastMessage,
       listingId: conversation.listing_id || '',
       otherUser,
@@ -291,7 +291,7 @@ export async function getConversationById(conversationId: string, userId: string
     conversation: {
       id: data.id,
       listingId: data.listing_id || '',
-      listingTitle: data.listing_id ? titles[data.listing_id] || 'Listing unavailable' : 'General conversation',
+      listingTitle: 'CampusTrader chat',
       messages: messagesByConversation[data.id] || [],
       buyerId: data.buyer_id,
       sellerId: data.seller_id,
