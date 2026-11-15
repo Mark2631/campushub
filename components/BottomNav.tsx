@@ -9,7 +9,7 @@ import AuthPromptModal from './AuthPromptModal';
 
 const navItems = [
   { href: '/', label: 'Home', Icon: Home },
-  { href: '/sell', label: 'Sell', Icon: PlusCircle },
+  { href: '/sell', label: 'Submit', Icon: PlusCircle },
   { href: '/messages', label: 'Messages', Icon: MessageCircle },
   { href: '/community', label: 'Community', Icon: Users },
   { href: '/profile', label: 'Profile', Icon: User },
