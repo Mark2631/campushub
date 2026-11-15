@@ -136,7 +136,7 @@ export default function Home() {
     });
   }, [activeCategory, condition, listings, maxPrice, minPrice, query, sortOrder]);
 
-  const activeFilterCount = Number(Boolean(minPrice.trim())) + Number(Boolean(maxPrice.trim())) + Number(condition !== 'all');
+  const activeFilterCount = Number(Boolean(query.trim())) + Number(activeCategory !== 'All') + Number(Boolean(minPrice.trim())) + Number(Boolean(maxPrice.trim())) + Number(condition !== 'all');
 
   const clearFilters = () => {
     setMinPrice('');
@@ -236,6 +236,39 @@ export default function Home() {
             ))}
           </div>
         </nav>
+
+        {(query.trim() || activeCategory !== 'All' || minPrice.trim() || maxPrice.trim() || condition !== 'all') ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Applied filters">
+            {query.trim() ? (
+              <button type="button" onClick={() => setQuery('')} aria-label="Remove search filter" className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                Search: {query.trim()} <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
+            {activeCategory !== 'All' ? (
+              <button type="button" onClick={() => setActiveCategory('All')} aria-label="Remove category filter" className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                {activeCategory} <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
+            {minPrice.trim() ? (
+              <button type="button" onClick={() => setMinPrice('')} aria-label="Remove minimum price filter" className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                From KSh {minPrice.trim()} <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
+            {maxPrice.trim() ? (
+              <button type="button" onClick={() => setMaxPrice('')} aria-label="Remove maximum price filter" className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-700 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                Up to KSh {maxPrice.trim()} <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
+            {condition !== 'all' ? (
+              <button type="button" onClick={() => setCondition('all')} aria-label="Remove condition filter" className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium capitalize text-slate-700 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                {condition} <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            ) : null}
+            <button type="button" onClick={() => { setQuery(''); setActiveCategory('All'); clearFilters(); }} className="min-h-8 px-2 py-1 text-[11px] font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">
+              Clear all
+            </button>
+          </div>
+        ) : null}
 
         <section className="mt-7">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
