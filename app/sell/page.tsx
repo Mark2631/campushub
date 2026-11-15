@@ -559,9 +559,9 @@ function SellPageContent() {
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
+            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Have something to offer?</h2>
             <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
-              Create a free account to submit products for review, message sellers, or request an item.
+              Create an account to submit an item for review, message sellers, or request a product.
             </p>
             <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
               <Link href="/signin?next=/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -584,15 +584,15 @@ function SellPageContent() {
       <Header />
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
-          <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
+          <h1 className="text-3xl font-bold">{editListingId ? 'Edit submission' : 'Submit an item'}</h1>
           <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Submit products for review. Management checks the details and sets the public price before anything is published.</p>
         </header>
 
         <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           {[
-            ['sell', 'Sell an item/service'],
+            ['sell', 'Submit an item'],
             ['requests', 'Requests'],
-            ['guide', 'My selling guide'],
+            ['guide', 'Submission guide'],
           ].map(([value, label]) => (
             <button
               key={value}
