@@ -314,7 +314,7 @@ export default function Home() {
 
         <section className="mt-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-slate-800 dark:bg-slate-900">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Have something to sell?</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">List an item for your campus</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">List an item for students around your campus to discover.</p>
           </div>
           <div className="flex flex-wrap gap-2">
