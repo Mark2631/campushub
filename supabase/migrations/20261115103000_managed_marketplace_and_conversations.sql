@@ -154,8 +154,7 @@ ALTER TABLE public.communities
   ALTER COLUMN posting_mode SET DEFAULT 'admin_only';
 
 UPDATE public.communities
-SET posting_mode = 'admin_only'
-WHERE COALESCE(is_official, false) = true;
+SET posting_mode = 'admin_only';
 
 DROP POLICY IF EXISTS users_can_request_communities ON public.communities;
 
