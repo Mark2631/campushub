@@ -138,6 +138,12 @@ export default function Home() {
 
   const activeFilterCount = Number(Boolean(query.trim())) + Number(activeCategory !== 'All') + Number(Boolean(minPrice.trim())) + Number(Boolean(maxPrice.trim())) + Number(condition !== 'all');
 
+  const categoryShelves = useMemo(() => productCategories.slice(1).map((category) => ({
+    category,
+    listings: availableProducts.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 4),
+  })).filter((section) => section.listings.length > 0), [availableProducts]);
+  const showCategoryShelves = activeFilterCount === 0;
+
   const clearFilters = () => {
     setMinPrice('');
     setMaxPrice('');
@@ -219,22 +225,32 @@ export default function Home() {
           </div>
         </section>
 
-        <nav aria-label="Product categories" className="mt-4 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-          <div className="flex min-w-max gap-2 pb-1">
-            {productCategories.map((category) => (
+        <nav aria-label="Shop by category" className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {productCategories.slice(1).map((category) => {
+            const details: Record<string, string> = {
+              Electronics: 'Phones, laptops, gadgets',
+              Fashion: 'Clothes and accessories',
+              Furniture: 'Room and home essentials',
+              Books: 'Textbooks and study material',
+              Food: 'Meals and snacks',
+              Refurbished: 'Restored and renewed',
+              Other: 'More campus finds',
+            };
+            return (
               <button
                 key={category}
                 type="button"
                 aria-pressed={activeCategory === category}
                 onClick={() => setActiveCategory(category)}
                 className={activeCategory === category
-                  ? 'rounded-full border border-blue-600 bg-blue-600 px-4 py-2 text-xs font-semibold text-white'
-                  : 'rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'}
+                  ? 'min-h-[76px] rounded-xl border border-blue-600 bg-blue-50 px-3 py-3 text-left dark:bg-blue-950/30'
+                  : 'min-h-[76px] rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900'}
               >
-                {category}
+                <span className="block text-xs font-bold text-slate-900 dark:text-white">{category}</span>
+                <span className="mt-1 block text-[10px] leading-4 text-slate-500 dark:text-slate-400">{details[category] || 'Explore products'}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </nav>
 
         {(query.trim() || activeCategory !== 'All' || minPrice.trim() || maxPrice.trim() || condition !== 'all') ? (
@@ -305,9 +321,34 @@ export default function Home() {
           {loading ? (
             <ListingSkeletons />
           ) : availableProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-              {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
-            </div>
+            showCategoryShelves ? (
+              <div className="space-y-8">
+                {categoryShelves.map(({ category, listings: sectionListings }) => (
+                  <section key={category}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-950 dark:text-white">{category}</h3>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Recent products in this department</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveCategory(category)}
+                        className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300"
+                      >
+                        View all
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                      {sectionListings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+              </div>
+            )
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center dark:border-slate-700 dark:bg-slate-900">
               <PackageSearch className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
@@ -316,8 +357,8 @@ export default function Home() {
               </h3>
               <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
                 {listings.length === 0
-                  ? 'New products will appear here as students and campus businesses list what they have available.'
-                  : 'Try another search, choose a different category or clear your filters.'}
+                  ? 'Products appear here after CampusTrader management reviews the details and sets the public price.'
+                  : 'Try another search or category. Can't find it? Send a product request and management can check with campus sellers.'}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {activeFilterCount > 0 || query || activeCategory !== 'All' ? (
@@ -349,11 +390,11 @@ export default function Home() {
         <section className="mt-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-slate-800 dark:bg-slate-900">
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">List an item for your campus</h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">List an item for students around your campus to discover.</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Send us your item details. Management checks the listing and sets the public price before it goes live.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
-              Start selling
+              Submit an item
             </Link>
             <Link href="/help" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
               How it works
