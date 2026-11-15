@@ -144,6 +144,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
   useEffect(() => {
     if (!user || !setupAction) return;
+    if (setupAction === 'business') {
+      void Promise.resolve().then(() => setSettingsOpen(true));
+      return;
+    }
     if (setupAction === 'contact' || setupAction === 'verification') {
       void Promise.resolve().then(() => {
         setProfileEditOpen(true);
@@ -544,10 +548,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             <section id="my-listings" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold">My Listings</h2>
+                  <h2 className="text-xl font-bold">My products</h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Track items waiting for review and manage the products already on the marketplace.</p>
                 </div>
-                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
+                <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Submit an item</Link>
               </div>
 
               <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
