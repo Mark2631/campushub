@@ -1279,13 +1279,9 @@ export default function AdminPage() {
                     placeholder="Category"
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   />
-                  <select
-                    value={communityForm.postingMode}
-                    onChange={(event) => setCommunityForm((current) => ({ ...current, postingMode: 'admin_only' as const }))}
-                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
-                  >
-                    <option value="admin_only">Management-only posting</option>
-                  </select>
+                  <p className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-zinc-300">
+                    Only CampusTrader management can publish to this community.
+                  </p>
                   <label className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-100">
                     Cover image
                     <input
