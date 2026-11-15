@@ -4,69 +4,73 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { MapPin, Package } from 'lucide-react';
 import type { Listing } from '../lib/listings';
 
 export default function ListingCard({ listing }: { listing: Listing }) {
   const firstImage = Array.isArray(listing.media_urls) ? listing.media_urls[0] : null;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(firstImage) && !imageFailed;
+  const priceLabel = listing.price != null && listing.price > 0
+    ? 'KSh ' + listing.price.toLocaleString('en-KE')
+    : 'Ask seller for price';
+  const sellerLabel = listing.sellerType === 'business'
+    ? listing.sellerName || 'Campus business'
+    : listing.sellerName || 'Student seller';
 
   return (
     <Link
-      href={`/listing/${listing.id}`}
+      href={'/listing/' + listing.id}
       prefetch={false}
-      aria-label={`View ${listing.title}`}
-      className="group block min-h-full touch-manipulation overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
+      aria-label={'View ' + listing.title}
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700"
     >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
+      <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
         {showImage ? (
           <img
-            src={firstImage || '/placeholder-image.png'}
+            src={firstImage || ''}
             alt={listing.title}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025]"
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 px-3 text-center text-white">
-            <span className="text-[10px] font-semibold uppercase tracking-wide">{listing.category}</span>
-            <span className="mt-1 text-xs font-bold">{listing.sellerType === 'business' ? 'Verified seller' : 'Campus listing'}</span>
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
+            <Package className="h-8 w-8" strokeWidth={1.5} aria-hidden="true" />
+            <span className="text-[10px] font-medium uppercase tracking-wide">{listing.category}</span>
           </div>
         )}
+        <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-1 text-[10px] font-semibold text-slate-700 shadow-sm dark:bg-slate-950/90 dark:text-slate-200">
+          {listing.condition === 'new' ? 'New' : listing.condition === 'refurbished' ? 'Refurbished' : 'Used'}
+        </span>
       </div>
-      <div className="p-2.5 sm:p-3">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-bold leading-5 text-slate-950 sm:text-sm dark:text-slate-50">{listing.title}</h3>
-        <p className="mt-1 text-sm font-extrabold text-blue-700 sm:text-base dark:text-cyan-300">
-          {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
+
+      <div className="flex flex-1 flex-col p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{listing.category}</p>
+        <h3 className="mt-1 line-clamp-2 min-h-10 text-[13px] font-semibold leading-5 text-slate-900 sm:text-sm dark:text-white">
+          {listing.title}
+        </h3>
+        <p className="mt-1 text-sm font-bold text-blue-700 dark:text-blue-300">{priceLabel}</p>
+        <p className="mt-2 line-clamp-2 min-h-9 text-[11px] leading-[1.15rem] text-slate-600 dark:text-slate-400">
+          {listing.description?.trim() || 'Open the listing for more product details.'}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-300">{listing.location || 'Campus location'}</p>
-        {listing.sellerRatingCount ? (
-          <p className="mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-300" aria-label={`Seller rating ${listing.sellerRatingAverage?.toFixed(1)} out of 5 from ${listing.sellerRatingCount} reviews`}>
-            ★ {listing.sellerRatingAverage?.toFixed(1)} <span className="font-normal text-slate-500 dark:text-zinc-400">({listing.sellerRatingCount})</span>
-          </p>
-        ) : null}
-        <div className="mt-2 flex min-h-5 items-center gap-1.5">
-          {listing.badgeType === 'gold' ? (
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-              Gold tick
+        <div className="mt-auto pt-3">
+          <div className="flex min-w-0 items-center justify-between gap-2 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+            <span className="min-w-0 truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">{sellerLabel}</span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+              View details
+              <span aria-hidden="true">→</span>
             </span>
-          ) : listing.badgeType === 'admin' ? (
-            <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-              Admin
-            </span>
-          ) : listing.badgeType === 'blue' ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-              Verified
-            </span>
-          ) : listing.business_id ? (
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-              Business
-            </span>
+          </div>
+          {listing.location ? (
+            <p className="mt-1.5 flex items-center gap-1 truncate text-[10px] text-slate-500 dark:text-slate-400">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+              {listing.location}
+            </p>
           ) : null}
-          <span className="truncate text-[10px] text-gray-500 dark:text-zinc-500">{listing.category}</span>
         </div>
-        <span className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition group-hover:bg-blue-700">View listing</span>
+        <span className="sr-only">View listing</span>
       </div>
     </Link>
   );
