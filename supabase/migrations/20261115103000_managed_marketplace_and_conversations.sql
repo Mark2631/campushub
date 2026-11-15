@@ -297,6 +297,26 @@ CREATE POLICY ct_admin_businesses_read
 
 -- Admin contact details are deliberately not exposed to the public marketplace.
 DROP POLICY IF EXISTS ct_admin_profile_contact_read ON public.profiles;
+DROP POLICY IF EXISTS hardening_community_posts_insert_institution ON public.community_posts;
+CREATE POLICY hardening_community_posts_insert_institution
+  ON public.community_posts
+  AS RESTRICTIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    COALESCE(public.is_admin(), false)
+    OR (
+      author_id = (SELECT auth.uid())
+      AND EXISTS (
+        SELECT 1
+        FROM public.communities AS community
+        WHERE community.id = community_posts.community_id
+          AND community.status = 'active'
+          AND community.institution_id = (SELECT private.current_active_institution_id())
+      )
+    )
+  );
+
 CREATE POLICY ct_admin_profile_contact_read
   ON public.profiles
   AS PERMISSIVE
