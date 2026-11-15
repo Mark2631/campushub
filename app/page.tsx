@@ -138,6 +138,7 @@ export default function Home() {
 
   const activeFilterCount = Number(Boolean(query.trim())) + Number(activeCategory !== 'All') + Number(Boolean(minPrice.trim())) + Number(Boolean(maxPrice.trim())) + Number(condition !== 'all');
 
+  const campusBusinessProducts = useMemo(() => availableProducts.filter((listing) => listing.sellerType === 'business').slice(0, 4), [availableProducts]);
   const categoryShelves = useMemo(() => productCategories.slice(1).map((category) => ({
     category,
     listings: availableProducts.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 4),
@@ -323,6 +324,20 @@ export default function Home() {
           ) : availableProducts.length > 0 ? (
             showCategoryShelves ? (
               <div className="space-y-8">
+                {campusBusinessProducts.length > 0 ? (
+                  <section>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-950 dark:text-white">Campus businesses</h3>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Products from local campus shops</p>
+                      </div>
+                      <Link href="/profile#manage-business-profile" className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">Promote a business</Link>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                      {campusBusinessProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                    </div>
+                  </section>
+                ) : null}
                 {categoryShelves.map(({ category, listings: sectionListings }) => (
                   <section key={category}>
                     <div className="mb-3 flex items-center justify-between gap-3">
