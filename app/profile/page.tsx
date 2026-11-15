@@ -43,7 +43,7 @@ const businessCategories = ['Campus Services', 'Food', 'Electronics', 'Fashion',
 
 function statusLabel(status?: string | null) {
   if (!status || status === 'unverified') return 'Not verified';
-  if (status === 'verified') return 'Verified seller';
+  if (status === 'verified') return 'Verified business';
   if (status === 'pending') return 'Verification under review';
   if (status === 'rejected') return 'Verification rejected';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -431,7 +431,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         <header className="mb-6">
           <Logo />
           <h1 className="mt-5 text-2xl font-bold sm:text-3xl">Profile</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your identity and marketplace summary.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Your CampusTrader account and marketplace activity.</p>
         </header>
 
         {loading || profileLoading ? (
@@ -460,8 +460,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="truncate text-xl font-bold sm:text-2xl">{displayName}</h2>
-                      <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusClass(verificationStatus)}`}>
-                        {statusLabel(verificationStatus)}
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                        CampusTrader member
                       </span>
                       {isAdmin ? (
                         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin</span>
@@ -501,14 +501,14 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mt-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Seller rating</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Buyer feedback</p>
                     {sellerRating.reviewCount > 0 ? (
                       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         <span className="font-bold text-amber-600 dark:text-amber-300">★ {sellerRating.averageRating.toFixed(1)} / 5</span>
                         <span className="ml-2 text-slate-500 dark:text-slate-400">{sellerRating.reviewCount} {sellerRating.reviewCount === 1 ? 'review' : 'reviews'}</span>
                       </p>
                     ) : (
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">No ratings yet. Buyers can rate you after confirming a completed order.</p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Feedback appears here after a buyer confirms a completed handover.</p>
                     )}
                   </div>
                   {sellerRating.reviewCount > 0 ? <p className="text-2xl font-bold text-amber-500" aria-label={`${sellerRating.averageRating} out of 5 stars`}>★</p> : null}
@@ -528,25 +528,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 ) : null}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                {verificationStatus === 'verified' ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-200">
-                    <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                    Verified seller
-                  </div>
-                ) : verificationStatus === 'pending' ? (
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">Verification under review</p>
-                ) : verificationStatus === 'rejected' ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-200">Verification rejected</p>
-                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="text-sm font-bold text-blue-600 dark:text-blue-300">View verification</button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Verify to earn a trusted badge</p>
-                    <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(true); }} className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Apply in Settings</button>
-                  </div>
-                )}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                CampusTrader reviews each product before it appears in the catalogue. Your account remains a regular member account.
               </div>
             </section>
 
@@ -611,7 +594,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
           <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-2xl font-bold">{helpRequested ? 'Sign in to contact support.' : 'Sign in to continue.'}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
-              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to post, message, verify, and manage listings.'}
+              {helpRequested ? 'Sign in or create an account to use the existing report issue form in Manage → Help.' : 'Create an account to submit products, message buyers and sellers, and manage your activity.'}
             </p>
             <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
               <Link href={createAccountHref} className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white">Create account</Link>
@@ -627,7 +610,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 id="edit-profile-title" className="text-xl font-bold">Edit profile</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your name, contact details, institution and verification.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Your name, contact details and institution.</p>
               </div>
               <button type="button" aria-label="Close Edit Profile" onClick={() => setProfileEditOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -677,7 +660,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <Link href="/profile?manage=help#manage-help" onClick={() => setProfileEditOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-600 underline dark:text-blue-300">Request an institution correction</Link>
               </section>
 
-              <section id="edit-profile-verification" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+              <section id="edit-profile-verification" className="hidden">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-bold">Verification</h3>
@@ -722,7 +705,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold">Manage</h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Selling profile, preferences and support.</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Business profile, preferences and support.</p>
               </div>
               <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -788,7 +771,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
               <section id="manage-help" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
                 <h3 className="font-bold">Help &amp; support</h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Need help creating a listing, verifying your account or arranging delivery? See our simple step-by-step guide.</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Need help submitting an item, promoting a campus business or arranging delivery? See our step-by-step guide.</p>
                 <Link href="/help" onClick={() => setSettingsOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-blue-700 underline dark:text-blue-300">How CampusTrader works</Link>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
                   <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900" />
@@ -799,7 +782,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
               {businesses.length > 0 ? (
                 <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                  <h3 className="font-bold">Business Profiles</h3>
+                  <h3 className="font-bold">Business profiles & advertising</h3>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Create your business profile, then submit each product. Management reviews the item and sets the public price before it is advertised.</p>
                   <div className="mt-3 space-y-3">
                     {businesses.map((business) => (
                       <article key={business.id} className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900">
