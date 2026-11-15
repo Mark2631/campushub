@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { MapPin, Package } from 'lucide-react';
 import type { Listing } from '../lib/listings';
 
-export default function ListingCard({ listing }: { listing: Listing }) {
+export default function ListingCard({ listing, showCampus = false }: { listing: Listing; showCampus?: boolean }) {
   const firstImage = Array.isArray(listing.media_urls) ? listing.media_urls[0] : null;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(firstImage) && !imageFailed;
@@ -79,8 +79,13 @@ export default function ListingCard({ listing }: { listing: Listing }) {
               <span aria-hidden="true">→</span>
             </span>
           </div>
+          {showCampus && listing.campus ? (
+            <p className="mt-1.5 truncate text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+              {listing.campus === 'MUKIRIA' ? 'Mukiria TTI' : listing.campus}
+            </p>
+          ) : null}
           {listing.location ? (
-            <p className="mt-1.5 flex items-center gap-1 truncate text-[10px] text-slate-500 dark:text-slate-400">
+            <p className="mt-1 flex items-center gap-1 truncate text-[10px] text-slate-500 dark:text-slate-400">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
               {listing.location}
             </p>
