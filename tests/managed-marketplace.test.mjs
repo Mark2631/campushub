@@ -12,6 +12,8 @@ test('homepage uses product departments, a business shelf and a clear request pa
   assert.match(home, /Shop by category/);
   assert.match(home, /categoryShelves/);
   assert.match(home, /Campus businesses/);
+  assert.match(home, /All campuses/);
+  assert.match(home, /browseScope === 'all' \? '' : feedInstitution/);
   assert.match(home, /Promote a business/);
   assert.match(home, /\/sell\?mode=request/);
   assert.match(card, /listing\.category/);
@@ -20,6 +22,9 @@ test('homepage uses product departments, a business shelf and a clear request pa
   assert.match(card, /listing\.negotiable \? 'Negotiable' : 'Fixed price'/);
   assert.match(card, /Price on enquiry/);
   assert.match(card, /Reviewed/);
+  assert.match(card, /showCampus/);
+  const listingCardQuery = await read('../lib/listings.ts');
+  assert.match(listingCardQuery, /location, campus, media_urls/);
   const listings = await read('../lib/listings.ts');
   assert.doesNotMatch(listings, /select\('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at'\)/);
   assert.doesNotMatch(listings, /sellerPhoneNumber:/);
