@@ -277,7 +277,7 @@ export default function AdminPage() {
   };
 
   const reviewInputFor = (listing: AdminDashboardData['listings'][number]) => listingReviewInputs[listing.id] || {
-    price: listing.price != null ? String(listing.price) : '',
+    price: '',
     negotiable: Boolean(listing.negotiable),
     reason: listing.moderation_reason || '',
   };
@@ -444,7 +444,7 @@ export default function AdminPage() {
   const handleApproveListing = async (listingId: string) => {
     const listing = dashboard.listings.find((item) => item.id === listingId);
     const values = listingReviewInputs[listingId] || {
-      price: listing?.price != null ? String(listing.price) : '',
+      price: '',
       negotiable: Boolean(listing?.negotiable),
       reason: listing?.moderation_reason || '',
     };
