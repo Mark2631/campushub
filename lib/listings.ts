@@ -428,12 +428,21 @@ export async function insertListing(
 
     // The app preview may run before the migration is applied. Retry without
     // newly introduced audit columns, while still submitting as hidden/pending.
-    for (const optionalColumn of ['reviewed_by', 'reviewed_at', 'moderation_reason', 'campus']) {
-      if (error && isMissingColumnError(error, 'listings', optionalColumn)) {
-        delete insertPayload[optionalColumn];
-        if (optionalColumn === 'reviewed_at') includeReviewTimestamp = false;
-        ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
-      }
+    const reviewSchemaMissing = error && (
+      isMissingColumnError(error, 'listings', 'reviewed_by')
+      || isMissingColumnError(error, 'listings', 'reviewed_at')
+      || isMissingColumnError(error, 'listings', 'moderation_reason')
+    );
+    if (reviewSchemaMissing) {
+      delete insertPayload.reviewed_by;
+      delete insertPayload.reviewed_at;
+      delete insertPayload.moderation_reason;
+      includeReviewTimestamp = false;
+      ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
+    }
+    if (error && isMissingColumnError(error, 'listings', 'campus')) {
+      delete insertPayload.campus;
+      ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
     }
 
     if (error) {
@@ -625,11 +634,15 @@ export async function updateListing(
   );
   let updatePayload: Record<string, unknown> = { ...payload };
   let { data: updated, error } = await runUpdate(updatePayload);
-  for (const optionalColumn of ['reviewed_by', 'reviewed_at', 'moderation_reason']) {
-    if (error && isMissingColumnError(error, 'listings', optionalColumn)) {
-      delete updatePayload[optionalColumn];
-      ({ data: updated, error } = await runUpdate(updatePayload));
-    }
+  if (error && (
+    isMissingColumnError(error, 'listings', 'reviewed_by')
+    || isMissingColumnError(error, 'listings', 'reviewed_at')
+    || isMissingColumnError(error, 'listings', 'moderation_reason')
+  )) {
+    delete updatePayload.reviewed_by;
+    delete updatePayload.reviewed_at;
+    delete updatePayload.moderation_reason;
+    ({ data: updated, error } = await runUpdate(updatePayload));
   }
 
   if (error) {
