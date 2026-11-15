@@ -13,7 +13,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   const showImage = Boolean(firstImage) && !imageFailed;
   const priceLabel = listing.price != null && listing.price > 0
     ? 'KSh ' + listing.price.toLocaleString('en-KE')
-    : 'Ask seller for price';
+    : 'Price on enquiry';
   const sellerLabel = listing.sellerType === 'business'
     ? listing.sellerName || 'Campus business'
     : listing.sellerName || 'CampusTrader member';
