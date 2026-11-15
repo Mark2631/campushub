@@ -348,12 +348,16 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
           .order('created_at', { ascending: false })
           .limit(100);
       };
-      let response = await fetchBusinesses(true, true);
+      let includeOwnerId = true;
+      let includeUserId = true;
+      let response = await fetchBusinesses(includeOwnerId, includeUserId);
       if (response.error && isMissingColumnError(response.error, 'businesses', 'owner_id')) {
-        response = await fetchBusinesses(false, true) as typeof response;
+        includeOwnerId = false;
+        response = await fetchBusinesses(includeOwnerId, includeUserId) as typeof response;
       }
       if (response.error && isMissingColumnError(response.error, 'businesses', 'user_id')) {
-        response = await fetchBusinesses(true, false) as typeof response;
+        includeUserId = false;
+        response = await fetchBusinesses(includeOwnerId, includeUserId) as typeof response;
       }
       const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
       return {
@@ -451,13 +455,54 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       return { data: (response.data || []) as AdminReport[], error: response.error };
     }),
     safeSection('buyer item requests', [] as AdminItemRequest[], async () => {
-      const response = await supabase
-        .from('item_requests')
-        .select('id, user_id, title, description, category, min_price, max_price, location, interested_count, status, campus, institution_id, created_at')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      return { data: (response.data || []) as AdminItemRequest[], error: response.error };
+      const fetchItemRequests = (includeInterest: boolean, includeCampus: boolean, includeInstitution: boolean) => {
+        const columns = [
+          'id', 'user_id', 'title', 'description', 'category', 'min_price', 'max_price',
+          'location', ...(includeInterest ? ['interested_count'] : []), 'status',
+          ...(includeCampus ? ['campus'] : []),
+          ...(includeInstitution ? ['institution_id'] : []),
+          'created_at',
+        ].join(', ');
+        return supabase.from('item_requests').select(columns)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(100);
+      };
+      let includeInterest = true;
+      let includeCampus = true;
+      let includeInstitution = true;
+      let response = await fetchItemRequests(includeInterest, includeCampus, includeInstitution);
+      if (response.error && isMissingColumnError(response.error, 'item_requests', 'interested_count')) {
+        includeInterest = false;
+        response = await fetchItemRequests(includeInterest, includeCampus, includeInstitution) as typeof response;
+      }
+      if (response.error && isMissingColumnError(response.error, 'item_requests', 'campus')) {
+        includeCampus = false;
+        response = await fetchItemRequests(includeInterest, includeCampus, includeInstitution) as typeof response;
+      }
+      if (response.error && isMissingColumnError(response.error, 'item_requests', 'institution_id')) {
+        includeInstitution = false;
+        response = await fetchItemRequests(includeInterest, includeCampus, includeInstitution) as typeof response;
+      }
+      const rows = (response.data || []) as unknown as Array<Record<string, unknown>>;
+      return {
+        data: rows.map((row) => ({
+          id: String(row.id || ''),
+          user_id: typeof row.user_id === 'string' ? row.user_id : null,
+          title: String(row.title || 'Untitled request'),
+          description: typeof row.description === 'string' ? row.description : null,
+          category: typeof row.category === 'string' ? row.category : null,
+          min_price: row.min_price == null ? null : Number(row.min_price),
+          max_price: row.max_price == null ? null : Number(row.max_price),
+          location: typeof row.location === 'string' ? row.location : null,
+          interested_count: typeof row.interested_count === 'number' ? row.interested_count : 0,
+          status: String(row.status || 'open'),
+          campus: typeof row.campus === 'string' ? row.campus : null,
+          institution_id: typeof row.institution_id === 'string' ? row.institution_id : null,
+          created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
+        })) as AdminItemRequest[],
+        error: response.error,
+      };
     }),
     safeCount('users', () => supabase.from('profiles').select('id', { count: 'exact', head: true })),
     safeCount('listings', () => supabase.from('listings').select('id', { count: 'exact', head: true })),
@@ -488,7 +533,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       .from('profiles')
       .select(includePhone ? 'id, full_name, email, phone_number' : 'id, full_name, email')
       .in('id', contactIds)
-      .limit(300);
+      .limit(1000);
     let response = await fetchContacts(true);
     if (response.error && isMissingColumnError(response.error, 'profiles', 'phone_number')) {
       response = await fetchContacts(false) as typeof response;
