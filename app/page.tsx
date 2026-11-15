@@ -389,11 +389,14 @@ export default function Home() {
 
         <section className="mt-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-slate-800 dark:bg-slate-900">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">List an item for your campus</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Advertise your campus business</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Send us your item details. Management checks the listing and sets the public price before it goes live.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
+            <Link href="/profile#manage-business-profile" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
+              Business profile
+            </Link>
+            <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
               Submit an item
             </Link>
             <Link href="/help" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
