@@ -1,25 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+
 const read = async (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('seller WhatsApp lookup is scoped to active listings, not public profiles', async () => {
-  const sql = await read('../supabase/migrations/20261027210000_active_listing_whatsapp_contact.sql');
+test('admin contact RPC exposes only the intentional CampusTrader WhatsApp endpoint', async () => {
+  const sql = await read('../supabase/migrations/20261115060000_campustrader_management_contact.sql');
   const button = await read('../components/WhatsAppButton.tsx');
-  const listing = await read('../app/listing/[id]/page.tsx');
-  assert.match(sql, /l\.status = 'active'/);
-  assert.match(sql, /l\.deleted_at IS NULL/);
-  assert.match(sql, /REVOKE ALL ON FUNCTION .* FROM PUBLIC/);
-  assert.match(button, /rpc\('get_listing_seller_whatsapp'/);
-  assert.match(button, /window\.location\.assign/);
-  assert.match(listing, /<WhatsAppButton listingId=\{listing\.id\}/);
+  assert.match(sql, /security definer/i);
+  assert.match(sql, /set search_path to ''/i);
+  assert.match(sql, /from public\.admins/);
+  assert.match(sql, /from public\.profiles/);
+  assert.match(sql, /nullif\(btrim\(p\.phone_number\), ''\)/i);
+  assert.match(button, /rpc\('get_campustrader_whatsapp'\)/);
+  assert.doesNotMatch(button, /get_listing_seller_whatsapp/);
 });
 
-test('ordering is disabled, listing cards give explicit view guidance', async () => {
+test('ordering is disabled and listing cards provide a clear way to open product details', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const card = await read('../components/ListingCard.tsx');
   assert.match(buy, /disabled aria-disabled="true"/);
-  assert.match(card, /View listing/);
+  assert.match(card, /View details/);
 });
 
 test('verification file selection is displayed and not reset on selection', async () => {
