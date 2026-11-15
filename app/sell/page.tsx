@@ -76,7 +76,7 @@ function SellPageContent() {
     profileContext.mode === 'business'
       ? profileContext.businessName || 'Business profile'
       : activeSellerProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Personal profile';
-  const sellerLabel = profileContext.mode === 'business' ? 'Business seller' : 'Student seller';
+  const sellerLabel = profileContext.mode === 'business' ? 'Campus business' : 'CampusTrader member';
 
   const [prevRequestMode, setPrevRequestMode] = useState(requestMode);
   if (requestMode !== prevRequestMode) {
