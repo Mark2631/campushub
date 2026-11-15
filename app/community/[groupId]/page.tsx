@@ -228,7 +228,7 @@ export default function CommunityGroupPage({ params }: Props) {
   const handlePublish = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!community || !user || publishing) return;
-    if (!isAdmin && community.posting_mode !== 'everyone') {
+    if (!isAdmin) {
       setMessage({ type: 'error', text: 'You do not have permission to do that.' });
       return;
     }
@@ -441,7 +441,7 @@ export default function CommunityGroupPage({ params }: Props) {
           </div>
         ) : null}
 
-        {user && (isAdmin || community.posting_mode === 'everyone') ? (
+        {user && isAdmin ? (
           <form onSubmit={handlePublish} className="mb-5 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-bold text-slate-900 dark:text-white">New group post</p>
