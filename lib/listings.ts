@@ -117,12 +117,9 @@ async function enrichListings(rows: ListingRow[]) {
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
     const business = row.business_id ? businessesById.get(row.business_id) : null;
-    const emailPrefix = profile?.email?.split('@')[0] || null;
-
-
     return {
       ...row,
-      sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader member',
+      sellerName: business?.business_name || profile?.full_name || 'CampusTrader member',
       sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
       sellerAvatarUrl: profile?.avatar_url || null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
