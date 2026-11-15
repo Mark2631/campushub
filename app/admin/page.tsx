@@ -7,6 +7,7 @@ import AdminTransactionDesk from '../../components/AdminTransactionDesk';
 import ManualDeliveryRequests from '../../components/ManualDeliveryRequests';
 import Logo from '../../components/Logo';
 import useUser from '../../hooks/useUser';
+import { DEFAULT_CAMPUS, SUPPORTED_INSTITUTIONS, institutionLabel, type Institution } from '../../lib/validation';
 import {
   Community,
   CommunityPost,
@@ -182,7 +183,7 @@ export default function AdminPage() {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [communityWorking, setCommunityWorking] = useState(false);
-  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' as const });
+  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', campus: DEFAULT_CAMPUS as Institution, postingMode: 'admin_only' as const });
   const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
   const [communityCoverFile, setCommunityCoverFile] = useState<File | null>(null);
@@ -489,6 +490,7 @@ export default function AdminPage() {
       name: communityForm.name,
       description: communityForm.description,
       category: communityForm.category,
+      campus: communityForm.campus,
       postingMode: communityForm.postingMode,
     });
 
@@ -522,7 +524,7 @@ export default function AdminPage() {
     setCommunityWorking(false);
     setCommunities((current) => [nextCommunity, ...current]);
     setSelectedCommunityId(community.id);
-    setCommunityForm({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' });
+    setCommunityForm({ name: '', description: '', category: 'Announcements', campus: DEFAULT_CAMPUS, postingMode: 'admin_only' });
     setCommunityCoverFile(null);
     setMessage({ type: 'success', text: 'Community created.' });
     showToast({ type: 'success', message: 'Community created.' });
@@ -1317,7 +1319,7 @@ export default function AdminPage() {
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-xl font-bold">Communities</h2>
-                <p className="mt-1 text-sm text-zinc-400">Official MUST groups, posts, pins, and moderation.</p>
+                <p className="mt-1 text-sm text-zinc-400">Official campus groups, posts, pins, and moderation.</p>
               </div>
               <select
                 value={selectedCommunityId}
@@ -1348,6 +1350,18 @@ export default function AdminPage() {
                     placeholder="Category"
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   />
+                  <label className="block text-xs font-semibold text-zinc-300">
+                    Campus
+                    <select
+                      value={communityForm.campus}
+                      onChange={(event) => setCommunityForm((current) => ({ ...current, campus: event.target.value as Institution }))}
+                      className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    >
+                      {SUPPORTED_INSTITUTIONS.map((institution) => (
+                        <option key={institution} value={institution}>{institutionLabel(institution)}</option>
+                      ))}
+                    </select>
+                  </label>
                   <p className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-zinc-300">
                     Only CampusTrader management can publish to this community.
                   </p>
