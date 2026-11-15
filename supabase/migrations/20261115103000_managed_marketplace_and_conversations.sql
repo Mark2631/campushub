@@ -8,6 +8,99 @@ ALTER TABLE public.listings
   ADD COLUMN IF NOT EXISTS reviewed_at timestamptz,
   ADD COLUMN IF NOT EXISTS moderation_reason text;
 
+-- Existing tenant protection also guards moderation_status. Permit the owner
+-- to move their own edited product to the one safe state that requests review,
+-- while keeping approval, deletion and other moderation controls admin-only.
+CREATE OR REPLACE FUNCTION public.guard_listing_tenant_fields()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'pg_catalog', 'public', 'auth', 'private'
+AS $function$
+DECLARE
+  v_tenant_id uuid;
+  v_code text;
+  v_owner_lifecycle_update boolean := false;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  v_tenant_id := private.current_active_institution_id();
+
+  IF TG_OP = 'INSERT' THEN
+    IF v_tenant_id IS NULL THEN
+      RAISE EXCEPTION 'active institution required' USING errcode = '42501';
+    END IF;
+
+    IF NEW.institution_id IS DISTINCT FROM v_tenant_id THEN
+      RAISE EXCEPTION 'listing institution must match the authenticated profile institution' USING errcode = '42501';
+    END IF;
+
+    SELECT CASE WHEN upper(i.code) = 'MUKIRIA TTI' THEN 'MUKIRIA' ELSE i.code END
+      INTO v_code
+    FROM public.institutions i
+    WHERE i.id = v_tenant_id AND i.status = 'active';
+
+    NEW.campus := v_code;
+    NEW.created_at := now();
+    NEW.updated_at := now();
+    NEW.hidden_at := NULL;
+    NEW.hidden_by := NULL;
+    NEW.deleted_at := NULL;
+    NEW.deleted_by := NULL;
+    RETURN NEW;
+  END IF;
+
+  -- Ownership and tenant identity never change during moderation.
+  IF NEW.id IS DISTINCT FROM OLD.id
+     OR NEW.user_id IS DISTINCT FROM OLD.user_id
+     OR NEW.seller_id IS DISTINCT FROM OLD.seller_id
+     OR NEW.institution_id IS DISTINCT FROM OLD.institution_id
+     OR NEW.campus IS DISTINCT FROM OLD.campus
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION 'listing owner, institution, campus, and creation time are immutable' USING errcode = '42501';
+  END IF;
+
+  IF NOT COALESCE(public.is_admin(), false)
+     AND (
+       (
+         NEW.moderation_status IS DISTINCT FROM OLD.moderation_status
+         AND NOT (
+           auth.uid() = OLD.user_id
+           AND auth.uid() = OLD.seller_id
+           AND NEW.status = 'hidden'::public.listing_status
+           AND NEW.moderation_status = 'pending_review'
+         )
+       )
+       OR NEW.hidden_at IS DISTINCT FROM OLD.hidden_at
+       OR NEW.hidden_by IS DISTINCT FROM OLD.hidden_by
+       OR NEW.deleted_at IS DISTINCT FROM OLD.deleted_at
+       OR NEW.deleted_by IS DISTINCT FROM OLD.deleted_by
+     ) THEN
+    RAISE EXCEPTION 'moderation and deletion state can only be changed by an administrator, except an owner may request review for their hidden edit' USING errcode = '42501';
+  END IF;
+
+  -- Admins operate across campuses. Non-admins may only change lifecycle
+  -- status on their own row when their active institution context differs.
+  IF (v_tenant_id IS NULL OR NEW.institution_id IS DISTINCT FROM v_tenant_id)
+     AND NOT COALESCE(public.is_admin(), false) THEN
+    v_owner_lifecycle_update :=
+      auth.uid() = OLD.user_id
+      AND auth.uid() = OLD.seller_id
+      AND NEW.status IS DISTINCT FROM OLD.status
+      AND NEW.status::text IN ('active', 'sold', 'hidden')
+      AND (to_jsonb(NEW) - 'status' - 'updated_at') = (to_jsonb(OLD) - 'status' - 'updated_at');
+
+    IF NOT v_owner_lifecycle_update THEN
+      RAISE EXCEPTION 'active institution required; only the listing owner may change lifecycle status across campus context' USING errcode = '42501';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+
 CREATE INDEX IF NOT EXISTS listings_moderation_review_queue_idx
   ON public.listings (created_at DESC)
   WHERE status = 'hidden'::public.listing_status
