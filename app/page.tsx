@@ -238,6 +238,8 @@ export default function Home() {
               Books: 'Textbooks and study material',
               Food: 'Meals and snacks',
               Refurbished: 'Restored and renewed',
+              Services: 'Repairs and campus help',
+              Business: 'Products from local shops',
               Other: 'More campus finds',
             };
             return (
