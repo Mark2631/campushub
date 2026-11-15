@@ -285,7 +285,8 @@ export default async function ListingPage({ params }: Props) {
                     <>
                       <BuyOrderButton listingId={listing.id} />
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
-                      <WhatsAppButton listingId={listing.id} />
+                      <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">Your product enquiry goes to CampusTrader management. The item details are added to your message automatically.</p>
+                      <WhatsAppButton listingId={listing.id} listingTitle={listing.title} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}

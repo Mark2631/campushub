@@ -33,7 +33,6 @@ type ConversationDetails = {
     full_name: string | null;
     email: string | null;
     avatar_url: string | null;
-    phone_number?: string | null;
   };
 };
 
@@ -256,10 +255,10 @@ export default function ConversationPage({ params }: Props) {
                   View listing
                 </Link>
               ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
-              {conversation?.otherUser.id ? (
+              {conversation?.listingId ? (
                 <div className="mt-3">
-                  <WhatsAppButton userId={conversation.otherUser.id} phoneNumber={conversation.otherUser.phone_number} />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                  <WhatsAppButton listingId={conversation.listingId} listingTitle={conversation.listingTitle} />
+                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Your WhatsApp enquiry goes to CampusTrader management, not directly to the seller.</p>
                 </div>
               ) : null}
             </div>
