@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ImagePlus, Send, Trash2, X } from 'lucide-react';
@@ -41,10 +42,14 @@ const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery 
 export default function ConversationPage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const interestTitle = searchParams.get('item') || '';
+  const interestListingId = searchParams.get('listing') || '';
   const { user, loading, showToast } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
+  const [interestPrefilled, setInterestPrefilled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -52,6 +57,12 @@ export default function ConversationPage({ params }: Props) {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
+
+  useEffect(() => {
+    if (!interestTitle || interestPrefilled) return;
+    setMessageText((current) => current.trim() ? current : `Hi, I'm interested in ${interestTitle}. Is it still available?`);
+    setInterestPrefilled(true);
+  }, [interestTitle, interestPrefilled]);
 
   useEffect(() => {
     const load = async () => {
@@ -223,7 +234,7 @@ export default function ConversationPage({ params }: Props) {
               </div>
               <div className="min-w-0">
                 <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
-                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
+                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">CampusTrader direct chat</p>
               </div>
             </div>
             {conversation ? (
@@ -247,20 +258,21 @@ export default function ConversationPage({ params }: Props) {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Listing Reference Card */}
-            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-blue-50 p-4 dark:bg-blue-900/20">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Meet in public. Do not pay before inspection.</p>
-              {conversation?.listingId ? (
-                <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 underline dark:text-blue-200">
-                  View listing
-                </Link>
-              ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
-              {conversation?.listingId ? (
-                <div className="mt-3">
-                  <WhatsAppButton listingId={conversation.listingId} listingTitle={conversation.listingTitle} />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Your WhatsApp enquiry goes to CampusTrader management, not directly to the seller.</p>
-                </div>
-              ) : null}
+            <div className="rounded-2xl border border-gray-200 bg-slate-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              {interestTitle ? (
+                <>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Product enquiry</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{interestTitle}</p>
+                  {isValidUuid(interestListingId) ? (
+                    <Link href={`/listing/${interestListingId}`} className="mt-2 inline-flex text-xs font-semibold text-blue-700 underline dark:text-blue-300">
+                      Return to this product
+                    </Link>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-300">This is your ongoing chat. You can discuss more than one product in the same conversation.</p>
+              )}
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Meet in public and inspect the item before making payment. For WhatsApp assistance, use the management contact on the product page.</p>
             </div>
 
             {/* Messages Container */}
