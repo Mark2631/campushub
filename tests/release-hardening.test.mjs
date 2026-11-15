@@ -274,7 +274,7 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
   assert.ok(!source.includes('Have something to sell?'));
-  assert.ok(source.includes('Start selling'));
+  assert.ok(source.includes('Submit an item'));
   assert.ok(help.includes('A simpler way to trade around campus.'));
   assert.ok(help.includes('Post a listing'));
   assert.ok(help.includes('Ask CampusTrader'));
@@ -363,13 +363,13 @@ test('zero and missing listing prices are never presented as free', async () => 
     read('../app/admin/page.tsx'),
   ]);
   assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
-  assert.ok(sell.includes('Leave it blank if buyers should contact you to agree on a price.'));
+  assert.ok(sell.includes('Management checks this suggestion and decides the public price.'));
   for (const source of [card, detail]) {
     assert.ok(source.includes('Ask seller for price'));
     assert.ok(!source.includes("'Free'"));
   }
   assert.ok(home.includes('listing.price > 0'));
-  assert.ok(admin.includes('Ask seller for price'));
+  assert.ok(admin.includes('No public price'));
 });
 
 test('Edit Profile is separated from Manage and includes identity fields', async () => {
