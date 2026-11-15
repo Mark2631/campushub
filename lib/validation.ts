@@ -81,8 +81,8 @@ export function isMissingColumnError(error: unknown, table: string, column: stri
   const message = String((error as { message?: unknown }).message || '');
   const postgresMissingColumn = new RegExp(`column\\s+${table}\\.${column}\\s+does not exist`, 'i').test(message);
   const postgrestMissingColumn = /could not find|schema cache/i.test(message)
-    && new RegExp(`['"`]${column}['"`]`, 'i').test(message)
-    && new RegExp(`['"`]${table}['"`]`, 'i').test(message);
+    && message.toLowerCase().includes(column.toLowerCase())
+    && message.toLowerCase().includes(table.toLowerCase());
   return postgresMissingColumn || postgrestMissingColumn;
 }
 
