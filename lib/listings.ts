@@ -31,6 +31,7 @@ export interface Listing {
   status: string;
   moderation_status?: string | null;
   reviewed_at?: string | null;
+  moderation_reason?: string | null;
   location: string | null;
   media_urls: string[];
   video_url: string | null;
@@ -200,6 +201,7 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     updated_at: row.updated_at || row.created_at || new Date().toISOString(),
     moderation_status: row.moderation_status ?? null,
     reviewed_at: row.reviewed_at ?? null,
+    moderation_reason: row.moderation_reason ?? null,
   };
 }
 
@@ -277,7 +279,7 @@ export async function getListingsByUser(userId: string) {
   try {
     const { data, error } = await supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url')
+      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, moderation_reason, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
 
