@@ -70,24 +70,12 @@ export default function Home() {
         }),
       ]);
 
-      let finalResult = result;
-      let effectiveInstitution = browseScope === 'all' ? 'ALL' : primaryInstitution;
-      if (!result.error && result.listings.length === 0 && primaryInstitution && primaryInstitution !== 'MUST') {
-        finalResult = await Promise.race([
-          getListings(pageSize, 0, 'MUST'),
-          new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
-            window.setTimeout(() => resolve({ listings: [], error: 'The catalogue took too long to respond. Please retry.' }), 10000);
-          }),
-        ]);
-        effectiveInstitution = 'MUST';
-      }
-
       if (!active) return;
-      setFeedInstitution(effectiveInstitution);
-      setListings(finalResult.listings);
-      setOffset(finalResult.listings.length);
-      setHasMore(finalResult.listings.length === pageSize);
-      setError(finalResult.error);
+      setFeedInstitution(browseScope === 'all' ? 'ALL' : primaryInstitution);
+      setListings(result.listings);
+      setOffset(result.listings.length);
+      setHasMore(result.listings.length === pageSize);
+      setError(result.error);
       setLoading(false);
     };
 
@@ -401,14 +389,23 @@ export default function Home() {
             <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center dark:border-slate-700 dark:bg-slate-900">
               <PackageSearch className="mx-auto h-8 w-8 text-slate-400" aria-hidden="true" />
               <h3 className="mt-3 text-base font-semibold text-slate-900 dark:text-white">
-                {listings.length === 0 ? 'The catalogue is just getting started.' : 'No matching products found.'}
+                {listings.length === 0
+                  ? browseScope === 'campus' && isSignedIn ? 'No products listed at your campus yet.' : 'The catalogue is just getting started.'
+                  : 'No matching products found.'}
               </h3>
               <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
                 {listings.length === 0
-                  ? 'Products appear here after CampusTrader management reviews the details and sets the public price.'
+                  ? browseScope === 'campus' && isSignedIn
+                    ? 'There are no reviewed products at this campus yet. Browse all participating campuses or request the product you need.'
+                    : 'Products appear here after CampusTrader management reviews the details and sets the public price.'
                   : "Try another search or category. Can't find it? Send a product request and management can check with campus sellers."}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {browseScope === 'campus' && isSignedIn && listings.length === 0 ? (
+                  <button type="button" onClick={() => setBrowseScope('all')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                    Browse all campuses
+                  </button>
+                ) : null}
                 {activeFilterCount > 0 || query || activeCategory !== 'All' ? (
                   <button type="button" onClick={() => { setQuery(''); setActiveCategory('All'); clearFilters(); }} className="rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
                     Clear search and filters
