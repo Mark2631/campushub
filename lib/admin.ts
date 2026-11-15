@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { createAdminNotificationRecord } from './notifications';
 import { ComplaintRecord, getComplaints, updateComplaintStatus } from './complaints';
-import { cleanText, isValidUuid } from './validation';
+import { cleanText, isMissingColumnError, isValidUuid } from './validation';
 
 export interface AdminVerificationRequest {
   id: string;
@@ -61,6 +61,7 @@ export interface AdminUser {
   id: string;
   email: string | null;
   full_name: string | null;
+  phone_number?: string | null;
   verification_status: string | null;
   role: string | null;
   created_at?: string;
@@ -268,18 +269,24 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       return { data: (response.data || []) as AdminBusiness[], error: response.error };
     }),
     safeSection('listings', [] as AdminListing[], async () => {
-      const response = await supabase
+      const fetchListings = (includeModerationReason: boolean) => supabase
         .from('listings')
-        .select('id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, moderation_reason, media_urls, business_id, location, created_at')
+        .select(includeModerationReason
+          ? 'id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, moderation_reason, media_urls, business_id, location, created_at'
+          : 'id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, media_urls, business_id, location, created_at')
         .or('status.in.(active,reported),moderation_status.eq.pending_review')
         .order('created_at', { ascending: false })
         .limit(100);
+      let response = await fetchListings(true);
+      if (response.error && isMissingColumnError(response.error, 'listings', 'moderation_reason')) {
+        response = await fetchListings(false);
+      }
       return { data: (response.data || []) as AdminListing[], error: response.error };
     }),
     safeSection('users', [] as AdminUser[], async () => {
       const response = await supabase
         .from('profiles')
-        .select('id, email, full_name, verification_status, role, created_at')
+        .select('id, email, full_name, phone_number, verification_status, role, created_at')
         .order('created_at', { ascending: false })
         .limit(80);
       return { data: (response.data || []) as AdminUser[], error: response.error };
@@ -1075,23 +1082,36 @@ export async function approveListingSubmission(
   }
 
   const reviewedAt = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('listings')
-    .update({
+  const runApproval = (includeReviewDetails: boolean) => {
+    const payload: Record<string, unknown> = {
       price: finalPrice,
       negotiable,
       status: 'active',
       moderation_status: 'safe',
-      reviewed_by: adminId,
-      reviewed_at: reviewedAt,
-      moderation_reason: null,
       updated_at: reviewedAt,
-    })
-    .eq('id', listingId)
-    .eq('status', 'hidden')
-    .eq('moderation_status', 'pending_review')
-    .select('id')
-    .maybeSingle();
+    };
+    if (includeReviewDetails) {
+      payload.reviewed_by = adminId;
+      payload.reviewed_at = reviewedAt;
+      payload.moderation_reason = null;
+    }
+    return supabase
+      .from('listings')
+      .update(payload)
+      .eq('id', listingId)
+      .eq('status', 'hidden')
+      .eq('moderation_status', 'pending_review')
+      .select('id')
+      .maybeSingle();
+  };
+  let { data, error } = await runApproval(true);
+  if (error && (
+    isMissingColumnError(error, 'listings', 'reviewed_by')
+    || isMissingColumnError(error, 'listings', 'reviewed_at')
+    || isMissingColumnError(error, 'listings', 'moderation_reason')
+  )) {
+    ({ data, error } = await runApproval(false));
+  }
 
   if (error) {
     console.error('Listing approval failed:', error);
@@ -1124,21 +1144,34 @@ export async function rejectListingSubmission(listingId: string, reason: string)
   }
 
   const reviewedAt = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('listings')
-    .update({
+  const runRejection = (includeReviewDetails: boolean) => {
+    const payload: Record<string, unknown> = {
       status: 'hidden',
       moderation_status: 'rejected',
-      reviewed_by: adminId,
-      reviewed_at: reviewedAt,
-      moderation_reason: cleanReason,
       updated_at: reviewedAt,
-    })
-    .eq('id', listingId)
-    .eq('status', 'hidden')
-    .eq('moderation_status', 'pending_review')
-    .select('id')
-    .maybeSingle();
+    };
+    if (includeReviewDetails) {
+      payload.reviewed_by = adminId;
+      payload.reviewed_at = reviewedAt;
+      payload.moderation_reason = cleanReason;
+    }
+    return supabase
+      .from('listings')
+      .update(payload)
+      .eq('id', listingId)
+      .eq('status', 'hidden')
+      .eq('moderation_status', 'pending_review')
+      .select('id')
+      .maybeSingle();
+  };
+  let { data, error } = await runRejection(true);
+  if (error && (
+    isMissingColumnError(error, 'listings', 'reviewed_by')
+    || isMissingColumnError(error, 'listings', 'reviewed_at')
+    || isMissingColumnError(error, 'listings', 'moderation_reason')
+  )) {
+    ({ data, error } = await runRejection(false));
+  }
 
   if (error) {
     console.error('Listing rejection failed:', error);
