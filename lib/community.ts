@@ -94,7 +94,7 @@ export const officialCommunitySeeds: Community[] = [
     category: 'Deals',
     cover_url: null,
     is_official: true,
-    posting_mode: 'everyone',
+    posting_mode: 'admin_only',
     status: 'active',
     created_by: null,
   },
@@ -397,7 +397,7 @@ export async function createCommunityPost(args: {
     return { post: null as CommunityPost | null, error: GENERIC_ERROR };
   }
 
-  if (!isAdmin && community.posting_mode !== 'everyone') {
+  if (!isAdmin) {
     return { post: null as CommunityPost | null, error: PERMISSION_ERROR };
   }
 
