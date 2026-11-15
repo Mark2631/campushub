@@ -50,6 +50,8 @@ import {
 const emptyDashboard: AdminDashboardData = {
   verifications: [],
   communityRequests: [],
+  itemRequests: [],
+  contacts: [],
   businesses: [],
   listings: [],
   users: [],
@@ -64,6 +66,7 @@ const emptyDashboard: AdminDashboardData = {
     activeListings: 0,
     reportedListings: 0,
     pendingBusinesses: 0,
+    openRequests: 0,
   },
   complaints: [],
   errors: [],
@@ -170,7 +173,7 @@ export default function AdminPage() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'listings' | 'payments' | 'delivery' | 'service-delivery' | 'verifications' | 'reports' | 'communities'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'businesses' | 'requests' | 'listings' | 'payments' | 'delivery' | 'service-delivery' | 'verifications' | 'reports' | 'communities'>('overview');
   const [modalState, setModalState] = useState<ModalState>({ type: null });
   const [modalNotes, setModalNotes] = useState('');
   const [modalTitle, setModalTitle] = useState('');
@@ -188,6 +191,9 @@ export default function AdminPage() {
   const [auditError, setAuditError] = useState<string | null>(null);
   const [listingReviewInputs, setListingReviewInputs] = useState<Record<string, { price: string; negotiable: boolean; reason: string }>>({});
 
+  const contactsById = useMemo(() => {
+    return new Map(dashboard.contacts.map((contact) => [contact.id, contact]));
+  }, [dashboard.contacts]);
   const usersById = useMemo(() => {
     return new Map(dashboard.users.map((user) => [user.id, user]));
   }, [dashboard.users]);
@@ -692,7 +698,7 @@ export default function AdminPage() {
 
         {/* Tab Navigation */}
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-zinc-800 pb-0">
-          {(['overview', 'users', 'businesses', 'listings', 'payments', 'delivery', 'service-delivery', 'verifications', 'reports', 'communities'] as const).map((t) => (
+          {(['overview', 'users', 'businesses', 'requests', 'listings', 'payments', 'delivery', 'service-delivery', 'verifications', 'reports', 'communities'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -700,7 +706,7 @@ export default function AdminPage() {
                 tab === t ? 'border-b-2 border-blue-500 text-blue-300' : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
-              {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : t === 'service-delivery' ? 'Service delivery' : formatStatus(t)}
+              {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : t === 'service-delivery' ? 'Service delivery' : t === 'requests' ? `Buyer requests (${dashboard.stats.openRequests})` : formatStatus(t)}
             </button>
           ))}
         </div>
@@ -722,6 +728,7 @@ export default function AdminPage() {
                   ['Active listings', dashboard.stats.activeListings],
                   ['Reported listings', dashboard.stats.reportedListings],
                   ['Businesses', dashboard.stats.businesses],
+                  ['Open buyer requests', dashboard.stats.openRequests],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
                     <p className="text-2xl font-bold text-white">{value}</p>
@@ -875,7 +882,9 @@ export default function AdminPage() {
             <h2 className="text-xl font-bold">Business management ({dashboard.businesses.length} businesses)</h2>
             <div className="space-y-3">
               {dashboard.businesses.length > 0 ? (
-                dashboard.businesses.map((business) => (
+                dashboard.businesses.map((business) => {
+                  const ownerContact = contactsById.get(business.owner_id || business.user_id);
+                  return (
                   <article key={business.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0">
@@ -885,10 +894,16 @@ export default function AdminPage() {
                         </div>
                         <p className="mt-2 text-sm text-zinc-400">{business.category} · {business.location}</p>
                         <p className="mt-1 text-sm text-zinc-500">{business.description || 'No description'}</p>
+                        <div className="mt-3 rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 text-xs text-zinc-400">
+                          <p>Owner: {ownerContact?.full_name || ownerContact?.email || business.owner_id || business.user_id || 'Not linked'}</p>
+                          {ownerContact?.phone_number ? <p className="mt-1">Phone: <a href={`tel:${ownerContact.phone_number}`} className="font-semibold text-blue-300 underline">{ownerContact.phone_number}</a></p> : null}
+                          {ownerContact?.email ? <p className="mt-1">Email: <a href={`mailto:${ownerContact.email}`} className="font-semibold text-blue-300 underline">{ownerContact.email}</a></p> : null}
+                          {!ownerContact?.phone_number && !ownerContact?.email ? <p className="mt-1">Owner contact details are not available on this profile.</p> : null}
+                        </div>
                         <p className="mt-1 text-xs text-zinc-600">{formatDate(business.created_at)}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {business.verification_status === 'unverified' && (
+                        {['unverified', 'pending'].includes(business.verification_status) && (
                           <>
                             <button
                               onClick={() => openModal('business_approve', 'Approve Business', `Approve "${business.business_name}"?`, business.id, 'business')}
@@ -929,10 +944,63 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </article>
-                ))
+                  );
+                })
               ) : (
                 <EmptyState text="No businesses found." />
               )}
+            </div>
+          </section>
+        )}
+
+        {/* Buyer Requests Tab */}
+        {tab === 'requests' && (
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold">Buyer requests ({dashboard.itemRequests.length} open)</h2>
+              <p className="mt-1 max-w-2xl text-sm text-zinc-400">These are people actively looking for products. Use their details to match demand with campus sellers and businesses.</p>
+            </div>
+            <div className="space-y-3">
+              {dashboard.itemRequests.length > 0 ? dashboard.itemRequests.map((request) => {
+                const requester = request.user_id ? contactsById.get(request.user_id) : null;
+                const budget = request.min_price != null || request.max_price != null
+                  ? request.min_price != null && request.max_price != null
+                    ? `KSh ${Number(request.min_price).toLocaleString('en-KE')}–${Number(request.max_price).toLocaleString('en-KE')}`
+                    : request.min_price != null
+                      ? `From KSh ${Number(request.min_price).toLocaleString('en-KE')}`
+                      : `Up to KSh ${Number(request.max_price).toLocaleString('en-KE')}`
+                  : 'Budget not specified';
+                return (
+                  <article key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-white">{request.title}</h3>
+                          <StatusPill status={request.status} />
+                          {request.category ? <span className="text-xs text-zinc-500">{request.category}</span> : null}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-zinc-300">{request.description || 'No extra details supplied.'}</p>
+                        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
+                          <span>{budget}</span>
+                          {request.location ? <span>{request.location}</span> : null}
+                          {request.campus ? <span>{request.campus}</span> : null}
+                          <span>{request.interested_count || 0} interested</span>
+                          <span>{formatDate(request.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-zinc-800 bg-black/40 p-3 text-xs text-zinc-400 lg:w-72">
+                        <p className="font-semibold text-zinc-200">{requester?.full_name || requester?.email || 'Requester contact unavailable'}</p>
+                        {requester?.phone_number ? (
+                          <p className="mt-2">Phone: <a href={`tel:${requester.phone_number}`} className="font-semibold text-blue-300 underline">{requester.phone_number}</a></p>
+                        ) : <p className="mt-2">No phone number on profile.</p>}
+                        {requester?.email ? (
+                          <p className="mt-1">Email: <a href={`mailto:${requester.email}`} className="font-semibold text-blue-300 underline">{requester.email}</a></p>
+                        ) : <p className="mt-1">No email on profile.</p>}
+                      </div>
+                    </div>
+                  </article>
+                );
+              }) : <EmptyState text="No open buyer requests." />}
             </div>
           </section>
         )}
@@ -963,9 +1031,11 @@ export default function AdminPage() {
                             {listing.condition || 'Condition not supplied'} · {listing.location || 'No location'}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-zinc-300">{listing.description || 'No description supplied.'}</p>
-                          <div className="mt-2 text-xs text-zinc-500">
-                            <p>Submitted by: {usersById.get(listing.seller_id)?.full_name || usersById.get(listing.seller_id)?.email || listing.seller_id}</p>
-                            {usersById.get(listing.seller_id)?.phone_number ? <p>Seller contact: {usersById.get(listing.seller_id)?.phone_number}</p> : null}
+                          <div className="mt-2 rounded-lg border border-zinc-800 bg-black/40 px-3 py-2 text-xs text-zinc-400">
+                            <p>Submitted by: {contactsById.get(listing.seller_id)?.full_name || contactsById.get(listing.seller_id)?.email || listing.seller_id}</p>
+                            {contactsById.get(listing.seller_id)?.phone_number ? <p className="mt-1">Phone: <a href={`tel:${contactsById.get(listing.seller_id)?.phone_number}`} className="font-semibold text-blue-300 underline">{contactsById.get(listing.seller_id)?.phone_number}</a></p> : null}
+                            {contactsById.get(listing.seller_id)?.email ? <p className="mt-1">Email: <a href={`mailto:${contactsById.get(listing.seller_id)?.email}`} className="font-semibold text-blue-300 underline">{contactsById.get(listing.seller_id)?.email}</a></p> : null}
+                            {!contactsById.get(listing.seller_id)?.phone_number && !contactsById.get(listing.seller_id)?.email ? <p className="mt-1">No contact details available on this profile.</p> : null}
                           </div>
                           {listing.media_urls?.length ? (
                             <div className="mt-2 flex flex-wrap gap-2">
@@ -1061,7 +1131,7 @@ export default function AdminPage() {
             <div className="space-y-3">
               {dashboard.verifications.length > 0 ? (
                 dashboard.verifications.map((request) => {
-                  const requester = usersById.get(request.user_id);
+                  const requester = contactsById.get(request.user_id);
                   return (
                     <article key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -1073,6 +1143,8 @@ export default function AdminPage() {
                           <p className="mt-2 text-sm text-zinc-400">
                             Requester: {requester?.full_name || requester?.email || request.user_id}
                           </p>
+                          {requester?.phone_number ? <p className="mt-1 text-xs text-zinc-400">Phone: <a href={`tel:${requester.phone_number}`} className="font-semibold text-blue-300 underline">{requester.phone_number}</a></p> : null}
+                          {requester?.email ? <p className="mt-1 text-xs text-zinc-400">Email: <a href={`mailto:${requester.email}`} className="font-semibold text-blue-300 underline">{requester.email}</a></p> : null}
                           <p className="mt-1 text-sm text-zinc-500">Document: {request.document_name || 'No document'}</p>
                           {request.document_urls?.length ? (
                             <div className="mt-2 flex flex-wrap gap-2">
@@ -1143,7 +1215,7 @@ export default function AdminPage() {
                 <p className="mt-1 text-sm text-zinc-400">Review student-created communities before they become visible.</p>
               </div>
               {dashboard.communityRequests.length > 0 ? dashboard.communityRequests.map((request) => {
-                const requester = request.created_by ? usersById.get(request.created_by) : null;
+                const requester = request.created_by ? contactsById.get(request.created_by) : null;
                 return (
                   <article key={request.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1198,8 +1270,9 @@ export default function AdminPage() {
                         </div>
                         <p className="mt-2 text-sm text-zinc-400">{report.reason || report.details || 'No reason provided'}</p>
                         <p className="mt-1 text-xs text-zinc-600">
-                          Target: {report.target_id} · Reporter: {report.reporter_id}
+                          Target: {report.target_id} · Reporter: {report.reporter_id ? contactsById.get(report.reporter_id)?.full_name || contactsById.get(report.reporter_id)?.email || report.reporter_id : 'Unknown'}
                         </p>
+                        {report.reporter_id && contactsById.get(report.reporter_id)?.phone_number ? <p className="mt-1 text-xs text-zinc-400">Reporter phone: <a href={`tel:${contactsById.get(report.reporter_id)?.phone_number}`} className="text-blue-300 underline">{contactsById.get(report.reporter_id)?.phone_number}</a></p> : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <select
