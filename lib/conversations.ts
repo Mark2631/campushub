@@ -89,7 +89,7 @@ export async function findOrCreateConversation(
     if (insertError.code === '23505') {
       const { data: racedConversation, error: retryError } = await findExisting();
       if (!retryError && racedConversation) {
-        const hiddenFor = (racedConversation.hidden_for || []).filter((id) => id !== buyerId);
+        const hiddenFor = (racedConversation.hidden_for || []).filter((id: string) => id !== buyerId);
         if (hiddenFor.length !== (racedConversation.hidden_for || []).length) {
           await supabase.from('conversations').update({ hidden_for: hiddenFor }).eq('id', racedConversation.id);
         }
