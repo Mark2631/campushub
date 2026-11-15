@@ -270,4 +270,51 @@ SET posting_mode = 'admin_only';
 
 DROP POLICY IF EXISTS users_can_request_communities ON public.communities;
 
+-- Admins need to see pending and cross-campus businesses during review.
+-- Preserve scoped visibility for ordinary authenticated users.
+DROP POLICY IF EXISTS hardening_businesses_select_institution ON public.businesses;
+CREATE POLICY hardening_businesses_select_institution
+  ON public.businesses
+  AS RESTRICTIVE
+  FOR SELECT
+  TO authenticated
+  USING (
+    COALESCE(public.is_admin(), false)
+    OR (
+      institution_id IS NOT NULL
+      AND institution_id = (SELECT private.current_active_institution_id())
+      AND status = 'active'
+    )
+  );
+
+DROP POLICY IF EXISTS ct_admin_businesses_read ON public.businesses;
+CREATE POLICY ct_admin_businesses_read
+  ON public.businesses
+  AS PERMISSIVE
+  FOR SELECT
+  TO authenticated
+  USING (COALESCE(public.is_admin(), false));
+
+-- Admin contact details are deliberately not exposed to the public marketplace.
+DROP POLICY IF EXISTS ct_admin_profile_contact_read ON public.profiles;
+CREATE POLICY ct_admin_profile_contact_read
+  ON public.profiles
+  AS PERMISSIVE
+  FOR SELECT
+  TO authenticated
+  USING (COALESCE(public.is_admin(), false));
+
+DROP POLICY IF EXISTS ct_admin_item_requests_read ON public.item_requests;
+CREATE POLICY ct_admin_item_requests_read
+  ON public.item_requests
+  AS PERMISSIVE
+  FOR SELECT
+  TO authenticated
+  USING (COALESCE(public.is_admin(), false));
+
+-- Public customers may reach the CampusTrader management contact, but no
+-- client role may call the seller-number lookup RPC.
+REVOKE ALL ON FUNCTION public.get_listing_seller_whatsapp(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_campustrader_whatsapp() TO anon, authenticated;
+
 COMMIT;
