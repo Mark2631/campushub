@@ -9,8 +9,8 @@ test('admin contact RPC exposes only the intentional CampusTrader WhatsApp endpo
   const button = await read('../components/WhatsAppButton.tsx');
   assert.match(sql, /security definer/i);
   assert.match(sql, /set search_path to ''/i);
-  assert.match(sql, /from public\.admins/);
-  assert.match(sql, /from public\.profiles/);
+  assert.match(sql, /FROM public\.admins AS a/i);
+  assert.match(sql, /JOIN public\.profiles AS p/i);
   assert.match(sql, /nullif\(btrim\(p\.phone_number\), ''\)/i);
   assert.match(button, /rpc\('get_campustrader_whatsapp'\)/);
   assert.doesNotMatch(button, /get_listing_seller_whatsapp/);
