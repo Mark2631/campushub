@@ -376,7 +376,7 @@ export default function Home() {
               <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
                 {listings.length === 0
                   ? 'Products appear here after CampusTrader management reviews the details and sets the public price.'
-                  : 'Try another search or category. Can't find it? Send a product request and management can check with campus sellers.'}
+                  : "Try another search or category. Can't find it? Send a product request and management can check with campus sellers."}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {activeFilterCount > 0 || query || activeCategory !== 'All' ? (
