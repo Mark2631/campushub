@@ -42,6 +42,7 @@ export default function Home() {
   const isSignedIn = Boolean(user?.id);
   const [listings, setListings] = useState<Listing[]>([]);
   const [feedInstitution, setFeedInstitution] = useState('MUST');
+  const [browseScope, setBrowseScope] = useState<'campus' | 'all'>('campus');
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
@@ -61,7 +62,7 @@ export default function Home() {
     const loadFirstPage = async () => {
       setLoading(true);
       setError(null);
-      const primaryInstitution = isSignedIn ? institution : 'MUST';
+      const primaryInstitution = browseScope === 'all' ? '' : isSignedIn ? institution : 'MUST';
       const result = await Promise.race([
         getListings(pageSize, 0, primaryInstitution),
         new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
@@ -70,8 +71,8 @@ export default function Home() {
       ]);
 
       let finalResult = result;
-      let effectiveInstitution = primaryInstitution;
-      if (!result.error && result.listings.length === 0 && primaryInstitution !== 'MUST') {
+      let effectiveInstitution = browseScope === 'all' ? 'ALL' : primaryInstitution;
+      if (!result.error && result.listings.length === 0 && primaryInstitution && primaryInstitution !== 'MUST') {
         finalResult = await Promise.race([
           getListings(pageSize, 0, 'MUST'),
           new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
@@ -96,7 +97,7 @@ export default function Home() {
       active = false;
       window.removeEventListener('campustrader:listings-refresh', loadFirstPage);
     };
-  }, [institution, isSignedIn]);
+  }, [browseScope, institution, isSignedIn]);
 
   const availableProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -112,6 +113,7 @@ export default function Home() {
         listing.description || '',
         listing.category,
         listing.location || '',
+        listing.campus || '',
         listing.sellerName || '',
       ].join(' ').toLowerCase();
       const searchMatch = !normalizedQuery || text.includes(normalizedQuery);
@@ -158,7 +160,7 @@ export default function Home() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const result = await getListings(pageSize, offset, feedInstitution);
+      const result = await getListings(pageSize, offset, feedInstitution === 'ALL' ? '' : feedInstitution);
       if (result.error) {
         setError(result.error);
         return;
@@ -190,9 +192,35 @@ export default function Home() {
             Good finds, closer to campus.
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base dark:text-slate-300">
-            From books and gadgets to fashion and room essentials, discover products listed by students and nearby businesses in one campus marketplace.
+            Find products from students and campus businesses across participating campuses.
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Browse</span>
+            <button
+              type="button"
+              aria-pressed={browseScope === 'campus'}
+              onClick={() => setBrowseScope('campus')}
+              className={browseScope === 'campus'
+                ? 'min-h-9 rounded-lg border border-blue-600 bg-blue-50 px-3 text-xs font-semibold text-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+                : 'min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}
+            >
+              {isSignedIn ? 'My campus' : 'MUST'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={browseScope === 'all'}
+              onClick={() => setBrowseScope('all')}
+              className={browseScope === 'all'
+                ? 'min-h-9 rounded-lg border border-blue-600 bg-blue-50 px-3 text-xs font-semibold text-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+                : 'min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}
+            >
+              All campuses
+            </button>
+            {browseScope === 'all' ? (
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Items show their campus on each card</span>
+            ) : null}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Browse products</span>
             <span aria-hidden="true">/</span>
             <span>Ask a question</span>
@@ -339,7 +367,7 @@ export default function Home() {
                       <Link href="/profile?setup=business" className="shrink-0 text-xs font-semibold text-blue-700 underline underline-offset-2 dark:text-blue-300">Promote a business</Link>
                     </div>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-                      {campusBusinessProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                      {campusBusinessProducts.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
                     </div>
                   </section>
                 ) : null}
@@ -359,14 +387,14 @@ export default function Home() {
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-                      {sectionListings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                      {sectionListings.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
                     </div>
                   </section>
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-                {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                {availableProducts.map((listing) => <ListingCard key={listing.id} listing={listing} showCampus={browseScope === 'all'} />)}
               </div>
             )
           ) : (
