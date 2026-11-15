@@ -39,6 +39,7 @@ function ListingSkeletons() {
 
 export default function Home() {
   const { user, institution } = useUser();
+  const isSignedIn = Boolean(user?.id);
   const [listings, setListings] = useState<Listing[]>([]);
   const [feedInstitution, setFeedInstitution] = useState('MUST');
   const [query, setQuery] = useState('');
@@ -60,7 +61,7 @@ export default function Home() {
     const loadFirstPage = async () => {
       setLoading(true);
       setError(null);
-      const primaryInstitution = user ? institution : 'MUST';
+      const primaryInstitution = isSignedIn ? institution : 'MUST';
       const result = await Promise.race([
         getListings(pageSize, 0, primaryInstitution),
         new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
@@ -95,7 +96,7 @@ export default function Home() {
       active = false;
       window.removeEventListener('campustrader:listings-refresh', loadFirstPage);
     };
-  }, [institution, user?.id]);
+  }, [institution, isSignedIn]);
 
   const availableProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
