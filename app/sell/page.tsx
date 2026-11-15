@@ -77,12 +77,6 @@ function SellPageContent() {
       ? profileContext.businessName || 'Business profile'
       : activeSellerProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Personal profile';
   const sellerLabel = profileContext.mode === 'business' ? 'Business seller' : 'Student seller';
-  const sellerBadge =
-    activeSellerProfile?.role === 'admin'
-      ? 'Admin'
-      : activeSellerProfile?.verification_status === 'verified' || activeSellerProfile?.badge_type === 'verified' || activeSellerProfile?.badge_type === 'blue'
-        ? 'Verified'
-        : 'Unverified';
 
   const [prevRequestMode, setPrevRequestMode] = useState(requestMode);
   if (requestMode !== prevRequestMode) {
@@ -634,11 +628,6 @@ function SellPageContent() {
                     Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
 
-                  {activeSellerProfile?.phone_number ? (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                      WhatsApp ready
-                    </span>
-                  ) : null}
                 </div>
                 <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
                   {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
