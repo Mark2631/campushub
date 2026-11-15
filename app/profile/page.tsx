@@ -106,7 +106,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const filteredListings = userListings.filter((listing) => listingFilter === 'pending_review'
     ? listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')
     : listing.status === listingFilter && !(listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')));
-  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
+  const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : setupAction ? `/profile?setup=${encodeURIComponent(setupAction)}` : '/profile';
   const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
   const signInHref = `/signin?mode=signin&next=${encodeURIComponent(authNextPath)}`;
 
