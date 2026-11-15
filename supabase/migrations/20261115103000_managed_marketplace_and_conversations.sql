@@ -36,7 +36,10 @@ BEGIN
   -- A seller may mark a live product as sold. Every other seller edit
   -- removes it from the public catalogue and sends it back for review.
   IF OLD.status = 'active'::public.listing_status
-     AND NEW.status = 'sold'::public.listing_status THEN
+     AND NEW.status IN ('hidden'::public.listing_status, 'sold'::public.listing_status)
+     AND NEW.moderation_status IS NOT DISTINCT FROM OLD.moderation_status THEN
+    -- Hiding or marking an item sold changes visibility, not the editorial
+    -- review state. A content edit explicitly sets pending_review in the client.
     NEW.moderation_status := OLD.moderation_status;
     NEW.reviewed_by := OLD.reviewed_by;
     NEW.reviewed_at := OLD.reviewed_at;
