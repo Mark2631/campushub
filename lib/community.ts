@@ -561,7 +561,7 @@ export async function createCommunity(args: {
   name: string;
   description: string;
   category: string;
-  postingMode?: 'everyone' | 'admin_only';
+  postingMode?: 'admin_only';
 }) {
   if (!isValidUuid(args.adminId)) return { community: null as Community | null, error: GENERIC_ERROR };
   if (!(await assertAdmin(args.adminId, args.adminEmail))) return { community: null as Community | null, error: PERMISSION_ERROR };
@@ -590,7 +590,7 @@ export async function createCommunity(args: {
       description,
       category,
         is_official: true,
-      posting_mode: args.postingMode || 'everyone',
+      posting_mode: 'admin_only',
       status: 'active',
       created_by: args.adminId,
       approved_by: args.adminId,
@@ -657,9 +657,9 @@ export async function updateCommunityPostingMode(
   communityId: string,
   adminId: string,
   adminEmail: string | null | undefined,
-  postingMode: 'everyone' | 'admin_only'
+  postingMode: 'admin_only'
 ) {
-  if (!isValidUuid(communityId) || !isValidUuid(adminId) || !isAllowedValue(postingMode, ['everyone', 'admin_only'] as const)) {
+  if (!isValidUuid(communityId) || !isValidUuid(adminId) || postingMode !== 'admin_only') {
     return { error: GENERIC_ERROR };
   }
 
