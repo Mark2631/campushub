@@ -269,7 +269,7 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
     read('../app/help/page.tsx'),
   ]);
   assert.ok(source.includes('Good finds, closer to campus.'));
-  assert.ok(source.includes('discover products listed by students and nearby businesses'));
+  assert.ok(source.includes('Find products from students and campus businesses across participating campuses.'));
   assert.ok(source.includes('href="/help"'));
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
