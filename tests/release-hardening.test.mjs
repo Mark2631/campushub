@@ -199,7 +199,7 @@ test('a completed seller listing or item request is not blocked by notification 
 test('listing insert confirmation is not blocked by unbounded seller enrichment', async () => {
   const source = await read('../lib/listings.ts');
   const insert = source.slice(source.indexOf('export async function insertListing('), source.indexOf('export async function getListingById('));
-  assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as ListingRow\]\)/);
+  assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as unknown as ListingRow\]\)/);
 });
 
 
@@ -268,15 +268,16 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
     read('../app/page.tsx'),
     read('../app/help/page.tsx'),
   ]);
-  assert.ok(source.includes('CampusTrader: buy and sell on campus in Kenya'));
-  assert.ok(source.includes('second-hand electronics, books, fashion, furniture, food, and services'));
+  assert.ok(source.includes('Good finds, closer to campus.'));
+  assert.ok(source.includes('Find products from students and campus businesses across participating campuses.'));
   assert.ok(source.includes('href="/help"'));
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
   assert.ok(!source.includes('Have something to sell?'));
-  assert.ok(help.includes('How to get started'));
+  assert.ok(source.includes('Submit an item'));
+  assert.ok(help.includes('A simpler way to trade around campus.'));
   assert.ok(help.includes('Post a listing'));
-  assert.ok(help.includes('Talk to the seller'));
+  assert.ok(help.includes('Ask CampusTrader'));
 });
 
 test('public listings have unique canonical metadata and product markup only for active priced products', async () => {
@@ -362,13 +363,13 @@ test('zero and missing listing prices are never presented as free', async () => 
     read('../app/admin/page.tsx'),
   ]);
   assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
-  assert.ok(sell.includes('Leave it blank if buyers should contact you to agree on a price.'));
+  assert.ok(sell.includes('Management checks this suggestion and decides the public price.'));
   for (const source of [card, detail]) {
-    assert.ok(source.includes('Ask seller for price'));
+    assert.ok(source.includes('Price on enquiry'));
     assert.ok(!source.includes("'Free'"));
   }
-  assert.ok(home.includes("typeof listing.price === 'number' && listing.price > 0"));
-  assert.ok(admin.includes('Ask seller for price'));
+  assert.ok(home.includes('listing.price > 0'));
+  assert.ok(admin.includes('No public price'));
 });
 
 test('Edit Profile is separated from Manage and includes identity fields', async () => {

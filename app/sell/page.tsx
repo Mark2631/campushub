@@ -69,7 +69,6 @@ function SellPageContent() {
   const [activeTab, setActiveTab] = useState<SellTab>(requestMode ? 'requests' : 'sell');
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
-  const isNewBusinessPost = !editListingId && profileContext.mode === 'business' && Boolean(profileContext.businessId);
   const activeSellerProfile = sellerProfile?.id === user?.id ? sellerProfile : null;
   const invalidSourceRequest = Boolean(sourceRequestId && !isValidUuid(sourceRequestId));
   const visibleRequestPrefillMessage = invalidSourceRequest ? 'That request is unavailable.' : requestPrefillMessage;
@@ -77,13 +76,7 @@ function SellPageContent() {
     profileContext.mode === 'business'
       ? profileContext.businessName || 'Business profile'
       : activeSellerProfile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Personal profile';
-  const sellerLabel = profileContext.mode === 'business' ? 'Business seller' : 'Student seller';
-  const sellerBadge =
-    activeSellerProfile?.role === 'admin'
-      ? 'Admin'
-      : activeSellerProfile?.verification_status === 'verified' || activeSellerProfile?.badge_type === 'verified' || activeSellerProfile?.badge_type === 'blue'
-        ? 'Verified'
-        : 'Unverified';
+  const sellerLabel = profileContext.mode === 'business' ? 'Campus business' : 'CampusTrader member';
 
   const [prevRequestMode, setPrevRequestMode] = useState(requestMode);
   if (requestMode !== prevRequestMode) {
@@ -447,7 +440,6 @@ function SellPageContent() {
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
       mediaUrls,
       videoUrl,
-      status: isNewBusinessPost ? 'active' as const : undefined,
       campus: institution,
     };
 
@@ -501,13 +493,13 @@ function SellPageContent() {
       }
 
       setCreatedListingId(listing?.id || null);
-      const successText = editListingId ? 'Listing updated successfully.' : 'Listing posted successfully.';
+      const successText = editListingId ? 'Changes submitted for management review.' : 'Your item was submitted for management review.';
       setMessage({ type: 'success', text: successText });
       showToast({ type: 'success', message: successText });
       void Promise.resolve(pushNotification({
         type: editListingId ? 'listing updated' : 'listing posted',
-        title: editListingId ? 'Listing updated' : 'Listing posted successfully',
-        body: editListingId ? `${listing?.title || 'Your listing'} has been updated.` : `${listing?.title || 'Your listing'} is now live.`,
+        title: editListingId ? 'Listing sent for review' : 'New item submitted',
+        body: `${listing?.title || 'Your item'} is waiting for management review and a final public price.`,
       })).catch((notificationError) => {
         console.warn('Listing notification delivery failed:', notificationError);
       });
@@ -567,9 +559,9 @@ function SellPageContent() {
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
           <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
+            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Have something to offer?</h2>
             <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
-              Create a free account to list an item, offer a service, or post a request for sellers.
+              Create an account to submit an item for review, message sellers, or request a product.
             </p>
             <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
               <Link href="/signin?next=/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -592,15 +584,15 @@ function SellPageContent() {
       <Header />
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
-          <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
-          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post items, services, or campus requests for MUST students.</p>
+          <h1 className="text-3xl font-bold">{editListingId ? 'Edit submission' : 'Submit an item'}</h1>
+          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Submit products for review. Management checks the details and sets the public price before anything is published.</p>
         </header>
 
         <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           {[
-            ['sell', 'Sell an item/service'],
+            ['sell', 'Submit an item'],
             ['requests', 'Requests'],
-            ['guide', 'My selling guide'],
+            ['guide', 'Submission guide'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -635,14 +627,7 @@ function SellPageContent() {
                   <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
                     Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    {sellerBadge}
-                  </span>
-                  {activeSellerProfile?.phone_number ? (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                      WhatsApp ready
-                    </span>
-                  ) : null}
+
                 </div>
                 <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
                   {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
@@ -732,8 +717,8 @@ function SellPageContent() {
             {message.type === 'success' && (
               <div className="mt-2 flex flex-wrap gap-3 text-sm">
                 {createdListingId ? (
-                  <Link href={`/listing/${createdListingId}`} className="font-semibold underline hover:no-underline">
-                    View listing
+                  <Link href="/profile#my-listings" className="font-semibold underline hover:no-underline">
+                    View submission status
                   </Link>
                 ) : null}
                 <Link href="/" className="font-semibold underline hover:no-underline">
@@ -767,7 +752,7 @@ function SellPageContent() {
                   disabled={isSubmitting}
                   className="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Post without media
+                  Submit without media
                 </button>
               </div>
             ) : null}
@@ -780,7 +765,7 @@ function SellPageContent() {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">1</div>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">Step 1: Media</h2>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Upload up to 10 images and 1 optional video.</p>
+              <p className="text-sm text-gray-600 dark:text-zinc-400">Clear photos help management and buyers judge the item. Add up to 10 images and 1 optional video.</p>
             </div>
           </div>
 
@@ -906,7 +891,7 @@ function SellPageContent() {
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">2</div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">Step 2: Details</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Step 2: Product details</h2>
               <p className="text-sm text-gray-600 dark:text-zinc-400">Add the basics buyers need to decide fast.</p>
             </div>
           </div>
@@ -943,21 +928,21 @@ function SellPageContent() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Price (KSh, optional)</span>
+              <span className="font-medium text-gray-900 dark:text-white">Suggested price for management (KSh, optional)</span>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="Leave blank to ask seller"
+                placeholder="Your suggested price"
                 min="1"
                 step="1"
                 className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
-              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
+              <span className="block text-xs text-gray-500 dark:text-zinc-500">Management checks this suggestion and decides the public price. It will not be published automatically.</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
-              <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>
+              <span className="font-medium text-gray-900 dark:text-white">Would you consider negotiation?</span>
               <input
                 type="checkbox"
                 name="negotiable"
@@ -1015,8 +1000,8 @@ function SellPageContent() {
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">3</div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">Step 3: Review & Post</h2>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Check your listing before posting it.</p>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Step 3: Submit for review</h2>
+              <p className="text-sm text-gray-600 dark:text-zinc-400">Management checks the item and sets the price shown to buyers.</p>
             </div>
           </div>
 
@@ -1048,7 +1033,7 @@ function SellPageContent() {
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{normalizeListingCondition(formData.condition, formData.category)}</span>
                     {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">Negotiable</span> : null}
                   </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price.trim() && Number(formData.price) > 0 ? `KSh ${Number(formData.price).toLocaleString()}` : 'Ask seller for price'}</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price.trim() && Number(formData.price) > 0 ? `Suggested: KSh ${Number(formData.price).toLocaleString()}` : 'Price to be set by management'}</p>
                   <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
                   <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
@@ -1068,7 +1053,7 @@ function SellPageContent() {
             disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
             className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
-            {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : 'Post listing'}
+            {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Submitting...' : editListingId ? 'Save & resubmit for review' : 'Submit for review'}
           </button>
           {isSubmitting && uploadStatus ? (
             <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>

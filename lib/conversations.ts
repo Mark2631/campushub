@@ -16,7 +16,6 @@ export interface ConversationUser {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
-  phone_number?: string | null;
 }
 
 type RawMessageRow = {
@@ -35,11 +34,6 @@ type ConversationRow = {
   hidden_for?: string[] | null;
 };
 
-type ListingTitleRow = {
-  id: string;
-  title: string;
-};
-
 type ProfileRow = ConversationUser;
 
 function serializeError(error: unknown) {
@@ -55,12 +49,15 @@ export async function findOrCreateConversation(
     return { conversation: null, error: 'Unable to open conversation. Please try again.' };
   }
 
+  // One conversation belongs to the two people, not to an individual listing.
+  // Keep the original listing_id for the insert-time RLS check, then reuse this
+  // thread for every later product between the same pair.
   const findExisting = async () => supabase
     .from('conversations')
     .select('id, hidden_for')
-    .eq('listing_id', listingId)
-    .eq('buyer_id', buyerId)
-    .eq('seller_id', sellerId)
+    .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+    .order('updated_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   const { data: existing, error: fetchError } = await findExisting();
@@ -70,7 +67,7 @@ export async function findOrCreateConversation(
   }
 
   if (existing) {
-    const hiddenFor = ((existing as { hidden_for?: string[] | null }).hidden_for || []).filter((id) => id !== buyerId);
+    const hiddenFor = ((existing as { hidden_for?: string[] | null }).hidden_for || []).filter((id: string) => id !== buyerId && id !== sellerId);
     if (hiddenFor.length !== ((existing as { hidden_for?: string[] | null }).hidden_for || []).length) {
       const { error: unhideError } = await supabase
         .from('conversations')
@@ -92,6 +89,10 @@ export async function findOrCreateConversation(
     if (insertError.code === '23505') {
       const { data: racedConversation, error: retryError } = await findExisting();
       if (!retryError && racedConversation) {
+        const hiddenFor = (racedConversation.hidden_for || []).filter((id: string) => id !== buyerId && id !== sellerId);
+        if (hiddenFor.length !== (racedConversation.hidden_for || []).length) {
+          await supabase.from('conversations').update({ hidden_for: hiddenFor }).eq('id', racedConversation.id);
+        }
         return { conversation: { id: racedConversation.id }, error: null };
       }
     }
@@ -149,7 +150,7 @@ async function fetchProfiles(userIds: string[]) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, avatar_url, phone_number')
+    .select('id, full_name, avatar_url')
     .in('id', validUserIds);
 
   if (error) {
@@ -164,29 +165,6 @@ async function fetchProfiles(userIds: string[]) {
   }, {});
 
   return { profiles, error: null };
-}
-
-async function fetchListingTitles(listingIds: string[]) {
-  const validListingIds = listingIds.filter(isValidUuid);
-  if (validListingIds.length === 0) return { titles: {} as Record<string, string>, error: null };
-
-  const { data, error } = await supabase
-    .from('listings')
-    .select('id, title')
-    .in('id', validListingIds);
-
-  if (error) {
-    console.error('Error fetching listing titles:', serializeError(error));
-    return { titles: {} as Record<string, string>, error: GENERIC_ERROR };
-  }
-
-  const titles = (data || []).reduce<Record<string, string>>((acc, row) => {
-    const listing = row as ListingTitleRow;
-    acc[listing.id] = listing.title;
-    return acc;
-  }, {});
-
-  return { titles, error: null };
 }
 
 export async function getUserConversations(userId: string) {
@@ -211,16 +189,14 @@ export async function getUserConversations(userId: string) {
   }
 
   const conversationIds = rows.map((row) => row.id);
-  const listingIds = rows.map((row) => row.listing_id).filter(Boolean) as string[];
   const otherUserIds = rows.map((row) => (row.buyer_id === userId ? row.seller_id : row.buyer_id)).filter(Boolean);
 
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
+  const [{ messagesByConversation, error: messagesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages(conversationIds),
-    fetchListingTitles(Array.from(new Set(listingIds))),
     fetchProfiles(Array.from(new Set(otherUserIds))),
   ]);
 
-  const derivedError = messagesError || titlesError || profilesError;
+  const derivedError = messagesError || profilesError;
 
   const conversations = rows.map((conversation) => {
     const messages = messagesByConversation[conversation.id] || [];
@@ -235,7 +211,7 @@ export async function getUserConversations(userId: string) {
 
     return {
       id: conversation.id,
-      listingTitle: conversation.listing_id ? titles[conversation.listing_id] || 'Listing unavailable' : 'General conversation',
+      listingTitle: 'CampusTrader chat',
       lastMessage,
       listingId: conversation.listing_id || '',
       otherUser,
@@ -275,19 +251,18 @@ export async function getConversationById(conversationId: string, userId: string
   }
 
   const otherUserId = data.buyer_id === userId ? data.seller_id : data.buyer_id;
-  const [{ messagesByConversation, error: messagesError }, { titles, error: titlesError }, { profiles, error: profilesError }] = await Promise.all([
+  const [{ messagesByConversation, error: messagesError }, { profiles, error: profilesError }] = await Promise.all([
     fetchConversationMessages([data.id]),
-    fetchListingTitles(data.listing_id ? [data.listing_id] : []),
     fetchProfiles([otherUserId]),
   ]);
 
-  const derivedError = messagesError || titlesError || profilesError;
+  const derivedError = messagesError || profilesError;
 
   return {
     conversation: {
       id: data.id,
       listingId: data.listing_id || '',
-      listingTitle: data.listing_id ? titles[data.listing_id] || 'Listing unavailable' : 'General conversation',
+      listingTitle: 'CampusTrader chat',
       messages: messagesByConversation[data.id] || [],
       buyerId: data.buyer_id,
       sellerId: data.seller_id,

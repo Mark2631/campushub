@@ -2,13 +2,12 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, Send, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import ReportButton from '../../../components/ReportButton';
-import WhatsAppButton from '../../../components/WhatsAppButton';
 import useUser from '../../../hooks/useUser';
 import { getConversationById, Message, hideConversationForUser, sendMessage } from '../../../lib/conversations';
 import { createMessageNotificationRecord } from '../../../lib/notifications';
@@ -33,7 +32,6 @@ type ConversationDetails = {
     full_name: string | null;
     email: string | null;
     avatar_url: string | null;
-    phone_number?: string | null;
   };
 };
 
@@ -42,6 +40,9 @@ const riskyTerms = ['whatsapp', 'deposit', 'send money', 'pay first', 'delivery 
 export default function ConversationPage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const interestTitle = searchParams.get('item') || '';
+  const interestListingId = searchParams.get('listing') || '';
   const { user, loading, showToast } = useUser();
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,7 +53,13 @@ export default function ConversationPage({ params }: Props) {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
+  const interestKey = interestTitle ? `${interestListingId}:${interestTitle}` : '';
+  const [lastPrefilledKey, setLastPrefilledKey] = useState('');
+  const prefilledMessage = interestTitle && interestKey !== lastPrefilledKey
+    ? `Hi, I'm interested in ${interestTitle}. Is it still available?`
+    : '';
+  const messageDraft = messageText || prefilledMessage;
+  const showWarning = riskyTerms.some((term) => messageDraft.toLowerCase().includes(term));
 
   useEffect(() => {
     const load = async () => {
@@ -110,8 +117,8 @@ export default function ConversationPage({ params }: Props) {
 
   const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if ((!messageText.trim() && !attachment) || !user || !conversation || uploading) return;
-    let content = messageText.trim();
+    if ((!messageDraft.trim() && !attachment) || !user || !conversation || uploading) return;
+    let content = messageDraft.trim();
 
     if (attachment) {
       setUploading(true);
@@ -135,6 +142,7 @@ export default function ConversationPage({ params }: Props) {
     };
     setMessages((current) => [...current, optimisticMessage]);
     setMessageText('');
+    if (interestKey) setLastPrefilledKey(interestKey);
     setAttachment(null);
     if (attachmentPreview) URL.revokeObjectURL(attachmentPreview);
     setAttachmentPreview(null);
@@ -224,7 +232,7 @@ export default function ConversationPage({ params }: Props) {
               </div>
               <div className="min-w-0">
                 <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
-                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
+                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">CampusTrader direct chat</p>
               </div>
             </div>
             {conversation ? (
@@ -248,20 +256,21 @@ export default function ConversationPage({ params }: Props) {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Listing Reference Card */}
-            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-blue-50 p-4 dark:bg-blue-900/20">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Meet in public. Do not pay before inspection.</p>
-              {conversation?.listingId ? (
-                <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 underline dark:text-blue-200">
-                  View listing
-                </Link>
-              ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
-              {conversation?.otherUser.id ? (
-                <div className="mt-3">
-                  <WhatsAppButton userId={conversation.otherUser.id} phoneNumber={conversation.otherUser.phone_number} />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
-                </div>
-              ) : null}
+            <div className="rounded-2xl border border-gray-200 bg-slate-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+              {interestTitle ? (
+                <>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-blue-700 dark:text-blue-300">Product enquiry</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{interestTitle}</p>
+                  {isValidUuid(interestListingId) ? (
+                    <Link href={`/listing/${interestListingId}`} className="mt-2 inline-flex text-xs font-semibold text-blue-700 underline dark:text-blue-300">
+                      Return to this product
+                    </Link>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-300">This is your ongoing chat. You can discuss more than one product in the same conversation.</p>
+              )}
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Meet in public and inspect the item before making payment. For WhatsApp assistance, use the management contact on the product page.</p>
             </div>
 
             {/* Messages Container */}
@@ -342,15 +351,18 @@ export default function ConversationPage({ params }: Props) {
                 </label>
                 <textarea
                   aria-label="Message"
-                  value={messageText}
-                  onChange={(event) => setMessageText(event.target.value)}
+                  value={messageDraft}
+                  onChange={(event) => {
+                    setMessageText(event.target.value);
+                    if (!event.target.value.trim() && interestKey) setLastPrefilledKey(interestKey);
+                  }}
                   rows={1}
                   className="min-h-11 flex-1 resize-none rounded-2xl border-0 bg-transparent px-3 py-3 text-sm text-gray-900 outline-none placeholder-gray-500 dark:text-white dark:placeholder-zinc-500"
                   placeholder="Write your message..."
                 />
                 <button
                   type="submit"
-                  disabled={sending || uploading || (!messageText.trim() && !attachment)}
+                  disabled={sending || uploading || (!messageDraft.trim() && !attachment)}
                   aria-label="Send message"
                   className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:bg-gray-400"
                 >

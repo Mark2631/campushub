@@ -7,6 +7,7 @@ import AuthPromptModal from '../../../components/AuthPromptModal';
 import BottomNav from '../../../components/BottomNav';
 import Header from '../../../components/Header';
 import useUser from '../../../hooks/useUser';
+import { institutionLabel, normalizeInstitution } from '../../../lib/validation';
 import {
   Community,
   CommunityPost,
@@ -228,7 +229,7 @@ export default function CommunityGroupPage({ params }: Props) {
   const handlePublish = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!community || !user || publishing) return;
-    if (!isAdmin && community.posting_mode !== 'everyone') {
+    if (!isAdmin) {
       setMessage({ type: 'error', text: 'You do not have permission to do that.' });
       return;
     }
@@ -420,7 +421,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  {community.memberCount || 0} followers · {community.postCount || posts.length} posts · MUST
+                  {community.memberCount || 0} followers · {community.postCount || posts.length} posts · {institutionLabel(normalizeInstitution(community.campus))}
                 </p>
               </div>
               <button
@@ -441,7 +442,7 @@ export default function CommunityGroupPage({ params }: Props) {
           </div>
         ) : null}
 
-        {user && (isAdmin || community.posting_mode === 'everyone') ? (
+        {user && isAdmin ? (
           <form onSubmit={handlePublish} className="mb-5 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-bold text-slate-900 dark:text-white">New group post</p>

@@ -29,6 +29,9 @@ export interface Listing {
   negotiable: boolean;
   condition: string;
   status: string;
+  moderation_status?: string | null;
+  reviewed_at?: string | null;
+  moderation_reason?: string | null;
   location: string | null;
   media_urls: string[];
   video_url: string | null;
@@ -37,50 +40,31 @@ export interface Listing {
   updated_at: string;
   sellerName?: string;
   sellerType?: 'student' | 'business';
-  badgeType?: 'none' | 'blue' | 'gold' | 'admin';
-  sellerSince?: string | null;
   sellerAvatarUrl?: string | null;
-  sellerPhoneNumber?: string | null;
   businessDeliveryAvailable?: boolean;
-  sellerRatingAverage?: number | null;
-  sellerRatingCount?: number;
 }
 
-type ListingRow = Omit<Listing, 'sellerName' | 'sellerType' | 'badgeType' | 'sellerSince'>;
+type ListingRow = Omit<Listing, 'sellerName' | 'sellerType'>;
 
 type ProfileRow = {
   id: string;
   full_name: string | null;
-  email?: string | null;
-  badge_type: string | null;
-  verification_status: string | null;
-  role: string | null;
   avatar_url?: string | null;
-  phone_number?: string | null;
   created_at: string | null;
 };
 
 type BusinessRow = {
   id: string;
   business_name: string;
-  verification_status: string | null;
-  badge_type?: string | null;
   delivery_available?: boolean | null;
 };
-
-type SellerRatingRow = {
-  seller_id: string;
-  average_rating: number | string | null;
-  review_count: number | null;
-};
-
 
 async function fetchPublicProfiles(sellerIds: string[]) {
   if (sellerIds.length === 0) return { data: [] as ProfileRow[], error: null as unknown };
 
   const publicResponse = await supabase
     .from('marketplace_profiles')
-    .select('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at')
+    .select('id, full_name, avatar_url, created_at')
     .in('id', sellerIds);
 
   if (!publicResponse.error) {
@@ -95,7 +79,7 @@ async function fetchPublicBusinesses(businessIds: string[]) {
 
   const publicResponse = await supabase
     .from('marketplace_businesses')
-    .select('id, business_name, verification_status, badge_type, delivery_available')
+    .select('id, business_name, delivery_available')
     .in('id', businessIds);
 
   if (!publicResponse.error) {
@@ -116,12 +100,9 @@ async function enrichListings(rows: ListingRow[]) {
   const sellerIds = Array.from(new Set(rows.map((row) => row.seller_id).filter(Boolean)));
   const businessIds = Array.from(new Set(rows.map((row) => row.business_id).filter(Boolean))) as string[];
 
-  const [profilesResponse, businessesResponse, ratingsResponse] = await Promise.all([
+  const [profilesResponse, businessesResponse] = await Promise.all([
     fetchPublicProfiles(sellerIds),
     fetchPublicBusinesses(businessIds),
-    sellerIds.length
-      ? supabase.from('marketplace_seller_rating_summary').select('seller_id, average_rating, review_count').in('seller_id', sellerIds)
-      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (profilesResponse?.error) {
@@ -130,40 +111,18 @@ async function enrichListings(rows: ListingRow[]) {
   if (businessesResponse?.error) {
     logSupabaseError('Error enriching listing businesses:', businessesResponse.error);
   }
-  if (ratingsResponse?.error) {
-    logSupabaseError('Error enriching seller ratings:', ratingsResponse.error);
-  }
-
   const profilesById = new Map((profilesResponse?.data || []).map((profile) => [profile.id, profile as ProfileRow]));
   const businessesById = new Map((businessesResponse?.data || []).map((business) => [business.id, business as BusinessRow]));
-  const ratingsBySeller = new Map(((ratingsResponse?.data || []) as SellerRatingRow[]).map((rating) => [rating.seller_id, rating]));
 
   return rows.map((row) => {
     const profile = profilesById.get(row.seller_id);
     const business = row.business_id ? businessesById.get(row.business_id) : null;
-    const sellerRating = ratingsBySeller.get(row.seller_id);
-    const emailPrefix = profile?.email?.split('@')[0] || null;
-    const badgeType = business?.verification_status === 'verified'
-      ? 'gold'
-      : profile?.badge_type === 'admin'
-        ? 'admin'
-        : profile?.verification_status === 'verified' || profile?.badge_type === 'verified' || profile?.badge_type === 'blue'
-          ? 'blue'
-          : profile
-            ? 'none'
-            : 'none';
-
     return {
       ...row,
-      sellerName: business?.business_name || profile?.full_name || emailPrefix || 'CampusTrader seller',
+      sellerName: business?.business_name || profile?.full_name || 'CampusTrader member',
       sellerType: (business ? 'business' : 'student') as Listing['sellerType'],
-      badgeType: badgeType as Listing['badgeType'],
-      sellerSince: profile?.created_at || null,
       sellerAvatarUrl: profile?.avatar_url || null,
-      sellerPhoneNumber: profile?.phone_number || null,
       businessDeliveryAvailable: Boolean(business?.delivery_available),
-      sellerRatingAverage: sellerRating ? Number(sellerRating.average_rating || 0) : null,
-      sellerRatingCount: Number(sellerRating?.review_count || 0),
     };
   });
 }
@@ -219,6 +178,9 @@ function normalizeListingRow(row: Partial<ListingRow>): ListingRow {
     campus: row.campus || DEFAULT_CAMPUS,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+    moderation_status: row.moderation_status ?? null,
+    reviewed_at: row.reviewed_at ?? null,
+    moderation_reason: row.moderation_reason ?? null,
   };
 }
 
@@ -233,18 +195,28 @@ async function enrichListingsWithDeadline(rows: ListingRow[]): Promise<Listing[]
 
 export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
   try {
-    const query = supabase
-      .from('listings')
-      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, created_at, seller_id, business_id')
-      .eq('status', 'active');
-    if (institution) {
-      const normalizedInstitution = normalizeInstitution(institution);
-      const institutionId = await getInstitutionIdForCode(normalizedInstitution);
-      // Fail closed when an institution cannot be mapped.
-      query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
-    }
+    const institutionId = institution
+      ? await getInstitutionIdForCode(normalizeInstitution(institution))
+      : null;
+    const fetchRows = (includeReviewTimestamp: boolean) => {
+      const query = supabase
+        .from('listings')
+        .select(includeReviewTimestamp
+          ? 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, campus, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id'
+          : 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, campus, media_urls, status, moderation_status, created_at, seller_id, business_id')
+        .eq('status', 'active');
+      if (institution) {
+        // Fail closed when an institution cannot be mapped.
+        query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
+      }
+      return query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    };
 
-    const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    let response = await fetchRows(true);
+    if (response.error && isMissingColumnError(response.error, 'listings', 'reviewed_at')) {
+      response = await fetchRows(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
@@ -253,7 +225,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
 
     const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
     // The feed uses description, negotiable, and sellerType in its filters.
-    // Enrich seller metadata as well so verified/business badges are accurate;
+    // Enrich the public seller identity and business-account details;
     // the deadline fallback keeps listing cards visible on a slow profile query.
     return { listings: await enrichListingsWithDeadline(liveListings), error: null };
   } catch (err) {
@@ -294,11 +266,21 @@ export async function getListingsByUser(userId: string) {
   }
 
   try {
-    const { data, error } = await supabase
+    const fetchUserListings = (includeReviewDetails: boolean) => supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
+      .select(includeReviewDetails
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, moderation_reason, location, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
+    let response = await fetchUserListings(true);
+    if (response.error && (
+      isMissingColumnError(response.error, 'listings', 'reviewed_at')
+      || isMissingColumnError(response.error, 'listings', 'moderation_reason')
+    )) {
+      response = await fetchUserListings(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching user listings:', error);
@@ -394,7 +376,11 @@ export async function insertListing(
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
-      status: data.status || 'active',
+      status: 'hidden',
+      moderation_status: 'pending_review',
+      reviewed_by: null,
+      reviewed_at: null,
+      moderation_reason: null,
       location: validated.value.location,
       media_urls: data.mediaUrls || [],
       video_url: data.videoUrl || null,
@@ -404,30 +390,38 @@ export async function insertListing(
       institution_id: institutionId,
     };
 
-    const insertQuery = supabase
-        .from('listings')
-        .insert(listingToInsert)
-        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-        .single();
-
-    let { data: newListing, error } = await withTimeout(
-      insertQuery,
-      15000,
-      'Creating listing timed out. Please try again.'
-    );
-
-    if (error && isMissingColumnError(error, 'listings', 'campus')) {
-      const { campus, ...legacyPayload } = listingToInsert;
-      void campus;
-      ({ data: newListing, error } = await withTimeout(
-        supabase
-          .from('listings')
-          .insert(legacyPayload)
-          .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-          .single(),
+    const runInsert = async (payload: Record<string, unknown>, includeReviewTimestamp: boolean) => {
+      const columns = includeReviewTimestamp
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, created_at, updated_at, media_urls, video_url';
+      return withTimeout(
+        supabase.from('listings').insert(payload).select(columns).single(),
         15000,
         'Creating listing timed out. Please try again.'
-      ));
+      );
+    };
+
+    const insertPayload = { ...listingToInsert };
+    let includeReviewTimestamp = true;
+    let { data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp);
+
+    // The app preview may run before the migration is applied. Retry without
+    // newly introduced audit columns, while still submitting as hidden/pending.
+    const reviewSchemaMissing = error && (
+      isMissingColumnError(error, 'listings', 'reviewed_by')
+      || isMissingColumnError(error, 'listings', 'reviewed_at')
+      || isMissingColumnError(error, 'listings', 'moderation_reason')
+    );
+    if (reviewSchemaMissing) {
+      delete insertPayload.reviewed_by;
+      delete insertPayload.reviewed_at;
+      delete insertPayload.moderation_reason;
+      includeReviewTimestamp = false;
+      ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
+    }
+    if (error && isMissingColumnError(error, 'listings', 'campus')) {
+      delete insertPayload.campus;
+      ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
     }
 
     if (error) {
@@ -448,7 +442,7 @@ export async function insertListing(
       return { listing: null, error: 'We could not publish this listing. Check your details and connection, then try again.' };
     }
 
-    const [listing] = await enrichListingsWithDeadline([newListing as ListingRow]);
+    const [listing] = await enrichListingsWithDeadline([newListing as unknown as ListingRow]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error inserting listing:', err);
@@ -462,11 +456,18 @@ export async function getListingById(id: string) {
   }
 
   try {
-    const { data, error } = await supabase
+    const fetchListing = (includeReviewTimestamp: boolean) => supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, campus, created_at, updated_at, media_urls, video_url')
+      .select(includeReviewTimestamp
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, campus, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, campus, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
       .maybeSingle();
+    let response = await fetchListing(true);
+    if (response.error && isMissingColumnError(response.error, 'listings', 'reviewed_at')) {
+      response = await fetchListing(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching listing by id:', error);
@@ -477,7 +478,7 @@ export async function getListingById(id: string) {
       return { listing: null, error: null };
     }
 
-    const [listing] = await enrichListingsWithDeadline([normalizeListingRow(data as ListingRow)]);
+    const [listing] = await enrichListingsWithDeadline([normalizeListingRow(data as unknown as ListingRow)]);
     return { listing: listing || null, error: null };
   } catch (err) {
     console.error('Unexpected error fetching listing by id:', err);
@@ -488,13 +489,13 @@ export async function getListingById(id: string) {
 export async function updateListingLifecycleStatus(
   listingId: string,
   sellerId: string,
-  status: 'sold' | 'hidden' | 'active'
+  status: 'sold' | 'hidden'
 ) {
   if (!isValidUuid(listingId) || !isValidUuid(sellerId)) {
     return { error: 'Listing not found.' };
   }
 
-  if (!isAllowedValue(status, ['sold', 'hidden', 'active'] as const)) {
+  if (!isAllowedValue(status, ['sold', 'hidden'] as const)) {
     return { error: GENERIC_ERROR };
   }
 
@@ -590,15 +591,19 @@ export async function updateListing(
     business_id: data.businessId && isValidUuid(data.businessId) ? data.businessId : null,
     media_urls: mediaUrls,
     video_url: videoUrl ?? null,
-    ...(data.status ? { status: data.status } : {}),
+    status: 'hidden' as const,
+    moderation_status: 'pending_review',
+    reviewed_by: null,
+    reviewed_at: null,
+    moderation_reason: null,
     // Institution identity is immutable in the database. Never resend campus or institution_id on edit.
     updated_at: new Date().toISOString(),
   };
 
-  const { data: updated, error } = await withTimeout(
+  const runUpdate = (nextPayload: Record<string, unknown>) => withTimeout(
     supabase
       .from('listings')
-      .update(payload)
+      .update(nextPayload)
       .eq('id', listingId)
       .eq('seller_id', sellerId)
       .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
@@ -606,13 +611,25 @@ export async function updateListing(
     15000,
     'Saving listing timed out. Please try again.'
   );
+  const updatePayload: Record<string, unknown> = { ...payload };
+  let { data: updated, error } = await runUpdate(updatePayload);
+  if (error && (
+    isMissingColumnError(error, 'listings', 'reviewed_by')
+    || isMissingColumnError(error, 'listings', 'reviewed_at')
+    || isMissingColumnError(error, 'listings', 'moderation_reason')
+  )) {
+    delete updatePayload.reviewed_by;
+    delete updatePayload.reviewed_at;
+    delete updatePayload.moderation_reason;
+    ({ data: updated, error } = await runUpdate(updatePayload));
+  }
 
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);
     return { listing: null, error: GENERIC_ERROR };
   }
 
-  const [listing] = await enrichListings([updated as ListingRow]);
+  const [listing] = await enrichListings([updated as unknown as ListingRow]);
   return { listing: listing || null, error: null };
 }
 
