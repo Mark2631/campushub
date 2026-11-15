@@ -983,7 +983,7 @@ export default function AdminPage() {
                       {awaitingReview ? (
                         <div className="mt-4 grid gap-3 rounded-xl border border-amber-900/70 bg-amber-950/20 p-3 md:grid-cols-[1fr_auto]">
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">Seller's suggested price</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">Seller&apos;s suggested price</p>
                             <p className="mt-1 text-sm font-semibold text-white">{listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString('en-KE')}` : 'No suggestion supplied'}</p>
                             <p className="mt-1 text-xs text-zinc-400">Suggestion only. Set the final price below.</p>
                           </div>
