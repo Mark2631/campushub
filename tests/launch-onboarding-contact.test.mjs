@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 test('public management contact is resolved from the configured active admin profile only', async () => {
   const sql = await read('../supabase/migrations/20261115060000_campustrader_management_contact.sql');
   assert.match(sql, /function public\.get_campustrader_whatsapp\(\)/i);
-  assert.match(sql, /join public\.profiles as p on lower\(p\.email\) = lower\(a\.email\)/i);
+  assert.match(sql, /JOIN public\.profiles\s+AS p\s+ON LOWER\(p\.email\) = LOWER\(a\.email\)/i);
   assert.match(sql, /coalesce\(p\.account_status, 'active'\) = 'active'/i);
   assert.match(sql, /set search_path to ''/i);
   assert.match(sql, /revoke all on function public\.get_campustrader_whatsapp\(\) from public/i);
