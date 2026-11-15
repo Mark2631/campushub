@@ -33,6 +33,9 @@ test('product cards are descriptive and the catalogue uses a scrollable grid rat
   assert.match(home, /loadMore/);
   assert.doesNotMatch(home, /grid-flow-col/);
   assert.doesNotMatch(home, /ListingSection/);
+  assert.match(home, /Applied filters/);
+  assert.match(home, /Remove category filter/);
+  assert.match(home, /Clear all/);
 });
 
 test('ordering remains disabled during the managed-enquiry launch phase', async () => {
