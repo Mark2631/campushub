@@ -199,7 +199,7 @@ test('a completed seller listing or item request is not blocked by notification 
 test('listing insert confirmation is not blocked by unbounded seller enrichment', async () => {
   const source = await read('../lib/listings.ts');
   const insert = source.slice(source.indexOf('export async function insertListing('), source.indexOf('export async function getListingById('));
-  assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as ListingRow\]\)/);
+  assert.match(insert, /await enrichListingsWithDeadline\(\[newListing as unknown as ListingRow\]\)/);
 });
 
 
