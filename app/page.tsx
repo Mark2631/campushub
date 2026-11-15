@@ -145,7 +145,7 @@ export default function Home() {
       .filter((listing) => !campusBusinessProducts.some((businessListing) => businessListing.id === listing.id))
       .filter((listing) => listingBelongsToCategory(listing, category))
       .slice(0, 4),
-  })).filter((section) => section.listings.length > 0), [availableProducts]);
+  })).filter((section) => section.listings.length > 0), [availableProducts, campusBusinessProducts]);
   const showCategoryShelves = activeFilterCount === 0;
 
   const clearFilters = () => {
