@@ -202,8 +202,8 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
       const query = supabase
         .from('listings')
         .select(includeReviewTimestamp
-          ? 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id'
-          : 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, created_at, seller_id, business_id')
+          ? 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, campus, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id'
+          : 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, campus, media_urls, status, moderation_status, created_at, seller_id, business_id')
         .eq('status', 'active');
       if (institution) {
         // Fail closed when an institution cannot be mapped.
