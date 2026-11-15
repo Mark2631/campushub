@@ -16,7 +16,6 @@ export interface ConversationUser {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
-  phone_number?: string | null;
 }
 
 type RawMessageRow = {
@@ -149,7 +148,7 @@ async function fetchProfiles(userIds: string[]) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, avatar_url, phone_number')
+    .select('id, full_name, avatar_url')
     .in('id', validUserIds);
 
   if (error) {
