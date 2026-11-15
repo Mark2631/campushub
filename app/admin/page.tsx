@@ -38,6 +38,8 @@ import {
   terminateBusiness,
   hideListing,
   restoreListing,
+  approveListingSubmission,
+  rejectListingSubmission,
   deleteListingAsAdmin,
   approveVerification,
   rejectVerification,
@@ -155,6 +157,13 @@ interface ModalState {
   notes?: string;
 }
 
+function reviewInputForId(
+  current: Record<string, { price: string; negotiable: boolean; reason: string }>,
+  listingId: string
+) {
+  return current[listingId] || { price: '', negotiable: false, reason: '' };
+}
+
 export default function AdminPage() {
   const { loading: userLoading, isAdmin, adminLoading, user: authUser, showToast } = useUser();
   const [dashboard, setDashboard] = useState<AdminDashboardData>(emptyDashboard);
@@ -170,13 +179,14 @@ export default function AdminPage() {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [communityWorking, setCommunityWorking] = useState(false);
-  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' as 'everyone' | 'admin_only' });
+  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' as 'everyone' | 'admin_only' });
   const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
   const [communityCoverFile, setCommunityCoverFile] = useState<File | null>(null);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [auditEntries, setAuditEntries] = useState<Awaited<ReturnType<typeof getAdminAudit>>['data']>([]);
   const [auditError, setAuditError] = useState<string | null>(null);
+  const [listingReviewInputs, setListingReviewInputs] = useState<Record<string, { price: string; negotiable: boolean; reason: string }>>({});
 
   const usersById = useMemo(() => {
     return new Map(dashboard.users.map((user) => [user.id, user]));
@@ -262,6 +272,22 @@ export default function AdminPage() {
     setMessage({ type: 'success', text: successText });
     showToast({ type: 'success', message: successText });
     await loadDashboard();
+  };
+
+  const reviewInputFor = (listing: AdminDashboardData['listings'][number]) => listingReviewInputs[listing.id] || {
+    price: listing.price != null ? String(listing.price) : '',
+    negotiable: Boolean(listing.negotiable),
+    reason: listing.moderation_reason || '',
+  };
+
+  const updateListingReviewInput = (
+    listingId: string,
+    patch: Partial<{ price: string; negotiable: boolean; reason: string }>
+  ) => {
+    setListingReviewInputs((current) => ({
+      ...current,
+      [listingId]: { ...reviewInputForId(current, listingId), ...patch },
+    }));
   };
 
   const openModal = (
@@ -413,6 +439,37 @@ export default function AdminPage() {
     }
   };
 
+  const handleApproveListing = async (listingId: string) => {
+    const values = listingReviewInputs[listingId];
+    const price = Number(values?.price || '');
+    if (!Number.isFinite(price) || price <= 0) {
+      const text = 'Set the final public price before publishing.';
+      setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
+      return;
+    }
+    await runAction(
+      listingId,
+      () => approveListingSubmission(listingId, price, Boolean(values?.negotiable)),
+      'Listing approved and published.'
+    );
+  };
+
+  const handleRejectListing = async (listingId: string) => {
+    const reason = listingReviewInputs[listingId]?.reason || '';
+    if (reason.trim().length < 4) {
+      const text = 'Add a short reason before rejecting this submission.';
+      setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
+      return;
+    }
+    await runAction(
+      listingId,
+      () => rejectListingSubmission(listingId, reason),
+      'Submission rejected and kept off the marketplace.'
+    );
+  };
+
   const handleCommunityCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!authUser?.id) return;
@@ -457,7 +514,7 @@ export default function AdminPage() {
     setCommunityWorking(false);
     setCommunities((current) => [nextCommunity, ...current]);
     setSelectedCommunityId(community.id);
-    setCommunityForm({ name: '', description: '', category: 'Announcements', postingMode: 'everyone' });
+    setCommunityForm({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' });
     setCommunityCoverFile(null);
     setMessage({ type: 'success', text: 'Community created.' });
     showToast({ type: 'success', message: 'Community created.' });
@@ -877,52 +934,112 @@ export default function AdminPage() {
         {/* Listings Tab */}
         {tab === 'listings' && (
           <section className="space-y-6">
-            <h2 className="text-xl font-bold">Listing moderation ({dashboard.listings.length} listings)</h2>
+            <div>
+              <h2 className="text-xl font-bold">Product review & moderation ({dashboard.listings.length})</h2>
+              <p className="mt-1 max-w-2xl text-sm text-zinc-400">Check the photos, description and condition. Set the price CampusTrader will publish and decide whether bargaining is allowed.</p>
+              <p className="mt-2 text-xs font-semibold text-amber-300">{dashboard.listings.filter((listing) => listing.moderation_status === 'pending_review').length} submissions awaiting review</p>
+            </div>
             <div className="space-y-3">
               {dashboard.listings.length > 0 ? (
-                dashboard.listings.map((listing) => (
-                  <article key={listing.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold text-white">{listing.title}</p>
-                          <StatusPill status={listing.status} />
+                dashboard.listings.map((listing) => {
+                  const reviewInput = reviewInputFor(listing);
+                  const awaitingReview = listing.moderation_status === 'pending_review';
+                  return (
+                    <article key={listing.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-white">{listing.title}</p>
+                            <StatusPill status={awaitingReview ? 'pending_review' : listing.status} />
+                            {listing.category ? <span className="text-xs text-zinc-500">{listing.category}</span> : null}
+                          </div>
+                          <p className="mt-2 text-sm text-zinc-400">
+                            {listing.condition || 'Condition not supplied'} · {listing.location || 'No location'}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-zinc-300">{listing.description || 'No description supplied.'}</p>
+                          <p className="mt-2 text-xs text-zinc-600">Submitted by: {listing.seller_id}</p>
+                          {listing.media_urls?.length ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {listing.media_urls.map((url, index) => (
+                                <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-300 underline underline-offset-2">
+                                  Open photo {index + 1}
+                                </a>
+                              ))}
+                            </div>
+                          ) : <p className="mt-2 text-xs text-amber-300">No product photos were submitted.</p>}
+                          <p className="mt-2 text-xs text-zinc-600">{formatDate(listing.created_at)}</p>
                         </div>
-                        <p className="mt-2 text-sm text-zinc-400">
-                          {listing.price != null && listing.price > 0 ? `KSh ${listing.price}` : 'Ask seller for price'} · {listing.location || 'No location'}
-                        </p>
-                        <p className="mt-1 text-xs text-zinc-600">Seller: {listing.seller_id}</p>
-                        <p className="mt-1 text-xs text-zinc-600">{formatDate(listing.created_at)}</p>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {listing.status !== 'hidden' && (
-                          <button
-                            onClick={() => openModal('listing_hide', 'Hide Listing', `Hide "${listing.title}"?`, listing.id, 'listing')}
-                            className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700"
+
+                      {awaitingReview ? (
+                        <div className="mt-4 grid gap-3 rounded-xl border border-amber-900/70 bg-amber-950/20 p-3 md:grid-cols-[1fr_auto]">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">Seller's suggested price</p>
+                            <p className="mt-1 text-sm font-semibold text-white">{listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString('en-KE')}` : 'No suggestion supplied'}</p>
+                            <p className="mt-1 text-xs text-zinc-400">Suggestion only. Set the final price below.</p>
+                          </div>
+                          <form
+                            className="grid gap-3 md:col-span-2 md:grid-cols-[minmax(0,1fr)_auto]"
+                            onSubmit={(event) => { event.preventDefault(); void handleApproveListing(listing.id); }}
                           >
-                            Hide
-                          </button>
-                        )}
-                        {listing.status === 'hidden' && (
-                          <button
-                            onClick={() => openModal('listing_restore', 'Restore Listing', `Restore "${listing.title}"?`, listing.id, 'listing')}
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                          >
-                            Restore
-                          </button>
-                        )}
-                        <button
-                          onClick={() => openModal('listing_delete', 'Hide Listing', `Hide "${listing.title}" from the marketplace?`, listing.id, 'listing')}
-                          className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))
+                            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                              <label className="block text-xs font-semibold text-zinc-300">
+                                Final public price (KSh)
+                                <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  required
+                                  value={reviewInput.price}
+                                  onChange={(event) => updateListingReviewInput(listing.id, { price: event.target.value })}
+                                  className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                                  placeholder="Enter price"
+                                />
+                              </label>
+                              <label className="flex items-center gap-2 self-end rounded-lg border border-zinc-700 px-3 py-2.5 text-xs font-semibold text-zinc-200">
+                                <input
+                                  type="checkbox"
+                                  checked={reviewInput.negotiable}
+                                  onChange={(event) => updateListingReviewInput(listing.id, { negotiable: event.target.checked })}
+                                  className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-blue-600"
+                                />
+                                Allow negotiation
+                              </label>
+                            </div>
+                            <button type="submit" disabled={workingId !== null} className="self-end rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-60">
+                              {workingId === listing.id ? 'Publishing…' : 'Approve & publish'}
+                            </button>
+                          </form>
+                          <div className="md:col-span-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                            <input
+                              value={reviewInput.reason}
+                              onChange={(event) => updateListingReviewInput(listing.id, { reason: event.target.value })}
+                              placeholder="Reason for rejection (required when rejecting)"
+                              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-xs text-white outline-none focus:border-red-500"
+                            />
+                            <button type="button" disabled={workingId !== null} onClick={() => void handleRejectListing(listing.id)} className="rounded-lg border border-red-800 px-4 py-2.5 text-xs font-bold text-red-300 hover:bg-red-950/50 disabled:opacity-60">
+                              {workingId === listing.id ? 'Saving…' : 'Reject submission'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-zinc-300">
+                            {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString('en-KE')}` : 'No public price'} · {listing.negotiable ? 'Negotiable' : 'Fixed price'}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {listing.status !== 'hidden' && (
+                              <button onClick={() => openModal('listing_hide', 'Hide Listing', `Hide "${listing.title}"?`, listing.id, 'listing')} className="rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700">Hide</button>
+                            )}
+                            <button onClick={() => openModal('listing_delete', 'Remove Listing', `Remove "${listing.title}" from the marketplace?`, listing.id, 'listing')} className="rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700">Remove</button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
               ) : (
-                <EmptyState text="No listings found." />
+                <EmptyState text="No listings or submissions found." />
               )}
             </div>
           </section>
