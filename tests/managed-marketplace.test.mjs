@@ -105,7 +105,7 @@ test('only management can publish to campus communities', async () => {
   assert.match(admin, /Management-only posting/);
   assert.match(migration, /UPDATE public\.communities[\s\S]*?SET posting_mode = 'admin_only'/);
   assert.match(migration, /DROP POLICY IF EXISTS users_can_request_communities/);
-  assert.match(migration, /DROP POLICY IF EXISTS hardening_community_posts_insert_institution[\\s\\S]*?COALESCE\\(public\\.is_admin\\(\\), false\\)/i);
+  assert.match(migration, /DROP POLICY IF EXISTS hardening_community_posts_insert_institution[\s\S]*?COALESCE\(public\.is_admin\(\), false\)/i);
   assert.match(admin, /SUPPORTED_INSTITUTIONS/);
   assert.match(admin, /campus: communityForm\.campus/);
 });
