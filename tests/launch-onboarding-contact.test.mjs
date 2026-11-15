@@ -4,44 +4,48 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
-test('active listing seller contact is available without publishing non-seller phone numbers', async () => {
-  const sql = await read('../supabase/migrations/20261027195500_seller_contact_phone_active_listings.sql');
-  assert.match(sql, /l\.seller_id = p\.id AND l\.status = 'active'/);
-  assert.match(sql, /THEN p\.phone_number ELSE NULL::text/);
+test('public management contact is resolved from the configured active admin profile only', async () => {
+  const sql = await read('../supabase/migrations/20261115060000_campustrader_management_contact.sql');
+  assert.match(sql, /function public\.get_campustrader_whatsapp\(\)/i);
+  assert.match(sql, /join public\.profiles as p on lower\(p\.email\) = lower\(a\.email\)/i);
+  assert.match(sql, /coalesce\(p\.account_status, 'active'\) = 'active'/i);
+  assert.match(sql, /set search_path to ''/i);
+  assert.match(sql, /revoke all on function public\.get_campustrader_whatsapp\(\) from public/i);
+  assert.match(sql, /grant execute on function public\.get_campustrader_whatsapp\(\) to anon, authenticated/i);
 });
 
-test('WhatsApp routing normalizes Kenyan numbers and navigates on mobile browsers', async () => {
+test('WhatsApp enquiries always route to CampusTrader management with item context', async () => {
   const button = await read('../components/WhatsAppButton.tsx');
-  assert.match(button, /normalizeKenyanPhone/);
+  const listing = await read('../app/listing/[id]/page.tsx');
+  assert.match(button, /rpc\('get_campustrader_whatsapp'\)/);
+  assert.match(button, /encodeURIComponent\(message\)/);
   assert.match(button, /window\.location\.assign/);
-  assert.doesNotMatch(button, /window\.open/);
+  assert.doesNotMatch(button, /get_listing_seller_whatsapp/);
+  assert.match(listing, /<WhatsAppButton listingId=\{listing\.id\} listingTitle=\{listing\.title\}/);
 });
 
-test('first-time marketplace flow offers direct browse, sell and request actions', async () => {
+test('product cards are descriptive and the catalogue uses a scrollable grid rather than product carousels', async () => {
   const card = await read('../components/ListingCard.tsx');
   const home = await read('../app/page.tsx');
-  const profile = await read('../app/profile/page.tsx');
-  assert.match(card, /View listing/);
-  assert.doesNotMatch(home, /GettingStartedChecklist/);
-  assert.match(home, /Browse items/);
-  assert.match(home, /href="\/sell"/);
-  assert.match(home, /href="\/sell\?mode=request"/);
-  assert.match(home, /href="#marketplace-search"/);
-  assert.match(home, /message the seller/i);
-  assert.match(profile, /setupAction/);
+  assert.match(card, /listing\.description/);
+  assert.match(card, /View details/);
+  assert.match(home, /grid-cols-2/);
+  assert.match(home, /loadMore/);
+  assert.doesNotMatch(home, /grid-flow-col/);
+  assert.doesNotMatch(home, /ListingSection/);
 });
 
-test('verification selection persists in the file picker and displays selected count', async () => {
-  const profile = await read('../app/profile/page.tsx');
-  const filePickerHandler = profile.split('const handleDocumentChange =')[1]?.split('const handleVerificationSubmit =')[0] || '';
-  assert.doesNotMatch(filePickerHandler, /event\.currentTarget\.value = ''/);
-  assert.match(profile, /documentFiles\.length} document/);
-});
-
-test('order checkout is disabled during launch', async () => {
+test('ordering remains disabled during the managed-enquiry launch phase', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const order = await read('../app/orders/new/page.tsx');
   assert.match(buy, /disabled aria-disabled="true"/);
   assert.match(order, /Orders coming soon/);
   assert.doesNotMatch(order, /OrderCheckoutForm/);
+});
+
+test('verification file selection is displayed and not reset on selection', async () => {
+  const profile = await read('../app/profile/page.tsx');
+  const handler = profile.split('const handleDocumentChange =')[1]?.split('const handleVerificationSubmit =')[0] || '';
+  assert.equal(handler.includes("event.currentTarget.value = ''"), false);
+  assert.match(profile, /documentFiles\.length > 0/);
 });
