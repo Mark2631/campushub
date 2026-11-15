@@ -20,6 +20,9 @@ test('homepage uses product departments, a business shelf and a clear request pa
   assert.match(card, /listing\.negotiable \? 'Negotiable' : 'Fixed price'/);
   assert.match(card, /Price on enquiry/);
   assert.match(card, /Reviewed/);
+  const listings = await read('../lib/listings.ts');
+  assert.doesNotMatch(listings, /select\('id, full_name, avatar_url, badge_type, verification_status, phone_number, created_at'\)/);
+  assert.doesNotMatch(listings, /sellerPhoneNumber:/);
 });
 
 test('new and edited seller listings remain private until management review', async () => {
@@ -55,6 +58,7 @@ test('management sets the final price and can reject with a reason', async () =>
   assert.match(admin, /moderation_status: 'rejected'/);
   assert.match(page, /Final public price \(KSh\)/);
   assert.match(page, /Approve & publish/);
+  assert.match(page, /price: ''/);
   assert.match(page, /Reject submission/);
   assert.match(page, /Seller&apos;s suggested price/);
 });
@@ -101,6 +105,9 @@ test('only management can publish to campus communities', async () => {
   assert.match(admin, /Management-only posting/);
   assert.match(migration, /UPDATE public\.communities[\s\S]*?SET posting_mode = 'admin_only'/);
   assert.match(migration, /DROP POLICY IF EXISTS users_can_request_communities/);
+  assert.match(migration, /DROP POLICY IF EXISTS hardening_community_posts_insert_institution[\\s\\S]*?COALESCE\\(public\\.is_admin\\(\\), false\\)/i);
+  assert.match(admin, /SUPPORTED_INSTITUTIONS/);
+  assert.match(admin, /campus: communityForm\.campus/);
 });
 
 test('messaging and product enquiry channels remain distinct', async () => {
