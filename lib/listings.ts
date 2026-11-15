@@ -216,18 +216,28 @@ async function enrichListingsWithDeadline(rows: ListingRow[]): Promise<Listing[]
 
 export async function getListings(limit = 20, offset = 0, institution: string = DEFAULT_CAMPUS) {
   try {
-    const query = supabase
-      .from('listings')
-      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id')
-      .eq('status', 'active');
-    if (institution) {
-      const normalizedInstitution = normalizeInstitution(institution);
-      const institutionId = await getInstitutionIdForCode(normalizedInstitution);
-      // Fail closed when an institution cannot be mapped.
-      query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
-    }
+    const institutionId = institution
+      ? await getInstitutionIdForCode(normalizeInstitution(institution))
+      : null;
+    const fetchRows = (includeReviewTimestamp: boolean) => {
+      const query = supabase
+        .from('listings')
+        .select(includeReviewTimestamp
+          ? 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, reviewed_at, created_at, seller_id, business_id'
+          : 'id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, moderation_status, created_at, seller_id, business_id')
+        .eq('status', 'active');
+      if (institution) {
+        // Fail closed when an institution cannot be mapped.
+        query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
+      }
+      return query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    };
 
-    const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    let response = await fetchRows(true);
+    if (response.error && isMissingColumnError(response.error, 'listings', 'reviewed_at')) {
+      response = await fetchRows(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
@@ -277,11 +287,21 @@ export async function getListingsByUser(userId: string) {
   }
 
   try {
-    const { data, error } = await supabase
+    const fetchUserListings = (includeReviewDetails: boolean) => supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, moderation_reason, location, created_at, updated_at, media_urls, video_url')
+      .select(includeReviewDetails
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, moderation_reason, location, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, created_at, updated_at, media_urls, video_url')
       .eq('seller_id', userId)
       .order('created_at', { ascending: false });
+    let response = await fetchUserListings(true);
+    if (response.error && (
+      isMissingColumnError(response.error, 'listings', 'reviewed_at')
+      || isMissingColumnError(response.error, 'listings', 'moderation_reason')
+    )) {
+      response = await fetchUserListings(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching user listings:', error);
@@ -391,30 +411,29 @@ export async function insertListing(
       institution_id: institutionId,
     };
 
-    const insertQuery = supabase
-        .from('listings')
-        .insert(listingToInsert)
-        .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url')
-        .single();
-
-    let { data: newListing, error } = await withTimeout(
-      insertQuery,
-      15000,
-      'Creating listing timed out. Please try again.'
-    );
-
-    if (error && isMissingColumnError(error, 'listings', 'campus')) {
-      const { campus, ...legacyPayload } = listingToInsert;
-      void campus;
-      ({ data: newListing, error } = await withTimeout(
-        supabase
-          .from('listings')
-          .insert(legacyPayload)
-          .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
-          .single(),
+    const runInsert = async (payload: Record<string, unknown>, includeReviewTimestamp: boolean) => {
+      const columns = includeReviewTimestamp
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, created_at, updated_at, media_urls, video_url';
+      return withTimeout(
+        supabase.from('listings').insert(payload).select(columns).single(),
         15000,
         'Creating listing timed out. Please try again.'
-      ));
+      );
+    };
+
+    let insertPayload = { ...listingToInsert };
+    let includeReviewTimestamp = true;
+    let { data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp);
+
+    // The app preview may run before the migration is applied. Retry without
+    // newly introduced audit columns, while still submitting as hidden/pending.
+    for (const optionalColumn of ['reviewed_by', 'reviewed_at', 'moderation_reason', 'campus']) {
+      if (error && isMissingColumnError(error, 'listings', optionalColumn)) {
+        delete insertPayload[optionalColumn];
+        if (optionalColumn === 'reviewed_at') includeReviewTimestamp = false;
+        ({ data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp));
+      }
     }
 
     if (error) {
@@ -449,11 +468,18 @@ export async function getListingById(id: string) {
   }
 
   try {
-    const { data, error } = await supabase
+    const fetchListing = (includeReviewTimestamp: boolean) => supabase
       .from('listings')
-      .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, campus, created_at, updated_at, media_urls, video_url')
+      .select(includeReviewTimestamp
+        ? 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, reviewed_at, location, campus, created_at, updated_at, media_urls, video_url'
+        : 'id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, moderation_status, location, campus, created_at, updated_at, media_urls, video_url')
       .eq('id', id)
       .maybeSingle();
+    let response = await fetchListing(true);
+    if (response.error && isMissingColumnError(response.error, 'listings', 'reviewed_at')) {
+      response = await fetchListing(false);
+    }
+    const { data, error } = response;
 
     if (error) {
       logSupabaseError('Error fetching listing by id:', error);
@@ -586,10 +612,10 @@ export async function updateListing(
     updated_at: new Date().toISOString(),
   };
 
-  const { data: updated, error } = await withTimeout(
+  const runUpdate = (nextPayload: Record<string, unknown>) => withTimeout(
     supabase
       .from('listings')
-      .update(payload)
+      .update(nextPayload)
       .eq('id', listingId)
       .eq('seller_id', sellerId)
       .select('id, user_id, business_id, seller_id, title, description, category, listing_type, price, negotiable, condition, status, location, created_at, updated_at, media_urls, video_url')
@@ -597,6 +623,14 @@ export async function updateListing(
     15000,
     'Saving listing timed out. Please try again.'
   );
+  let updatePayload: Record<string, unknown> = { ...payload };
+  let { data: updated, error } = await runUpdate(updatePayload);
+  for (const optionalColumn of ['reviewed_by', 'reviewed_at', 'moderation_reason']) {
+    if (error && isMissingColumnError(error, 'listings', optionalColumn)) {
+      delete updatePayload[optionalColumn];
+      ({ data: updated, error } = await runUpdate(updatePayload));
+    }
+  }
 
   if (error) {
     logSupabaseError('Error updating listing:', error, payload);
