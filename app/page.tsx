@@ -408,7 +408,7 @@ export default function Home() {
             <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Send us your item details. Management checks the listing and sets the public price before it goes live.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/profile#manage-business-profile" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
+            <Link href="/profile?setup=business" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white">
               Business profile
             </Link>
             <Link href="/sell" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
