@@ -1316,7 +1316,7 @@ export default function AdminPage() {
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-white">{community.name}</p>
                           <p className="mt-1 text-sm text-zinc-500">
-                            {community.category} · {community.memberCount || 0} followers · {community.posting_mode === 'admin_only' ? 'Admin-only posting' : 'Everyone can post'}
+                            {community.category} · {community.memberCount || 0} followers · Management-only posting
                           </p>
                         </div>
                         <StatusPill status={community.status} />
