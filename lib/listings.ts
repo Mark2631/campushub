@@ -422,7 +422,7 @@ export async function insertListing(
       );
     };
 
-    let insertPayload = { ...listingToInsert };
+    const insertPayload = { ...listingToInsert };
     let includeReviewTimestamp = true;
     let { data: newListing, error } = await runInsert(insertPayload, includeReviewTimestamp);
 
@@ -632,7 +632,7 @@ export async function updateListing(
     15000,
     'Saving listing timed out. Please try again.'
   );
-  let updatePayload: Record<string, unknown> = { ...payload };
+  const updatePayload: Record<string, unknown> = { ...payload };
   let { data: updated, error } = await runUpdate(updatePayload);
   if (error && (
     isMissingColumnError(error, 'listings', 'reviewed_by')
