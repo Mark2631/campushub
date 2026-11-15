@@ -43,6 +43,8 @@ test('ordering remains disabled during the managed-enquiry launch phase', async 
   const order = await read('../app/orders/new/page.tsx');
   assert.match(buy, /disabled aria-disabled="true"/);
   assert.match(order, /Orders coming soon/);
+  assert.match(order, /contact CampusTrader management/);
+  assert.doesNotMatch(order, /contact them on WhatsApp/);
   assert.doesNotMatch(order, /OrderCheckoutForm/);
 });
 
