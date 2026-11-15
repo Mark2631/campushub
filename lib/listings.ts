@@ -225,7 +225,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
 
     const liveListings = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
     // The feed uses description, negotiable, and sellerType in its filters.
-    // Enrich seller metadata as well so verified/business badges are accurate;
+    // Enrich the public seller identity and business-account details;
     // the deadline fallback keeps listing cards visible on a slow profile query.
     return { listings: await enrichListingsWithDeadline(liveListings), error: null };
   } catch (err) {
