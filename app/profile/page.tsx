@@ -153,6 +153,14 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   }, [user, setupAction]);
 
   useEffect(() => {
+    if (setupAction !== 'business' || !settingsOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById('manage-business-profile')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [setupAction, settingsOpen]);
+
+  useEffect(() => {
     if (!profileEditOpen || setupAction !== 'verification') return;
     const id = window.requestAnimationFrame(() => document.getElementById('edit-profile-verification')?.scrollIntoView({ block: 'nearest' }));
     return () => window.cancelAnimationFrame(id);
@@ -725,13 +733,13 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h3 className="font-bold">Manage areas</h3>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <span aria-disabled="true" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-3 text-center text-sm font-semibold text-slate-500 dark:bg-slate-800">Orders · Soon</span>
-                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Selling profile</a>
+                  <a href="#manage-business-profile" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Business profile</a>
                   <a href="#manage-help" className="rounded-xl border border-slate-200 px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help &amp; support</a>
                 </div>
               </section>
 
               <section id="manage-business-profile" className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                <h3 className="font-bold">Selling Profile</h3>
+                <h3 className="font-bold">Business profile</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-blue-600 text-white' : 'border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}>Personal</button>
                   {businesses.map((business) => (
