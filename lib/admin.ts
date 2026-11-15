@@ -281,7 +281,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
       if (response.error && isMissingColumnError(response.error, 'listings', 'moderation_reason')) {
         response = await fetchListings(false);
       }
-      return { data: (response.data || []) as AdminListing[], error: response.error };
+      return { data: (response.data || []) as unknown as AdminListing[], error: response.error };
     }),
     safeSection('users', [] as AdminUser[], async () => {
       const response = await supabase
