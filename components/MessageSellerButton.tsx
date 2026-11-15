@@ -10,9 +10,10 @@ import AuthPromptModal from './AuthPromptModal';
 type Props = {
   listingId: string;
   sellerId: string;
+  listingTitle?: string;
 };
 
-export default function MessageSellerButton({ listingId, sellerId }: Props) {
+export default function MessageSellerButton({ listingId, sellerId, listingTitle }: Props) {
   const router = useRouter();
   const { user, loading } = useUser();
   const [status, setStatus] = useState<string | null>(null);
@@ -49,7 +50,8 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
         return;
       }
 
-      router.push(`/messages/${conversation.id}`);
+      const context = listingTitle ? `?item=${encodeURIComponent(listingTitle)}` : '';
+      router.push(`/messages/${conversation.id}${context}`);
     } catch (error) {
       console.error('Unexpected conversation navigation failure:', error);
       setStatus('Unable to open conversation. Please try again.');
