@@ -40,6 +40,7 @@ test('new and edited seller listings remain private until management review', as
   assert.match(migration, /CREATE TRIGGER listings_force_management_review/i);
   assert.match(migration, /CREATE POLICY ct_managed_submissions_insert_guard[\s\S]*?status = 'hidden'[\s\S]*?moderation_status = 'pending_review'/i);
   assert.match(migration, /CREATE POLICY ct_managed_submissions_update_guard/i);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\\.guard_listing_tenant_fields[\\s\\S]*?auth\\.uid\\(\\) = OLD\\.user_id[\\s\\S]*?NEW\\.status = 'hidden'[\\s\\S]*?NEW\\.moderation_status = 'pending_review'/i);
   assert.match(migration, /UPDATE public\.listings[\s\S]*?moderation_status = 'pending_review'[\s\S]*?WHERE status = 'active'/i);
 });
 
