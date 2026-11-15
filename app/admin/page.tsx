@@ -963,7 +963,10 @@ export default function AdminPage() {
                             {listing.condition || 'Condition not supplied'} · {listing.location || 'No location'}
                           </p>
                           <p className="mt-1 text-sm leading-6 text-zinc-300">{listing.description || 'No description supplied.'}</p>
-                          <p className="mt-2 text-xs text-zinc-600">Submitted by: {listing.seller_id}</p>
+                          <div className="mt-2 text-xs text-zinc-500">
+                            <p>Submitted by: {usersById.get(listing.seller_id)?.full_name || usersById.get(listing.seller_id)?.email || listing.seller_id}</p>
+                            {usersById.get(listing.seller_id)?.phone_number ? <p>Seller contact: {usersById.get(listing.seller_id)?.phone_number}</p> : null}
+                          </div>
                           {listing.media_urls?.length ? (
                             <div className="mt-2 flex flex-wrap gap-2">
                               {listing.media_urls.map((url, index) => (
