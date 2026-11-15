@@ -365,7 +365,7 @@ test('zero and missing listing prices are never presented as free', async () => 
   assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
   assert.ok(sell.includes('Management checks this suggestion and decides the public price.'));
   for (const source of [card, detail]) {
-    assert.ok(source.includes('Ask seller for price'));
+    assert.ok(source.includes('Price on enquiry'));
     assert.ok(!source.includes("'Free'"));
   }
   assert.ok(home.includes('listing.price > 0'));
