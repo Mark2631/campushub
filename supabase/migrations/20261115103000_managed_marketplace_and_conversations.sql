@@ -13,6 +13,17 @@ CREATE INDEX IF NOT EXISTS listings_moderation_review_queue_idx
   WHERE status = 'hidden'::public.listing_status
     AND moderation_status = 'pending_review';
 
+-- Re-review the existing live catalogue so every public price and item
+-- description follows the same management-controlled standard.
+UPDATE public.listings
+SET status = 'hidden'::public.listing_status,
+    moderation_status = 'pending_review',
+    reviewed_by = NULL,
+    reviewed_at = NULL,
+    moderation_reason = NULL,
+    updated_at = now()
+WHERE status = 'active'::public.listing_status;
+
 CREATE OR REPLACE FUNCTION private.force_listing_review_for_non_admin()
 RETURNS trigger
 LANGUAGE plpgsql
