@@ -97,7 +97,7 @@ export default function MessagesPage() {
           <span className="text-base sm:text-lg">🛡️</span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Safety First</p>
-            <p className="text-xs text-blue-100 truncate">Meet in public. Do not pay before inspection. Verify seller profile.</p>
+            <p className="text-xs text-blue-100 truncate">Meet in public. Inspect the item before paying. Keep your chat in CampusTrader.</p>
           </div>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function MessagesPage() {
         <header className="mb-8 mt-2">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Your inbox</p>
           <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Keep buying and selling conversations in one place.</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">One thread per person. Keep discussing other products in the same chat.</p>
         </header>
 
         <div className="mb-6">
@@ -122,7 +122,7 @@ export default function MessagesPage() {
           <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
             <p className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Sign in to continue.</p>
             <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
-              Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
+              Browsing is free. Create an account only when you want to post, message, save items, or follow official groups.
             </p>
             <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
               <Link href="/signin?next=/messages" className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
@@ -159,7 +159,7 @@ export default function MessagesPage() {
                         <div className="flex items-center gap-2">
                           <p className="truncate font-semibold text-gray-900 dark:text-white">{profileName(conversation.otherUser)}</p>
                           <span className="text-xs text-gray-400">•</span>
-                          <p className="truncate text-xs text-gray-500 dark:text-zinc-500">{conversation.listingTitle}</p>
+                          <p className="truncate text-xs text-gray-500 dark:text-zinc-500">Direct chat</p>
                         </div>
                         <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">
                           {conversation.lastMessage?.content || 'No messages yet'}
