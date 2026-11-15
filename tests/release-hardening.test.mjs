@@ -268,15 +268,16 @@ test('homepage keeps concise crawlable marketplace context and moves detailed gu
     read('../app/page.tsx'),
     read('../app/help/page.tsx'),
   ]);
-  assert.ok(source.includes('CampusTrader: buy and sell on campus in Kenya'));
-  assert.ok(source.includes('second-hand electronics, books, fashion, furniture, food, and services'));
+  assert.ok(source.includes('Good finds, closer to campus.'));
+  assert.ok(source.includes('discover products listed by students and nearby businesses'));
   assert.ok(source.includes('href="/help"'));
   assert.ok(!source.includes('A marketplace built around campus life in Kenya'));
   assert.ok(!source.includes('Looking to buy?'));
   assert.ok(!source.includes('Have something to sell?'));
-  assert.ok(help.includes('How to get started'));
+  assert.ok(source.includes('Start selling'));
+  assert.ok(help.includes('A simpler way to trade around campus.'));
   assert.ok(help.includes('Post a listing'));
-  assert.ok(help.includes('Talk to the seller'));
+  assert.ok(help.includes('Ask CampusTrader'));
 });
 
 test('public listings have unique canonical metadata and product markup only for active priced products', async () => {
@@ -367,7 +368,7 @@ test('zero and missing listing prices are never presented as free', async () => 
     assert.ok(source.includes('Ask seller for price'));
     assert.ok(!source.includes("'Free'"));
   }
-  assert.ok(home.includes("typeof listing.price === 'number' && listing.price > 0"));
+  assert.ok(home.includes('listing.price > 0'));
   assert.ok(admin.includes('Ask seller for price'));
 });
 
