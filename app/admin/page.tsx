@@ -179,7 +179,7 @@ export default function AdminPage() {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState('');
   const [communityWorking, setCommunityWorking] = useState(false);
-  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' as 'everyone' | 'admin_only' });
+  const [communityForm, setCommunityForm] = useState({ name: '', description: '', category: 'Announcements', postingMode: 'admin_only' as const });
   const [communityPostForm, setCommunityPostForm] = useState({ content: '', isPinned: false });
   const [communityMedia, setCommunityMedia] = useState<File[]>([]);
   const [communityCoverFile, setCommunityCoverFile] = useState<File | null>(null);
@@ -1281,11 +1281,10 @@ export default function AdminPage() {
                   />
                   <select
                     value={communityForm.postingMode}
-                    onChange={(event) => setCommunityForm((current) => ({ ...current, postingMode: event.target.value as 'everyone' | 'admin_only' }))}
+                    onChange={(event) => setCommunityForm((current) => ({ ...current, postingMode: 'admin_only' as const }))}
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   >
-                    <option value="everyone">Everyone can post</option>
-                    <option value="admin_only">Admin-only posting</option>
+                    <option value="admin_only">Management-only posting</option>
                   </select>
                   <label className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-100">
                     Cover image
