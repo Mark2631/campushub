@@ -32,8 +32,16 @@ export interface AdminListing {
   id: string;
   seller_id: string;
   title: string;
+  description?: string | null;
+  category?: string | null;
+  condition?: string | null;
   price: number | null;
+  negotiable?: boolean | null;
   status: string;
+  moderation_status?: string | null;
+  moderation_reason?: string | null;
+  media_urls?: string[] | null;
+  business_id?: string | null;
   location: string | null;
   created_at?: string;
 }
@@ -262,10 +270,10 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
     safeSection('listings', [] as AdminListing[], async () => {
       const response = await supabase
         .from('listings')
-        .select('id, seller_id, title, price, status, location, created_at')
-        .in('status', ['active', 'reported'])
+        .select('id, seller_id, title, description, category, condition, price, negotiable, status, moderation_status, moderation_reason, media_urls, business_id, location, created_at')
+        .or('status.in.(active,reported),moderation_status.eq.pending_review')
         .order('created_at', { ascending: false })
-        .limit(80);
+        .limit(100);
       return { data: (response.data || []) as AdminListing[], error: response.error };
     }),
     safeSection('users', [] as AdminUser[], async () => {
@@ -1049,3 +1057,103 @@ export async function getAllAdminActions(adminId?: string, limit = 100) {
 }
 
 export { updateComplaintStatus };
+
+
+export async function approveListingSubmission(
+  listingId: string,
+  finalPrice: number,
+  negotiable: boolean
+) {
+  if (!isValidUuid(listingId) || !Number.isFinite(finalPrice) || finalPrice <= 0) {
+    return { error: 'Enter a valid public price above KSh 0.' };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const adminId = authData.user?.id;
+  if (authError || !adminId || !(await assertCurrentUserIsAdmin(adminId))) {
+    return invalidAdminAction();
+  }
+
+  const reviewedAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('listings')
+    .update({
+      price: finalPrice,
+      negotiable,
+      status: 'active',
+      moderation_status: 'safe',
+      reviewed_by: adminId,
+      reviewed_at: reviewedAt,
+      moderation_reason: null,
+      updated_at: reviewedAt,
+    })
+    .eq('id', listingId)
+    .eq('status', 'hidden')
+    .eq('moderation_status', 'pending_review')
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Listing approval failed:', error);
+    return { error: 'The listing could not be approved. Refresh the queue and try again.' };
+  }
+  if (!data) return { error: 'This submission is no longer waiting for review.' };
+
+  const { error: auditError } = await supabase.from('admin_actions').insert({
+    admin_id: adminId,
+    action_type: 'listing_approved',
+    target_type: 'listing',
+    target_id: listingId,
+    reason: `Published at KSh ${Math.round(finalPrice).toLocaleString('en-KE')} · ${negotiable ? 'Negotiable' : 'Fixed price'}`,
+  });
+  if (auditError) console.error('Listing approval audit could not be recorded:', auditError);
+
+  return { error: null };
+}
+
+export async function rejectListingSubmission(listingId: string, reason: string) {
+  const cleanReason = cleanText(reason, 500);
+  if (!isValidUuid(listingId) || cleanReason.length < 4) {
+    return { error: 'Add a short reason before rejecting this submission.' };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  const adminId = authData.user?.id;
+  if (authError || !adminId || !(await assertCurrentUserIsAdmin(adminId))) {
+    return invalidAdminAction();
+  }
+
+  const reviewedAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('listings')
+    .update({
+      status: 'hidden',
+      moderation_status: 'rejected',
+      reviewed_by: adminId,
+      reviewed_at: reviewedAt,
+      moderation_reason: cleanReason,
+      updated_at: reviewedAt,
+    })
+    .eq('id', listingId)
+    .eq('status', 'hidden')
+    .eq('moderation_status', 'pending_review')
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Listing rejection failed:', error);
+    return { error: 'The submission could not be rejected. Refresh the queue and try again.' };
+  }
+  if (!data) return { error: 'This submission is no longer waiting for review.' };
+
+  const { error: auditError } = await supabase.from('admin_actions').insert({
+    admin_id: adminId,
+    action_type: 'listing_rejected',
+    target_type: 'listing',
+    target_id: listingId,
+    reason: cleanReason,
+  });
+  if (auditError) console.error('Listing rejection audit could not be recorded:', auditError);
+
+  return { error: null };
+}
