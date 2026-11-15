@@ -440,8 +440,13 @@ export default function AdminPage() {
   };
 
   const handleApproveListing = async (listingId: string) => {
-    const values = listingReviewInputs[listingId];
-    const price = Number(values?.price || '');
+    const listing = dashboard.listings.find((item) => item.id === listingId);
+    const values = listingReviewInputs[listingId] || {
+      price: listing?.price != null ? String(listing.price) : '',
+      negotiable: Boolean(listing?.negotiable),
+      reason: listing?.moderation_reason || '',
+    };
+    const price = Number(values.price || '');
     if (!Number.isFinite(price) || price <= 0) {
       const text = 'Set the final public price before publishing.';
       setMessage({ type: 'error', text });
@@ -450,13 +455,14 @@ export default function AdminPage() {
     }
     await runAction(
       listingId,
-      () => approveListingSubmission(listingId, price, Boolean(values?.negotiable)),
+      () => approveListingSubmission(listingId, price, Boolean(values.negotiable)),
       'Listing approved and published.'
     );
   };
 
   const handleRejectListing = async (listingId: string) => {
-    const reason = listingReviewInputs[listingId]?.reason || '';
+    const listing = dashboard.listings.find((item) => item.id === listingId);
+    const reason = listingReviewInputs[listingId]?.reason || listing?.moderation_reason || '';
     if (reason.trim().length < 4) {
       const text = 'Add a short reason before rejecting this submission.';
       setMessage({ type: 'error', text });
