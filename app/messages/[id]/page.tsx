@@ -47,20 +47,19 @@ export default function ConversationPage({ params }: Props) {
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
-  const [lastPrefilledTitle, setLastPrefilledTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const showWarning = riskyTerms.some((term) => messageText.toLowerCase().includes(term));
-
-  useEffect(() => {
-    if (!interestTitle || interestTitle === lastPrefilledTitle) return;
-    setMessageText((current) => current.trim() ? current : `Hi, I'm interested in ${interestTitle}. Is it still available?`);
-    setLastPrefilledTitle(interestTitle);
-  }, [interestTitle, lastPrefilledTitle]);
+  const interestKey = interestTitle ? `${interestListingId}:${interestTitle}` : '';
+  const [lastPrefilledKey, setLastPrefilledKey] = useState('');
+  const prefilledMessage = interestTitle && interestKey !== lastPrefilledKey
+    ? `Hi, I'm interested in ${interestTitle}. Is it still available?`
+    : '';
+  const messageDraft = messageText || prefilledMessage;
+  const showWarning = riskyTerms.some((term) => messageDraft.toLowerCase().includes(term));
 
   useEffect(() => {
     const load = async () => {
@@ -118,8 +117,8 @@ export default function ConversationPage({ params }: Props) {
 
   const handleSend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if ((!messageText.trim() && !attachment) || !user || !conversation || uploading) return;
-    let content = messageText.trim();
+    if ((!messageDraft.trim() && !attachment) || !user || !conversation || uploading) return;
+    let content = messageDraft.trim();
 
     if (attachment) {
       setUploading(true);
@@ -143,6 +142,7 @@ export default function ConversationPage({ params }: Props) {
     };
     setMessages((current) => [...current, optimisticMessage]);
     setMessageText('');
+    if (interestKey) setLastPrefilledKey(interestKey);
     setAttachment(null);
     if (attachmentPreview) URL.revokeObjectURL(attachmentPreview);
     setAttachmentPreview(null);
@@ -351,15 +351,18 @@ export default function ConversationPage({ params }: Props) {
                 </label>
                 <textarea
                   aria-label="Message"
-                  value={messageText}
-                  onChange={(event) => setMessageText(event.target.value)}
+                  value={messageDraft}
+                  onChange={(event) => {
+                    setMessageText(event.target.value);
+                    if (!event.target.value.trim() && interestKey) setLastPrefilledKey(interestKey);
+                  }}
                   rows={1}
                   className="min-h-11 flex-1 resize-none rounded-2xl border-0 bg-transparent px-3 py-3 text-sm text-gray-900 outline-none placeholder-gray-500 dark:text-white dark:placeholder-zinc-500"
                   placeholder="Write your message..."
                 />
                 <button
                   type="submit"
-                  disabled={sending || uploading || (!messageText.trim() && !attachment)}
+                  disabled={sending || uploading || (!messageDraft.trim() && !attachment)}
                   aria-label="Send message"
                   className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:bg-gray-400"
                 >
