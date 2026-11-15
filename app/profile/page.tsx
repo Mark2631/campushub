@@ -56,12 +56,12 @@ function statusClass(status?: string | null) {
   return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300';
 }
 
-type ListingFilter = 'active' | 'sold' | 'hidden' | 'pending_payment';
+type ListingFilter = 'active' | 'pending_review' | 'sold' | 'hidden';
 
 function listingEmptyText(filter: ListingFilter) {
   if (filter === 'active') return 'No active listings';
   if (filter === 'sold') return 'No sold listings';
-  if (filter === 'pending_payment') return 'No pending listings';
+  if (filter === 'pending_review') return 'No items waiting for review';
   return 'No hidden listings';
 }
 
@@ -109,8 +109,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const activeListingsCount = userListings.filter((listing) => listing.status === 'active').length;
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
-  const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
-  const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
+  const pendingListingsCount = userListings.filter((listing) => listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')).length;
+  const filteredListings = userListings.filter((listing) => listingFilter === 'pending_review'
+    ? listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')
+    : listing.status === listingFilter && !(listing.status === 'hidden' && ['pending_review', 'rejected'].includes(listing.moderation_status || '')));
   const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
   const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
   const signInHref = `/signin?mode=signin&next=${encodeURIComponent(authNextPath)}`;
@@ -255,7 +257,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     showToast({ type: 'success', message: 'WhatsApp number saved.' });
   };
 
-  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
+  const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden') => {
     if (!user || listingActionId) return;
 
     setListingActionId(listingId);
@@ -286,9 +288,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         type: 'success',
         message: status === 'sold'
           ? 'Marked as sold and removed from the marketplace.'
-          : status === 'hidden'
-            ? 'Listing hidden from the marketplace.'
-            : 'Listing restored to the marketplace.',
+          : 'Listing hidden from the marketplace.',
       });
     } catch (err) {
       console.error('Unexpected listing status update failure:', err);
@@ -537,15 +537,15 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold">My Listings</h2>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Manage active, pending, sold, and hidden listings.</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Track items waiting for review and manage the products already on the marketplace.</p>
                 </div>
                 <Link href="/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-blue-700">Post listing</Link>
               </div>
 
               <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-950">
-                {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
+                {(['active', 'pending_review', 'sold', 'hidden'] as const).map((status) => (
                   <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                    {status === 'pending_payment' ? 'Pending' : status}
+                    {status === 'pending_review' ? 'In review' : status}
                   </button>
                 ))}
               </div>
@@ -558,26 +558,24 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         <div className="min-w-0">
                           <p className="truncate font-bold">{listing.title}</p>
                           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                            {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
+                            {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'No price set'} · {listing.location || 'MUST'} · {listing.moderation_status === 'pending_review' ? 'Awaiting management review' : listing.moderation_status === 'rejected' ? 'Changes requested' : statusLabel(listing.status)}
                           </p>
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                          {listing.status === 'active' || listing.status === 'sold' ? (
+                            <Link href={`/listing/${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">View</Link>
+                          ) : null}
                           <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Edit</Link>
                           {listing.status !== 'sold' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Sold'}
                             </button>
                           ) : null}
-                          {listing.status !== 'hidden' ? (
+                          {listing.status === 'active' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'hidden')} className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Hide'}
                             </button>
-                          ) : (
-                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                              {listingActionId === listing.id ? 'Saving…' : 'Restore'}
-                            </button>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </article>
