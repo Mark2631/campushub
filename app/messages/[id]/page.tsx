@@ -177,10 +177,10 @@ export default function ConversationPage({ params }: Props) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24 dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="flex-1 flex items-center justify-center px-4 py-8">
-          <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-blue-500 animate-spin" />
+          <div className="h-12 w-12 rounded-full border-2 border-[var(--border)] dark:border-[var(--border)] border-t-blue-500 animate-spin" />
         </main>
         <BottomNav />
       </div>
@@ -189,12 +189,12 @@ export default function ConversationPage({ params }: Props) {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24 dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="flex-1 px-4 py-8">
-          <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Sign in to continue.</h2>
-            <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
+          <div className="rounded-2xl border-2 border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-8 text-center">
+            <h2 className="text-2xl font-bold mb-3 text-[var(--foreground)] dark:text-[var(--foreground)]">Sign in to continue.</h2>
+            <p className="mx-auto max-w-md text-[var(--muted)] dark:text-[var(--muted)]">
               Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
             </p>
           </div>
@@ -205,17 +205,17 @@ export default function ConversationPage({ params }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-950 pb-24 dark:bg-slate-950 dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24 dark:bg-[var(--background)] dark:text-[var(--foreground)]">
       <Header />
 
       <main className="flex-1 max-w-5xl mx-auto px-4 py-8 w-full">
         <header className="mb-6">
-          <Link href="/messages" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold mb-4">
+          <Link href="/messages" className="inline-flex items-center gap-2 text-[var(--brand)] dark:text-[var(--brand)] hover:text-[var(--brand)] dark:hover:text-[var(--brand)] text-sm font-semibold mb-4">
             ← Back to Messages
           </Link>
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-bold text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand)] text-sm font-bold text-white">
                 {conversation?.otherUser.avatar_url ? (
                   <Image src={conversation.otherUser.avatar_url} alt="" width={48} height={48} className="h-full w-full object-cover" />
                 ) : (
@@ -223,8 +223,8 @@ export default function ConversationPage({ params }: Props) {
                 )}
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">{otherName}</h1>
-                <p className="truncate text-sm text-gray-600 dark:text-zinc-400">{conversation?.listingTitle || 'Listing conversation'}</p>
+                <h1 className="truncate text-2xl font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{otherName}</h1>
+                <p className="truncate text-sm text-[var(--muted)] dark:text-[var(--muted)]">{conversation?.listingTitle || 'Listing conversation'}</p>
               </div>
             </div>
             {conversation ? (
@@ -233,7 +233,7 @@ export default function ConversationPage({ params }: Props) {
                 aria-label="Remove conversation"
                 onClick={handleDeleteConversation}
                 disabled={deleting}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:text-red-300"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-[var(--border)] dark:text-[var(--muted)] dark:hover:border-red-900 dark:hover:text-red-300"
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -249,25 +249,25 @@ export default function ConversationPage({ params }: Props) {
         ) : (
           <div className="space-y-6">
             {/* Listing Reference Card */}
-            <div className="rounded-2xl border border-gray-200 dark:border-zinc-800 bg-blue-50 p-4 dark:bg-blue-900/20">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Meet in public. Do not pay before inspection.</p>
+            <div className="rounded-2xl border border-[var(--border)] dark:border-[var(--border)] bg-[var(--brand-soft)] p-4 dark:bg-[var(--brand-soft)]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand)] dark:text-[var(--brand)]">Meet in public. Do not pay before inspection.</p>
               {conversation?.listingId ? (
-                <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-blue-700 underline dark:text-blue-200">
+                <Link href={`/listing/${conversation.listingId}`} className="mt-2 inline-block text-sm font-semibold text-[var(--brand)] underline dark:text-[var(--brand)]">
                   View listing
                 </Link>
-              ) : <p className="mt-2 text-sm text-blue-700 dark:text-blue-200">Listing reference is unavailable.</p>}
+              ) : <p className="mt-2 text-sm text-[var(--brand)] dark:text-[var(--brand)]">Listing reference is unavailable.</p>}
               {conversation?.otherUser.id ? (
                 <div className="mt-3">
                   <WhatsAppButton userId={conversation.otherUser.id} phoneNumber={conversation.otherUser.phone_number} />
-                  <p className="mt-2 text-xs leading-5 text-blue-700 dark:text-blue-200">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                  <p className="mt-2 text-xs leading-5 text-[var(--brand)] dark:text-[var(--brand)]">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                 </div>
               ) : null}
             </div>
 
             {/* Messages Container */}
-            <div className="min-h-96 max-h-[32rem] space-y-4 overflow-y-auto rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+            <div className="min-h-96 max-h-[32rem] space-y-4 overflow-y-auto rounded-3xl border border-[var(--border)]/80 bg-[var(--surface)] p-4 shadow-sm sm:p-6 dark:border-[var(--border)] dark:bg-[var(--surface)]">
               {messages.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-zinc-400 py-8">No messages yet.</p>
+                <p className="text-center text-[var(--muted)] dark:text-[var(--muted)] py-8">No messages yet.</p>
               ) : (
                 messages.map((message, index) => {
                   const previous = messages[index - 1];
@@ -279,7 +279,7 @@ export default function ConversationPage({ params }: Props) {
                     className={`flex gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
                   >
                     {!isOwn && startsGroup ? (
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand)] text-[10px] font-bold text-white">
                         {conversation?.otherUser.avatar_url ? (
                           <Image src={conversation.otherUser.avatar_url} alt="" width={28} height={28} className="h-full w-full object-cover" />
                         ) : (
@@ -290,11 +290,11 @@ export default function ConversationPage({ params }: Props) {
                     <div
                       className={`max-w-xs rounded-2xl px-4 py-3 ${
                         isOwn
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/10'
-                          : 'bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white'
+                          ? 'bg-[var(--brand)] text-white shadow-sm shadow-[var(--brand)]/10'
+                          : 'bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] text-[var(--foreground)] dark:text-[var(--foreground)]'
                       }`}
                     >
-                      {!isOwn && startsGroup ? <p className="mb-1 text-[11px] font-semibold text-gray-500 dark:text-zinc-400">{otherName}</p> : null}
+                      {!isOwn && startsGroup ? <p className="mb-1 text-[11px] font-semibold text-[var(--muted)] dark:text-[var(--muted)]">{otherName}</p> : null}
                       {(() => {
                         const mediaMatch = message.content.match(/\\[\\[media:(.+?)\\|(image|video)\\|(.+?)\\]\\]/);
                         const text = message.content.replace(/\\n?\\n?\\[\\[media:.+?\\]\\]/, '').trim();
@@ -306,7 +306,7 @@ export default function ConversationPage({ params }: Props) {
                           </>
                         );
                       })()}
-                      <p className={`mt-2 text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-zinc-500'}`}>
+                      <p className={`mt-2 text-xs ${isOwn ? 'text-white/75' : 'text-[var(--muted)] dark:text-[var(--muted)]'}`}>
                         {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                         {message.status === 'sending' ? ' · sending' : message.status === 'failed' ? ' · failed' : ''}
                       </p>
@@ -329,14 +329,14 @@ export default function ConversationPage({ params }: Props) {
                 </div>
               ) : null}
               {attachmentPreview ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-3 dark:border-[var(--border)] dark:bg-[var(--brand-soft)]">
                   {attachment?.type.startsWith('video/') ? <video src={attachmentPreview} className="h-16 w-16 rounded-xl object-cover" muted /> : <Image src={attachmentPreview} alt="Attachment preview" width={64} height={64} unoptimized className="h-16 w-16 rounded-xl object-cover" />}
                   <p className="min-w-0 flex-1 truncate text-sm font-medium">{attachment?.name}</p>
-                  <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-slate-500 hover:bg-white hover:text-red-600 dark:hover:bg-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface)] hover:text-red-600 dark:hover:bg-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
               ) : null}
-              <div className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-800 dark:hover:text-blue-300" aria-label="Attach image or video">
+              <div className="flex items-end gap-2 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
+                <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)] dark:hover:bg-slate-800 dark:hover:text-[var(--brand)]" aria-label="Attach image or video">
                   <ImagePlus className="h-5 w-5" aria-hidden="true" />
                   <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" className="sr-only" onChange={(event) => { handleAttachment(event.target.files?.[0]); event.currentTarget.value = ''; }} />
                 </label>
@@ -345,14 +345,14 @@ export default function ConversationPage({ params }: Props) {
                   value={messageText}
                   onChange={(event) => setMessageText(event.target.value)}
                   rows={1}
-                  className="min-h-11 flex-1 resize-none rounded-2xl border-0 bg-transparent px-3 py-3 text-sm text-gray-900 outline-none placeholder-gray-500 dark:text-white dark:placeholder-zinc-500"
+                  className="min-h-11 flex-1 resize-none rounded-2xl border-0 bg-transparent px-3 py-3 text-sm text-[var(--foreground)] outline-none placeholder-gray-500 dark:text-[var(--foreground)] dark:placeholder-zinc-500"
                   placeholder="Write your message..."
                 />
                 <button
                   type="submit"
                   disabled={sending || uploading || (!messageText.trim() && !attachment)}
                   aria-label="Send message"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition hover:bg-blue-700 disabled:bg-gray-400"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-white transition hover:bg-[var(--brand-strong)] disabled:bg-gray-400"
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
