@@ -1066,7 +1066,7 @@ function SellPageContent() {
           <button
             type="submit"
             disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
-            className="w-full rounded-2xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-strong)] hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
+            className="w-full rounded-2xl bg-[var(--brand)] hover:bg-[var(--brand-strong)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--muted)] px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
             {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : 'Post listing'}
           </button>
@@ -1086,7 +1086,7 @@ export default function SellPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-[var(--foreground)] dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-[var(--foreground)]">
+        <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)]">
           <Header />
           <main className="max-w-6xl mx-auto flex w-full flex-1 items-center justify-center px-4 py-8">
             <div className="h-12 w-12 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin dark:border-[var(--border)]" />
