@@ -34,7 +34,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             </div>
             <button
               onClick={onClose}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs font-bold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-slate-200"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs font-bold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
             >
               Close
             </button>
@@ -56,7 +56,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
               className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 text-left text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
             >
               <span>Theme</span>
-              <span className="shrink-0 rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-slate-200">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+              <span className="shrink-0 rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]">{theme === 'dark' ? 'Dark' : 'Light'}</span>
             </button>
 
             <Link href="/profile" onClick={onClose} className="block rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-4 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
