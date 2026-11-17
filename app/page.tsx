@@ -112,6 +112,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<Listing[]>([]);
   const [requests, setRequests] = useState<ItemRequest[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [searchRetry, setSearchRetry] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchHasMore, setSearchHasMore] = useState(false);
   const [searchOffset, setSearchOffset] = useState(0);
@@ -331,7 +332,7 @@ export default function Home() {
       active = false;
       window.clearTimeout(debounce);
     };
-  }, [activeSearchFilters, hasActiveFilters, institution, query, user?.id]);
+  }, [activeSearchFilters, hasActiveFilters, institution, query, searchRetry, user?.id]);
 
   const displayedResults = hasActiveFilters ? searchResults : filteredListings;
   const displayedResultsLoading = hasActiveFilters ? searchLoading : loadingListings;
@@ -603,7 +604,7 @@ export default function Home() {
               <div role="alert" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
                 <p className="text-sm font-bold">Search could not be completed.</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">{displayedResultsError}</p>
-                <button type="button" onClick={() => setQuery((value) => value)} className="mt-3 rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white">Retry search</button>
+                <button type="button" onClick={() => setSearchRetry((value) => value + 1)} className="mt-3 rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white">Retry search</button>
               </div>
             ) : displayedResults.length ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
