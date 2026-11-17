@@ -325,6 +325,9 @@ test('marketplace search applies catalogue filters and campus scope before pagin
   assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters)'));
   assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, searchOffset, searchCampus, activeSearchFilters)'));
   assert.ok(homepage.includes("const campus = institution;"));
+  assert.ok(homepage.includes("const [mode, setMode] = useState<BrowseMode>('All')"));
+  assert.ok(homepage.includes("const categoryParam = params.get('category')"));
+  assert.ok(homepage.includes("|| sort !== 'newest'"));
 });
 
 test('official CampusTrader mark is reused across header, favicon, manifest and generated PWA icons', async () => {
