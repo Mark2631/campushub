@@ -25,6 +25,8 @@ export default function Header() {
             <Link href="/categories" className="text-[13px] font-semibold text-[var(--foreground)] transition hover:text-[var(--brand)]">Shop</Link>
             <Link href="/community" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">Community</Link>
             <Link href="/help" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">How it works</Link>
+            <Link href="/sell" className="text-[13px] font-bold text-[var(--brand)] transition hover:text-[var(--brand-strong)]">Sell</Link>
+            {user ? <Link href="/messages" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">Inbox</Link> : null}
           </div>
 
           <div className="hidden shrink-0 md:flex">
