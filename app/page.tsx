@@ -307,10 +307,12 @@ export default function Home() {
           .insert({ listing_id: null, buyer_id: user.id, seller_id: request.user_id })
           .select('id').single();
         if (createError || !created) throw createError || new Error('Conversation could not be created');
-        conversationId = created.id;
-        const { error: sendError } = await sendMessage(conversationId, user.id, 'Hi, I can help with your request: ' + request.title + '. Is this still needed?');
+        const createdConversationId = created.id;
+        conversationId = createdConversationId;
+        const { error: sendError } = await sendMessage(createdConversationId, user.id, 'Hi, I can help with your request: ' + request.title + '. Is this still needed?');
         if (sendError) console.warn('Conversation created, but the opening message could not be sent:', sendError);
       }
+      if (!conversationId) throw new Error('Conversation id is unavailable');
       router.push('/messages/' + conversationId);
     } catch (error) {
       console.error('Could not start request conversation:', error);
