@@ -549,15 +549,27 @@ export default function Home() {
         <section className="mb-9">
           <SectionHeading title="Shop by category" subtitle="Start with a department or explore everything." href="/categories" action="All categories" />
           <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
-            {categoryMeta.map(({ name, description, Icon }) => (
-              <button key={name} type="button" onClick={() => { setCategory(name); setMode('All'); setQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="group flex min-w-0 flex-col items-center rounded-[17px] border border-[var(--border)] bg-[var(--surface)] px-1.5 py-3 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-sm sm:px-2 sm:py-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[var(--brand-soft)] text-[var(--brand)] transition group-hover:bg-[var(--brand)] group-hover:text-white sm:h-12 sm:w-12">
-                  <Icon className="h-5 w-5 sm:h-[22px] sm:w-[22px]" strokeWidth={1.8} aria-hidden="true" />
-                </span>
-                <span className="mt-2.5 line-clamp-1 text-[10px] font-bold text-[var(--foreground)] sm:text-xs">{name}</span>
-                <span className="mt-0.5 hidden text-[9px] text-[var(--muted)] lg:block">{description}</span>
-              </button>
-            ))}
+            {categoryMeta.map(({ name, description, Icon }) => {
+              const categoryPhoto = listings.find((listing) =>
+                String(listing.status || 'active').toLowerCase() === 'active'
+                && listingBelongsToCategory(listing, name)
+                && Array.isArray(listing.media_urls)
+                && Boolean(listing.media_urls[0])
+              );
+              return (
+                <button key={name} type="button" onClick={() => { setCategory(name); setMode('All'); setQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="group flex min-w-0 flex-col items-center rounded-[17px] border border-[var(--border)] bg-[var(--surface)] px-1.5 py-3 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-sm sm:px-2 sm:py-4">
+                  <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[14px] bg-[var(--brand-soft)] text-[var(--brand)] transition group-hover:bg-[var(--brand)] group-hover:text-white sm:h-12 sm:w-12">
+                    {categoryPhoto?.media_urls[0] ? (
+                      <Image src={categoryPhoto.media_urls[0]} alt="" fill sizes="48px" className="object-cover transition duration-300 group-hover:scale-105" unoptimized />
+                    ) : (
+                      <Icon className="h-5 w-5 sm:h-[22px] sm:w-[22px]" strokeWidth={1.8} aria-hidden="true" />
+                    )}
+                  </span>
+                  <span className="mt-2.5 line-clamp-1 text-[10px] font-bold text-[var(--foreground)] sm:text-xs">{name}</span>
+                  <span className="mt-0.5 hidden text-[9px] text-[var(--muted)] lg:block">{description}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
