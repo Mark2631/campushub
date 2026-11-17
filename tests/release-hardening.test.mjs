@@ -301,6 +301,32 @@ test('homepage search and social metadata consistently describe CampusTrader', a
   assert.ok(source.includes("card: 'summary_large_image'"));
 });
 
+test('marketplace search applies catalogue filters and campus scope before pagination', async () => {
+  const [listings, homepage] = await Promise.all([
+    read('../lib/listings.ts'),
+    read('../app/page.tsx'),
+  ]);
+  const searchStart = listings.indexOf('export async function searchMarketplaceListings(');
+  const searchEnd = listings.indexOf('export async function getServiceListings(', searchStart);
+  assert.ok(searchStart >= 0 && searchEnd > searchStart);
+  const search = listings.slice(searchStart, searchEnd);
+  assert.ok(search.includes(".eq('status', 'active')"));
+  assert.ok(search.includes(".eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000')"));
+  assert.ok(search.includes("query.or(["));
+  assert.ok(search.includes("'title.ilike.' + pattern"));
+  assert.ok(search.includes("'description.ilike.' + pattern"));
+  assert.ok(search.includes("query.eq('listing_type', 'PHYSICAL_PRODUCT')"));
+  assert.ok(search.includes("query.eq('condition', 'service')"));
+  assert.ok(search.includes("query.not('business_id', 'is', null)"));
+  assert.ok(search.includes("query.gte('price', filters.minPrice)"));
+  assert.ok(search.includes("query.lte('price', filters.maxPrice)"));
+  assert.ok(search.includes(".range(offset, offset + limit - 1)"));
+  assert.ok(search.indexOf("query.or([") < search.indexOf(".range(offset, offset + limit - 1)"));
+  assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters)'));
+  assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, searchOffset, searchCampus, activeSearchFilters)'));
+  assert.ok(homepage.includes("const campus = user?.id ? institution : 'MUST';"));
+});
+
 test('official CampusTrader mark is reused across header, favicon, manifest and generated PWA icons', async () => {
   const [logo, mark, favicon, layout, manifestText, serviceWorker, icon192, icon512, appleIcon, renderer] = await Promise.all([
     read('../components/Logo.tsx'),
