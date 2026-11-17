@@ -1,45 +1,15 @@
-type BrandMarkProps = {
-  size?: number;
-  className?: string;
-  title?: string;
-};
+type BrandMarkProps = { size?: number; className?: string; title?: string };
 
 export default function BrandMark({ size = 44, className, title }: BrandMarkProps) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 512 512"
-      className={className}
-      role={title ? 'img' : undefined}
-      aria-label={title}
-      aria-hidden={title ? undefined : true}
-      focusable="false"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 48 48" className={className} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} focusable="false">
       {title ? <title>{title}</title> : null}
-      <defs>
-        <linearGradient id="campustrader-mark-gradient" x1="80" y1="84" x2="432" y2="438" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#29a9c2" />
-          <stop offset="0.44" stopColor="#0967b8" />
-          <stop offset="1" stopColor="#071747" />
-        </linearGradient>
-        <clipPath id="campustrader-case-clip">
-          <path d="M111 198H401c21 0 38 17 38 38v151c0 23-18 41-41 41H114c-23 0-41-18-41-41V236c0-21 17-38 38-38Z" />
-        </clipPath>
-      </defs>
-      <rect width="512" height="512" fill="#070b14" />
-      <rect x="70" y="70" width="372" height="372" rx="88" fill="url(#campustrader-mark-gradient)" />
-      <path d="M148 207v-37c0-26 21-47 47-47h122c26 0 47 21 47 47v37h-38v-25c0-6-5-11-11-11H197c-6 0-11 5-11 11v25Z" fill="#f4f5f1" />
-      <path d="M111 198H401c21 0 38 17 38 38v151c0 23-18 41-41 41H114c-23 0-41-18-41-41V236c0-21 17-38 38-38Z" fill="#f4f5f1" />
-      <g clipPath="url(#campustrader-case-clip)">
-        <rect x="72" y="247" width="368" height="43" fill="#a6b8c9" />
-        <path d="M183 197h146v58c0 14-11 25-25 25h-96c-14 0-25-11-25-25Z" fill="#075da8" />
-      </g>
-      <path d="m256 209 101 47-101 43-101-43Z" fill="#071020" />
-      <path d="M192 276 256 303l64-27v47c0 20-29 39-64 39s-64-19-64-39Z" fill="#071020" />
-      <path d="M356 258v59" stroke="#071020" strokeWidth="20" strokeLinecap="round" />
-      <circle cx="356" cy="337" r="18" fill="#071020" />
+      <rect x="1" y="1" width="46" height="46" rx="14" fill="#125B47" />
+      <path d="M14.5 19.5h19l-1.4 17.2c-.1 1.2-1.1 2.1-2.3 2.1H18.2c-1.2 0-2.2-.9-2.3-2.1l-1.4-17.2Z" fill="#F7F7F1" />
+      <path d="M18.5 20v-3.6a5.5 5.5 0 0 1 11 0V20" fill="none" stroke="#F7F7F1" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M18.8 27.2c2.2 2.1 8.2 2.1 10.4 0" fill="none" stroke="#125B47" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="34.4" cy="13.2" r="4.3" fill="#E6A641" />
+      <circle cx="34.4" cy="13.2" r="1.4" fill="#125B47" />
     </svg>
   );
 }
