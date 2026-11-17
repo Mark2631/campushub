@@ -147,17 +147,22 @@ export default function Home() {
   const [requestActionError, setRequestActionError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     const params = new URLSearchParams(window.location.search);
     const categoryParam = params.get('category');
     const modeParam = params.get('mode');
-    if (categoryParam && STANDARD_CATEGORIES.includes(categoryParam as typeof STANDARD_CATEGORIES[number])) {
-      setCategory(categoryParam);
-      setMode('All');
-    }
-    if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
-      setMode(modeParam);
-      setCategory('All');
-    }
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      if (categoryParam && STANDARD_CATEGORIES.includes(categoryParam as typeof STANDARD_CATEGORIES[number])) {
+        setCategory(categoryParam);
+        setMode('All');
+      }
+      if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
+        setMode(modeParam);
+        setCategory('All');
+      }
+    });
+    return () => { active = false; };
   }, []);
 
 
