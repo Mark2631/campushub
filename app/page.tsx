@@ -151,7 +151,7 @@ export default function Home() {
     const load = async () => {
       setLoadingListings(true);
       setListingError(null);
-      const campus = user ? institution : 'MUST';
+      const campus = user?.id ? institution : 'MUST';
       const primary = await getListingsWithDeadline(campus);
       let rows = primary.listings || [];
       let error = primary.error || null;
