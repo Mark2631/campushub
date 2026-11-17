@@ -159,7 +159,7 @@ export default function Home() {
     const load = async () => {
       setLoadingListings(true);
       setListingError(null);
-      const campus = user?.id ? institution : 'MUST';
+      const campus = institution;
       const primary = await getListingsWithDeadline(campus);
       let rows = primary.listings || [];
       let error = primary.error || null;
@@ -291,7 +291,7 @@ export default function Home() {
       setSearchLoading(true);
       setSearchError(null);
       setSearchResults([]);
-      const campus = user?.id ? institution : 'MUST';
+      const campus = institution;
       let result = await searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters);
       let resolvedCampus = campus;
       let usedFallback = false;
