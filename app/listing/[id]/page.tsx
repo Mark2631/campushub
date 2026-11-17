@@ -11,8 +11,11 @@ import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import DeliveryRequestButton from '../../../components/DeliveryRequestButton';
-import { getListingById } from '../../../lib/listings';
+import { getListingById, getListings } from '../../../lib/listings';
+import { listingBelongsToCategory } from '../../../lib/categories';
 import HelpContactAction from '../../../components/HelpContactAction';
+import ListingCard from '../../../components/ListingCard';
+import ListingMediaGallery from '../../../components/ListingMediaGallery';
 import { isValidUuid } from '../../../lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -114,6 +117,12 @@ export default async function ListingPage({ params }: Props) {
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
+  const { listings: relatedCandidates } = listing.status === 'active'
+    ? await getListings(24, 0, listing.campus || 'MUST')
+    : { listings: [] as Awaited<ReturnType<typeof getListings>>['listings'] };
+  const relatedListings = relatedCandidates
+    .filter((candidate) => candidate.id !== listing.id && candidate.status === 'active' && listingBelongsToCategory(candidate, listing.category))
+    .slice(0, 5);
   const conditionUrl = listing.condition === 'new'
     ? 'https://schema.org/NewCondition'
     : listing.condition === 'refurbished'
@@ -171,19 +180,8 @@ export default async function ListingPage({ params }: Props) {
 
             <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
               <div className="space-y-5">
-                {mediaUrls.length > 0 ? (
-                  <div className="grid gap-3">
-                    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)]">
-                      <Image src={mediaUrls[0]} alt={listing.title} width={1200} height={900} className="max-h-[24rem] w-full object-contain sm:max-h-[32rem]" unoptimized />
-                    </div>
-                    {mediaUrls.length > 1 ? (
-                      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-5">
-                        {mediaUrls.slice(1).map((url) => (
-                          <Image key={url} src={url} alt={listing.title} width={240} height={240} className="h-24 rounded-xl border border-[var(--border)] object-cover dark:border-zinc-800" unoptimized />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                {productImages.length > 0 ? (
+                  <ListingMediaGallery images={productImages} title={listing.title} />
                 ) : (
                   fallbackPanel
                 )}
@@ -299,6 +297,21 @@ export default async function ListingPage({ params }: Props) {
               </div>
             </div>
           </div>
+          {relatedListings.length > 0 ? (
+              <section className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-6">
+                <div className="mb-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brand)]">Keep exploring</p>
+                    <h2 className="mt-1 text-xl font-extrabold tracking-[-0.04em]">More in {listing.category}</h2>
+                    <p className="mt-1 text-xs text-[var(--muted)]">Other listings from your campus marketplace.</p>
+                  </div>
+                  <Link href={'/?category=' + encodeURIComponent(listing.category)} className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--brand)] hover:underline">View category <ChevronRight className="h-3.5 w-3.5" /></Link>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {relatedListings.map((related) => <ListingCard key={related.id} listing={related} />)}
+                </div>
+              </section>
+            ) : null}
         </div>
       </main>
       <BottomNav />
