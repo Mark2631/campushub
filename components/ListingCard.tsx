@@ -11,7 +11,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   const firstImage = Array.isArray(listing.media_urls) ? listing.media_urls[0] : null;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(firstImage) && !imageFailed;
-  const price = listing.price != null && listing.price > 0 ? 'KSh ' + listing.price.toLocaleString('en-KE') : 'Ask for price';
+  const price = listing.price != null && listing.price > 0 ? 'KSh ' + listing.price.toLocaleString('en-KE') : 'Ask seller for price';
   const verified = listing.badgeType === 'gold' || listing.badgeType === 'blue' || listing.badgeType === 'admin';
 
   return (
