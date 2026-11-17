@@ -2,8 +2,32 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  color-scheme: light;
+  --background: #f6f7f4;
+  --surface: #ffffff;
+  --surface-muted: #eef1eb;
+  --foreground: #18251f;
+  --muted: #66736b;
+  --border: #dfe5de;
+  --brand: #125b47;
+  --brand-strong: #0e4839;
+  --brand-soft: #e7f1eb;
+  --accent: #e6a641;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #101814;
+  --surface: #17211c;
+  --surface-muted: #202d25;
+  --foreground: #edf3ed;
+  --muted: #a0ada3;
+  --border: #2b3a30;
+  --brand: #64b899;
+  --brand-strong: #83cdb0;
+  --brand-soft: #20372d;
+  --accent: #efba64;
 }
 
 @theme inline {
@@ -13,24 +37,23 @@
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
-.dark {
-  --background: #020617;
-  --foreground: #e5eefb;
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-}
-
 html,
 body {
   max-width: 100%;
+  min-height: 100%;
   overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-::selection {
-  background: #2563eb;
-  color: white;
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, a { touch-action: manipulation; }
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand) 52%, transparent);
+  outline-offset: 2px;
 }
+::selection { background: var(--brand); color: #fff; }
+* { scrollbar-color: color-mix(in srgb, var(--muted) 35%, transparent) transparent; }
