@@ -30,7 +30,7 @@ export default function CategoriesPage() {
         </div>
         <section aria-label="All marketplace categories" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map(({ name, description, Icon, label }) => (
-            <a key={name} href={'/?category=' + encodeURIComponent(name)} className="group flex min-h-[142px] items-center gap-4 rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)]/50 hover:shadow-[0_12px_34px_rgba(18,45,30,.08)]">
+            <Link key={name} href={'/?category=' + encodeURIComponent(name)} className="group flex min-h-[142px] items-center gap-4 rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)]/50 hover:shadow-[0_12px_34px_rgba(18,45,30,.08)]">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><Icon className="h-6 w-6" strokeWidth={1.7} aria-hidden="true" /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted)]">{label}</span>
@@ -38,7 +38,7 @@ export default function CategoriesPage() {
                 <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">{description}</span>
               </span>
               <ArrowRight className="h-4 w-4 shrink-0 text-[var(--muted)] transition group-hover:translate-x-1 group-hover:text-[var(--brand)]" aria-hidden="true" />
-            </a>
+            </Link>
           ))}
         </section>
         <section className="mt-9 grid gap-3 sm:grid-cols-2">
