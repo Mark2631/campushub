@@ -319,7 +319,7 @@ export default function CommunityGroupPage({ params }: Props) {
           </div>
         ) : null}
 
-        {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[var(--foreground)] dark:text-slate-200">{post.content}</p> : null}
+        {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[var(--foreground)] dark:text-[var(--foreground)]">{post.content}</p> : null}
         <PostMedia post={post} />
 
         <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-[var(--border)]">
@@ -329,7 +329,7 @@ export default function CommunityGroupPage({ params }: Props) {
             className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${
               post.viewerReacted
                 ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-200'
-                : 'bg-[var(--surface-muted)] text-[var(--foreground)] hover:bg-slate-200 dark:bg-[var(--surface-muted)] dark:text-slate-200 dark:hover:bg-slate-700'
+                : 'bg-[var(--surface-muted)] text-[var(--foreground)] hover:bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-muted)]'
             }`}
           >
             <Heart className="h-4 w-4" aria-hidden="true" />
@@ -345,8 +345,8 @@ export default function CommunityGroupPage({ params }: Props) {
               <div key={comment.id} className="flex gap-2">
                 <Avatar name={commentName} src={comment.user?.avatar_url} />
                 <div className="min-w-0 rounded-2xl bg-[var(--surface-muted)] px-3 py-2 dark:bg-[var(--surface-muted)]">
-                  <p className="text-xs font-bold text-[var(--foreground)] dark:text-slate-200">{commentName}</p>
-                  <p className="mt-1 text-sm text-[var(--foreground)] dark:text-slate-200">{comment.content}</p>
+                  <p className="text-xs font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{commentName}</p>
+                  <p className="mt-1 text-sm text-[var(--foreground)] dark:text-[var(--foreground)]">{comment.content}</p>
                 </div>
               </div>
             );
@@ -427,7 +427,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 type="button"
                 onClick={handleFollow}
                 disabled={community.isFollowed}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] disabled:opacity-60 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-slate-200"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] disabled:opacity-60 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
               >
                 {community.isFollowed ? 'Following' : 'Follow'}
               </button>
@@ -473,12 +473,12 @@ export default function CommunityGroupPage({ params }: Props) {
               </div>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-slate-200">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                 <ImagePlus className="h-4 w-4" aria-hidden="true" />
                 <span>Media</span>
                 <input type="file" multiple accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={handleMediaChange} className="hidden" />
               </label>
-              <button type="button" onClick={clearComposer} className="rounded-2xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:text-slate-200">
+              <button type="button" onClick={clearComposer} className="rounded-2xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--foreground)]">
                 Clear
               </button>
               <button type="submit" disabled={publishing} className="ml-auto inline-flex items-center gap-2 rounded-2xl bg-[var(--brand)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
@@ -491,7 +491,7 @@ export default function CommunityGroupPage({ params }: Props) {
           <button
             type="button"
             onClick={() => setAuthOpen(true)}
-            className="mb-5 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 text-sm font-bold text-[var(--foreground)] shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-slate-100"
+            className="mb-5 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 text-sm font-bold text-[var(--foreground)] shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
           >
             Create a free account to join the conversation.
           </button>
@@ -499,7 +499,7 @@ export default function CommunityGroupPage({ params }: Props) {
 
         {pinnedPost ? (
           <section className="mb-5">
-            <h2 className="mb-3 text-sm font-bold text-[var(--foreground)] dark:text-slate-200">Pinned post</h2>
+            <h2 className="mb-3 text-sm font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">Pinned post</h2>
             {renderPost(pinnedPost)}
           </section>
         ) : null}
