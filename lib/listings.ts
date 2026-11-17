@@ -260,8 +260,8 @@ export type MarketplaceSearchFilters = {
 function safeMarketplaceSearchTerm(value?: string) {
   return String(value || '')
     .trim()
-    .replace(/[,%_()\\\"\\n\\r]/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/[,%_()"]/g, ' ')
+    .replace(/\s+/g, ' ')
     .slice(0, 120);
 }
 
