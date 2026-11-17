@@ -15,7 +15,7 @@ import ListingCard from '../components/ListingCard';
 import GettingStartedChecklist from '../components/GettingStartedChecklist';
 import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
-import { getListings, type Listing } from '../lib/listings';
+import { getListings, searchMarketplaceListings, type Listing, type MarketplaceSearchFilters } from '../lib/listings';
 import { getItemRequests, deleteItemRequest, type ItemRequest } from '../lib/itemRequests';
 import { sendMessage } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
@@ -109,7 +109,14 @@ export default function Home() {
   const router = useRouter();
   const { user, institution, isAdmin } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [searchResults, setSearchResults] = useState<Listing[]>([]);
   const [requests, setRequests] = useState<ItemRequest[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchHasMore, setSearchHasMore] = useState(false);
+  const [searchOffset, setSearchOffset] = useState(0);
+  const [searchCampus, setSearchCampus] = useState('MUST');
+  const [searchingMeruFallback, setSearchingMeruFallback] = useState(false);
   const [loadingListings, setLoadingListings] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -253,9 +260,86 @@ export default function Home() {
     query.trim() || category !== 'All' || mode !== 'All' || filters.minPrice || filters.maxPrice ||
     filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.seller !== 'all'
   );
+  const activeSearchFilters = useMemo<MarketplaceSearchFilters>(() => {
+    const parsePrice = (value: string) => {
+      if (!value.trim()) return null;
+      const amount = Number(value);
+      return Number.isFinite(amount) && amount > 0 ? amount : null;
+    };
+
+    return {
+      query: query.trim(),
+      category,
+      mode,
+      minPrice: parsePrice(filters.minPrice),
+      maxPrice: parsePrice(filters.maxPrice),
+      condition: filters.condition,
+      location: filters.location.trim(),
+      seller: filters.seller as 'all' | 'student' | 'business',
+      negotiableOnly: filters.negotiableOnly,
+      sort,
+    };
+  }, [category, filters, mode, query, sort]);
+
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setSearchLoading(false);
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchHasMore(false);
+      setSearchingMeruFallback(false);
+      return;
+    }
+
+    let active = true;
+    setSearchLoading(true);
+    setSearchError(null);
+    setSearchResults([]);
+
+    const loadSearchResults = async () => {
+      const campus = user?.id ? institution : 'MUST';
+      let result = await searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters);
+      let resolvedCampus = campus;
+      let usedFallback = false;
+
+      if (!result.error && result.listings.length === 0 && campus !== 'MUST') {
+        const fallback = await searchMarketplaceListings(PAGE_SIZE, 0, 'MUST', activeSearchFilters);
+        if (fallback.listings.length > 0) {
+          result = fallback;
+          resolvedCampus = 'MUST';
+          usedFallback = true;
+        } else if (fallback.error) {
+          result = fallback;
+        }
+      }
+
+      if (!active) return;
+      setSearchResults(result.listings || []);
+      setSearchOffset(result.listings?.length || 0);
+      setSearchHasMore(Boolean(result.hasMore));
+      setSearchCampus(resolvedCampus);
+      setSearchError(result.error);
+      setSearchingMeruFallback(usedFallback);
+      setSearchLoading(false);
+    };
+
+    const debounce = window.setTimeout(() => {
+      void loadSearchResults();
+    }, query.trim() ? 280 : 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(debounce);
+    };
+  }, [activeSearchFilters, hasActiveFilters, institution, query, user?.id]);
+
+  const displayedResults = hasActiveFilters ? searchResults : filteredListings;
+  const displayedResultsLoading = hasActiveFilters ? searchLoading : loadingListings;
+  const displayedResultsError = hasActiveFilters ? searchError : listingError;
+
 
   const categoryListings = (name: string) => filteredListings.filter((listing) => listingBelongsToCategory(listing, name)).slice(0, 6);
-  const heroListing = listings.find((listing) => Array.isArray(listing.media_urls) && listing.media_urls.length > 0);
+  const heroListing = listings.find((listing) => String(listing.status || 'active').toLowerCase() === 'active' && Array.isArray(listing.media_urls) && listing.media_urls.length > 0);
   const campusLabel = institution === 'MUST' ? 'Meru University' : institution;
 
   const clearAll = () => {
@@ -267,7 +351,31 @@ export default function Home() {
   };
 
   const loadMore = async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore) return;
+
+    if (hasActiveFilters) {
+      if (!searchHasMore) return;
+      setLoadingMore(true);
+      const result = await searchMarketplaceListings(PAGE_SIZE, searchOffset, searchCampus, activeSearchFilters);
+      setLoadingMore(false);
+      if (result.error) {
+        setSearchError(result.error);
+        return;
+      }
+      const next = result.listings || [];
+      setSearchOffset((current) => current + next.length);
+      setSearchHasMore(Boolean(result.hasMore));
+      setSearchResults((current) => {
+        const merged = [...current];
+        next.forEach((item) => {
+          if (!merged.some((existing) => existing.id === item.id)) merged.push(item);
+        });
+        return merged;
+      });
+      return;
+    }
+
+    if (!hasMore) return;
     setLoadingMore(true);
     const result = await getListingsWithDeadline(listingCampus, offset);
     setLoadingMore(false);
@@ -486,13 +594,20 @@ export default function Home() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">Marketplace results</p>
-                <h2 className="mt-1 text-lg font-extrabold tracking-[-0.04em]">{filteredListings.length} {filteredListings.length === 1 ? 'listing' : 'listings'} found</h2>
+                <h2 className="mt-1 text-lg font-extrabold tracking-[-0.04em]">{displayedResults.length} {displayedResults.length === 1 ? 'listing' : 'listings'} loaded</h2>
               </div>
               <button type="button" onClick={clearAll} className="text-xs font-bold text-[var(--brand)] hover:underline">Clear all</button>
             </div>
-            {loadingListings ? <ListingSkeletons /> : filteredListings.length ? (
+            {searchingMeruFallback ? <p className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">No matching listings at your selected institution yet. Showing results from Meru University.</p> : null}
+            {displayedResultsLoading ? <ListingSkeletons /> : displayedResultsError ? (
+              <div role="alert" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+                <p className="text-sm font-bold">Search could not be completed.</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">{displayedResultsError}</p>
+                <button type="button" onClick={() => setQuery((value) => value)} className="mt-3 rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white">Retry search</button>
+              </div>
+            ) : displayedResults.length ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {filteredListings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                {displayedResults.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
               </div>
             ) : (
               <EmptyState title="No matching listings yet" description="Try a broader search, remove a filter or browse another category." onClear={clearAll} />
@@ -532,10 +647,10 @@ export default function Home() {
           </>
         )}
 
-        {hasMore && !hasActiveFilters ? (
+        {(hasActiveFilters ? searchHasMore : hasMore) ? (
           <div className="mb-10 flex justify-center">
-            <button type="button" disabled={loadingMore} onClick={loadMore} className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/60 disabled:opacity-60">
-              {loadingMore ? 'Loading listings…' : 'Load more listings'}
+            <button type="button" disabled={loadingMore || searchLoading} onClick={loadMore} className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/60 disabled:opacity-60">
+              {loadingMore ? 'Loading results…' : hasActiveFilters ? 'Load more results' : 'Load more listings'}
             </button>
           </div>
         ) : null}
