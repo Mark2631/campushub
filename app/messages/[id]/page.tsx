@@ -332,11 +332,11 @@ export default function ConversationPage({ params }: Props) {
                 <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-3 dark:border-[var(--border)] dark:bg-[var(--brand-soft)]">
                   {attachment?.type.startsWith('video/') ? <video src={attachmentPreview} className="h-16 w-16 rounded-xl object-cover" muted /> : <Image src={attachmentPreview} alt="Attachment preview" width={64} height={64} unoptimized className="h-16 w-16 rounded-xl object-cover" />}
                   <p className="min-w-0 flex-1 truncate text-sm font-medium">{attachment?.name}</p>
-                  <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface)] hover:text-red-600 dark:hover:bg-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>
+                  <button type="button" onClick={() => { setAttachment(null); URL.revokeObjectURL(attachmentPreview); setAttachmentPreview(null); }} aria-label="Remove attachment" className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface)] hover:text-red-600 dark:hover:bg-[var(--surface-muted)]"><X className="h-4 w-4" aria-hidden="true" /></button>
                 </div>
               ) : null}
               <div className="flex items-end gap-2 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
-                <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)] dark:hover:bg-slate-800 dark:hover:text-[var(--brand)]" aria-label="Attach image or video">
+                <label className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)] dark:hover:bg-[var(--surface-muted)] dark:hover:text-[var(--brand)]" aria-label="Attach image or video">
                   <ImagePlus className="h-5 w-5" aria-hidden="true" />
                   <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" className="sr-only" onChange={(event) => { handleAttachment(event.target.files?.[0]); event.currentTarget.value = ''; }} />
                 </label>
@@ -352,7 +352,7 @@ export default function ConversationPage({ params }: Props) {
                   type="submit"
                   disabled={sending || uploading || (!messageText.trim() && !attachment)}
                   aria-label="Send message"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-white transition hover:bg-[var(--brand-strong)] disabled:bg-gray-400"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-white transition hover:bg-[var(--brand-strong)] disabled:bg-[var(--surface-muted)] disabled:text-[var(--muted)]"
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                 </button>
