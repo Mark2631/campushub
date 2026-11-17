@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { BadgeCheck, MapPin, PackageOpen, Store } from 'lucide-react';
+import { ArrowRight, BadgeCheck, MapPin, PackageOpen, Store } from 'lucide-react';
 import type { Listing } from '../lib/listings';
 
 export default function ListingCard({ listing }: { listing: Listing }) {
@@ -34,6 +34,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           {verified ? <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[var(--brand)]" aria-label="Verified seller" /> : null}
         </div>
         {listing.sellerName ? <p className="mt-1 truncate text-[10px] text-[var(--muted)]">{listing.sellerName}</p> : null}
+        <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold text-[var(--brand)]">View listing <ArrowRight className="h-3 w-3" /></span>
       </div>
     </Link>
   );
