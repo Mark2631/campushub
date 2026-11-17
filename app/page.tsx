@@ -130,16 +130,8 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [query, setQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
-  const [mode, setMode] = useState<BrowseMode>(() => {
-    if (typeof window === 'undefined') return 'All';
-    const value = new URLSearchParams(window.location.search).get('mode');
-    return value === 'Products' || value === 'Services' || value === 'Businesses' ? value : 'All';
-  });
-  const [category, setCategory] = useState(() => {
-    if (typeof window === 'undefined') return 'All';
-    const value = new URLSearchParams(window.location.search).get('category');
-    return value && STANDARD_CATEGORIES.includes(value as typeof STANDARD_CATEGORIES[number]) ? value : 'All';
-  });
+  const [mode, setMode] = useState<BrowseMode>('All');
+  const [category, setCategory] = useState('All');
   const [sort, setSort] = useState<SortMode>('newest');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -153,6 +145,20 @@ export default function Home() {
   const [deletingRequest, setDeletingRequest] = useState<string | null>(null);
   const [messagingRequest, setMessagingRequest] = useState<string | null>(null);
   const [requestActionError, setRequestActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category');
+    const modeParam = params.get('mode');
+    if (categoryParam && STANDARD_CATEGORIES.includes(categoryParam as typeof STANDARD_CATEGORIES[number])) {
+      setCategory(categoryParam);
+      setMode('All');
+    }
+    if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
+      setMode(modeParam);
+      setCategory('All');
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -260,7 +266,7 @@ export default function Home() {
 
   const hasActiveFilters = Boolean(
     query.trim() || category !== 'All' || mode !== 'All' || filters.minPrice || filters.maxPrice ||
-    filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.seller !== 'all'
+    filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.seller !== 'all' || sort !== 'newest'
   );
   const activeSearchFilters = useMemo<MarketplaceSearchFilters>(() => {
     const parsePrice = (value: string) => {
