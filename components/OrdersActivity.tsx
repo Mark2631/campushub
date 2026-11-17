@@ -205,7 +205,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   }
 
   if (isLoading) {
-    return <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">Loading your protected orders…</section>;
+    return <section className="mt-5 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 text-sm text-[var(--muted)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--muted)]">Loading your protected orders…</section>;
   }
 
   if (error) {
@@ -219,13 +219,13 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
   return (
     <section className="mt-5 space-y-3">
-      {feedback ? <p role={feedback.type === 'error' ? 'alert' : 'status'} className={`rounded-2xl border p-4 text-sm leading-6 ${feedback.type === 'error' ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100' : 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100'}`}>{feedback.text}</p> : null}
+      {feedback ? <p role={feedback.type === 'error' ? 'alert' : 'status'} className={`rounded-2xl border p-4 text-sm leading-6 ${feedback.type === 'error' ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100' : 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--foreground)]'}`}>{feedback.text}</p> : null}
 
       {orders.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-[var(--surface)] p-8 text-center dark:border-[var(--border)] dark:bg-[var(--surface)]">
           <p className="font-semibold">{activeTab === 'buying' ? 'No purchases yet.' : 'No sales yet.'}</p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Orders appear here only after the backend creates them.</p>
-          {activeTab === 'buying' ? <Link href="/" className="mt-4 inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Browse listings</Link> : null}
+          <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Orders appear here only after the backend creates them.</p>
+          {activeTab === 'buying' ? <Link href="/" className="mt-4 inline-flex rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">Browse listings</Link> : null}
         </div>
       ) : null}
 
@@ -263,30 +263,30 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const orderEvents = isExpanded ? events || [] : [];
 
         return (
-          <article key={order.id} id={isBuying ? 'buying' : 'selling'} className="rounded-3xl border border-slate-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <article key={order.id} id={isBuying ? 'buying' : 'selling'} className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">{order.order_number || order.id}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand)] dark:text-[var(--brand)]">{order.order_number || order.id}</p>
                 <h2 className="mt-2 font-bold">{order.listing_title_snapshot || 'CampusTrader order'}</h2>
-                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">{isBuying ? 'Seller' : 'Buyer'}: {personName}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">{new Date(order.created_at).toLocaleString('en-KE')}</p>
+                <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">{isBuying ? 'Seller' : 'Buyer'}: {personName}</p>
+                <p className="mt-1 text-xs text-[var(--muted)] dark:text-[var(--muted)]">{new Date(order.created_at).toLocaleString('en-KE')}</p>
               </div>
               <p className="font-bold">{formatKes(Number(order.total_amount))}</p>
             </div>
 
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-zinc-950 sm:grid-cols-3">
-              <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Quantity</dt><dd className="mt-1 font-semibold">{order.quantity}</dd></div>
-              <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Fulfilment</dt><dd className="mt-1 font-semibold">{prettyState(order.delivery_option)}</dd></div>
-              <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Payment</dt><dd className="mt-1 font-semibold">{prettyPaymentState(order.payment_state)}</dd></div>
-              <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Order status</dt><dd className="mt-1 font-semibold">{prettyState(order.order_state)}</dd></div>
-              <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Product amount</dt><dd className="mt-1 font-semibold">{formatKes(productAmount)}</dd></div>
-                <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Platform + delivery fees</dt><dd className="mt-1 font-semibold">{formatKes(fee + deliveryFee)}</dd></div>
-                {order.expires_at && ['PENDING_PAYMENT', 'PAYMENT_PENDING', 'SELLER_PENDING'].includes(orderState) ? <div className="col-span-2 sm:col-span-3"><dt className="text-xs text-slate-500 dark:text-zinc-500">Order expires</dt><dd className="mt-1 font-semibold">{new Date(order.expires_at).toLocaleString('en-KE')}</dd></div> : null}
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-[var(--background)] p-4 text-sm dark:bg-[var(--background)] sm:grid-cols-3">
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Quantity</dt><dd className="mt-1 font-semibold">{order.quantity}</dd></div>
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Fulfilment</dt><dd className="mt-1 font-semibold">{prettyState(order.delivery_option)}</dd></div>
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Payment</dt><dd className="mt-1 font-semibold">{prettyPaymentState(order.payment_state)}</dd></div>
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Order status</dt><dd className="mt-1 font-semibold">{prettyState(order.order_state)}</dd></div>
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Product amount</dt><dd className="mt-1 font-semibold">{formatKes(productAmount)}</dd></div>
+                <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Platform + delivery fees</dt><dd className="mt-1 font-semibold">{formatKes(fee + deliveryFee)}</dd></div>
+                {order.expires_at && ['PENDING_PAYMENT', 'PAYMENT_PENDING', 'SELLER_PENDING'].includes(orderState) ? <div className="col-span-2 sm:col-span-3"><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Order expires</dt><dd className="mt-1 font-semibold">{new Date(order.expires_at).toLocaleString('en-KE')}</dd></div> : null}
               </dl>
 
             {isBuying && orderState === 'DISPUTED' ? <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">Transaction under review. It cannot be released while this dispute is active.</p> : null}
             {!isBuying && orderIsPaid(order) ? (
-              <p className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
+              <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] p-3 text-sm leading-6 text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--foreground)]">
                 Payment secured. {sellerAccepted ? 'Order accepted; please prepare the item.' : sellerPending ? 'Waiting for your response.' : prettyState(order.seller_acceptance_state)} Settlement is operator-managed after handover and buyer confirmation; no automatic payout is promised.
               </p>
             ) : null}
@@ -294,19 +294,19 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             <div className="mt-4 flex flex-wrap gap-2">
               {!isBuying && canSellerRespond ? (
                 <>
-                  <button type="button" onClick={() => runOrderAction(order, 'accept')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:accept` ? 'Accepting…' : 'Accept order'}</button>
-                  <button type="button" onClick={() => runOrderAction(order, 'decline')} disabled={busyKey !== null} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 disabled:opacity-50">{busyKey === `${order.id}:decline` ? 'Declining…' : 'Decline order'}</button>
+                  <button type="button" onClick={() => runOrderAction(order, 'accept')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:accept` ? 'Accepting…' : 'Accept order'}</button>
+                  <button type="button" onClick={() => runOrderAction(order, 'decline')} disabled={busyKey !== null} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)] disabled:opacity-50">{busyKey === `${order.id}:decline` ? 'Declining…' : 'Decline order'}</button>
                 </>
               ) : null}
-              {canSellerConfirmHandover ? <button type="button" onClick={() => runOrderAction(order, 'handover')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:handover` ? 'Recording handover…' : 'Confirm pickup handover'}</button> : null}
-              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : 'Confirm receipt'}</button> : null}
+              {canSellerConfirmHandover ? <button type="button" onClick={() => runOrderAction(order, 'handover')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:handover` ? 'Recording handover…' : 'Confirm pickup handover'}</button> : null}
+              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : 'Confirm receipt'}</button> : null}
               {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : 'Cancel unpaid order'}</button> : null}
-              {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700 disabled:opacity-50">Report a problem / dispute</button> : null}
-              <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">{isExpanded ? 'Hide order details' : 'View order details'}</button>
-              {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">View listing</Link> : null}
+              {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)] disabled:opacity-50">Report a problem / dispute</button> : null}
+              <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">{isExpanded ? 'Hide order details' : 'View order details'}</button>
+              {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">View listing</Link> : null}
             </div>
 
-            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-zinc-400">{isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'} Settlement status is shown when recorded by the backend.</p> : null}
+            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">{isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'} Settlement status is shown when recorded by the backend.</p> : null}
 
             {disputeOrderId === order.id ? (
               <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
@@ -314,12 +314,12 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                 <p className="mt-1 text-sm leading-5 text-amber-900 dark:text-amber-100">Only report a genuine issue. Opening a dispute pauses release while CampusTrader reviews it.</p>
                 <div className="mt-3 grid gap-3">
                   <label className="text-sm font-semibold" htmlFor={`dispute-reason-${order.id}`}>Reason
-                    <select id={`dispute-reason-${order.id}`} value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+                    <select id={`dispute-reason-${order.id}`} value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)} className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 dark:border-[var(--border)] dark:bg-[var(--surface)]">
                       {disputeReasons.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
                     </select>
                   </label>
                   <label className="text-sm font-semibold" htmlFor={`dispute-description-${order.id}`}>What happened?
-                    <textarea id={`dispute-description-${order.id}`} value={disputeDescription} onChange={(event) => setDisputeDescription(event.target.value)} rows={3} maxLength={1200} className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900" />
+                    <textarea id={`dispute-description-${order.id}`} value={disputeDescription} onChange={(event) => setDisputeDescription(event.target.value)} rows={3} maxLength={1200} className="mt-2 w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                   </label>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => submitDispute(order)} disabled={busyKey !== null} className="rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:dispute` ? 'Submitting…' : 'Submit dispute'}</button>
@@ -331,36 +331,36 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
             {isExpanded ? (
               <div className="mt-4 space-y-4">
-                <section className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800" aria-label={`Fulfillment details for ${order.order_number}`}>
+                <section className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]" aria-label={`Fulfillment details for ${order.order_number}`}>
                   <h3 className="font-semibold">Fulfillment details</h3>
-                  {!canReadFulfillmentDetails ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Private fulfillment details are available to the buyer and to the seller after payment is secured.</p> : null}
-                  {canReadFulfillmentDetails && fulfillmentLoading ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Loading private fulfillment details…</p> : null}
+                  {!canReadFulfillmentDetails ? <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Private fulfillment details are available to the buyer and to the seller after payment is secured.</p> : null}
+                  {canReadFulfillmentDetails && fulfillmentLoading ? <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Loading private fulfillment details…</p> : null}
                   {canReadFulfillmentDetails && fulfillmentError ? <p role="status" className="mt-2 text-sm text-amber-700 dark:text-amber-200">Private fulfillment details are unavailable for this session. No extra contact information is shown.</p> : null}
                   {canReadFulfillmentDetails && !fulfillmentLoading && !fulfillmentError && fulfillmentDetails ? (
                     <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                      {fulfillmentDetails.delivery_zone_code ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Delivery zone</dt><dd className="mt-1 font-medium">{prettyState(fulfillmentDetails.delivery_zone_code)}</dd></div> : null}
-                      {fulfillmentDetails.pickup_location ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Pickup location</dt><dd className="mt-1 font-medium">{fulfillmentDetails.pickup_location}</dd></div> : null}
-                      {fulfillmentDetails.dropoff_location ? <div className="sm:col-span-2"><dt className="text-xs text-slate-500 dark:text-zinc-500">Delivery location and instructions</dt><dd className="mt-1 whitespace-pre-wrap font-medium">{fulfillmentDetails.dropoff_location}</dd></div> : null}
-                      {fulfillmentDetails.receiver_name ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Receiver</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_name}</dd></div> : null}
-                      {fulfillmentDetails.receiver_phone ? <div><dt className="text-xs text-slate-500 dark:text-zinc-500">Receiver phone</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_phone}</dd></div> : null}
+                      {fulfillmentDetails.delivery_zone_code ? <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Delivery zone</dt><dd className="mt-1 font-medium">{prettyState(fulfillmentDetails.delivery_zone_code)}</dd></div> : null}
+                      {fulfillmentDetails.pickup_location ? <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Pickup location</dt><dd className="mt-1 font-medium">{fulfillmentDetails.pickup_location}</dd></div> : null}
+                      {fulfillmentDetails.dropoff_location ? <div className="sm:col-span-2"><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Delivery location and instructions</dt><dd className="mt-1 whitespace-pre-wrap font-medium">{fulfillmentDetails.dropoff_location}</dd></div> : null}
+                      {fulfillmentDetails.receiver_name ? <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Receiver</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_name}</dd></div> : null}
+                      {fulfillmentDetails.receiver_phone ? <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Receiver phone</dt><dd className="mt-1 font-medium">{fulfillmentDetails.receiver_phone}</dd></div> : null}
                     </dl>
                   ) : null}
-                  {canReadFulfillmentDetails && !fulfillmentLoading && !fulfillmentError && !fulfillmentDetails?.delivery_zone_code && !fulfillmentDetails?.pickup_location && !fulfillmentDetails?.dropoff_location && !fulfillmentDetails?.receiver_name && !fulfillmentDetails?.receiver_phone ? <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">No additional fulfillment details are available for this order.</p> : null}
+                  {canReadFulfillmentDetails && !fulfillmentLoading && !fulfillmentError && !fulfillmentDetails?.delivery_zone_code && !fulfillmentDetails?.pickup_location && !fulfillmentDetails?.dropoff_location && !fulfillmentDetails?.receiver_name && !fulfillmentDetails?.receiver_phone ? <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">No additional fulfillment details are available for this order.</p> : null}
                 </section>
 
-                <section className="rounded-2xl border border-slate-200 p-4 dark:border-zinc-800" aria-label={`Transaction history for ${order.order_number}`}>
+                <section className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]" aria-label={`Transaction history for ${order.order_number}`}>
                   <h3 className="font-semibold">Transaction timeline</h3>
-                {eventsLoading ? <p className="mt-3 text-sm text-slate-500 dark:text-zinc-400">Loading recorded events…</p> : null}
+                {eventsLoading ? <p className="mt-3 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Loading recorded events…</p> : null}
                 {eventError ? <p role="status" className="mt-3 text-sm text-amber-700 dark:text-amber-200">Recorded timeline is unavailable for this session.</p> : null}
-                {!eventsLoading && !eventError && orderEvents.length === 0 ? <p className="mt-3 text-sm text-slate-500 dark:text-zinc-400">No transaction events have been recorded yet.</p> : null}
+                {!eventsLoading && !eventError && orderEvents.length === 0 ? <p className="mt-3 text-sm text-[var(--muted)] dark:text-[var(--muted)]">No transaction events have been recorded yet.</p> : null}
                 {orderEvents.length > 0 ? (
-                  <ol className="mt-3 space-y-3 border-l border-slate-200 pl-4 dark:border-zinc-800">
+                  <ol className="mt-3 space-y-3 border-l border-[var(--border)] pl-4 dark:border-[var(--border)]">
                     {orderEvents.map((event) => (
                       <li key={event.id} className="relative text-sm">
-                        <span className="absolute -left-[1.34rem] top-1.5 size-2 rounded-full bg-blue-500" aria-hidden="true" />
+                        <span className="absolute -left-[1.34rem] top-1.5 size-2 rounded-full bg-[var(--brand-soft)]0" aria-hidden="true" />
                         <p className="font-semibold">{prettyState(event.event_type)}</p>
-                        {event.new_order_state ? <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">Status: {prettyState(event.new_order_state)}</p> : null}
-                        <time className="mt-1 block text-xs text-slate-500 dark:text-zinc-500">{new Date(event.created_at).toLocaleString('en-KE')}</time>
+                        {event.new_order_state ? <p className="mt-1 text-xs text-[var(--muted)] dark:text-[var(--muted)]">Status: {prettyState(event.new_order_state)}</p> : null}
+                        <time className="mt-1 block text-xs text-[var(--muted)] dark:text-[var(--muted)]">{new Date(event.created_at).toLocaleString('en-KE')}</time>
                       </li>
                     ))}
                   </ol>
