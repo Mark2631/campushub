@@ -98,7 +98,7 @@ export default async function ListingPage({ params }: Props) {
       <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)]">
         <Header />
         <main className="flex-1 px-4 py-20 text-center">
-          <div className="mx-auto max-w-md rounded-2xl border-2 border-gray-300 bg-[var(--surface)] p-10 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <div className="mx-auto max-w-md rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] p-10 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <h1 className="mb-4 text-3xl font-bold text-[var(--foreground)]">Listing not found</h1>
             <p className="text-[var(--muted)]">This listing is unavailable.</p>
             <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">
@@ -153,11 +153,11 @@ export default async function ListingPage({ params }: Props) {
     : null;
 
   const fallbackPanel = (
-    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-8 text-center text-[var(--foreground)] dark:border-zinc-800">
+    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-8 text-center text-[var(--foreground)] dark:border-[var(--border)]">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.24em]">{listing.category}</p>
         <p className="mt-3 text-2xl font-bold">{listing.title}</p>
-        <p className="mt-2 text-sm text-blue-50/90">Listing preview for items without uploaded media.</p>
+        <p className="mt-2 text-sm text-white/75">Listing preview for items without uploaded media.</p>
       </div>
     </div>
   );
@@ -176,7 +176,7 @@ export default async function ListingPage({ params }: Props) {
           <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-6 md:p-8">
             <div className="mb-6 sm:mb-8">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{listing.category}</p>
-              <h1 className="mt-3 text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl dark:text-white">{listing.title}</h1>
+              <h1 className="mt-3 text-2xl font-bold text-[var(--foreground)] sm:text-3xl md:text-4xl dark:text-[var(--foreground)]">{listing.title}</h1>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
@@ -206,7 +206,7 @@ export default async function ListingPage({ params }: Props) {
                   <p className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand)] sm:text-4xl">
                     {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
                   </p>
-                  {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-[var(--brand)] dark:text-blue-200">Negotiable</p> : null}
+                  {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-[var(--brand)] dark:text-[var(--brand)]">Negotiable</p> : null}
                 </div>
 
                 <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
@@ -218,11 +218,11 @@ export default async function ListingPage({ params }: Props) {
                     <p className="text-sm font-semibold text-[var(--muted)]">Condition</p>
                     <p className="mt-2 text-lg font-bold capitalize text-[var(--foreground)]">{listing.condition}</p>
                   </div>
-                  <div className="border-t border-[var(--border)] pt-4 dark:border-zinc-800">
+                  <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
                     <p className="text-sm font-semibold text-[var(--muted)]">Location</p>
                     <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{listing.location || 'Campus location'}</p>
                   </div>
-                  <div className="border-t border-[var(--border)] pt-4 dark:border-zinc-800">
+                  <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
                     <p className="text-sm font-semibold text-[var(--muted)]">Posted</p>
                     <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{formattedDate}</p>
                   </div>
@@ -268,7 +268,7 @@ export default async function ListingPage({ params }: Props) {
                             : 'CampusTrader seller'}
                       </p>
                       {listing.sellerSince ? (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                        <p className="mt-1 text-xs text-[var(--muted)] dark:text-[var(--muted)]">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                       ) : null}
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export default async function ListingPage({ params }: Props) {
                 <div className="flex flex-col gap-3">
                   <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
                   {listing.status === 'sold' ? (
-                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300" disabled>
+                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]" disabled>
                       Sold
                     </button>
                   ) : (
@@ -288,7 +288,7 @@ export default async function ListingPage({ params }: Props) {
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
-                      <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                     </>
                   )}
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
