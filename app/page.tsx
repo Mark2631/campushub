@@ -1,75 +1,71 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import BottomNav from '../components/BottomNav';
-import SafetyBanner from '../components/SafetyBanner';
+import {
+  ArrowRight, ArrowUpDown, BookOpen, BriefcaseBusiness, Cable, ChefHat,
+  ChevronRight, MapPin, MessageCircle, PackageOpen, Search, ShieldCheck,
+  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle, Sparkles
+} from 'lucide-react';
 import Header from '../components/Header';
+import BottomNav from '../components/BottomNav';
 import ListingCard from '../components/ListingCard';
 import GettingStartedChecklist from '../components/GettingStartedChecklist';
+import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
-import { getListings, Listing } from '../lib/listings';
-import { getProfileById } from '../lib/profiles';
-import { deleteItemRequest, getItemRequests, type ItemRequest } from '../lib/itemRequests';
+import { getListings, type Listing } from '../lib/listings';
+import { getItemRequests, deleteItemRequest, type ItemRequest } from '../lib/itemRequests';
 import { sendMessage } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
-import { STANDARD_CATEGORIES, listingBelongsToCategory, logCategoryStats, normalizeCategory } from '../lib/categories';
+import { STANDARD_CATEGORIES, listingBelongsToCategory, normalizeCategory } from '../lib/categories';
 
-const categories = STANDARD_CATEGORIES;
-const listingsPageSize = 24;
-const categorySections = [
-  { title: 'Electronics', category: 'Electronics' },
-  { title: 'Services', category: 'Services' },
-  { title: 'Fashion', category: 'Fashion' },
-  { title: 'Books', category: 'Books' },
-  { title: 'Refurbished Deals', category: 'Refurbished' },
-  { title: 'Food', category: 'Food' },
-  { title: 'Business', category: 'Business' },
-  { title: 'Other', category: 'Other' },
+const PAGE_SIZE = 24;
+
+const categoryMeta = [
+  { name: 'Electronics', description: 'Phones, laptops and accessories', Icon: Cable },
+  { name: 'Books', description: 'Textbooks and revision guides', Icon: BookOpen },
+  { name: 'Fashion', description: 'Clothing, shoes and bags', Icon: Shirt },
+  { name: 'Furniture', description: 'Room and study essentials', Icon: Sofa },
+  { name: 'Food', description: 'Meals, snacks and treats', Icon: ChefHat },
+  { name: 'Services', description: 'Repairs, design and skills', Icon: Wrench },
+  { name: 'Refurbished', description: 'Pre-owned value finds', Icon: Recycle },
+  { name: 'Business', description: 'Shops and campus businesses', Icon: BriefcaseBusiness },
 ] as const;
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+type BrowseMode = 'All' | 'Products' | 'Services' | 'Businesses';
+type SortMode = 'newest' | 'price-low' | 'price-high';
+
+async function getListingsWithDeadline(campus: string, offset = 0) {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      getListings(PAGE_SIZE, offset, campus),
+      new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) => {
+        timer = window.setTimeout(() => resolve({ listings: [], error: 'Listings are taking longer than expected. Please retry.' }), 10000);
+      }),
+    ]);
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
 }
 
-function ListingSection({ title, listings }: { title: string; listings: Listing[] }) {
-  return (
-    <section className="mb-8 sm:mb-10">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 sm:text-xl dark:text-white">{title}</h2>
-      </div>
-      {listings.length > 0 ? (
-        <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
-          <div className="grid auto-cols-[minmax(140px,48vw)] grid-flow-col gap-2.5 pb-2 sm:auto-cols-[180px] lg:grid-flow-row lg:grid-cols-5 xl:grid-cols-6">
-            {listings.map((listing) => (
-              <ListingCard key={`${title}-${listing.id}`} listing={listing} />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-          <p className="font-semibold text-gray-900 dark:text-white">No listings yet in {title}.</p>
-          <p className="mt-1 text-sm">Post the first {title.toLowerCase().replace('recently posted', 'listing')}.</p>
-        </div>
-      )}
-    </section>
-  );
-}
+const formatListingPrice = (listing: Listing) =>
+  typeof listing.price === 'number' && listing.price > 0
+    ? 'KSh ' + listing.price.toLocaleString('en-KE')
+    : 'Ask seller for price';
 
 function ListingSkeletons() {
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {Array.from({ length: 10 }).map((_, index) => (
-        <div key={index} className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="aspect-square animate-pulse bg-gray-200 dark:bg-zinc-800" />
-          <div className="space-y-2 p-3">
-            <div className="h-3 w-5/6 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-zinc-800" />
+        <div key={index} className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--surface)]">
+          <div className="aspect-square animate-pulse bg-[var(--surface-muted)]" />
+          <div className="space-y-2.5 p-3.5">
+            <div className="h-3 w-5/6 animate-pulse rounded bg-[var(--surface-muted)]" />
+            <div className="h-4 w-2/5 animate-pulse rounded bg-[var(--surface-muted)]" />
+            <div className="h-3 w-3/5 animate-pulse rounded bg-[var(--surface-muted)]" />
           </div>
         </div>
       ))}
@@ -77,588 +73,598 @@ function ListingSkeletons() {
   );
 }
 
+function EmptyState({ title, description, onClear }: { title: string; description: string; onClear?: () => void }) {
+  return (
+    <div className="rounded-[22px] border border-dashed border-[var(--border)] bg-[var(--surface)] px-5 py-12 text-center">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]">
+        <PackageOpen className="h-6 w-6" strokeWidth={1.6} />
+      </span>
+      <h3 className="mt-4 text-base font-bold text-[var(--foreground)]">{title}</h3>
+      <p className="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-[var(--muted)]">{description}</p>
+      {onClear ? <button type="button" onClick={onClear} className="mt-4 rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[var(--brand-strong)]">Clear search and filters</button> : null}
+    </div>
+  );
+}
+
+function SectionHeading({ title, subtitle, href, action = 'View all' }: { title: string; subtitle?: string; href?: string; action?: string }) {
+  return (
+    <div className="mb-4 flex items-end justify-between gap-4">
+      <div className="min-w-0">
+        <h2 className="text-[18px] font-extrabold tracking-[-0.04em] text-[var(--foreground)] sm:text-[20px]">{title}</h2>
+        {subtitle ? <p className="mt-1 text-xs text-[var(--muted)] sm:text-sm">{subtitle}</p> : null}
+      </div>
+      {href ? <Link href={href} className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--brand)] transition hover:gap-2">{action}<ArrowRight className="h-3.5 w-3.5" /></Link> : null}
+    </div>
+  );
+}
+
+function formatRequestBudget(request: ItemRequest) {
+  if (request.min_price == null && request.max_price == null) return 'Budget not specified';
+  if (request.min_price != null && request.max_price != null) return 'KSh ' + Number(request.min_price).toLocaleString('en-KE') + ' – ' + Number(request.max_price).toLocaleString('en-KE');
+  if (request.max_price != null) return 'Up to KSh ' + Number(request.max_price).toLocaleString('en-KE');
+  return 'From KSh ' + Number(request.min_price).toLocaleString('en-KE');
+}
+
 export default function Home() {
   const router = useRouter();
-  const { user, institution } = useUser();
-  const userId = user?.id;
-  const hasUser = Boolean(userId);
-  const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const isAdmin = Boolean(userId && adminUserId === userId);
-  const [deletingRequest, setDeletingRequest] = useState(false);
-  const [showingMeruFallback, setShowingMeruFallback] = useState(false);
+  const { user, institution, isAdmin } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [studentRequests, setStudentRequests] = useState<ItemRequest[]>([]);
-  const [requestError, setRequestError] = useState<string | null>(null);
-  const [loadingRequests, setLoadingRequests] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState<ItemRequest | null>(null);
-  const [messagingRequest, setMessagingRequest] = useState(false);
-  const [requestMessageError, setRequestMessageError] = useState<string | null>(null);
-  const [profileName, setProfileName] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [activeBrowseTab, setActiveBrowseTab] = useState('All');
-  const [error, setError] = useState<string | null>(null);
+  const [requests, setRequests] = useState<ItemRequest[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMoreListings, setHasMoreListings] = useState(true);
-  const [listingOffset, setListingOffset] = useState(0);
+  const [listingError, setListingError] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [showingMeruFallback, setShowingMeruFallback] = useState(false);
+  const [listingCampus, setListingCampus] = useState('MUST');
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [mode, setMode] = useState<BrowseMode>('All');
+  const [category, setCategory] = useState('All');
+  const [sort, setSort] = useState<SortMode>('newest');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [showWelcome] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('welcome') === '1';
-  });
-  const [currentTime] = useState(() => Date.now());
   const [filters, setFilters] = useState({
     minPrice: '',
     maxPrice: '',
     condition: 'all',
     location: '',
-    sellerType: 'all',
+    seller: 'all',
     negotiableOnly: false,
   });
+  const [deletingRequest, setDeletingRequest] = useState<string | null>(null);
+  const [messagingRequest, setMessagingRequest] = useState<string | null>(null);
+  const [requestActionError, setRequestActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category');
+    const modeParam = params.get('mode');
+    if (categoryParam && STANDARD_CATEGORIES.includes(categoryParam as typeof STANDARD_CATEGORIES[number])) {
+      setCategory(categoryParam);
+      setMode('All');
+    }
+    if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
+      setMode(modeParam);
+      setCategory('All');
+    }
+  }, []);
 
-    const loadListings = async (options?: { initial?: boolean }) => {
-      if (isMounted && options?.initial) setLoadingListings(true);
-      const primaryInstitution = hasUser ? institution : 'MUST';
-      // Never leave pilot users staring at skeletons indefinitely on a stalled network.
-      const result = await Promise.race([
-        getListings(listingsPageSize, 0, primaryInstitution),
-        new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) =>
-          setTimeout(() => resolve({ listings: [], error: 'Listing request timed out. Please retry.' }), 10000)
-        ),
-      ]);
-      const shouldFallback = !result.error && result.listings.length === 0 && primaryInstitution !== 'MUST';
-      const fallback = shouldFallback ? await Promise.race([
-        getListings(listingsPageSize, 0, 'MUST'),
-        new Promise<Awaited<ReturnType<typeof getListings>>>((resolve) =>
-          setTimeout(() => resolve({ listings: [], error: 'Listing request timed out. Please retry.' }), 10000)
-        ),
-      ]) : null;
-      const rows = fallback?.listings || result.listings;
-      const error = fallback?.error || result.error;
-      if (!isMounted) return;
-      setShowingMeruFallback(Boolean(shouldFallback && fallback?.listings.length));
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoadingListings(true);
+      setListingError(null);
+      const campus = user ? institution : 'MUST';
+      const primary = await getListingsWithDeadline(campus);
+      let rows = primary.listings || [];
+      let error = primary.error || null;
+      let fellBack = false;
+      let resolvedCampus = campus;
+
+      if (!error && rows.length === 0 && campus !== 'MUST') {
+        const fallback = await getListingsWithDeadline('MUST');
+        if (fallback.listings?.length) {
+          rows = fallback.listings;
+          error = null;
+          fellBack = true;
+          resolvedCampus = 'MUST';
+        } else if (fallback.error) {
+          error = fallback.error;
+        }
+      }
+
+      if (!active) return;
       setListings(rows);
-      setListingOffset(rows.length);
-      setHasMoreListings(rows.length === listingsPageSize);
-      setError(error);
+      setListingCampus(resolvedCampus);
+      setOffset(rows.length);
+      setHasMore(rows.length === PAGE_SIZE);
+      setListingError(error);
+      setShowingMeruFallback(fellBack);
       setLoadingListings(false);
     };
 
-    void loadListings({ initial: true });
-    const refreshListings = () => {
-      void loadListings();
-    };
-    window.addEventListener('campustrader:listings-refresh', refreshListings);
-
+    void load();
+    const refresh = () => void load();
+    window.addEventListener('campustrader:listings-refresh', refresh);
     return () => {
-      isMounted = false;
-      window.removeEventListener('campustrader:listings-refresh', refreshListings);
+      active = false;
+      window.removeEventListener('campustrader:listings-refresh', refresh);
     };
-  }, [institution, hasUser]);
+  }, [institution, user?.id]);
 
   useEffect(() => {
-    if (!userId) return;
-    let mounted = true;
-    void supabase.rpc('is_admin').then(({ data, error }) => {
-      if (mounted) setAdminUserId(!error && data === true ? userId : null);
-    });
-    return () => { mounted = false; };
-  }, [userId]);
-
-  useEffect(() => {
-    let mounted = true;
-    const refreshRequests = async () => {
-      if (mounted) setLoadingRequests(true);
-      const { requests, error } = await getItemRequests(isAdmin ? 100 : 30, institution, isAdmin);
-      if (!mounted) return;
-      setStudentRequests(requests);
-      setRequestError(error);
+    let active = true;
+    const load = async () => {
+      setLoadingRequests(true);
+      const result = await getItemRequests(isAdmin ? 100 : 30, institution, isAdmin);
+      if (!active) return;
+      setRequests(result.requests || []);
+      setRequestError(result.error || null);
       setLoadingRequests(false);
     };
-    void refreshRequests();
-    window.addEventListener('campustrader:requests-refresh', refreshRequests);
+    void load();
+    const refresh = () => void load();
+    window.addEventListener('campustrader:requests-refresh', refresh);
     return () => {
-      mounted = false;
-      window.removeEventListener('campustrader:requests-refresh', refreshRequests);
+      active = false;
+      window.removeEventListener('campustrader:requests-refresh', refresh);
     };
   }, [institution, isAdmin, user?.id]);
 
-  useEffect(() => {
-    logCategoryStats(listings);
-  }, [listings]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    let isMounted = true;
-
-    const loadProfile = async () => {
-      const { profile } = await getProfileById(user.id);
-      if (isMounted) {
-        setProfileName(profile?.full_name || null);
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const activeListings = listings.filter((listing) => String(listing.status ?? 'active').toLowerCase() === 'active');
-    const browseText = (listing: Listing) => `${listing.category} ${listing.title} ${listing.description || ''}`.toLowerCase();
-    const browseMatches = (listing: Listing) => {
-      const text = browseText(listing);
-      if (activeBrowseTab === 'All') return true;
-      if (activeBrowseTab === 'Products') return String(listing.listing_type || '').toUpperCase() === 'PHYSICAL_PRODUCT';
-      if (activeBrowseTab === 'Requests') return /wanted|request|looking for|need /.test(text);
-      if (activeBrowseTab === 'Room share') return /roommate|room share|bedsitter|shared room/.test(text);
-      if (activeBrowseTab === 'Rentals') return /rent|rental|hostel|apartment|house/.test(text);
-      if (activeBrowseTab === 'Businesses') return listingBelongsToCategory(listing, 'Business') || /shop|restaurant|printing|repair/.test(text);
-      return listingBelongsToCategory(listing, activeBrowseTab);
-    };
-
-    return activeListings.filter((listing) => {
-      const normalizedCategory = normalizeCategory(listing.category);
-      const matchesCategory = activeCategory === 'All' || listingBelongsToCategory(listing, activeCategory);
-      const matchesQuery =
-        !normalizedQuery ||
-        listing.title.toLowerCase().includes(normalizedQuery) ||
-        normalizedCategory.toLowerCase().includes(normalizedQuery) ||
-        listing.description?.toLowerCase().includes(normalizedQuery) ||
-        listing.location?.toLowerCase().includes(normalizedQuery);
-      const numericPrice = typeof listing.price === 'number' && listing.price > 0 ? listing.price : null;
-      const matchesMinPrice = !filters.minPrice || (numericPrice != null && numericPrice >= Number(filters.minPrice));
-      const matchesMaxPrice = !filters.maxPrice || (numericPrice != null && numericPrice <= Number(filters.maxPrice));
-      const matchesCondition = filters.condition === 'all' || listing.condition.toLowerCase() === filters.condition.toLowerCase();
-      const matchesLocation = !filters.location || (listing.location || '').toLowerCase().includes(filters.location.toLowerCase());
-      const matchesSellerType = filters.sellerType === 'all' || listing.sellerType === filters.sellerType;
+    const results = listings.filter((listing) => {
+      if (String(listing.status || 'active').toLowerCase() !== 'active') return false;
+      const text = [listing.title, listing.description || '', listing.category, listing.location || '', listing.sellerName || ''].join(' ').toLowerCase();
+      const matchesQuery = !normalizedQuery || text.includes(normalizedQuery);
+      const matchesCategory = category === 'All' || listingBelongsToCategory(listing, category);
+      const listingType = String(listing.listing_type || '').toUpperCase();
+      const matchesMode = mode === 'All'
+        || (mode === 'Products' && !['SERVICE', 'SERVICES'].includes(listingType) && !listingBelongsToCategory(listing, 'Services'))
+        || (mode === 'Services' && listingBelongsToCategory(listing, 'Services'))
+        || (mode === 'Businesses' && (listing.sellerType === 'business' || Boolean(listing.business_id)));
+      const price = typeof listing.price === 'number' && listing.price > 0 ? listing.price : null;
+      const min = filters.minPrice.trim() ? Number(filters.minPrice) : null;
+      const max = filters.maxPrice.trim() ? Number(filters.maxPrice) : null;
+      const matchesMin = min == null || (price != null && price >= min);
+      const matchesMax = max == null || (price != null && price <= max);
+      const matchesCondition = filters.condition === 'all' || String(listing.condition).toLowerCase() === filters.condition;
+      const matchesLocation = !filters.location.trim() || (listing.location || '').toLowerCase().includes(filters.location.trim().toLowerCase());
+      const matchesSeller = filters.seller === 'all' || listing.sellerType === filters.seller;
       const matchesNegotiable = !filters.negotiableOnly || listing.negotiable;
-
-      return (
-        browseMatches(listing) &&
-        matchesCategory &&
-        matchesQuery &&
-        matchesMinPrice &&
-        matchesMaxPrice &&
-        matchesCondition &&
-        matchesLocation &&
-        matchesSellerType &&
-        matchesNegotiable
-      );
+      return matchesQuery && matchesCategory && matchesMode && matchesMin && matchesMax && matchesCondition && matchesLocation && matchesSeller && matchesNegotiable;
     });
-  }, [activeBrowseTab, activeCategory, filters, listings, query]);
 
-  const sectionBuckets = useMemo(() => {
-    const twoDaysAgo = currentTime - 2 * 24 * 60 * 60 * 1000;
+    return results.sort((a, b) => {
+      if (sort === 'price-low') return (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER);
+      if (sort === 'price-high') return (b.price ?? -1) - (a.price ?? -1);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [category, filters, listings, mode, query, sort]);
 
-    const recent = [...filteredListings]
-      .filter((listing) => {
-        const createdAt = new Date(listing.created_at).getTime();
-        return Number.isFinite(createdAt) && createdAt >= twoDaysAgo;
-      })
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 12);
+  const suggestions = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (value.length < 2) return [];
+    const titles = listings
+      .filter((item) => String(item.status || 'active').toLowerCase() === 'active' && item.title.toLowerCase().includes(value))
+      .slice(0, 4)
+      .map((item) => item.title);
+    return Array.from(new Set(titles)).slice(0, 4);
+  }, [listings, query]);
 
-    const services = filteredListings
-      .filter((listing) => listingBelongsToCategory(listing, 'Services'))
-      .slice(0, 8);
+  const hasActiveFilters = Boolean(
+    query.trim() || category !== 'All' || mode !== 'All' || filters.minPrice || filters.maxPrice ||
+    filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.seller !== 'all'
+  );
 
-    const refurbished = filteredListings
-      .filter((listing) => listingBelongsToCategory(listing, 'Refurbished'))
-      .slice(0, 8);
+  const categoryListings = (name: string) => filteredListings.filter((listing) => listingBelongsToCategory(listing, name)).slice(0, 6);
+  const heroListing = listings.find((listing) => Array.isArray(listing.media_urls) && listing.media_urls.length > 0);
+  const campusLabel = institution === 'MUST' ? 'Meru University' : institution;
 
-    return { recent, services, refurbished };
-  }, [currentTime, filteredListings]);
-
-  const greetingName = profileName || user?.email?.split('@')[0];
-  const greeting = `${getGreeting()}${greetingName ? `, ${greetingName}` : ''}`;
-  const hasActiveBrowseFilter = activeBrowseTab !== 'All' || activeCategory !== 'All' || Boolean(query.trim()) || Boolean(filters.minPrice || filters.maxPrice || filters.location || filters.negotiableOnly || filters.condition !== 'all' || filters.sellerType !== 'all');
-  const visibleCategorySections = activeCategory === 'All'
-    ? categorySections
-    : categorySections.filter((section) => section.category === activeCategory);
-
-  const removeSelectedRequest = async () => {
-    if (!selectedRequest || !user || deletingRequest) return;
-    const canDelete = isAdmin || user.id === selectedRequest.user_id;
-    if (!canDelete) return;
-    const confirmed = window.confirm(
-      isAdmin && user.id !== selectedRequest.user_id
-        ? 'Delete this student request? This removes it from CampusTrader.'
-        : 'Delete your request? This cannot be undone.'
-    );
-    if (!confirmed) return;
-
-    setDeletingRequest(true);
-    setRequestMessageError(null);
-    const result = await deleteItemRequest(selectedRequest.id);
-    setDeletingRequest(false);
-    if (result.error) {
-      setRequestMessageError(result.error);
-      return;
-    }
-    setStudentRequests((current) => current.filter((request) => request.id !== selectedRequest.id));
-    setSelectedRequest(null);
-    window.dispatchEvent(new Event('campustrader:requests-refresh'));
+  const clearAll = () => {
+    setQuery('');
+    setCategory('All');
+    setMode('All');
+    setSort('newest');
+    setFilters({ minPrice: '', maxPrice: '', condition: 'all', location: '', seller: 'all', negotiableOnly: false });
   };
 
-  const messageRequestOwner = async () => {
-    if (!user || !selectedRequest || messagingRequest || user.id === selectedRequest.user_id) return;
-    setMessagingRequest(true);
-    setRequestMessageError(null);
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const result = await getListingsWithDeadline(listingCampus, offset);
+    setLoadingMore(false);
+    if (result.error) {
+      setListingError(result.error);
+      return;
+    }
+    const next = result.listings || [];
+    setOffset((current) => current + next.length);
+    setHasMore(next.length === PAGE_SIZE);
+    setListings((current) => {
+      const merged = [...current];
+      next.forEach((item) => {
+        if (!merged.some((existing) => existing.id === item.id)) merged.push(item);
+      });
+      return merged;
+    });
+  };
+
+  const messageRequestOwner = async (request: ItemRequest) => {
+    if (!user) {
+      router.push('/signin?mode=signin');
+      return;
+    }
+    if (user.id === request.user_id || messagingRequest) return;
+    setMessagingRequest(request.id);
+    setRequestActionError(null);
     try {
       const { data: existing, error: lookupError } = await supabase.from('conversations')
         .select('id').is('listing_id', null)
-        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${selectedRequest.user_id}),and(buyer_id.eq.${selectedRequest.user_id},seller_id.eq.${user.id})`)
+        .or('and(buyer_id.eq.' + user.id + ',seller_id.eq.' + request.user_id + '),and(buyer_id.eq.' + request.user_id + ',seller_id.eq.' + user.id + ')')
         .limit(1).maybeSingle();
       if (lookupError) throw lookupError;
-      if (existing) { router.push(`/messages/${existing.id}`); return; }
-      const { data: conversation, error: createError } = await supabase.from('conversations')
-        .insert({ listing_id: null, buyer_id: user.id, seller_id: selectedRequest.user_id })
-        .select('id').single();
-      if (createError || !conversation) throw createError || new Error('Conversation could not be created');
-      const { error: sendError } = await sendMessage(conversation.id, user.id, `Hi, I’m interested in your request: ${selectedRequest.title}. Is this still needed?`);
-      if (sendError) console.warn('Request conversation created, but initial message failed:', sendError);
-      router.push(`/messages/${conversation.id}`);
-    } catch (err) {
-      console.error('Could not start request conversation:', err);
-      setRequestMessageError('Could not start a conversation. Please try again.');
-    } finally { setMessagingRequest(false); }
+      let conversationId = existing?.id as string | undefined;
+      if (!conversationId) {
+        const { data: created, error: createError } = await supabase.from('conversations')
+          .insert({ listing_id: null, buyer_id: user.id, seller_id: request.user_id })
+          .select('id').single();
+        if (createError || !created) throw createError || new Error('Conversation could not be created');
+        conversationId = created.id;
+        const { error: sendError } = await sendMessage(conversationId, user.id, 'Hi, I can help with your request: ' + request.title + '. Is this still needed?');
+        if (sendError) console.warn('Conversation created, but the opening message could not be sent:', sendError);
+      }
+      router.push('/messages/' + conversationId);
+    } catch (error) {
+      console.error('Could not start request conversation:', error);
+      setRequestActionError('Could not open a conversation. Please try again.');
+    } finally {
+      setMessagingRequest(null);
+    }
   };
 
-  const listingsForCategorySection = (category: string) => {
-    if (category === 'Services') return sectionBuckets.services;
-    if (category === 'Refurbished') return sectionBuckets.refurbished;
-    return filteredListings.filter((listing) => listingBelongsToCategory(listing, category)).slice(0, 8);
+  const removeRequest = async (request: ItemRequest) => {
+    if (!user || deletingRequest || !(isAdmin || user.id === request.user_id)) return;
+    if (!window.confirm('Remove this campus request? This cannot be undone.')) return;
+    setDeletingRequest(request.id);
+    setRequestActionError(null);
+    const result = await deleteItemRequest(request.id);
+    setDeletingRequest(null);
+    if (result.error) {
+      setRequestActionError(result.error);
+      return;
+    }
+    setRequests((current) => current.filter((item) => item.id !== request.id));
+  };
+
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSearchFocused(false);
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 pb-32 sm:px-4 sm:py-6">
-        <GettingStartedChecklist />
-        <header className="mb-4 sm:mb-6">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">{greeting}</p>
-          <h1 className="mt-1 text-xl font-bold text-gray-900 sm:text-3xl dark:text-white">Find campus deals you can inspect before paying.</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Students and nearby registered businesses trading across trusted campus communities.</p>
-        </header>
+      <GettingStartedChecklist />
 
-  {showWelcome ? (
-  <section className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-950 dark:bg-blue-950/30">
-    <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Welcome to CampusTrader</p>
-    <div className="mt-3 grid gap-2 text-xs text-blue-900/80 sm:grid-cols-3 dark:text-blue-100/80">
-      <p><strong>1.</strong> Choose a section below to browse.</p>
-      <p><strong>2.</strong> Tap any card once to view details.</p>
-      <p><strong>3.</strong> Use Orders for your buying and selling activity.</p>
-    </div>
-  </section>
-  ) : null}
+      <main className="mx-auto w-full max-w-[1440px] px-4 pb-32 pt-5 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[var(--muted)]">
+          <div className="inline-flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-[var(--brand)]" />
+            <span>Shopping near</span>
+            <strong className="font-bold text-[var(--foreground)]">{campusLabel}</strong>
+          </div>
+          <Link href="/community" className="inline-flex items-center gap-1.5 font-semibold text-[var(--brand)] hover:underline">
+            <Users className="h-3.5 w-3.5" /> Campus community
+          </Link>
+        </div>
 
-        {!user ? (
-          <section className="mb-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-blue-950 dark:bg-zinc-900">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">Trade faster with a free account.</p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Post listings, send messages, explore campus communities, and manage your profile.</p>
+        <section className="mb-7 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-stretch">
+          <div className="flex flex-col justify-center rounded-[26px] bg-[var(--brand)] px-5 py-7 text-white sm:px-8 sm:py-9">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/65">The campus marketplace</p>
+            <h1 className="mt-3 max-w-2xl text-[30px] font-extrabold leading-[1.06] tracking-[-0.055em] sm:text-[42px]">Good finds.<br className="hidden sm:block" /> Closer to you.</h1>
+            <p className="mt-3 max-w-lg text-sm leading-6 text-white/75 sm:text-[15px]">Discover useful things from students and businesses around campus. Browse first, compare your options, then connect directly.</p>
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-bold text-[var(--brand)] transition hover:bg-[#f1f4ed]">Explore categories <ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href="/sell" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Start selling</Link>
+            </div>
+          </div>
+
+          {heroListing ? (
+            <Link href={'/listing/' + heroListing.id} className="group relative hidden min-h-[230px] overflow-hidden rounded-[26px] bg-[var(--surface-muted)] lg:block">
+              <Image src={heroListing.media_urls[0]} alt={heroListing.title} fill sizes="(min-width: 1024px) 380px, 0px" className="object-cover transition duration-700 group-hover:scale-[1.04]" unoptimized />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] backdrop-blur"><Sparkles className="h-3 w-3" /> On campus now</span>
+                <p className="mt-2 line-clamp-2 text-base font-bold">{heroListing.title}</p>
+                <p className="mt-1 text-sm font-semibold">{formatListingPrice(heroListing)}</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex">
-                <Link href="/signin?mode=signup" className="rounded-2xl bg-blue-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700">
-                  Create account
-                </Link>
-                <Link href="/signin?mode=signin" className="rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
-                  Sign in
-                </Link>
+            </Link>
+          ) : (
+            <div className="hidden min-h-[230px] flex-col justify-between rounded-[26px] border border-[var(--border)] bg-[var(--surface)] p-6 lg:flex">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><Store className="h-6 w-6" /></div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brand)]">Buy and sell locally</p>
+                <p className="mt-1 text-xl font-extrabold tracking-[-0.04em]">Your next find starts here.</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--muted)]">A focused marketplace for campus life.</p>
               </div>
             </div>
-          </section>
-        ) : null}
+          )}
+        </section>
 
-        <div className="mb-4">
-          <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 sm:gap-3 sm:px-4 dark:border-zinc-700 dark:bg-zinc-900">
-            <span className="text-lg text-gray-400 dark:text-zinc-500">⌕</span>
+        <section className="relative z-20 mb-8">
+          <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_8px_28px_rgba(18,45,30,.05)] transition focus-within:border-[var(--brand)]/60 focus-within:shadow-[0_8px_30px_rgba(18,91,71,.10)]">
+            <Search className="ml-2 h-5 w-5 shrink-0 text-[var(--muted)]" />
             <input
-              type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search items, services, businesses..."
-              className="min-w-0 flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none dark:text-white dark:placeholder-zinc-500"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => window.setTimeout(() => setSearchFocused(false), 140)}
+              onKeyDown={(event) => { if (event.key === 'Escape') setSearchFocused(false); }}
+              type="search"
+              aria-label="Search marketplace"
+              placeholder="Search phones, textbooks, fashion, services..."
+              className="h-11 min-w-0 flex-1 bg-transparent px-1 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] sm:text-[15px]"
             />
-            <button
-              onClick={() => setFiltersOpen(true)}
-              className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600"
-            >
-              Filter
+            {query ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')} className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface-muted)]"><X className="h-4 w-4" /></button> : null}
+            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/50">
+              <SlidersHorizontal className="h-4 w-4 text-[var(--brand)]" /><span className="hidden sm:inline">Filters</span>
             </button>
-          </div>
-        </div>
+            <button type="submit" className="hidden h-10 shrink-0 rounded-xl bg-[var(--brand)] px-5 text-xs font-bold text-white transition hover:bg-[var(--brand-strong)] sm:block">Search</button>
+          </form>
 
-        <div className="mb-5 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex min-w-max gap-2 pb-1" role="tablist" aria-label="Marketplace sections">
-            {['All', 'Products', 'Room share', 'Rentals', 'Services', 'Businesses', ...categories.filter((category) => !['Services', 'Business'].includes(category))].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={(['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab) ? activeBrowseTab === tab : activeCategory === tab)}
-                onClick={() => {
-                  if (['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab)) {
-                    setActiveBrowseTab(tab);
-                    setActiveCategory('All');
-                  } else {
-                    setActiveBrowseTab('All');
-                    setActiveCategory(tab);
-                  }
-                }}
-                className={`shrink-0 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
-                  (['All', 'Products', 'Requests', 'Room share', 'Rentals', 'Services', 'Businesses'].includes(tab) ? activeBrowseTab === tab && activeCategory === 'All' : activeCategory === tab)
-                    ? 'border-blue-500 bg-blue-600 text-white'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-            <button type="button" onClick={() => setFiltersOpen(true)} className="shrink-0 rounded-full border border-gray-300 bg-gray-50 px-3.5 py-2 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-              More filters
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <SafetyBanner />
-        </div>
-
-        {showingMeruFallback && !loadingListings ? (
-          <p className="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">No listings at your institution yet. Showing available listings from Meru University so you can explore CampusTrader.</p>
-        ) : null}
-
-        {loadingListings ? (
-          <ListingSkeletons />
-        ) : (
-          <>
-            {error ? (
-              <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-                <p className="font-semibold">Listings are taking longer than expected.</p>
-                <p className="mt-1 text-sm">You can retry without losing your search or browse section.</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError(null);
-                    setLoadingListings(true);
-                    window.dispatchEvent(new Event('campustrader:listings-refresh'));
-                  }}
-                  className="mt-3 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 transition hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100"
-                >
-                  Retry listings
-                </button>
-              </div>
-            ) : null}
-            {filteredListings.length === 0 ? (activeBrowseTab === 'Requests' ? null : (
-              <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl font-semibold text-blue-600 dark:bg-blue-950 dark:text-blue-200">
-                  +
-                </div>
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  {listings.length === 0
-                    ? 'No listings yet. Be the first to post.'
-                    : activeBrowseTab === 'All'
-                      ? 'No matching listings found.'
-                      : `No ${activeBrowseTab.toLowerCase()} found yet.`}
-                </p>
-                <p className="mx-auto mt-2 max-w-md text-sm">
-                  {listings.length === 0
-                    ? 'Start with an item, service, or campus deal that students can inspect before paying.'
-                    : activeBrowseTab === 'Requests'
-                      ? 'Post a request from the Sell tab so nearby students can respond.'
-                      : 'Try another section, clear filters, or post what you need from the Sell tab.'}
-                </p>
-                <div className="mt-4 flex justify-center">
-                    <Link href={activeBrowseTab === 'Requests' ? '/sell?mode=request' : '/sell'} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
-                      {activeBrowseTab === 'Requests' ? 'Post a request' : 'Post listing'}
-                    </Link>
-                </div>
-              </div>
-            )) : (
-              <>
-                {!hasActiveBrowseFilter && (sectionBuckets.recent.length > 0 ? (
-                  <ListingSection title="Recently Posted" listings={sectionBuckets.recent} />
-                ) : (
-                  <section className="mb-8 sm:mb-10">
-                    <h2 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl dark:text-white">Recently Posted</h2>
-                    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                      <p className="font-semibold text-gray-900 dark:text-white">No fresh listings from the last 2 days.</p>
-                    </div>
-                  </section>
-                ))}
-                {hasActiveBrowseFilter ? (
-                  <ListingSection title={activeBrowseTab !== 'All' ? activeBrowseTab : activeCategory} listings={filteredListings} />
-                ) : (
-                  visibleCategorySections.map((section) => (
-                    <ListingSection
-                      key={section.category}
-                      title={section.title}
-                      listings={listingsForCategorySection(section.category)}
-                    />
-                  ))
-                )}
-                {hasMoreListings ? (
-                  <div className="mb-10 flex justify-center">
-                    <button
-                      type="button"
-                      disabled={loadingMore}
-                      onClick={async () => {
-                        setLoadingMore(true);
-                        const { listings: rows, error } = await getListings(listingsPageSize, listingOffset, institution);
-                        setLoadingMore(false);
-                        setError(error);
-                        setListingOffset((current) => current + rows.length);
-                        setHasMoreListings(rows.length === listingsPageSize);
-                        setListings((current) => {
-                          const nextListings = [...current];
-                          (rows as Listing[]).forEach((listing) => {
-                            if (!nextListings.some((item) => item.id === listing.id)) {
-                              nextListings.push(listing);
-                            }
-                          });
-                          window.sessionStorage.setItem('campustrader-home-listings', JSON.stringify(nextListings));
-                          return nextListings;
-                        });
-                      }}
-                      className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-800 transition hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-600"
-                    >
-                      {loadingMore ? 'Loading...' : 'Load more'}
-                    </button>
-                  </div>
-                ) : null}
-              </>
-            )}
-          </>
-        )}
-        <section id="campus-requests" className="mt-10 mb-8 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-blue-950 dark:bg-zinc-900 sm:p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold sm:text-xl">What students are looking for</h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Open requests from your campus. Have it? Reach out to the requester.</p>
-            </div>
-            <Link href="/sell?mode=request" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Post a request</Link>
-          </div>
-          {loadingRequests ? <p role="status" className="text-sm text-gray-500">Loading requests…</p> : requestError ? (
-            <div role="alert" className="rounded-xl border border-amber-200 p-4 text-sm text-amber-800 dark:text-amber-200">
-              Requests could not be loaded. <button type="button" className="font-semibold underline" onClick={() => window.dispatchEvent(new Event('campustrader:requests-refresh'))}>Retry</button>
-            </div>
-          ) : studentRequests.length ? (
-            <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-3 [scrollbar-width:thin]">
-              {studentRequests.map((request) => (
-                <button key={request.id} type="button" onClick={() => { setSelectedRequest(request); setRequestMessageError(null); }} className="w-[78vw] max-w-[290px] shrink-0 snap-start rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-blue-400 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                  <p className="font-semibold">{request.title}</p>
-                  <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">{request.description || 'A student is looking for this item.'}</p>
-                  <p className="mt-2 text-xs text-gray-500">{request.location || institution}{request.max_price != null ? ` · Budget up to KSh ${Number(request.max_price).toLocaleString('en-KE')}` : ''}</p>
-                  {(isAdmin || user?.id === request.user_id) && request.status !== 'open' ? <span className="mt-2 inline-block rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">{request.status}</span> : null}
-                  <span className="mt-3 inline-block text-xs font-semibold text-blue-600 dark:text-blue-300">{isAdmin ? 'Review request →' : 'View request & message →'}</span>
+          {searchFocused && suggestions.length > 0 ? (
+            <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 mx-2 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(13,30,20,.15)]">
+              <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--muted)]">Matching listings</p>
+              {suggestions.map((suggestion) => (
+                <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(suggestion); setSearchFocused(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)]">
+                  <Search className="h-4 w-4 text-[var(--muted)]" />{suggestion}<ArrowRight className="ml-auto h-3.5 w-3.5 text-[var(--muted)]" />
                 </button>
               ))}
             </div>
-          ) : <p className="rounded-xl border border-dashed border-gray-300 p-5 text-sm text-gray-600 dark:border-zinc-700 dark:text-zinc-400">No open requests are visible for this campus yet. Post the first request.</p>}
+          ) : null}
         </section>
-        <section aria-labelledby="about-campus-trader" className="mb-8 border-t border-gray-200 pt-5 dark:border-zinc-800">
-          <h2 id="about-campus-trader" className="text-base font-semibold text-gray-900 dark:text-white">CampusTrader: buy and sell on campus in Kenya</h2>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-600 dark:text-zinc-400">
-            CampusTrader is a campus marketplace in Kenya where students and nearby businesses can buy and sell second-hand electronics, books, fashion, furniture, food, and services. Browse listings or post a request across participating universities, colleges, and technical institutions.
-          </p>
-          <Link href="/help" className="mt-2 inline-flex text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300">How CampusTrader works</Link>
+
+        {!user ? (
+          <section className="mb-8 flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-[var(--foreground)]">Browsing is open. Join to trade.</p>
+              <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]">Create an account to save finds, message sellers and manage your listings.</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Link href="/signin?mode=signup" className="rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[var(--brand-strong)]">Create account</Link>
+              <Link href="/signin?mode=signin" className="rounded-full border border-[var(--border)] px-4 py-2.5 text-xs font-bold text-[var(--foreground)] hover:bg-[var(--surface-muted)]">Sign in</Link>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mb-9">
+          <SectionHeading title="Shop by category" subtitle="Start with a department or explore everything." href="/categories" action="All categories" />
+          <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-8">
+            {categoryMeta.map(({ name, description, Icon }) => (
+              <button key={name} type="button" onClick={() => { setCategory(name); setMode('All'); setQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="group flex min-w-0 flex-col items-center rounded-[17px] border border-[var(--border)] bg-[var(--surface)] px-1.5 py-3 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-sm sm:px-2 sm:py-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[var(--brand-soft)] text-[var(--brand)] transition group-hover:bg-[var(--brand)] group-hover:text-white sm:h-12 sm:w-12">
+                  <Icon className="h-5 w-5 sm:h-[22px] sm:w-[22px]" strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <span className="mt-2.5 line-clamp-1 text-[10px] font-bold text-[var(--foreground)] sm:text-xs">{name}</span>
+                <span className="mt-0.5 hidden text-[9px] text-[var(--muted)] lg:block">{description}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div className="mb-7 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+          <div className="flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {([
+              ['All', 'For you'],
+              ['Products', 'Products'],
+              ['Services', 'Services'],
+              ['Businesses', 'Businesses'],
+            ] as const).map(([value, label]) => (
+              <button key={value} type="button" onClick={() => { setMode(value); setCategory('All'); }} className={'shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition ' + (mode === value && category === 'All' ? 'bg-[var(--brand)] text-white' : 'text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]')}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <label htmlFor="sort-listings" className="sr-only">Sort listings</label>
+            <span className="hidden text-[10px] font-semibold text-[var(--muted)] sm:inline">Sort by</span>
+            <div className="relative">
+              <select id="sort-listings" value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="appearance-none rounded-full border border-[var(--border)] bg-[var(--surface)] py-2 pl-3 pr-8 text-[10px] font-bold text-[var(--foreground)] outline-none hover:border-[var(--brand)]/50">
+                <option value="newest">Recently added</option>
+                <option value="price-low">Price: low to high</option>
+                <option value="price-high">Price: high to low</option>
+              </select>
+              <ArrowUpDown className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--muted)]" />
+            </div>
+          </div>
+        </div>
+
+        {showingMeruFallback ? <p className="mb-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">There are no listings at your selected institution yet. Showing the wider Meru University marketplace.</p> : null}
+
+        {hasActiveFilters ? (
+          <section className="mb-10">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">Marketplace results</p>
+                <h2 className="mt-1 text-lg font-extrabold tracking-[-0.04em]">{filteredListings.length} {filteredListings.length === 1 ? 'listing' : 'listings'} found</h2>
+              </div>
+              <button type="button" onClick={clearAll} className="text-xs font-bold text-[var(--brand)] hover:underline">Clear all</button>
+            </div>
+            {loadingListings ? <ListingSkeletons /> : filteredListings.length ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {filteredListings.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+              </div>
+            ) : (
+              <EmptyState title="No matching listings yet" description="Try a broader search, remove a filter or browse another category." onClear={clearAll} />
+            )}
+          </section>
+        ) : (
+          <>
+            <section className="mb-10">
+              <SectionHeading title="Recently added" subtitle="Fresh listings from your campus marketplace." href="/categories" />
+              {loadingListings ? <ListingSkeletons /> : filteredListings.length ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {filteredListings.slice(0, 10).map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+                </div>
+              ) : listingError ? (
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+                  <p className="text-sm font-bold">Listings could not be loaded.</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">{listingError}</p>
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('campustrader:listings-refresh'))} className="mt-3 rounded-full bg-[var(--brand)] px-4 py-2 text-xs font-bold text-white">Try again</button>
+                </div>
+              ) : (
+                <EmptyState title="The first listings are on their way" description="Browse categories or share the marketplace with a seller on your campus." />
+              )}
+            </section>
+
+            {(['Electronics', 'Books', 'Fashion', 'Services'] as const).map((name) => {
+              const items = categoryListings(name);
+              if (!items.length) return null;
+              return (
+                <section key={name} className="mb-10">
+                  <SectionHeading title={name === 'Services' ? 'Services around campus' : name + ' worth a look'} subtitle={'Explore more in ' + name.toLowerCase() + '.'} href={'/?category=' + encodeURIComponent(name)} />
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {items.slice(0, 5).map((listing) => <ListingCard key={name + '-' + listing.id} listing={listing} />)}
+                  </div>
+                </section>
+              );
+            })}
+          </>
+        )}
+
+        {hasMore && !hasActiveFilters ? (
+          <div className="mb-10 flex justify-center">
+            <button type="button" disabled={loadingMore} onClick={loadMore} className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/60 disabled:opacity-60">
+              {loadingMore ? 'Loading listings…' : 'Load more listings'}
+            </button>
+          </div>
+        ) : null}
+
+        <section className="mb-10">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brand)]">Student-to-student</p>
+              <h2 className="mt-1 text-[19px] font-extrabold tracking-[-0.04em]">Requests from your campus</h2>
+              <p className="mt-1 text-xs text-[var(--muted)]">See what other students need. Have it? Start a conversation.</p>
+            </div>
+            <Link href="/sell?mode=request" className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-xs font-bold text-[var(--brand)] transition hover:border-[var(--brand)]/50">
+              Post a request <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {loadingRequests ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-[18px] border border-[var(--border)] bg-[var(--surface)]" />)}
+            </div>
+          ) : requestError ? (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-xs text-[var(--muted)]">Campus requests could not be loaded. <button type="button" onClick={() => window.dispatchEvent(new Event('campustrader:requests-refresh'))} className="font-bold text-[var(--brand)] underline">Retry</button></div>
+          ) : requests.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {requests.slice(0, 6).map((request) => (
+                <article key={request.id} className="flex min-w-0 flex-col rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]/45">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand)]">{request.category || 'Campus request'}</span>
+                    {(isAdmin || user?.id === request.user_id) ? <button type="button" disabled={deletingRequest === request.id} onClick={() => void removeRequest(request)} className="text-[10px] font-semibold text-[var(--muted)] hover:text-red-600">{deletingRequest === request.id ? 'Removing…' : 'Remove'}</button> : null}
+                  </div>
+                  <h3 className="mt-3 line-clamp-2 text-sm font-bold text-[var(--foreground)]">{request.title}</h3>
+                  <p className="mt-1 line-clamp-2 min-h-9 text-xs leading-5 text-[var(--muted)]">{request.description || 'A student is looking for this item or service.'}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--muted)]">
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{request.location || campusLabel}</span>
+                    <span className="inline-flex items-center gap-1"><Tag className="h-3 w-3" />{formatRequestBudget(request)}</span>
+                  </div>
+                  {user?.id === request.user_id ? (
+                    <p className="mt-4 rounded-xl bg-[var(--background)] px-3 py-2 text-[10px] font-semibold text-[var(--muted)]">Your request · students can message you</p>
+                  ) : (
+                    <button type="button" disabled={messagingRequest === request.id} onClick={() => void messageRequestOwner(request)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
+                      <MessageCircle className="h-3.5 w-3.5" />{messagingRequest === request.id ? 'Opening chat…' : 'I can help with this'}
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center rounded-[20px] border border-dashed border-[var(--border)] bg-[var(--surface)] px-5 py-8 text-center">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><Users className="h-5 w-5" /></span>
+              <p className="mt-3 text-sm font-bold">No open requests at the moment</p>
+              <p className="mt-1 max-w-sm text-xs leading-5 text-[var(--muted)]">Post what you need and let students around campus know what they can help you find.</p>
+              <Link href="/sell?mode=request" className="mt-4 rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white">Post a request</Link>
+            </div>
+          )}
+          {requestActionError ? <p role="alert" className="mt-3 text-xs text-red-600">{requestActionError}</p> : null}
+        </section>
+
+        <section className="mb-7 grid gap-3 md:grid-cols-[1.15fr_.85fr]">
+          <Link href="/community" className="group flex items-center justify-between gap-4 rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[var(--brand)]/50">
+            <span className="min-w-0">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brand)]">Beyond buying and selling</span>
+              <span className="mt-1 block text-lg font-extrabold tracking-[-0.035em]">Your campus, connected.</span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Find communities, discuss campus life and connect with other students.</span>
+            </span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><Users className="h-5 w-5" /></span>
+          </Link>
+          <div className="rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-5">
+            <div className="flex items-center gap-2 text-[var(--brand)]"><ShieldCheck className="h-4 w-4" /><span className="text-[10px] font-bold uppercase tracking-[0.14em]">Shop with care</span></div>
+            <p className="mt-2 text-sm font-bold text-[var(--foreground)]">Inspect before you pay.</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">Meet in a public place, check the item and keep payment discussions clear.</p>
+            <Link href="/help" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--brand)]">Marketplace safety <ChevronRight className="h-3.5 w-3.5" /></Link>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--border)] pt-5">
+          <h2 className="text-xs font-bold text-[var(--foreground)]">CampusTrader: buy and sell on campus in Kenya</h2>
+          <p className="mt-2 max-w-4xl text-[11px] leading-5 text-[var(--muted)]">CampusTrader is a student marketplace for second-hand electronics, books, fashion, furniture, food, and services. Browse listings from students and nearby businesses, compare options and connect directly.</p>
+          <div className="mt-4"><SafetyBanner compact /></div>
+          <Link href="/help" className="mt-3 inline-flex text-xs font-bold text-[var(--brand)] hover:underline">How CampusTrader works</Link>
         </section>
       </main>
 
-      {selectedRequest ? (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-3 sm:items-center" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedRequest(null); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="request-detail-title" className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-gray-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-950 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div><p className="text-xs font-bold uppercase tracking-wide text-blue-600">Campus request · {selectedRequest.category}</p><h2 id="request-detail-title" className="mt-2 text-xl font-bold">{selectedRequest.title}</h2></div>
-              <button type="button" onClick={() => setSelectedRequest(null)} aria-label="Close request details" className="rounded-full border border-gray-200 px-3 py-1 text-sm dark:border-zinc-700">Close</button>
+      {filtersOpen ? (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFiltersOpen(false); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="filter-title" className="max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-[26px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl sm:rounded-[26px] sm:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div><p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brand)]">Refine results</p><h2 id="filter-title" className="mt-1 text-xl font-extrabold tracking-[-0.04em]">Filters</h2></div>
+              <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close filters" className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--muted)]"><X className="h-4 w-4" /></button>
             </div>
-            <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-zinc-300">{selectedRequest.description || 'No extra details were provided.'}</p>
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl bg-gray-50 p-3 dark:bg-zinc-900"><p className="text-xs text-gray-500">Budget</p><p className="mt-1 font-semibold">{selectedRequest.min_price != null || selectedRequest.max_price != null ? `KSh ${selectedRequest.min_price != null ? Number(selectedRequest.min_price).toLocaleString('en-KE') : '0'} – ${selectedRequest.max_price != null ? Number(selectedRequest.max_price).toLocaleString('en-KE') : 'Open'}` : 'Not specified'}</p></div>
-              <div className="rounded-xl bg-gray-50 p-3 dark:bg-zinc-900"><p className="text-xs text-gray-500">Location</p><p className="mt-1 font-semibold">{selectedRequest.location || institution || 'Campus'}</p></div>
+            <div className="grid gap-4">
+              <div>
+                <label className="mb-2 block text-xs font-bold text-[var(--foreground)]">Price range (KSh)</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input inputMode="numeric" value={filters.minPrice} onChange={(event) => setFilters((current) => ({ ...current, minPrice: event.target.value }))} placeholder="Minimum" className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
+                  <input inputMode="numeric" value={filters.maxPrice} onChange={(event) => setFilters((current) => ({ ...current, maxPrice: event.target.value }))} placeholder="Maximum" className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="filter-condition" className="text-xs font-bold">Condition</label>
+                <select id="filter-condition" value={filters.condition} onChange={(event) => setFilters((current) => ({ ...current, condition: event.target.value }))} className="h-11 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]">
+                  <option value="all">Any condition</option><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="service">Service</option>
+                </select>
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="filter-location" className="text-xs font-bold">Location</label>
+                <input id="filter-location" value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))} placeholder="e.g. main campus, town" className="h-11 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="filter-seller" className="text-xs font-bold">Seller type</label>
+                <select id="filter-seller" value={filters.seller} onChange={(event) => setFilters((current) => ({ ...current, seller: event.target.value }))} className="h-11 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]">
+                  <option value="all">All sellers</option><option value="student">Students</option><option value="business">Businesses</option>
+                </select>
+              </div>
+              <label className="flex min-h-12 items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm">
+                <span className="font-semibold">Negotiable prices only</span>
+                <input type="checkbox" checked={filters.negotiableOnly} onChange={(event) => setFilters((current) => ({ ...current, negotiableOnly: event.target.checked }))} className="h-4 w-4 accent-[var(--brand)]" />
+              </label>
             </div>
-            {user?.id === selectedRequest.user_id ? <p className="mt-5 rounded-xl bg-gray-50 p-3 text-sm text-gray-600 dark:bg-zinc-900 dark:text-zinc-300">This is your request. Other students can message you about it.</p> : !user ? (
-              <Link href="/signin?mode=signin" className="mt-5 block rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white">Sign in to message requester</Link>
-            ) : (
-              <button type="button" disabled={messagingRequest} onClick={messageRequestOwner} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">{messagingRequest ? 'Opening conversation…' : 'Message requester'}</button>
-            )}
-            {(isAdmin || user?.id === selectedRequest.user_id) ? (
-              <button
-                type="button"
-                disabled={deletingRequest}
-                onClick={removeSelectedRequest}
-                className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300"
-              >
-                {deletingRequest ? 'Deleting request…' : isAdmin && user?.id !== selectedRequest.user_id ? 'Delete request (admin)' : 'Delete my request'}
-              </button>
-            ) : null}
-            {requestMessageError ? <p role="alert" className="mt-3 text-sm text-red-600">{requestMessageError}</p> : null}
+            <div className="mt-6 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setFilters({ minPrice: '', maxPrice: '', condition: 'all', location: '', seller: 'all', negotiableOnly: false })} className="h-11 rounded-full border border-[var(--border)] text-xs font-bold text-[var(--foreground)] hover:bg-[var(--surface-muted)]">Reset filters</button>
+              <button type="button" onClick={() => setFiltersOpen(false)} className="h-11 rounded-full bg-[var(--brand)] text-xs font-bold text-white hover:bg-[var(--brand-strong)]">Show results</button>
+            </div>
           </section>
         </div>
       ) : null}
 
-      {filtersOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 py-4 sm:items-center">
-          <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
-              <button onClick={() => setFiltersOpen(false)} className="text-sm font-semibold text-gray-500 dark:text-zinc-400">Close</button>
-            </div>
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <input value={filters.minPrice} onChange={(event) => setFilters((current) => ({ ...current, minPrice: event.target.value }))} placeholder="Min KSh" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
-                <input value={filters.maxPrice} onChange={(event) => setFilters((current) => ({ ...current, maxPrice: event.target.value }))} placeholder="Max KSh" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
-              </div>
-              <select value={filters.condition} onChange={(event) => setFilters((current) => ({ ...current, condition: event.target.value }))} className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
-                <option value="all">All conditions</option>
-                <option value="new">New</option>
-                <option value="used">Used</option>
-                <option value="refurbished">Refurbished</option>
-                <option value="service">Service</option>
-              </select>
-              <input value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))} placeholder="Location" className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white" />
-              <select value={filters.sellerType} onChange={(event) => setFilters((current) => ({ ...current, sellerType: event.target.value }))} className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
-                <option value="all">All sellers</option>
-                <option value="student">Students</option>
-                <option value="business">Businesses</option>
-              </select>
-              <label className="flex items-center justify-between rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white">
-                <span>Negotiable only</span>
-                <input type="checkbox" checked={filters.negotiableOnly} onChange={(event) => setFilters((current) => ({ ...current, negotiableOnly: event.target.checked }))} />
-              </label>
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                onClick={() => {
-                  setFilters({ minPrice: '', maxPrice: '', condition: 'all', location: '', sellerType: 'all', negotiableOnly: false });
-                  setFiltersOpen(false);
-                }}
-                className="rounded-2xl border border-gray-300 px-4 py-3 text-sm font-semibold text-gray-700 dark:border-zinc-700 dark:text-zinc-200"
-              >
-                Clear filters
-              </button>
-              <button onClick={() => setFiltersOpen(false)} className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white">
-                Apply filters
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <Link href="/sell" className="fixed bottom-24 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-2xl text-white shadow-lg transition hover:scale-110 hover:from-blue-600 hover:to-blue-700 sm:right-6">
-        +
-      </Link>
       <BottomNav />
     </div>
   );
