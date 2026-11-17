@@ -301,6 +301,17 @@ test('homepage search and social metadata consistently describe CampusTrader', a
   assert.ok(source.includes("card: 'summary_large_image'"));
 });
 
+test('saved marketplace preferences hydrate after the server-safe initial render', async () => {
+  const source = await read('../components/AppProvider.tsx');
+  assert.ok(source.includes("useState<Theme>('light')"));
+  assert.ok(source.includes('useState<ProfileContext>(personalProfileContext)'));
+  assert.ok(source.includes('useState<Institution>(DEFAULT_CAMPUS)'));
+  assert.ok(source.includes("window.localStorage.getItem('campustrader-theme')"));
+  assert.ok(source.includes("window.localStorage.getItem('campustrader-institution')"));
+  assert.ok(source.includes('if (!profileContextHydrated) return;'));
+  assert.ok(source.includes('if (!institutionHydrated) return;'));
+});
+
 test('marketplace search applies catalogue filters and campus scope before pagination', async () => {
   const [listings, homepage] = await Promise.all([
     read('../lib/listings.ts'),
