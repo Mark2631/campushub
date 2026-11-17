@@ -301,7 +301,9 @@ export async function searchMarketplaceListings(
     const selectedCategory = String(filters.category || 'All').trim();
     if (selectedCategory !== 'All') {
       if (selectedCategory === 'Services') {
-        query.or('condition.eq.service,listing_type.eq.SERVICE_ENQUIRY,listing_type.eq.SERVICE,category.ilike.Services');
+        query.eq('condition', 'service');
+      } else if (selectedCategory === 'Refurbished') {
+        query.eq('condition', 'refurbished');
       } else {
         query.ilike('category', selectedCategory);
       }
@@ -310,7 +312,7 @@ export async function searchMarketplaceListings(
     if (filters.mode === 'Products') {
       query.eq('listing_type', 'PHYSICAL_PRODUCT');
     } else if (filters.mode === 'Services' && selectedCategory !== 'Services') {
-      query.or('condition.eq.service,listing_type.eq.SERVICE_ENQUIRY,listing_type.eq.SERVICE,category.ilike.Services');
+      query.eq('condition', 'service');
     }
 
     const businessSeller = filters.mode === 'Businesses' || filters.seller === 'business';
