@@ -283,21 +283,14 @@ export default function Home() {
   }, [category, filters, mode, query, sort]);
 
   useEffect(() => {
-    if (!hasActiveFilters) {
-      setSearchLoading(false);
-      setSearchResults([]);
-      setSearchError(null);
-      setSearchHasMore(false);
-      setSearchingMeruFallback(false);
-      return;
-    }
+    if (!hasActiveFilters) return;
 
     let active = true;
-    setSearchLoading(true);
-    setSearchError(null);
-    setSearchResults([]);
 
     const loadSearchResults = async () => {
+      setSearchLoading(true);
+      setSearchError(null);
+      setSearchResults([]);
       const campus = user?.id ? institution : 'MUST';
       let result = await searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters);
       let resolvedCampus = campus;
