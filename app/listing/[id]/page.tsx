@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
