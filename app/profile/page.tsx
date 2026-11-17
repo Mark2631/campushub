@@ -411,7 +411,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)] dark:bg-[var(--background)] dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
       <Header />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
         <header className="mb-6">
@@ -454,12 +454,12 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                       ) : null}
                     </div>
                     <p className="mt-2 truncate text-sm text-[var(--muted)] dark:text-[var(--muted)]">{profile?.email || user.email}</p>
-                    <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-[var(--muted)]">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
+                    <p className="mt-2 text-xs font-semibold text-[var(--muted)] dark:text-[var(--muted)]">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(false); }} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-slate-700 dark:bg-[var(--background)] dark:text-[var(--foreground)]">
+                  <button type="button" onClick={() => { setProfileEditOpen(true); setVerificationFormOpen(false); }} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                     Edit profile
                   </button>
@@ -479,12 +479,12 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl bg-[var(--background)] p-4 text-center dark:bg-[var(--background)]">
                     <p className="text-xl font-semibold">{value}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-[var(--muted)]">{label}</p>
+                    <p className="mt-1 text-xs font-semibold text-[var(--muted)] dark:text-[var(--muted)]">{label}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)] dark:border-slate-700 dark:text-[var(--muted)]">
+              <div className="mt-4 rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)] dark:border-[var(--border)] dark:text-[var(--muted)]">
                 Rating and reviews will appear here after more completed trades.
               </div>
 
@@ -539,10 +539,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                           </p>
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] dark:border-slate-700 dark:bg-[var(--surface)] dark:text-[var(--foreground)]">View</Link>
-                          <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] dark:border-slate-700 dark:bg-[var(--surface)] dark:text-[var(--foreground)]">Edit</Link>
+                          <Link href={`/listing/${listing.id}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">View</Link>
+                          <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">Edit</Link>
                           {listing.status !== 'sold' ? (
-                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Sold'}
                             </button>
                           ) : null}
@@ -560,7 +560,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-[var(--border)]">
                     <p className="font-bold">{listingEmptyText(listingFilter)}</p>
                   </div>
                 )}
@@ -575,7 +575,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
             </p>
             <div className="mx-auto mt-5 grid max-w-sm grid-cols-2 gap-3">
               <Link href={createAccountHref} className="rounded-2xl bg-[var(--brand)] px-6 py-3 text-sm font-semibold text-white">Create account</Link>
-              <Link href={signInHref} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-slate-700 dark:bg-[var(--background)] dark:text-[var(--foreground)]">Sign in</Link>
+              <Link href={signInHref} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">Sign in</Link>
             </div>
           </div>
         )}
@@ -589,7 +589,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h2 id="edit-profile-title" className="text-xl font-bold">Edit profile</h2>
                 <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Your name, contact details, institution and verification.</p>
               </div>
-              <button type="button" aria-label="Close Edit Profile" onClick={() => setProfileEditOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-[var(--muted)] dark:hover:bg-slate-900">
+              <button type="button" aria-label="Close Edit Profile" onClick={() => setProfileEditOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--muted)] hover:bg-[var(--surface-muted)] dark:text-[var(--muted)] dark:hover:bg-[var(--surface-muted)]">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
@@ -602,7 +602,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                       <Image src={avatarPreview || profile?.avatar_url || ''} alt="Profile photo preview" width={64} height={64} className="h-full w-full object-cover" />
                     ) : displayName.charAt(0).toUpperCase()}
                   </div>
-                  <label className="inline-flex cursor-pointer rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-slate-700 dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
+                  <label className="inline-flex cursor-pointer rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
                     {avatarUploading ? 'Uploading…' : 'Change photo'}
                     <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleAvatarChange} className="hidden" />
                   </label>
@@ -613,9 +613,9 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h3 className="font-bold">Personal details</h3>
                 <label className="mt-3 block space-y-2 text-sm">
                   <span className="font-medium">Name</span>
-                  <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} autoComplete="name" maxLength={80} placeholder="Your name" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand)] dark:border-slate-700 dark:bg-[var(--surface)]" />
+                  <input value={nameInput} onChange={(event) => setNameInput(event.target.value)} autoComplete="name" maxLength={80} placeholder="Your name" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                 </label>
-                <p className="mt-2 text-xs text-slate-500 dark:text-[var(--muted)]">Email: {profile?.email || user.email || 'Not available'}</p>
+                <p className="mt-2 text-xs text-[var(--muted)] dark:text-[var(--muted)]">Email: {profile?.email || user.email || 'Not available'}</p>
                 <button type="button" onClick={() => void handleNameSave()} disabled={nameSaving || nameInput.trim().length < 2} className="mt-3 rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
                   {nameSaving ? 'Saving name…' : 'Save name'}
                 </button>
@@ -625,15 +625,15 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h3 className="font-bold">WhatsApp number</h3>
                 <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Buyers use this number to contact you about listings.</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand)] dark:border-slate-700 dark:bg-[var(--surface)]" />
+                  <input value={phoneInput} onChange={(event) => setPhoneInput(event.target.value)} placeholder="07XXXXXXXX" aria-label="WhatsApp number" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm outline-none focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                   <button type="button" onClick={handlePhoneSave} className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white">Save number</button>
                 </div>
               </section>
 
               <section className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]">
                 <h3 className="font-bold">Institution</h3>
-                <p className="mt-2 font-semibold text-[var(--foreground)] dark:text-white">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-[var(--muted)]">Institution identity is linked to your account and existing listings. To correct a mistake, contact support so it can be reviewed safely.</p>
+                <p className="mt-2 font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">{institutionLabel(normalizeInstitution(profile?.campus || user.user_metadata?.institution))}</p>
+                <p className="mt-1 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Institution identity is linked to your account and existing listings. To correct a mistake, contact support so it can be reviewed safely.</p>
                 <Link href="/profile?manage=help#manage-help" onClick={() => setProfileEditOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-[var(--brand)] underline dark:text-[var(--brand)]">Request an institution correction</Link>
               </section>
 
@@ -655,10 +655,10 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
                 {verificationFormOpen && verificationStatus !== 'verified' && verificationStatus !== 'pending' ? (
                   <form onSubmit={handleVerificationSubmit} className="mt-4 space-y-4">
-                    <select value={verificationType} onChange={(event) => setVerificationType(event.target.value as (typeof verificationTypes)[number]['value'])} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]">
+                    <select value={verificationType} onChange={(event) => setVerificationType(event.target.value as (typeof verificationTypes)[number]['value'])} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
                       {verificationTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
                     </select>
-                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
+                    <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                     {documentFiles.length > 0 ? (
                       <div role="status" aria-live="polite" className="space-y-2 text-sm text-emerald-700 dark:text-emerald-300">
                         <p className="font-semibold">{documentFiles.length} document{documentFiles.length === 1 ? "" : "s"} selected</p>
@@ -684,7 +684,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <h2 className="text-xl font-bold">Manage</h2>
                 <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Selling profile, preferences and support.</p>
               </div>
-              <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-500 hover:bg-slate-100 dark:text-[var(--muted)] dark:hover:bg-slate-900">
+              <button type="button" aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-[var(--muted)] hover:bg-[var(--surface-muted)] dark:text-[var(--muted)] dark:hover:bg-[var(--surface-muted)]">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
@@ -693,7 +693,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <section className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]">
                 <h3 className="font-bold">Preferences</h3>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button type="button" onClick={toggleTheme} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-slate-700 dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
+                  <button type="button" onClick={toggleTheme} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
                     {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
                   </button>
                   {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
@@ -703,43 +703,43 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <section aria-label="Manage areas" className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]">
                 <h3 className="font-bold">Manage areas</h3>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <span aria-disabled="true" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-3 text-center text-sm font-semibold text-slate-500 dark:bg-slate-800">Orders · Soon</span>
-                  <a href="#manage-business-profile" className="rounded-xl border border-[var(--border)] px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Selling profile</a>
-                  <a href="#manage-help" className="rounded-xl border border-[var(--border)] px-3 py-3 text-center text-sm font-semibold dark:border-slate-700">Help &amp; support</a>
+                  <span aria-disabled="true" className="cursor-not-allowed rounded-xl bg-[var(--surface-muted)] px-3 py-3 text-center text-sm font-semibold text-[var(--muted)] dark:bg-[var(--surface-muted)]">Orders · Soon</span>
+                  <a href="#manage-business-profile" className="rounded-xl border border-[var(--border)] px-3 py-3 text-center text-sm font-semibold dark:border-[var(--border)]">Selling profile</a>
+                  <a href="#manage-help" className="rounded-xl border border-[var(--border)] px-3 py-3 text-center text-sm font-semibold dark:border-[var(--border)]">Help &amp; support</a>
                 </div>
               </section>
 
               <section id="manage-business-profile" className="rounded-2xl border border-[var(--border)] p-4 dark:border-[var(--border)]">
                 <h3 className="font-bold">Selling Profile</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-[var(--brand)] text-white' : 'border border-[var(--border)] text-[var(--foreground)] dark:border-slate-700 dark:text-[var(--foreground)]'}`}>Personal</button>
+                  <button type="button" onClick={() => setProfileContext({ mode: 'personal', businessId: null, businessName: null })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.mode === 'personal' ? 'bg-[var(--brand)] text-white' : 'border border-[var(--border)] text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--foreground)]'}`}>Personal</button>
                   {businesses.map((business) => (
-                    <button key={business.id} type="button" onClick={() => setProfileContext({ mode: 'business', businessId: business.id, businessName: business.business_name })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.businessId === business.id ? 'bg-[var(--brand)] text-white' : 'border border-[var(--border)] text-[var(--foreground)] dark:border-slate-700 dark:text-[var(--foreground)]'}`}>{business.business_name}</button>
+                    <button key={business.id} type="button" onClick={() => setProfileContext({ mode: 'business', businessId: business.id, businessName: business.business_name })} className={`rounded-2xl px-4 py-2 text-sm font-semibold ${profileContext.businessId === business.id ? 'bg-[var(--brand)] text-white' : 'border border-[var(--border)] text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--foreground)]'}`}>{business.business_name}</button>
                   ))}
                 </div>
 
                 <form onSubmit={handleBusinessSubmit} className="mt-4 grid gap-3">
-                  <input name="business_name" value={businessForm.business_name} onChange={(event) => setBusinessForm((current) => ({ ...current, business_name: event.target.value }))} placeholder="Business name" maxLength={120} required className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
+                  <input name="business_name" value={businessForm.business_name} onChange={(event) => setBusinessForm((current) => ({ ...current, business_name: event.target.value }))} placeholder="Business name" maxLength={120} required className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <select name="category" value={businessForm.category} onChange={(event) => setBusinessForm((current) => ({ ...current, category: event.target.value }))} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]">
+                    <select name="category" value={businessForm.category} onChange={(event) => setBusinessForm((current) => ({ ...current, category: event.target.value }))} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
                       {businessCategories.map((category) => <option key={category} value={category}>{category}</option>)}
                     </select>
-                    <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" maxLength={120} required className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
+                    <input name="location" value={businessForm.location} onChange={(event) => setBusinessForm((current) => ({ ...current, location: event.target.value }))} placeholder="Location" maxLength={120} required className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                   </div>
-                  <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} maxLength={1000} placeholder="Description" className="resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
-                  <fieldset className="rounded-2xl border border-[var(--border)] p-3 dark:border-slate-700">
+                  <textarea name="description" value={businessForm.description} onChange={(event) => setBusinessForm((current) => ({ ...current, description: event.target.value }))} rows={3} maxLength={1000} placeholder="Description" className="resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
+                  <fieldset className="rounded-2xl border border-[var(--border)] p-3 dark:border-[var(--border)]">
                     <legend className="px-1 text-sm font-semibold">Delivery</legend>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${!businessForm.delivery_available ? 'border-blue-500 bg-[var(--brand-soft)] dark:bg-[var(--brand-soft)]' : 'border-[var(--border)] dark:border-slate-700'}`}>
+                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${!businessForm.delivery_available ? 'border-[var(--brand)] bg-[var(--brand-soft)] dark:bg-[var(--brand-soft)]' : 'border-[var(--border)] dark:border-[var(--border)]'}`}>
                         <input type="radio" name="delivery_available" checked={!businessForm.delivery_available} onChange={() => setBusinessForm((current) => ({ ...current, delivery_available: false }))} className="mt-1" />
-                        <span><span className="block font-semibold">Pickup only</span><span className="mt-1 block text-xs text-slate-500 dark:text-[var(--muted)]">Customers collect from the business.</span></span>
+                        <span><span className="block font-semibold">Pickup only</span><span className="mt-1 block text-xs text-[var(--muted)] dark:text-[var(--muted)]">Customers collect from the business.</span></span>
                       </label>
-                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${businessForm.delivery_available ? 'border-blue-500 bg-[var(--brand-soft)] dark:bg-[var(--brand-soft)]' : 'border-[var(--border)] dark:border-slate-700'}`}>
+                      <label className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 text-sm ${businessForm.delivery_available ? 'border-[var(--brand)] bg-[var(--brand-soft)] dark:bg-[var(--brand-soft)]' : 'border-[var(--border)] dark:border-[var(--border)]'}`}>
                         <input type="radio" name="delivery_available" checked={businessForm.delivery_available} onChange={() => setBusinessForm((current) => ({ ...current, delivery_available: true }))} className="mt-1" />
-                        <span><span className="block font-semibold">Delivery can be arranged</span><span className="mt-1 block text-xs text-slate-500 dark:text-[var(--muted)]">CampusTrader will confirm a rider, fee and timing separately.</span></span>
+                        <span><span className="block font-semibold">Delivery can be arranged</span><span className="mt-1 block text-xs text-[var(--muted)] dark:text-[var(--muted)]">CampusTrader will confirm a rider, fee and timing separately.</span></span>
                       </label>
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-[var(--muted)]">Selecting delivery does not book a rider or take payment.</p>
+                    <p className="mt-2 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Selecting delivery does not book a rider or take payment.</p>
                   </fieldset>
 
                   <button type="submit" disabled={businessSubmitting} className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{businessSubmitting ? 'Creating...' : 'Create business profile'}</button>
@@ -751,8 +751,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Need help creating a listing, verifying your account or arranging delivery? See our simple step-by-step guide.</p>
                 <Link href="/help" onClick={() => setSettingsOpen(false)} className="mt-2 inline-flex text-sm font-semibold text-[var(--brand)] underline dark:text-[var(--brand)]">How CampusTrader works</Link>
                 <form onSubmit={handleComplaintSubmit} className="mt-4 grid gap-3">
-                  <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
-                  <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-slate-700 dark:bg-[var(--surface)]" />
+                  <input value={complaintForm.subject} onChange={(event) => setComplaintForm((current) => ({ ...current, subject: event.target.value }))} placeholder="Subject" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
+                  <textarea value={complaintForm.message} onChange={(event) => setComplaintForm((current) => ({ ...current, message: event.target.value }))} rows={3} placeholder="What happened?" className="resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                   <button type="submit" disabled={complaintSubmitting} className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">{complaintSubmitting ? 'Sending...' : 'Report issue'}</button>
                 </form>
               </section>
@@ -802,7 +802,7 @@ function ProfileLoading() {
     <div className="flex min-h-screen flex-col bg-[var(--background)] dark:bg-[var(--background)]">
       <Header />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 pb-28">
-        <p role="status" className="text-sm text-slate-500 dark:text-[var(--muted)]">Loading profile…</p>
+        <p role="status" className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Loading profile…</p>
       </main>
       <BottomNav />
     </div>
