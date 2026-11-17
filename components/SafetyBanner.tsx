@@ -1,12 +1,12 @@
+import { ShieldCheck } from 'lucide-react';
+
 export default function SafetyBanner({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg ${compact ? 'p-4' : 'p-4 sm:p-5'}`}>
-      <div className="flex items-start gap-3 sm:gap-4">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-sm font-semibold uppercase tracking-wide">Safe</span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold sm:text-base">Trade safely on CampusTrader</h3>
-          <p className="mt-1 text-sm text-blue-100">Meet in public. Inspect before paying. Avoid advance payments.</p>
-        </div>
+    <div className={'flex items-start gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] ' + (compact ? 'p-3' : 'px-4 py-3.5')}>
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]"><ShieldCheck className="h-[18px] w-[18px]" aria-hidden="true" /></span>
+      <div className="min-w-0">
+        <h3 className="text-[12px] font-bold text-[var(--foreground)]">Trade safely, meet locally</h3>
+        <p className="mt-0.5 text-[11px] leading-5 text-[var(--muted)]">Inspect items in person and meet in a public campus location. Never pay in advance to an unknown seller.</p>
       </div>
     </div>
   );
