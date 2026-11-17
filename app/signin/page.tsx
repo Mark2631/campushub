@@ -87,20 +87,20 @@ function PasswordInput({
   return (
     <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">
       {label}
-      <div className="mt-2 flex rounded-2xl border border-[var(--border)] bg-[var(--surface)] transition focus-within:border-blue-500 dark:border-[var(--border)] dark:bg-[var(--background)]">
+      <div className="mt-2 flex rounded-2xl border border-[var(--border)] bg-[var(--surface)] transition focus-within:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)]">
         <input
           type={visible ? 'text' : 'password'}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
-          className="min-w-0 flex-1 rounded-l-2xl bg-transparent px-4 py-3 text-[var(--foreground)] outline-none dark:text-white"
+          className="min-w-0 flex-1 rounded-l-2xl bg-transparent px-4 py-3 text-[var(--foreground)] outline-none dark:text-[var(--foreground)]"
           required
         />
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? 'Hide password' : 'Show password'}
-          className="inline-flex w-12 shrink-0 items-center justify-center rounded-r-2xl text-slate-500 transition hover:bg-slate-100 dark:text-[var(--muted)] dark:hover:bg-slate-900"
+          className="inline-flex w-12 shrink-0 items-center justify-center rounded-r-2xl text-[var(--muted)] transition hover:bg-[var(--surface-muted)] dark:text-[var(--muted)] dark:hover:bg-[var(--surface-muted)]"
         >
           {visible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
         </button>
@@ -294,8 +294,8 @@ function SignInPageContent() {
         <Header />
         <main className="mx-auto flex w-full max-w-3xl flex-1 items-center px-4 py-10">
           <div className="w-full rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
-            <div className="h-7 w-44 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
-            <div className="mt-4 h-4 w-72 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />
+            <div className="h-7 w-44 animate-pulse rounded-full bg-slate-200 dark:bg-[var(--surface-muted)]" />
+            <div className="mt-4 h-4 w-72 animate-pulse rounded-full bg-slate-200 dark:bg-[var(--surface-muted)]" />
           </div>
         </main>
       </div>
@@ -309,7 +309,7 @@ function SignInPageContent() {
         <section className="w-full min-w-0 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm sm:p-8 dark:border-[var(--border)] dark:bg-[var(--surface)]">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl dark:text-white">
+              <h1 className="text-2xl font-semibold text-[var(--foreground)] sm:text-3xl dark:text-[var(--foreground)]">
                 {mode === 'signup' ? 'Join CampusTrader' : 'Sign in'}
               </h1>
               <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">
@@ -335,9 +335,9 @@ function SignInPageContent() {
           {/* Google sign-in removed per request */}
 
           <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-[var(--muted)]">or use email</span>
-            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            <div className="h-px flex-1 bg-slate-200 dark:bg-[var(--surface-muted)]" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] dark:text-[var(--muted)]">or use email</span>
+            <div className="h-px flex-1 bg-slate-200 dark:bg-[var(--surface-muted)]" />
           </div>
 
           {mode === 'signup' ? (
@@ -348,13 +348,13 @@ function SignInPageContent() {
                   type="text"
                   value={signupForm.fullName}
                   onChange={(event) => setSignupForm((current) => ({ ...current, fullName: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                   required
                 />
               </label>
               <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">
                 Institution
-                <select value={signupForm.institution} onChange={(event) => setSignupForm((current) => ({ ...current, institution: event.target.value as Institution }))} required className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-white">
+                <select value={signupForm.institution} onChange={(event) => setSignupForm((current) => ({ ...current, institution: event.target.value as Institution }))} required className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                   <option value="">Select your institution</option>
                   {SUPPORTED_INSTITUTIONS.map((code) => <option key={code} value={code}>{institutionLabel(code)}</option>)}
                 </select>
@@ -367,10 +367,10 @@ function SignInPageContent() {
                   placeholder="0712345678"
                   value={signupForm.phone}
                   onChange={(event) => setSignupForm((current) => ({ ...current, phone: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                   aria-describedby="phone-format"
                   />
-                  <span id="phone-format" className="mt-1 block text-xs text-slate-500">Optional. If added, this WhatsApp number appears automatically on your profile.</span>
+                  <span id="phone-format" className="mt-1 block text-xs text-[var(--muted)]">Optional. If added, this WhatsApp number appears automatically on your profile.</span>
               </label>
               <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">
                 Email
@@ -378,7 +378,7 @@ function SignInPageContent() {
                   type="email"
                   value={signupForm.email}
                   onChange={(event) => setSignupForm((current) => ({ ...current, email: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                   required
                 />
               </label>
@@ -410,7 +410,7 @@ function SignInPageContent() {
                   type="email"
                   value={signinForm.email}
                   onChange={(event) => setSigninForm((current) => ({ ...current, email: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                   required
                 />
               </label>
@@ -427,7 +427,7 @@ function SignInPageContent() {
                   setResetEmail(signinForm.email);
                   setNotice(null);
                 }}
-                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-slate-300 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:hover:border-slate-700"
+                className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:hover:border-[var(--brand)]"
               >
                 Forgot password?
               </button>
@@ -443,14 +443,14 @@ function SignInPageContent() {
 
           {resetOpen ? (
             <form className="mt-6 space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 dark:border-[var(--border)] dark:bg-[var(--background)]" onSubmit={handleReset}>
-              <p className="text-sm font-semibold text-[var(--foreground)] dark:text-white">Reset password</p>
+              <p className="text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Reset password</p>
               <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">
                 Email
                 <input
                   type="email"
                   value={resetEmail}
                   onChange={(event) => setResetEmail(event.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-white"
+                  className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none transition focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
                   required
                 />
               </label>
