@@ -90,7 +90,7 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24 dark:bg-[var(--background)] dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] pb-24 dark:bg-[var(--background)] dark:text-[var(--foreground)]">
       <Header />
       <div className="sticky top-[65px] z-30 bg-[var(--brand)] text-white shadow-sm sm:top-[73px]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:py-3">
@@ -114,21 +114,21 @@ export default function MessagesPage() {
         </div>
 
         {loading || fetching ? (
-          <div className="rounded-2xl border border-gray-300 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-[var(--brand)] animate-spin mx-auto mb-4" />
+          <div className="rounded-2xl border border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-12 text-center text-[var(--muted)] dark:text-[var(--muted)]">
+            <div className="h-12 w-12 rounded-full border-2 border-[var(--border)] dark:border-[var(--border)] border-t-[var(--brand)] animate-spin mx-auto mb-4" />
             <p>Loading conversations...</p>
           </div>
         ) : !user ? (
-          <div className="rounded-2xl border-2 border-gray-300 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
-            <p className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Sign in to continue.</p>
-            <p className="mx-auto mb-6 max-w-md text-gray-600 dark:text-zinc-400">
+          <div className="rounded-2xl border-2 border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-12 text-center text-[var(--muted)] dark:text-[var(--muted)]">
+            <p className="mb-3 text-2xl font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">Sign in to continue.</p>
+            <p className="mx-auto mb-6 max-w-md text-[var(--muted)] dark:text-[var(--muted)]">
               Browsing is free. Create an account only when you want to post, message, save, verify, or join groups.
             </p>
             <div className="mx-auto grid max-w-sm grid-cols-2 gap-3">
               <Link href="/signin?next=/messages" className="rounded-2xl bg-[var(--brand)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">
                 Create account
               </Link>
-              <Link href="/signin?next=/messages&mode=signin" className="rounded-2xl border border-gray-200 bg-[var(--surface)] px-6 py-3 text-sm font-semibold text-gray-700 transition hover:border-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+              <Link href="/signin?next=/messages&mode=signin" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                 Sign in
               </Link>
             </div>
@@ -139,8 +139,8 @@ export default function MessagesPage() {
             <p className="text-sm mt-1">Try refreshing the page.</p>
           </div>
         ) : conversations.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-[var(--surface)] dark:bg-zinc-900 p-12 text-center text-gray-600 dark:text-zinc-400">
-            <p className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No messages yet.</p>
+          <div className="rounded-2xl border-2 border-dashed border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-12 text-center text-[var(--muted)] dark:text-[var(--muted)]">
+            <p className="mb-2 text-lg font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">No messages yet.</p>
             <p className="mb-2">Your buyer and seller conversations will appear here.</p>
             <p className="mb-6 text-sm">Start a chat from any listing when you are ready to negotiate or ask questions.</p>
             <Link href="/" className="inline-block rounded-2xl bg-[var(--brand)] hover:bg-[var(--brand-strong)] px-6 py-3 text-sm font-semibold text-white transition">
@@ -151,23 +151,23 @@ export default function MessagesPage() {
           <ul className="space-y-3">
             {conversations.map((conversation) => (
               <li key={conversation.id}>
-                <article className="rounded-3xl border border-[var(--border)]/80 bg-[var(--surface)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-lg sm:p-5 dark:border-[var(--border)] dark:bg-[var(--surface)] dark:hover:border-blue-700">
+                <article className="rounded-3xl border border-[var(--border)]/80 bg-[var(--surface)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-lg sm:p-5 dark:border-[var(--border)] dark:bg-[var(--surface)] dark:hover:border-[var(--brand)]">
                   <div className="flex items-center justify-between gap-4">
                     <Link href={`/messages/${conversation.id}`} className="flex min-w-0 flex-1 items-center gap-4">
                       <Avatar profile={conversation.otherUser} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="truncate font-semibold text-gray-900 dark:text-white">{profileName(conversation.otherUser)}</p>
+                          <p className="truncate font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">{profileName(conversation.otherUser)}</p>
                           <span className="text-xs text-gray-400">•</span>
-                          <p className="truncate text-xs text-gray-500 dark:text-zinc-500">{conversation.listingTitle}</p>
+                          <p className="truncate text-xs text-[var(--muted)] dark:text-[var(--muted)]">{conversation.listingTitle}</p>
                         </div>
-                        <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-zinc-400">
+                        <p className="mt-1 line-clamp-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">
                           {conversation.lastMessage?.content || 'No messages yet'}
                         </p>
                       </div>
                     </Link>
                     <div className="flex flex-col items-end gap-2">
-                      <span className="text-xs text-gray-500 dark:text-zinc-500 whitespace-nowrap">
+                      <span className="text-xs text-[var(--muted)] dark:text-[var(--muted)] whitespace-nowrap">
                         {conversation.lastMessage ? new Date(conversation.lastMessage.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                       {conversation.unreadCount > 0 ? (
@@ -180,7 +180,7 @@ export default function MessagesPage() {
                         aria-label="Remove conversation"
                         onClick={() => handleDeleteConversation(conversation.id)}
                         disabled={deletingId === conversation.id}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-red-900 dark:hover:text-red-300"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--muted)] transition hover:border-red-300 hover:text-red-600 disabled:opacity-60 dark:border-[var(--border)] dark:text-[var(--muted)] dark:hover:border-red-900 dark:hover:text-red-300"
                       >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </button>
