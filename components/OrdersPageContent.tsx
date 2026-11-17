@@ -18,7 +18,7 @@ export default function OrdersPageContent({ initialView }: Props) {
     <div className="min-h-screen bg-[var(--background)] pb-24 text-[var(--foreground)]">
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-5 sm:py-8">
-        <Link href="/profile" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--brand)] dark:text-[var(--muted)] dark:hover:text-blue-300">
+        <Link href="/profile" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--brand)] dark:text-[var(--muted)] dark:hover:text-[var(--brand)]">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Profile
         </Link>
         <div className="mt-5">
@@ -39,7 +39,7 @@ export default function OrdersPageContent({ initialView }: Props) {
 
         {user ? (
           <section aria-label="Request shortcuts" className="mt-5 grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => setActiveTab('buying')} className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-4 text-left transition hover:border-[var(--brand)] dark:border-blue-950 dark:bg-[var(--brand-soft)]">
+            <button type="button" onClick={() => setActiveTab('buying')} className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-4 text-left transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)]">
               <span className="block text-sm font-bold text-[var(--brand)] dark:text-[var(--brand)]">My requests</span>
               <span className="mt-1 block text-xs leading-5 text-[var(--brand)]/70 dark:text-[var(--brand)]/70">Orders you placed</span>
             </button>
