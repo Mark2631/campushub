@@ -551,8 +551,8 @@ function SellPageContent() {
       <div className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-600 dark:text-zinc-400">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-[var(--brand)] animate-spin mx-auto mb-4" />
+          <div className="text-center text-[var(--muted)] dark:text-[var(--muted)]">
+            <div className="h-12 w-12 rounded-full border-2 border-[var(--border)] dark:border-[var(--border)] border-t-[var(--brand)] animate-spin mx-auto mb-4" />
             <p>Loading...</p>
           </div>
         </main>
@@ -566,16 +566,16 @@ function SellPageContent() {
       <div className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
-          <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
-            <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
+          <div className="rounded-2xl border-2 border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-8 text-center">
+            <h2 className="text-2xl font-bold mb-3 text-[var(--foreground)] dark:text-[var(--foreground)]">Ready to sell?</h2>
+            <p className="mx-auto max-w-md text-[var(--muted)] dark:text-[var(--muted)]">
               Create a free account to list an item, offer a service, or post a request for sellers.
             </p>
             <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
               <Link href="/signin?next=/sell" className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">
                 Create account
               </Link>
-              <Link href="/signin?next=/sell&mode=signin" className="rounded-2xl border border-gray-200 bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+              <Link href="/signin?next=/sell&mode=signin" className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                 Sign in
               </Link>
             </div>
@@ -593,10 +593,10 @@ function SellPageContent() {
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
           <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
-          <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post items, services, or campus requests for MUST students.</p>
+          <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)] mt-2">Post items, services, or campus requests for MUST students.</p>
         </header>
 
-        <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-[var(--surface)] p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
           {[
             ['sell', 'Sell an item/service'],
             ['requests', 'Requests'],
@@ -609,7 +609,7 @@ function SellPageContent() {
               className={`min-h-11 rounded-xl px-2 py-2 text-xs font-bold transition sm:text-sm ${
                 activeTab === value
                   ? 'bg-[var(--brand)] text-white'
-                  : 'text-gray-600 hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                  : 'text-[var(--muted)] hover:bg-[var(--background)] dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-muted)]'
               }`}
             >
               {label}
@@ -617,7 +617,7 @@ function SellPageContent() {
           ))}
         </div>
 
-        {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-[var(--surface)] p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
+        {loadingEdit ? <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm text-[var(--muted)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">Loading listing details...</div> : null}
         {visibleRequestPrefillMessage ? (
           <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-4 text-sm font-semibold text-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
             {visibleRequestPrefillMessage}
@@ -625,7 +625,7 @@ function SellPageContent() {
         ) : null}
 
         {activeTab === 'sell' ? (
-          <section className="mb-5 rounded-2xl border border-gray-200 bg-[var(--surface)] p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="mb-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <div className="flex items-start gap-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand)] text-white">
                 <UserRound className="h-6 w-6" aria-hidden="true" />
@@ -635,7 +635,7 @@ function SellPageContent() {
                   <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[var(--brand)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
                     Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold uppercase text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]">
                     {sellerBadge}
                   </span>
                   {activeSellerProfile?.phone_number ? (
@@ -644,24 +644,24 @@ function SellPageContent() {
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-2 truncate text-base font-semibold text-gray-900 dark:text-white">
+                <p className="mt-2 truncate text-base font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">
                   {sellerDetailsLoading ? 'Loading seller...' : sellerDisplayName}
                 </p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{sellerLabel}</p>
+                <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">{sellerLabel}</p>
               </div>
             </div>
           </section>
         ) : null}
 
         {activeTab === 'requests' ? (
-          <form id="request-item" onSubmit={handleRequestSubmit} className="mb-6 space-y-4 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <form id="request-item" onSubmit={handleRequestSubmit} className="mb-6 space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand)] text-white">
                 <ClipboardList className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Post request</h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">Tell campus sellers what you are looking for.</p>
+                <h2 className="text-xl font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">Post request</h2>
+                <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Tell campus sellers what you are looking for.</p>
               </div>
             </div>
 
@@ -673,12 +673,12 @@ function SellPageContent() {
 
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="space-y-2 text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">What are you looking for?</span>
-                <input type="text" name="title" value={requestForm.title} onChange={handleRequestChange} placeholder="e.g., Laptop charger" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" required />
+                <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">What are you looking for?</span>
+                <input type="text" name="title" value={requestForm.title} onChange={handleRequestChange} placeholder="e.g., Laptop charger" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:placeholder-[var(--muted)]" required />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">Category</span>
-                <select name="category" value={requestForm.category} onChange={handleRequestChange} className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
+                <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Category</span>
+                <select name="category" value={requestForm.category} onChange={handleRequestChange} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                   {categories.map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
               </label>
@@ -686,22 +686,22 @@ function SellPageContent() {
 
             <div className="grid gap-4 lg:grid-cols-3">
               <label className="space-y-2 text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">Min price</span>
-                <input type="number" name="minPrice" value={requestForm.minPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Min price</span>
+                <input type="number" name="minPrice" value={requestForm.minPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:placeholder-[var(--muted)]" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">Max price</span>
-                <input type="number" name="maxPrice" value={requestForm.maxPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Max price</span>
+                <input type="number" name="maxPrice" value={requestForm.maxPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:placeholder-[var(--muted)]" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">Location</span>
-                <input type="text" name="location" value={requestForm.location} onChange={handleRequestChange} placeholder="Campus area" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Location</span>
+                <input type="text" name="location" value={requestForm.location} onChange={handleRequestChange} placeholder="Campus area" className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:placeholder-[var(--muted)]" />
               </label>
             </div>
 
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Description</span>
-              <textarea name="description" value={requestForm.description} onChange={handleRequestChange} rows={3} placeholder="Add size, model, deadline, or service details." className="w-full resize-none rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Description</span>
+              <textarea name="description" value={requestForm.description} onChange={handleRequestChange} rows={3} placeholder="Add size, model, deadline, or service details." className="w-full resize-none rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)] dark:placeholder-[var(--muted)]" />
             </label>
 
             <button type="submit" disabled={requestSubmitting} className="w-full rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
@@ -711,16 +711,16 @@ function SellPageContent() {
         ) : null}
 
         {activeTab === 'guide' ? (
-          <section className="mb-6 space-y-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="mb-6 space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             {[
               ['Meet safely', 'Meet inside campus or a public nearby place.'],
               ['Inspect first', 'Let buyers check the item before any payment.'],
               ['Keep proof', 'Use clear photos, honest condition, and chat records.'],
               ['Use fair pricing', 'Price services and used items clearly.'],
             ].map(([summary, detail]) => (
-              <details key={summary} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                <summary className="cursor-pointer text-sm font-bold text-gray-900 dark:text-white">{summary}</summary>
-                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-zinc-400">{detail}</p>
+              <details key={summary} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 dark:border-[var(--border)] dark:bg-[var(--background)]">
+                <summary className="cursor-pointer text-sm font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{summary}</summary>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">{detail}</p>
               </details>
             ))}
           </section>
@@ -775,18 +775,18 @@ function SellPageContent() {
         )}
 
         {activeTab === 'sell' ? (
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-5 sm:p-8">
-          <div className="flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-[var(--border)] dark:border-[var(--border)] bg-[var(--surface)] dark:bg-[var(--surface)] p-5 sm:p-8">
+          <div className="flex flex-col items-start gap-3 rounded-2xl bg-[var(--background)] p-4 sm:flex-row sm:items-center dark:bg-[var(--surface-muted)]">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">1</div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">Step 1: Media</h2>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Upload up to 10 images and 1 optional video.</p>
+              <h2 className="font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Step 1: Media</h2>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Upload up to 10 images and 1 optional video.</p>
             </div>
           </div>
 
           {/* Multiple Images Upload */}
           <div>
-            <label className="relative block rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-950 p-8 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
+            <label className="relative block rounded-2xl border-2 border-dashed border-[var(--border)] dark:border-[var(--border)] bg-[var(--background)] dark:bg-[var(--background)] p-8 text-center cursor-pointer hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition">
               <input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -795,18 +795,18 @@ function SellPageContent() {
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
               <ImagePlus className="mx-auto mb-3 h-8 w-8 text-[var(--brand)] dark:text-[var(--brand)] sm:h-10 sm:w-10" aria-hidden="true" />
-              <p className="font-medium text-gray-900 dark:text-white">Click to upload images</p>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">or drag and drop</p>
-              <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
+              <p className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Click to upload images</p>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">or drag and drop</p>
+              <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
             </label>
 
             {existingMediaUrls.length > 0 ? (
               <div className="mt-4">
-                <p className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Photos already on this listing</p>
-                <p className="mb-3 text-xs text-gray-600 dark:text-zinc-400">These photos stay attached when you save. Remove any you no longer want.</p>
+                <p className="mb-2 text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Photos already on this listing</p>
+                <p className="mb-3 text-xs text-[var(--muted)] dark:text-[var(--muted)]">These photos stay attached when you save. Remove any you no longer want.</p>
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
                   {existingMediaUrls.map((url, index) => (
-                    <div key={url + '-' + index} className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800">
+                    <div key={url + '-' + index} className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] dark:border-[var(--border)] dark:bg-[var(--surface-muted)]">
                       <Image src={url} alt={'Existing listing photo ' + (index + 1)} width={320} height={160} unoptimized className="h-28 w-full object-cover" />
                       <button
                         type="button"
@@ -821,14 +821,14 @@ function SellPageContent() {
                 </div>
               </div>
             ) : editListingId && loadingEdit ? (
-              <p className="mt-3 text-xs text-gray-500 dark:text-zinc-400">Loading existing photos…</p>
+              <p className="mt-3 text-xs text-[var(--muted)] dark:text-[var(--muted)]">Loading existing photos…</p>
             ) : null}
 
             {/* Image Previews */}
             {images.length > 0 && (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 {images.map((image, index) => (
-                  <div key={index} className="relative rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-800">
+                  <div key={index} className="relative rounded-lg overflow-hidden bg-gray-200 dark:bg-[var(--surface-muted)]">
                     <Image src={image.previewUrl} alt={`Preview ${index + 1}`} width={320} height={80} className="w-full h-20 object-cover" />
                     <button
                       type="button"
@@ -842,8 +842,8 @@ function SellPageContent() {
               </div>
             )}
             {images.length > 0 ? (
-              <div className="mt-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-3 text-xs text-gray-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-                <p className="mb-2 font-semibold text-gray-900 dark:text-white">Selected images</p>
+              <div className="mt-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 text-xs text-[var(--muted)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
+                <p className="mb-2 font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Selected images</p>
                 <ul className="space-y-1">
                   {images.map((image, index) => (
                     <li key={`${image.file.name}-${image.file.size}-${index}`} className="truncate">
@@ -853,14 +853,14 @@ function SellPageContent() {
                 </ul>
               </div>
             ) : null}
-            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-2">{existingMediaUrls.length + images.length}/10 photos attached</p>
+            <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">{existingMediaUrls.length + images.length}/10 photos attached</p>
           </div>
 
           {/* Single Video Upload */}
           <div>
             <label className="block space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Optional: Add a video (max 1)</span>
-              <div className="relative block rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-950 p-6 text-center cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Optional: Add a video (max 1)</span>
+              <div className="relative block rounded-2xl border-2 border-dashed border-[var(--border)] dark:border-[var(--border)] bg-[var(--background)] dark:bg-[var(--background)] p-6 text-center cursor-pointer hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition">
                 <input
                   type="file"
                   accept="video/mp4,video/webm,video/quicktime"
@@ -869,13 +869,13 @@ function SellPageContent() {
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               <Video className="mx-auto mb-2 h-7 w-7 text-[var(--brand)] dark:text-[var(--brand)] sm:h-8 sm:w-8" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{videoPreview ? videoPreview.file.name : 'Click to upload video'}</p>
-                <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 15MB</p>
+                <p className="text-sm font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">{videoPreview ? videoPreview.file.name : 'Click to upload video'}</p>
+                <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">MP4, WebM, or MOV up to 15MB</p>
               </div>
             </label>
 
             {existingVideoUrl && !videoPreview ? (
-              <div className="relative mt-4 overflow-hidden rounded-xl border border-gray-200 bg-black dark:border-zinc-700">
+              <div className="relative mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-black dark:border-[var(--border)]">
                 <video src={existingVideoUrl} controls className="max-h-64 w-full bg-black" />
                 <button
                   type="button"
@@ -903,34 +903,34 @@ function SellPageContent() {
           </div>
 
           {/* Form Fields */}
-          <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
+          <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-[var(--background)] p-4 sm:flex-row sm:items-center dark:bg-[var(--surface-muted)]">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">2</div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">Step 2: Details</h2>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Add the basics buyers need to decide fast.</p>
+              <h2 className="font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Step 2: Details</h2>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Add the basics buyers need to decide fast.</p>
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Title *</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Title *</span>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g., iPhone 13 Pro, Textbooks Bundle"
-                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
                 required
               />
             </label>
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Category</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Category</span>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -943,7 +943,7 @@ function SellPageContent() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Price (KSh, optional)</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Price (KSh, optional)</span>
               <input
                 type="number"
                 name="price"
@@ -952,30 +952,30 @@ function SellPageContent() {
                 placeholder="Leave blank to ask seller"
                 min="1"
                 step="1"
-                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
-              <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
+              <span className="block text-xs text-[var(--muted)] dark:text-[var(--muted)]">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
             </label>
-            <label className="flex items-center justify-between rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
-              <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>
+            <label className="flex items-center justify-between rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-sm cursor-pointer hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition">
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Negotiable</span>
               <input
                 type="checkbox"
                 name="negotiable"
                 checked={formData.negotiable}
                 onChange={handleChange}
-                className="h-5 w-5 rounded border-gray-300 bg-[var(--surface)] text-[var(--brand)] cursor-pointer"
+                className="h-5 w-5 rounded border-[var(--border)] bg-[var(--surface)] text-[var(--brand)] cursor-pointer"
               />
             </label>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Condition</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Condition</span>
               <select
                 name="condition"
                 value={formData.condition}
                 onChange={handleChange}
-                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               >
                 {conditions.map((condition) => (
                   <option key={condition} value={condition}>
@@ -984,47 +984,47 @@ function SellPageContent() {
                 ))}
               </select>
               {formData.category === 'Services' ? (
-                <p className="text-xs text-gray-500 dark:text-zinc-500">Services automatically use service condition.</p>
+                <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Services automatically use service condition.</p>
               ) : null}
             </label>
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">Location</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Location</span>
               <input
                 type="text"
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
                 placeholder="Campus area or building"
-                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
             </label>
           </div>
 
           <label className="space-y-2 text-sm">
-            <span className="font-medium text-gray-900 dark:text-white">Description</span>
+            <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Description</span>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
+              className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               placeholder="Tell buyers what makes this item special, its condition, and any defects."
             />
           </label>
 
-          <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
+          <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-[var(--background)] p-4 sm:flex-row sm:items-center dark:bg-[var(--surface-muted)]">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">3</div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">Step 3: Review & Post</h2>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Check your listing before posting it.</p>
+              <h2 className="font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Step 3: Review & Post</h2>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Check your listing before posting it.</p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--background)] p-5 dark:border-[var(--border)] dark:bg-[var(--background)]">
             {hasPreviewContent ? (
               <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
                 <div className="space-y-3">
-                  <div className="flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 text-center text-white">
+                  <div className="flex h-48 items-center justify-center overflow-hidden rounded-2xl bg-[var(--brand-soft)] text-center text-white">
                     {images[0] ? (
                       <Image src={images[0].previewUrl} alt="Listing preview" width={1200} height={480} className="h-full w-full object-cover" />
                     ) : (
@@ -1035,29 +1035,29 @@ function SellPageContent() {
                     )}
                   </div>
                   {videoPreview ? (
-                    <div className="rounded-2xl border border-gray-200 bg-[var(--surface)] px-4 py-3 text-sm text-gray-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
                       Video ready: {videoPreview.file.name}
                     </div>
                   ) : null}
                 </div>
-                <div className="space-y-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{formData.title || 'Add a title'}</p>
-                  <p className="text-sm text-gray-600 dark:text-zinc-400">{formData.location || 'Add a location'}</p>
+                <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+                  <p className="text-lg font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{formData.title || 'Add a title'}</p>
+                  <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">{formData.location || 'Add a location'}</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{formData.category}</span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{normalizeListingCondition(formData.condition, formData.category)}</span>
-                    {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-[var(--brand)] dark:bg-blue-900/30 dark:text-[var(--brand)]">Negotiable</span> : null}
+                    <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]">{formData.category}</span>
+                    <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold capitalize text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]">{normalizeListingCondition(formData.condition, formData.category)}</span>
+                    {formData.negotiable ? <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--brand)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">Negotiable</span> : null}
                   </div>
                   <p className="text-2xl font-bold text-[var(--brand)] dark:text-[var(--brand)]">{formData.price.trim() && Number(formData.price) > 0 ? `KSh ${Number(formData.price).toLocaleString()}` : 'Ask seller for price'}</p>
-                  <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
-                  <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
-                    <p className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{sellerDisplayName}</p>
+                  <p className="text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
+                  <div className="border-t border-[var(--border)] pt-3 dark:border-[var(--border)]">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] dark:text-[var(--muted)]">Seller</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">{sellerDisplayName}</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-600 dark:text-zinc-400">Your preview will appear here once you add media or details.</p>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Your preview will appear here once you add media or details.</p>
             )}
           </div>
 
@@ -1066,7 +1066,7 @@ function SellPageContent() {
           <button
             type="submit"
             disabled={isSubmitting || loadingEdit || (Boolean(editListingId) && editDataLoadedId !== editListingId)}
-            className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
+            className="w-full rounded-2xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-strong)] hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 px-5 py-4 text-sm font-semibold text-white transition disabled:cursor-not-allowed"
           >
             {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : 'Post listing'}
           </button>
@@ -1086,10 +1086,10 @@ export default function SellPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+        <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-[var(--foreground)] dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-[var(--foreground)]">
           <Header />
           <main className="max-w-6xl mx-auto flex w-full flex-1 items-center justify-center px-4 py-8">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-300 border-t-[var(--brand)] animate-spin dark:border-zinc-700" />
+            <div className="h-12 w-12 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin dark:border-[var(--border)]" />
           </main>
           <BottomNav />
         </div>
