@@ -548,11 +548,11 @@ function SellPageContent() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+      <div className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1 flex items-center justify-center">
           <div className="text-center text-gray-600 dark:text-zinc-400">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-blue-500 animate-spin mx-auto mb-4" />
+            <div className="h-12 w-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 border-t-[var(--brand)] animate-spin mx-auto mb-4" />
             <p>Loading...</p>
           </div>
         </main>
@@ -563,19 +563,19 @@ function SellPageContent() {
 
   if (!user) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+      <div className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
         <Header />
         <main className="max-w-6xl mx-auto px-4 py-8 flex-1">
-          <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center">
+          <div className="rounded-2xl border-2 border-gray-200 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-8 text-center">
             <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Ready to sell?</h2>
             <p className="mx-auto max-w-md text-gray-600 dark:text-zinc-400">
               Create a free account to list an item, offer a service, or post a request for sellers.
             </p>
             <div className="mx-auto mt-6 grid max-w-sm grid-cols-2 gap-3">
-              <Link href="/signin?next=/sell" className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+              <Link href="/signin?next=/sell" className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">
                 Create account
               </Link>
-              <Link href="/signin?next=/sell&mode=signin" className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-blue-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+              <Link href="/signin?next=/sell&mode=signin" className="rounded-2xl border border-gray-200 bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
                 Sign in
               </Link>
             </div>
@@ -588,7 +588,7 @@ function SellPageContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 text-gray-900 dark:text-white pb-24">
+    <div className="flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
       <Header />
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
@@ -596,7 +596,7 @@ function SellPageContent() {
           <p className="text-sm text-gray-600 dark:text-zinc-400 mt-2">Post items, services, or campus requests for MUST students.</p>
         </header>
 
-        <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-gray-200 bg-[var(--surface)] p-1 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           {[
             ['sell', 'Sell an item/service'],
             ['requests', 'Requests'],
@@ -608,7 +608,7 @@ function SellPageContent() {
               onClick={() => setActiveTab(value as SellTab)}
               className={`min-h-11 rounded-xl px-2 py-2 text-xs font-bold transition sm:text-sm ${
                 activeTab === value
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--brand)] text-white'
                   : 'text-gray-600 hover:bg-gray-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
               }`}
             >
@@ -617,22 +617,22 @@ function SellPageContent() {
           ))}
         </div>
 
-        {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
+        {loadingEdit ? <div className="mb-4 rounded-2xl border border-gray-200 bg-[var(--surface)] p-4 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">Loading listing details...</div> : null}
         {visibleRequestPrefillMessage ? (
-          <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200">
+          <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-4 text-sm font-semibold text-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
             {visibleRequestPrefillMessage}
           </div>
         ) : null}
 
         {activeTab === 'sell' ? (
-          <section className="mb-5 rounded-2xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="mb-5 rounded-2xl border border-gray-200 bg-[var(--surface)] p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand)] text-white">
                 <UserRound className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700 dark:bg-blue-950 dark:text-blue-200">
+                  <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[var(--brand)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
                     Posting as {profileContext.mode === 'business' ? profileContext.businessName || 'business' : 'personal profile'}
                   </span>
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
@@ -654,9 +654,9 @@ function SellPageContent() {
         ) : null}
 
         {activeTab === 'requests' ? (
-          <form id="request-item" onSubmit={handleRequestSubmit} className="mb-6 space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <form id="request-item" onSubmit={handleRequestSubmit} className="mb-6 space-y-4 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand)] text-white">
                 <ClipboardList className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
@@ -674,11 +674,11 @@ function SellPageContent() {
             <div className="grid gap-4 lg:grid-cols-2">
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-gray-900 dark:text-white">What are you looking for?</span>
-                <input type="text" name="title" value={requestForm.title} onChange={handleRequestChange} placeholder="e.g., Laptop charger" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" required />
+                <input type="text" name="title" value={requestForm.title} onChange={handleRequestChange} placeholder="e.g., Laptop charger" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" required />
               </label>
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-gray-900 dark:text-white">Category</span>
-                <select name="category" value={requestForm.category} onChange={handleRequestChange} className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
+                <select name="category" value={requestForm.category} onChange={handleRequestChange} className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white">
                   {categories.map((category) => <option key={category} value={category}>{category}</option>)}
                 </select>
               </label>
@@ -687,31 +687,31 @@ function SellPageContent() {
             <div className="grid gap-4 lg:grid-cols-3">
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-gray-900 dark:text-white">Min price</span>
-                <input type="number" name="minPrice" value={requestForm.minPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <input type="number" name="minPrice" value={requestForm.minPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
               </label>
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-gray-900 dark:text-white">Max price</span>
-                <input type="number" name="maxPrice" value={requestForm.maxPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <input type="number" name="maxPrice" value={requestForm.maxPrice} onChange={handleRequestChange} placeholder="KSh" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
               </label>
               <label className="space-y-2 text-sm">
                 <span className="font-medium text-gray-900 dark:text-white">Location</span>
-                <input type="text" name="location" value={requestForm.location} onChange={handleRequestChange} placeholder="Campus area" className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+                <input type="text" name="location" value={requestForm.location} onChange={handleRequestChange} placeholder="Campus area" className="w-full rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
               </label>
             </div>
 
             <label className="space-y-2 text-sm">
               <span className="font-medium text-gray-900 dark:text-white">Description</span>
-              <textarea name="description" value={requestForm.description} onChange={handleRequestChange} rows={3} placeholder="Add size, model, deadline, or service details." className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
+              <textarea name="description" value={requestForm.description} onChange={handleRequestChange} rows={3} placeholder="Add size, model, deadline, or service details." className="w-full resize-none rounded-2xl border border-gray-300 bg-[var(--surface)] px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500" />
             </label>
 
-            <button type="submit" disabled={requestSubmitting} className="w-full rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
+            <button type="submit" disabled={requestSubmitting} className="w-full rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
               {requestSubmitting ? 'Posting request...' : 'Post request'}
             </button>
           </form>
         ) : null}
 
         {activeTab === 'guide' ? (
-          <section className="mb-6 space-y-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <section className="mb-6 space-y-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
             {[
               ['Meet safely', 'Meet inside campus or a public nearby place.'],
               ['Inspect first', 'Let buyers check the item before any payment.'],
@@ -757,7 +757,7 @@ function SellPageContent() {
                   type="button"
                   onClick={() => submitListing()}
                   disabled={isSubmitting}
-                  className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-2xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Retry upload
                 </button>
@@ -775,9 +775,9 @@ function SellPageContent() {
         )}
 
         {activeTab === 'sell' ? (
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-[var(--surface)] dark:bg-zinc-900 p-5 sm:p-8">
           <div className="flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">1</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">1</div>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">Step 1: Media</h2>
               <p className="text-sm text-gray-600 dark:text-zinc-400">Upload up to 10 images and 1 optional video.</p>
@@ -794,7 +794,7 @@ function SellPageContent() {
                 onChange={handleImageUpload}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <ImagePlus className="mx-auto mb-3 h-8 w-8 text-blue-600 dark:text-blue-300 sm:h-10 sm:w-10" aria-hidden="true" />
+              <ImagePlus className="mx-auto mb-3 h-8 w-8 text-[var(--brand)] dark:text-[var(--brand)] sm:h-10 sm:w-10" aria-hidden="true" />
               <p className="font-medium text-gray-900 dark:text-white">Click to upload images</p>
               <p className="text-sm text-gray-600 dark:text-zinc-400">or drag and drop</p>
               <p className="text-xs text-gray-500 dark:text-zinc-500 mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
@@ -842,7 +842,7 @@ function SellPageContent() {
               </div>
             )}
             {images.length > 0 ? (
-              <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3 text-xs text-gray-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+              <div className="mt-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-3 text-xs text-gray-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
                 <p className="mb-2 font-semibold text-gray-900 dark:text-white">Selected images</p>
                 <ul className="space-y-1">
                   {images.map((image, index) => (
@@ -868,7 +868,7 @@ function SellPageContent() {
                   disabled={!!videoPreview}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
-              <Video className="mx-auto mb-2 h-7 w-7 text-blue-600 dark:text-blue-300 sm:h-8 sm:w-8" aria-hidden="true" />
+              <Video className="mx-auto mb-2 h-7 w-7 text-[var(--brand)] dark:text-[var(--brand)] sm:h-8 sm:w-8" aria-hidden="true" />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{videoPreview ? videoPreview.file.name : 'Click to upload video'}</p>
                 <p className="text-xs text-gray-600 dark:text-zinc-400">MP4, WebM, or MOV up to 15MB</p>
               </div>
@@ -904,7 +904,7 @@ function SellPageContent() {
 
           {/* Form Fields */}
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">2</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">2</div>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">Step 2: Details</h2>
               <p className="text-sm text-gray-600 dark:text-zinc-400">Add the basics buyers need to decide fast.</p>
@@ -920,7 +920,7 @@ function SellPageContent() {
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g., iPhone 13 Pro, Textbooks Bundle"
-                className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
                 required
               />
             </label>
@@ -930,7 +930,7 @@ function SellPageContent() {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
@@ -952,18 +952,18 @@ function SellPageContent() {
                 placeholder="Leave blank to ask seller"
                 min="1"
                 step="1"
-                className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
               />
               <span className="block text-xs text-gray-500 dark:text-zinc-500">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
             </label>
-            <label className="flex items-center justify-between rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
+            <label className="flex items-center justify-between rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition">
               <span className="font-medium text-gray-900 dark:text-white">Negotiable</span>
               <input
                 type="checkbox"
                 name="negotiable"
                 checked={formData.negotiable}
                 onChange={handleChange}
-                className="h-5 w-5 rounded border-gray-300 bg-white text-blue-600 cursor-pointer"
+                className="h-5 w-5 rounded border-gray-300 bg-[var(--surface)] text-[var(--brand)] cursor-pointer"
               />
             </label>
           </div>
@@ -975,7 +975,7 @@ function SellPageContent() {
                 name="condition"
                 value={formData.condition}
                 onChange={handleChange}
-                className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
               >
                 {conditions.map((condition) => (
                   <option key={condition} value={condition}>
@@ -995,7 +995,7 @@ function SellPageContent() {
                 value={formData.location}
                 onChange={handleChange}
                 placeholder="Campus area or building"
-                className="w-full rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
               />
             </label>
           </div>
@@ -1007,13 +1007,13 @@ function SellPageContent() {
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="w-full resize-none rounded-2xl bg-white dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-zinc-950 border border-gray-300 dark:border-zinc-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-zinc-500 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-blue-500/20"
               placeholder="Tell buyers what makes this item special, its condition, and any defects."
             />
           </label>
 
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-gray-50 p-4 sm:flex-row sm:items-center dark:bg-zinc-800">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold text-sm">3</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">3</div>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">Step 3: Review & Post</h2>
               <p className="text-sm text-gray-600 dark:text-zinc-400">Check your listing before posting it.</p>
@@ -1035,20 +1035,20 @@ function SellPageContent() {
                     )}
                   </div>
                   {videoPreview ? (
-                    <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                    <div className="rounded-2xl border border-gray-200 bg-[var(--surface)] px-4 py-3 text-sm text-gray-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
                       Video ready: {videoPreview.file.name}
                     </div>
                   ) : null}
                 </div>
-                <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="space-y-3 rounded-2xl border border-gray-200 bg-[var(--surface)] p-5 dark:border-zinc-800 dark:bg-zinc-900">
                   <p className="text-lg font-bold text-gray-900 dark:text-white">{formData.title || 'Add a title'}</p>
                   <p className="text-sm text-gray-600 dark:text-zinc-400">{formData.location || 'Add a location'}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{formData.category}</span>
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">{normalizeListingCondition(formData.condition, formData.category)}</span>
-                    {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">Negotiable</span> : null}
+                    {formData.negotiable ? <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-[var(--brand)] dark:bg-blue-900/30 dark:text-[var(--brand)]">Negotiable</span> : null}
                   </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.price.trim() && Number(formData.price) > 0 ? `KSh ${Number(formData.price).toLocaleString()}` : 'Ask seller for price'}</p>
+                  <p className="text-2xl font-bold text-[var(--brand)] dark:text-[var(--brand)]">{formData.price.trim() && Number(formData.price) > 0 ? `KSh ${Number(formData.price).toLocaleString()}` : 'Ask seller for price'}</p>
                   <p className="text-sm leading-6 text-gray-600 dark:text-zinc-400">{formData.description || 'Add a short description so buyers know what you are offering.'}</p>
                   <div className="border-t border-gray-200 pt-3 dark:border-zinc-800">
                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">Seller</p>
@@ -1071,7 +1071,7 @@ function SellPageContent() {
             {loadingEdit ? 'Loading listing…' : isSubmitting ? uploadStatus || 'Posting...' : editListingId ? 'Save changes' : 'Post listing'}
           </button>
           {isSubmitting && uploadStatus ? (
-            <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-300">{uploadStatus}</p>
+            <p className="text-center text-sm font-semibold text-[var(--brand)] dark:text-[var(--brand)]">{uploadStatus}</p>
           ) : null}
         </form>
         ) : null}
@@ -1089,7 +1089,7 @@ export default function SellPage() {
         <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
           <Header />
           <main className="max-w-6xl mx-auto flex w-full flex-1 items-center justify-center px-4 py-8">
-            <div className="h-12 w-12 rounded-full border-2 border-gray-300 border-t-blue-500 animate-spin dark:border-zinc-700" />
+            <div className="h-12 w-12 rounded-full border-2 border-gray-300 border-t-[var(--brand)] animate-spin dark:border-zinc-700" />
           </main>
           <BottomNav />
         </div>
