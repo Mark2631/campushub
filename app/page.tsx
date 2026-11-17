@@ -20,6 +20,7 @@ import { getItemRequests, deleteItemRequest, type ItemRequest } from '../lib/ite
 import { sendMessage } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 import { STANDARD_CATEGORIES, listingBelongsToCategory } from '../lib/categories';
+import { institutionLabel, normalizeInstitution, SUPPORTED_INSTITUTIONS } from '../lib/validation';
 
 const PAGE_SIZE = 24;
 
@@ -107,7 +108,7 @@ function formatRequestBudget(request: ItemRequest) {
 
 export default function Home() {
   const router = useRouter();
-  const { user, institution, isAdmin } = useUser();
+  const { user, institution, setInstitution, isAdmin } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
   const [searchResults, setSearchResults] = useState<Listing[]>([]);
   const [requests, setRequests] = useState<ItemRequest[]>([]);
@@ -334,7 +335,7 @@ export default function Home() {
 
   const categoryListings = (name: string) => filteredListings.filter((listing) => listingBelongsToCategory(listing, name)).slice(0, 6);
   const heroListing = listings.find((listing) => String(listing.status || 'active').toLowerCase() === 'active' && Array.isArray(listing.media_urls) && listing.media_urls.length > 0);
-  const campusLabel = institution === 'MUST' ? 'Meru University' : institution;
+  const campusLabel = institutionLabel(institution);
 
   const clearAll = () => {
     setQuery('');
@@ -453,7 +454,17 @@ export default function Home() {
           <div className="inline-flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-[var(--brand)]" />
             <span>Shopping near</span>
-            <strong className="font-bold text-[var(--foreground)]">{campusLabel}</strong>
+            <strong className="hidden font-bold text-[var(--foreground)] sm:inline">{campusLabel}</strong>
+            <label htmlFor="mobile-campus-select" className="sr-only sm:hidden">Choose your campus</label>
+            <select
+              id="mobile-campus-select"
+              aria-label="Choose your campus"
+              value={institution}
+              onChange={(event) => setInstitution(normalizeInstitution(event.target.value))}
+              className="max-w-[190px] rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--foreground)] outline-none focus:border-[var(--brand)] sm:hidden"
+            >
+              {SUPPORTED_INSTITUTIONS.map((code) => <option key={code} value={code}>{institutionLabel(code)}</option>)}
+            </select>
           </div>
           <Link href="/community" className="inline-flex items-center gap-1.5 font-semibold text-[var(--brand)] hover:underline">
             <Users className="h-3.5 w-3.5" /> Campus community
