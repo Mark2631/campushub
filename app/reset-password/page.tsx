@@ -51,10 +51,10 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)]">
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 items-center px-4 py-8 sm:py-12">
-        <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">Account recovery</p>
-          <h1 className="mt-3 text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Reset your password</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Enter a new password for your CampusTrader account.</p>
+        <section className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm sm:p-8 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--brand)] dark:text-[var(--brand)]">Account recovery</p>
+          <h1 className="mt-3 text-2xl font-semibold text-[var(--foreground)] sm:text-3xl dark:text-[var(--foreground)]">Reset your password</h1>
+          <p className="mt-2 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Enter a new password for your CampusTrader account.</p>
 
           {notice ? (
             <div
@@ -69,36 +69,36 @@ export default function ResetPasswordPage() {
           ) : null}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--muted)]">
               New password
               <input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                 required
               />
             </label>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="block text-sm font-medium text-[var(--foreground)] dark:text-[var(--muted)]">
               Confirm password
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                className="mt-2 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] outline-none focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
                 required
               />
             </label>
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? 'Updating password...' : 'Update password'}
             </button>
           </form>
 
-          <Link href="/signin" className="mt-5 inline-block text-sm font-semibold text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
+          <Link href="/signin" className="mt-5 inline-block text-sm font-semibold text-[var(--brand)] hover:text-[var(--brand)] dark:text-[var(--brand)] dark:hover:text-[var(--brand)]">
             Back to sign in
           </Link>
         </section>
