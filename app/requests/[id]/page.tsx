@@ -40,22 +40,22 @@ export default function RequestDetailPage() {
     router.push(`/messages/${result.conversation.id}`);
   }
 
-  return <div className="min-h-screen bg-slate-50 pb-24 text-slate-950 dark:bg-slate-950 dark:text-white">
+  return <div className="min-h-screen bg-[var(--background)] pb-24 text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
     <Header />
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <Link href="/#campus-requests" className="text-sm font-semibold text-blue-600">← Campus requests</Link>
+      <Link href="/#campus-requests" className="text-sm font-semibold text-[var(--brand)]">← Campus requests</Link>
       {fetching ? <p className="mt-8">Loading request…</p> : !request ? <p className="mt-8">{error || 'This request is unavailable.'}</p> : (
-        <article className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600">Student request · {request.category}</p>
+        <article className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand)]">Student request · {request.category}</p>
           <h1 className="mt-2 text-2xl font-bold">{request.title}</h1>
-          <p className="mt-4 whitespace-pre-wrap text-slate-600 dark:text-zinc-300">{request.description || 'No additional details provided.'}</p>
+          <p className="mt-4 whitespace-pre-wrap text-[var(--muted)] dark:text-[var(--foreground)]">{request.description || 'No additional details provided.'}</p>
           <p className="mt-4 text-sm">Location: {request.location || 'Not specified'}</p>
           {request.max_price != null ? <p className="mt-2 text-sm">Maximum budget: KSh {Number(request.max_price).toLocaleString('en-KE')}</p> : null}
           {error ? <p role="alert" className="mt-4 text-sm text-red-600">{error}</p> : null}
           {loading ? <p className="mt-6 text-sm">Checking your session…</p> : !user ? (
-            <Link href={`/signin?next=${encodeURIComponent(`/requests/${id}`)}`} className="mt-6 inline-block rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">Sign in to message</Link>
-          ) : user.id === request.user_id ? <p className="mt-6 text-sm text-slate-500">This is your request.</p> : (
-            <button type="button" onClick={messageRequester} disabled={starting} className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-50">{starting ? 'Opening chat…' : 'Message requester'}</button>
+            <Link href={`/signin?next=${encodeURIComponent(`/requests/${id}`)}`} className="mt-6 inline-block rounded-xl bg-[var(--brand)] px-5 py-3 font-semibold text-white">Sign in to message</Link>
+          ) : user.id === request.user_id ? <p className="mt-6 text-sm text-[var(--muted)]">This is your request.</p> : (
+            <button type="button" onClick={messageRequester} disabled={starting} className="mt-6 rounded-xl bg-[var(--brand)] px-5 py-3 font-semibold text-white disabled:opacity-50">{starting ? 'Opening chat…' : 'Message requester'}</button>
           )}
         </article>
       )}
