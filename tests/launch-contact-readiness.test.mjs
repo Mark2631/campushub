@@ -15,10 +15,11 @@ test('seller WhatsApp lookup is scoped to active listings, not public profiles',
   assert.match(listing, /<WhatsAppButton listingId=\{listing\.id\}/);
 });
 
-test('ordering is disabled, listing cards give explicit view guidance', async () => {
+test('eligible products link to order requests and listing cards keep clear view guidance', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const card = await read('../components/ListingCard.tsx');
-  assert.match(buy, /disabled aria-disabled="true"/);
+  assert.match(buy, /orders\/new\?listing=/);
+  assert.doesNotMatch(buy, /disabled aria-disabled="true"/);
   assert.match(card, /View listing/);
 });
 
