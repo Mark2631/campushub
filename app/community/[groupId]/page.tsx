@@ -39,7 +39,7 @@ function profileName(profile?: { full_name: string | null; email: string | null 
 
 function Avatar({ name, src }: { name: string; src?: string | null }) {
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xs font-semibold text-white">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand)] text-xs font-semibold text-white">
       {src ? <Image src={src} alt="" width={36} height={36} className="h-full w-full object-cover" /> : name.charAt(0).toUpperCase()}
     </div>
   );
@@ -288,12 +288,12 @@ export default function CommunityGroupPage({ params }: Props) {
   const renderPost = (post: CommunityPost) => {
     const name = profileName(post.author);
     return (
-      <article key={post.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <article key={post.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
         <div className="flex gap-3">
           <Avatar name={name} src={post.author?.avatar_url} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate font-bold text-slate-950 dark:text-white">{name}</p>
+              <p className="truncate font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{name}</p>
               {post.is_pinned ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-200">
                   <Pin className="h-3 w-3" aria-hidden="true" />
@@ -301,7 +301,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 </span>
               ) : null}
             </div>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-[var(--muted)] dark:text-[var(--muted)]">
               {new Date(post.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
@@ -319,23 +319,23 @@ export default function CommunityGroupPage({ params }: Props) {
           </div>
         ) : null}
 
-        {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-slate-200">{post.content}</p> : null}
+        {post.content ? <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[var(--foreground)] dark:text-[var(--foreground)]">{post.content}</p> : null}
         <PostMedia post={post} />
 
-        <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+        <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-[var(--border)]">
           <button
             type="button"
             onClick={() => handleReact(post.id)}
             className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition ${
               post.viewerReacted
                 ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-200'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                : 'bg-[var(--surface-muted)] text-[var(--foreground)] hover:bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)] dark:hover:bg-[var(--surface-muted)]'
             }`}
           >
             <Heart className="h-4 w-4" aria-hidden="true" />
             {post.reactionCount || 0}
           </button>
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{post.comments?.length || 0} comments</span>
+          <span className="text-xs font-semibold text-[var(--muted)] dark:text-[var(--muted)]">{post.comments?.length || 0} comments</span>
         </div>
 
         <div className="mt-4 space-y-3">
@@ -344,9 +344,9 @@ export default function CommunityGroupPage({ params }: Props) {
             return (
               <div key={comment.id} className="flex gap-2">
                 <Avatar name={commentName} src={comment.user?.avatar_url} />
-                <div className="min-w-0 rounded-2xl bg-slate-100 px-3 py-2 dark:bg-slate-800">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{commentName}</p>
-                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{comment.content}</p>
+                <div className="min-w-0 rounded-2xl bg-[var(--surface-muted)] px-3 py-2 dark:bg-[var(--surface-muted)]">
+                  <p className="text-xs font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">{commentName}</p>
+                  <p className="mt-1 text-sm text-[var(--foreground)] dark:text-[var(--foreground)]">{comment.content}</p>
                 </div>
               </div>
             );
@@ -360,13 +360,13 @@ export default function CommunityGroupPage({ params }: Props) {
                 if (!user) setAuthOpen(true);
               }}
               placeholder={user ? 'Write a reply...' : 'Sign in to reply'}
-              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-950"
+              className="min-w-0 flex-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm outline-none focus:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)]"
             />
             <button
               type="button"
               aria-label="Send reply"
               onClick={() => handleComment(post.id)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white transition hover:bg-blue-700"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--brand)] text-white transition hover:bg-[var(--brand-strong)]"
             >
               <Send className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -378,10 +378,10 @@ export default function CommunityGroupPage({ params }: Props) {
 
   if (fetching || loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-4 py-10">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-slate-800" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-[var(--border)]" />
         </main>
         <BottomNav />
       </div>
@@ -390,11 +390,11 @@ export default function CommunityGroupPage({ params }: Props) {
 
   if (!community) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
           <p className="text-lg font-bold">Group not found.</p>
-          <Link href="/community" className="mt-4 inline-block text-sm font-semibold text-blue-600 underline dark:text-blue-300">Back to Community</Link>
+          <Link href="/community" className="mt-4 inline-block text-sm font-semibold text-[var(--brand)] underline dark:text-[var(--brand)]">Back to Community</Link>
         </main>
         <BottomNav />
       </div>
@@ -402,13 +402,13 @@ export default function CommunityGroupPage({ params }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
       <Header />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 pb-28">
-        <Link href="/community" className="mb-4 inline-flex text-sm font-semibold text-blue-600 dark:text-blue-300">Back to Community</Link>
+        <Link href="/community" className="mb-4 inline-flex text-sm font-semibold text-[var(--brand)] dark:text-[var(--brand)]">Back to Community</Link>
 
-        <header className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="h-28 bg-gradient-to-br from-slate-700 to-slate-900">
+        <header className="mb-5 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
+          <div className="h-28 bg-[var(--brand-soft)]">
             {community.cover_url ? <Image src={community.cover_url} alt="" width={1200} height={300} className="h-full w-full object-cover" /> : null}
           </div>
           <div className="p-4">
@@ -416,10 +416,10 @@ export default function CommunityGroupPage({ params }: Props) {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{community.name}</h1>
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-200">Official</span>
+                  <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold uppercase text-[var(--brand)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">Official</span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{community.description}</p>
-                <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">{community.description}</p>
+                <p className="mt-2 text-xs font-semibold text-[var(--muted)] dark:text-[var(--muted)]">
                   {community.memberCount || 0} followers · {community.postCount || posts.length} posts · MUST
                 </p>
               </div>
@@ -427,7 +427,7 @@ export default function CommunityGroupPage({ params }: Props) {
                 type="button"
                 onClick={handleFollow}
                 disabled={community.isFollowed}
-                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-blue-300 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] disabled:opacity-60 dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]"
               >
                 {community.isFollowed ? 'Following' : 'Follow'}
               </button>
@@ -442,11 +442,11 @@ export default function CommunityGroupPage({ params }: Props) {
         ) : null}
 
         {user && (isAdmin || community.posting_mode === 'everyone') ? (
-          <form onSubmit={handlePublish} className="mb-5 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <form onSubmit={handlePublish} className="mb-5 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">New group post</p>
+              <p className="text-sm font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">New group post</p>
               {isAdmin ? (
-                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <label className="flex items-center gap-2 text-sm font-semibold text-[var(--foreground)] dark:text-[var(--muted)]">
                   <input type="checkbox" checked={postPinned} onChange={(event) => setPostPinned(event.target.checked)} />
                   Pin post
                 </label>
@@ -457,12 +457,12 @@ export default function CommunityGroupPage({ params }: Props) {
               onChange={(event) => setPostContent(event.target.value)}
               rows={3}
               placeholder="Write something for the group..."
-              className="w-full resize-none rounded-2xl border-0 bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-slate-950"
+              className="w-full resize-none rounded-2xl border-0 bg-[var(--background)] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--brand)]/20 dark:bg-[var(--background)]"
             />
             {selectedMedia.length > 0 ? (
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {selectedMedia.map((media, index) => (
-                  <div key={`${media.file.name}-${index}`} className="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                  <div key={`${media.file.name}-${index}`} className="relative overflow-hidden rounded-xl bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)]">
                     {media.file.type.startsWith('video/') ? (
                       <video src={media.previewUrl} className="h-24 w-full object-cover" />
                     ) : (
@@ -473,15 +473,15 @@ export default function CommunityGroupPage({ params }: Props) {
               </div>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-blue-300 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
                 <ImagePlus className="h-4 w-4" aria-hidden="true" />
                 <span>Media</span>
                 <input type="file" multiple accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={handleMediaChange} className="hidden" />
               </label>
-              <button type="button" onClick={clearComposer} className="rounded-2xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
+              <button type="button" onClick={clearComposer} className="rounded-2xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--foreground)]">
                 Clear
               </button>
-              <button type="submit" disabled={publishing} className="ml-auto inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+              <button type="submit" disabled={publishing} className="ml-auto inline-flex items-center gap-2 rounded-2xl bg-[var(--brand)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
                 <Send className="h-4 w-4" aria-hidden="true" />
                 {publishing ? uploadStatus || 'Publishing...' : 'Publish'}
               </button>
@@ -491,7 +491,7 @@ export default function CommunityGroupPage({ params }: Props) {
           <button
             type="button"
             onClick={() => setAuthOpen(true)}
-            className="mb-5 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="mb-5 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 text-sm font-bold text-[var(--foreground)] shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]"
           >
             Create a free account to join the conversation.
           </button>
@@ -499,7 +499,7 @@ export default function CommunityGroupPage({ params }: Props) {
 
         {pinnedPost ? (
           <section className="mb-5">
-            <h2 className="mb-3 text-sm font-bold text-slate-700 dark:text-slate-200">Pinned post</h2>
+            <h2 className="mb-3 text-sm font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">Pinned post</h2>
             {renderPost(pinnedPost)}
           </section>
         ) : null}
@@ -508,7 +508,7 @@ export default function CommunityGroupPage({ params }: Props) {
           {feedPosts.length > 0 ? (
             feedPosts.map(renderPost)
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--muted)]">
               No posts yet.
             </div>
           )}

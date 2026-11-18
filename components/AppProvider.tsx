@@ -75,33 +75,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return window.localStorage.getItem('campustrader-theme') === 'light' ? 'light' : 'dark';
-  });
+  const [theme, setTheme] = useState<Theme>('light');
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [profileContext, setProfileContextState] = useState<ProfileContext>(() => {
-    if (typeof window === 'undefined') return personalProfileContext;
-    return readStoredProfileContext();
-  });
-  const [institution, setInstitutionState] = useState<Institution>(() => {
-    if (typeof window === 'undefined') return DEFAULT_CAMPUS;
-    return normalizeInstitution(window.localStorage.getItem('campustrader-institution'));
-  });
+  const [profileContext, setProfileContextState] = useState<ProfileContext>(personalProfileContext);
+  const [profileContextHydrated, setProfileContextHydrated] = useState(false);
+  const [institution, setInstitutionState] = useState<Institution>(DEFAULT_CAMPUS);
+  const [institutionHydrated, setInstitutionHydrated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      try {
+        setTheme(window.localStorage.getItem('campustrader-theme') === 'dark' ? 'dark' : 'light');
+      } catch {
+        setTheme('light');
+      }
+      setProfileContextState(readStoredProfileContext());
+      setProfileContextHydrated(true);
+      try {
+        setInstitutionState(normalizeInstitution(window.localStorage.getItem('campustrader-institution')));
+      } catch {
+        setInstitutionState(DEFAULT_CAMPUS);
+      }
+      setInstitutionHydrated(true);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
   useEffect(() => {
+    if (!profileContextHydrated) return;
     storeProfileContext(profileContext);
-  }, [profileContext]);
+  }, [profileContext, profileContextHydrated]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('campustrader-institution', institution);
-  }, [institution]);
+    if (!institutionHydrated) return;
+    try {
+      window.localStorage.setItem('campustrader-institution', institution);
+    } catch {
+      // Preferences remain available for the current session when storage is unavailable.
+    }
+  }, [institution, institutionHydrated]);
 
   useEffect(() => {
     let isMounted = true;

@@ -23,6 +23,8 @@ The current launch scope is intentionally narrow: CampusTrader is for MUST first
 - Admin dashboard for verification, reports, listing moderation, business review, business post payment review, complaints, admin invites, and community management.
 - Manual business post review: businesses pay KSh 60 to Till `6362615` (`Newton Mwangi`), then admins approve the post before it goes live.
 - PWA metadata, app icons, favicon, Apple touch icon, and Open Graph preview assets.
+- Order requests for active, priced physical products, with buyer/seller order activity, cancellation, fulfilment updates, and dispute reporting backed by the existing Supabase transaction procedures.
+- D-Delivery order requests with configured campus zones, receiver details, and an order-linked delivery fee. Rider assignment is coordinated manually by an administrator; a submitted request is not a confirmed booking.
 
 ## Communities
 
@@ -164,6 +166,12 @@ Manual smoke checks:
 
 ## Not Active Yet
 
-Full checkout, escrow, protected payments, and M-Pesa STK Push are not active yet. This build only includes manual business-post payment review for KSh 60 posts. Future monetization work may include business verification fees, boosted listings, featured business cards, vendor subscriptions, urgent request boosts, sponsored category/community placements, protected payments, escrow, M-Pesa STK Push, and premium seller badges.
+Order requests are active only for listings that are active, have a positive price, and are physical products. Creating an order request does not collect money. Buyers and sellers arrange direct cash or M-PESA payment outside CampusTrader; those payments are not verified or protected by the app.
 
-Multi-university expansion is also not active yet. The code and schema are prepared around the `campus` default, but users do not choose campuses in the current MUST launch.
+Protected payments, escrow, and M-PESA STK Push are not active until payment initiation and verification are explicitly enabled in server configuration. The checkout only offers the protected option when the server reports payment initiation as available. Do not treat a payment screenshot, SMS, or chat message as proof of payment.
+
+D-Delivery can be requested against a configured campus zone. A request stores the receiver's contact and landmark, but it is not a rider booking. Dispatch and rider updates are manually coordinated by an administrator. The current product does not provide automated rider matching, self-service rider onboarding, GPS tracking, or live ETAs. Those capabilities require an operational, verified rider network and a separate tracking integration.
+
+The app also includes manual business-post payment review for KSh 60 posts. Future monetization work may include business verification fees, boosted listings, featured business cards, vendor subscriptions, urgent request boosts, sponsored category/community placements, protected payments, escrow, M-PESA STK Push, and premium seller badges.
+
+Multi-university expansion remains subject to campus-specific operations, moderation, and support readiness.

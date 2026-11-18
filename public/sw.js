@@ -1,6 +1,6 @@
 // Cache only stable, versioned offline assets. Never cache Next.js bundles
 // or application pages: stale code can break an otherwise healthy deployment.
-const CACHE_NAME = 'campustrader-offline-v3';
+const CACHE_NAME = 'campustrader-offline-v4';
 const OFFLINE_ASSETS = [
   '/favicon.svg',
   '/manifest.webmanifest',

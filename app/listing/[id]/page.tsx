@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
@@ -11,8 +12,11 @@ import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import DeliveryRequestButton from '../../../components/DeliveryRequestButton';
-import { getListingById } from '../../../lib/listings';
+import { getListingById, getListings } from '../../../lib/listings';
+import { listingBelongsToCategory } from '../../../lib/categories';
 import HelpContactAction from '../../../components/HelpContactAction';
+import ListingCard from '../../../components/ListingCard';
+import ListingMediaGallery from '../../../components/ListingMediaGallery';
 import { isValidUuid } from '../../../lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -91,13 +95,13 @@ export default async function ListingPage({ params }: Props) {
 
   if (error || !listing) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+      <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)]">
         <Header />
         <main className="flex-1 px-4 py-20 text-center">
-          <div className="mx-auto max-w-md rounded-2xl border-2 border-gray-300 bg-white p-10 dark:border-zinc-800 dark:bg-zinc-900">
-            <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Listing not found</h1>
-            <p className="text-gray-600 dark:text-zinc-400">This listing is unavailable.</p>
-            <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+          <div className="mx-auto max-w-md rounded-2xl border-2 border-[var(--border)] bg-[var(--surface)] p-10 dark:border-[var(--border)] dark:bg-[var(--surface)]">
+            <h1 className="mb-4 text-3xl font-bold text-[var(--foreground)]">Listing not found</h1>
+            <p className="text-[var(--muted)]">This listing is unavailable.</p>
+            <Link href="/sell" className="mt-5 inline-block rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">
               Post listing
             </Link>
           </div>
@@ -114,6 +118,12 @@ export default async function ListingPage({ params }: Props) {
   });
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
+  const { listings: relatedCandidates } = listing.status === 'active'
+    ? await getListings(24, 0, listing.campus || 'MUST')
+    : { listings: [] as Awaited<ReturnType<typeof getListings>>['listings'] };
+  const relatedListings = relatedCandidates
+    .filter((candidate) => candidate.id !== listing.id && candidate.status === 'active' && listingBelongsToCategory(candidate, listing.category))
+    .slice(0, 5);
   const conditionUrl = listing.condition === 'new'
     ? 'https://schema.org/NewCondition'
     : listing.condition === 'refurbished'
@@ -143,17 +153,17 @@ export default async function ListingPage({ params }: Props) {
     : null;
 
   const fallbackPanel = (
-    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-slate-700 to-slate-900 p-8 text-center text-white dark:border-zinc-800">
+    <div className="flex min-h-80 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-8 text-center text-[var(--foreground)] dark:border-[var(--border)]">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.24em]">{listing.category}</p>
         <p className="mt-3 text-2xl font-bold">{listing.title}</p>
-        <p className="mt-2 text-sm text-blue-50/90">Listing preview for items without uploaded media.</p>
+        <p className="mt-2 text-sm text-white/75">Listing preview for items without uploaded media.</p>
       </div>
     </div>
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100 pb-24 text-gray-900 dark:bg-gradient-to-br dark:from-black dark:to-zinc-950 dark:text-white">
+    <div className="flex min-h-screen flex-col bg-[var(--background)] pb-24 text-[var(--foreground)]">
       {productStructuredData ? (
         <script
           type="application/ld+json"
@@ -163,27 +173,16 @@ export default async function ListingPage({ params }: Props) {
       <Header />
       <main className="flex-1 px-4 py-6 sm:py-8">
         <div className="mx-auto max-w-5xl space-y-8">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-blue-500/5 sm:p-6 md:p-8">
+          <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-6 md:p-8">
             <div className="mb-6 sm:mb-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-500">{listing.category}</p>
-              <h1 className="mt-3 text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl dark:text-white">{listing.title}</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{listing.category}</p>
+              <h1 className="mt-3 text-2xl font-bold text-[var(--foreground)] sm:text-3xl md:text-4xl dark:text-[var(--foreground)]">{listing.title}</h1>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
               <div className="space-y-5">
-                {mediaUrls.length > 0 ? (
-                  <div className="grid gap-3">
-                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 dark:border-zinc-800 dark:bg-zinc-950">
-                      <Image src={mediaUrls[0]} alt={listing.title} width={1200} height={900} className="max-h-[24rem] w-full object-contain sm:max-h-[32rem]" unoptimized />
-                    </div>
-                    {mediaUrls.length > 1 ? (
-                      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-5">
-                        {mediaUrls.slice(1).map((url) => (
-                          <Image key={url} src={url} alt={listing.title} width={240} height={240} className="h-24 rounded-xl border border-gray-200 object-cover dark:border-zinc-800" unoptimized />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                {productImages.length > 0 ? (
+                  <ListingMediaGallery images={productImages} title={listing.title} />
                 ) : (
                   fallbackPanel
                 )}
@@ -197,47 +196,47 @@ export default async function ListingPage({ params }: Props) {
 
               <div className="space-y-6">
                 {listing.status === 'sold' ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--foreground)]">
                     This listing has been marked as sold.
                   </div>
                 ) : null}
 
-                <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6 dark:border-zinc-800 dark:from-blue-900/30 dark:to-blue-800/20">
-                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Price</p>
-                  <p className="mt-3 text-3xl font-bold text-blue-600 sm:text-4xl dark:text-blue-400">
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-5">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand)]">Price</p>
+                  <p className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand)] sm:text-4xl">
                     {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
                   </p>
-                  {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-blue-700 dark:text-blue-200">Negotiable</p> : null}
+                  {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-[var(--brand)] dark:text-[var(--brand)]">Negotiable</p> : null}
                 </div>
 
-                <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
                   <div>
-                    <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Category</p>
-                    <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">{listing.category}</p>
+                    <p className="text-sm font-semibold text-[var(--muted)]">Category</p>
+                    <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{listing.category}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Condition</p>
-                    <p className="mt-2 text-lg font-bold capitalize text-gray-900 dark:text-white">{listing.condition}</p>
+                    <p className="text-sm font-semibold text-[var(--muted)]">Condition</p>
+                    <p className="mt-2 text-lg font-bold capitalize text-[var(--foreground)]">{listing.condition}</p>
                   </div>
-                  <div className="border-t border-gray-200 pt-4 dark:border-zinc-800">
-                    <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Location</p>
-                    <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">{listing.location || 'Campus location'}</p>
+                  <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
+                    <p className="text-sm font-semibold text-[var(--muted)]">Location</p>
+                    <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{listing.location || 'Campus location'}</p>
                   </div>
-                  <div className="border-t border-gray-200 pt-4 dark:border-zinc-800">
-                    <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Posted</p>
-                    <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">{formattedDate}</p>
+                  <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
+                    <p className="text-sm font-semibold text-[var(--muted)]">Posted</p>
+                    <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{formattedDate}</p>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Description</p>
-                  <p className="mt-3 text-sm leading-7 text-gray-700 dark:text-zinc-300">{listing.description || 'No description provided.'}</p>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+                  <p className="text-sm font-semibold text-[var(--muted)]">Description</p>
+                  <p className="mt-3 text-sm leading-7 text-[var(--foreground)]">{listing.description || 'No description provided.'}</p>
                 </div>
 
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="text-sm font-semibold text-gray-600 dark:text-zinc-400">Seller</p>
+                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+                  <p className="text-sm font-semibold text-[var(--muted)]">Seller</p>
                   <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-lg font-bold text-white">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-lg font-bold text-[var(--brand)]">
                       {listing.sellerAvatarUrl ? (
                         <Image src={listing.sellerAvatarUrl} alt="" width={56} height={56} className="h-full w-full object-cover" unoptimized />
                       ) : (
@@ -246,7 +245,7 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-bold text-gray-900 dark:text-white">{listing.sellerName || 'CampusTrader seller'}</p>
+                        <p className="font-bold text-[var(--foreground)]">{listing.sellerName || 'CampusTrader seller'}</p>
                         {listing.badgeType === 'gold' ? (
                           <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                             Gold tick
@@ -256,12 +255,12 @@ export default async function ListingPage({ params }: Props) {
                             Admin
                           </span>
                         ) : listing.badgeType === 'blue' ? (
-                          <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                          <span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--brand)]">
                             Verified
                           </span>
                         ) : null}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-zinc-400">
+                      <p className="text-sm text-[var(--muted)]">
                         {listing.sellerType === 'business'
                           ? 'Nearby campus business'
                           : listing.badgeType === 'blue' || listing.badgeType === 'admin'
@@ -269,7 +268,7 @@ export default async function ListingPage({ params }: Props) {
                             : 'CampusTrader seller'}
                       </p>
                       {listing.sellerSince ? (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                        <p className="mt-1 text-xs text-[var(--muted)] dark:text-[var(--muted)]">Member since {new Date(listing.sellerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                       ) : null}
                     </div>
                   </div>
@@ -278,27 +277,42 @@ export default async function ListingPage({ params }: Props) {
                 <div className="flex flex-col gap-3">
                   <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
                   {listing.status === 'sold' ? (
-                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-gray-700 dark:bg-zinc-800 dark:text-zinc-300" disabled>
+                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]" disabled>
                       Sold
                     </button>
                   ) : (
                     <>
-                      <BuyOrderButton listingId={listing.id} />
+                      {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                       <WhatsAppButton listingId={listing.id} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
-                      <p className="text-xs leading-5 text-gray-500 dark:text-zinc-500">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
                     </>
                   )}
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
                   <SaveListingButton listingId={listing.id} />
                   <ReportButton targetType="listing" targetId={listing.id} />
                 </div>
               </div>
             </div>
           </div>
+          {relatedListings.length > 0 ? (
+              <section className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-6">
+                <div className="mb-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brand)]">Keep exploring</p>
+                    <h2 className="mt-1 text-xl font-extrabold tracking-[-0.04em]">More in {listing.category}</h2>
+                    <p className="mt-1 text-xs text-[var(--muted)]">Other listings from your campus marketplace.</p>
+                  </div>
+                  <Link href={'/?category=' + encodeURIComponent(listing.category)} className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--brand)] hover:underline">View category <ChevronRight className="h-3.5 w-3.5" /></Link>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {relatedListings.map((related) => <ListingCard key={related.id} listing={related} />)}
+                </div>
+              </section>
+            ) : null}
         </div>
       </main>
       <BottomNav />

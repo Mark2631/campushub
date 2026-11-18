@@ -244,6 +244,127 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
   }
 }
 
+export type MarketplaceSearchFilters = {
+  query?: string;
+  category?: string;
+  mode?: 'All' | 'Products' | 'Services' | 'Businesses';
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  condition?: string;
+  location?: string;
+  seller?: 'all' | 'student' | 'business';
+  negotiableOnly?: boolean;
+  sort?: 'newest' | 'price-low' | 'price-high';
+};
+
+function safeMarketplaceSearchTerm(value?: string) {
+  return String(value || '')
+    .trim()
+    .replace(/[,%_()"]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 120);
+}
+
+/**
+ * Server-side marketplace search. Search and refinements are applied before
+ * pagination so buyers can discover listings beyond the first feed page.
+ */
+export async function searchMarketplaceListings(
+  limit = 24,
+  offset = 0,
+  institution: string = DEFAULT_CAMPUS,
+  filters: MarketplaceSearchFilters = {},
+) {
+  try {
+    const query = supabase
+      .from('listings')
+      .select('id, user_id, title, description, price, category, listing_type, negotiable, condition, location, media_urls, status, created_at, seller_id, business_id')
+      .eq('status', 'active');
+
+    if (institution) {
+      const normalizedInstitution = normalizeInstitution(institution);
+      const institutionId = await getInstitutionIdForCode(normalizedInstitution);
+      query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
+    }
+
+    const searchTerm = safeMarketplaceSearchTerm(filters.query);
+    if (searchTerm) {
+      const pattern = '%' + searchTerm + '%';
+      query.or([
+        'title.ilike.' + pattern,
+        'description.ilike.' + pattern,
+        'category.ilike.' + pattern,
+        'location.ilike.' + pattern,
+      ].join(','));
+    }
+
+    const selectedCategory = String(filters.category || 'All').trim();
+    if (selectedCategory !== 'All') {
+      if (selectedCategory === 'Services') {
+        query.eq('condition', 'service');
+      } else if (selectedCategory === 'Refurbished') {
+        query.eq('condition', 'refurbished');
+      } else {
+        query.ilike('category', selectedCategory);
+      }
+    }
+
+    if (filters.mode === 'Products') {
+      query.eq('listing_type', 'PHYSICAL_PRODUCT');
+    } else if (filters.mode === 'Services' && selectedCategory !== 'Services') {
+      query.eq('condition', 'service');
+    }
+
+    const businessSeller = filters.mode === 'Businesses' || filters.seller === 'business';
+    if (businessSeller) {
+      query.not('business_id', 'is', null);
+    } else if (filters.seller === 'student') {
+      query.is('business_id', null);
+    }
+
+    if (filters.condition && filters.condition !== 'all') {
+      query.eq('condition', filters.condition);
+    }
+    if (filters.location) {
+      const locationTerm = safeMarketplaceSearchTerm(filters.location);
+      if (locationTerm) query.ilike('location', '%' + locationTerm + '%');
+    }
+    if (typeof filters.minPrice === 'number' && Number.isFinite(filters.minPrice) && filters.minPrice > 0) {
+      query.gte('price', filters.minPrice);
+    }
+    if (typeof filters.maxPrice === 'number' && Number.isFinite(filters.maxPrice) && filters.maxPrice > 0) {
+      query.lte('price', filters.maxPrice);
+    }
+    if (filters.negotiableOnly) {
+      query.eq('negotiable', true);
+    }
+
+    if (filters.sort === 'price-low') {
+      query.order('price', { ascending: true, nullsFirst: false }).order('created_at', { ascending: false });
+    } else if (filters.sort === 'price-high') {
+      query.order('price', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+    } else {
+      query.order('created_at', { ascending: false });
+    }
+
+    const { data, error } = await query.range(offset, offset + limit - 1).limit(limit);
+    if (error) {
+      logSupabaseError('Error searching marketplace listings:', error);
+      return { listings: [] as Listing[], error: GENERIC_ERROR, hasMore: false };
+    }
+
+    const rows = ((data || []) as Partial<ListingRow>[]).map(normalizeListingRow);
+    return {
+      listings: await enrichListingsWithDeadline(rows),
+      error: null,
+      hasMore: rows.length === limit,
+    };
+  } catch (error) {
+    console.error('Unexpected error searching marketplace listings:', error);
+    return { listings: [] as Listing[], error: GENERIC_ERROR, hasMore: false };
+  }
+}
+
 export async function getServiceListings(limit = 12, institution: string = DEFAULT_CAMPUS) {
   try {
     const query = supabase

@@ -4,64 +4,37 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight, BadgeCheck, MapPin, PackageOpen, Store } from 'lucide-react';
 import type { Listing } from '../lib/listings';
 
 export default function ListingCard({ listing }: { listing: Listing }) {
   const firstImage = Array.isArray(listing.media_urls) ? listing.media_urls[0] : null;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(firstImage) && !imageFailed;
+  const price = listing.price != null && listing.price > 0 ? 'KSh ' + listing.price.toLocaleString('en-KE') : 'Ask seller for price';
+  const verified = listing.badgeType === 'gold' || listing.badgeType === 'blue' || listing.badgeType === 'admin';
 
   return (
-    <Link
-      href={`/listing/${listing.id}`}
-      prefetch={false}
-      aria-label={`View ${listing.title}`}
-      className="group block min-h-full touch-manipulation overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:border-blue-300 hover:shadow-md active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
-    >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 text-sm text-gray-500 dark:from-zinc-800 dark:to-zinc-700 dark:text-zinc-500">
-        {showImage ? (
-          <img
-            src={firstImage || '/placeholder-image.png'}
-            alt={listing.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition group-hover:scale-105"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 px-3 text-center text-white">
-            <span className="text-[10px] font-semibold uppercase tracking-wide">{listing.category}</span>
-            <span className="mt-1 text-xs font-bold">{listing.sellerType === 'business' ? 'Verified seller' : 'Campus listing'}</span>
+    <Link href={'/listing/' + listing.id} prefetch={false} aria-label={'View ' + listing.title} className="group flex min-w-0 flex-col overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--surface)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-[0_12px_34px_rgba(18,45,30,.10)] active:scale-[.99]">
+      <div className="relative aspect-square overflow-hidden bg-[var(--surface-muted)]">
+        {showImage ? <img src={firstImage || ''} alt={listing.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" onError={() => setImageFailed(true)} /> : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[var(--muted)]">
+            <PackageOpen className="h-8 w-8 opacity-50" strokeWidth={1.35} aria-hidden="true" />
+            <span className="max-w-[85%] text-center text-[10px] font-semibold uppercase tracking-[0.12em]">{listing.category || 'Campus listing'}</span>
           </div>
         )}
+        {listing.condition ? <span className="absolute left-2.5 top-2.5 rounded-full bg-black/65 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur">{listing.condition}</span> : null}
+        {listing.business_id ? <span className="absolute right-2.5 top-2.5 rounded-full bg-white/95 p-1.5 text-[var(--brand)] shadow-sm"><Store className="h-3.5 w-3.5" aria-label="Business seller" /></span> : null}
       </div>
-      <div className="p-2.5 sm:p-3">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-xs font-bold leading-5 text-slate-950 sm:text-sm dark:text-slate-50">{listing.title}</h3>
-        <p className="mt-1 text-sm font-extrabold text-blue-700 sm:text-base dark:text-cyan-300">
-          {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
-        </p>
-        <p className="mt-0.5 truncate text-[11px] text-slate-600 dark:text-slate-300">{listing.location || 'Campus location'}</p>
-        <div className="mt-2 flex min-h-5 items-center gap-1.5">
-          {listing.badgeType === 'gold' ? (
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-              Gold tick
-            </span>
-          ) : listing.badgeType === 'admin' ? (
-            <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-              Admin
-            </span>
-          ) : listing.badgeType === 'blue' ? (
-            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-              Verified
-            </span>
-          ) : listing.business_id ? (
-            <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-              Business
-            </span>
-          ) : null}
-          <span className="truncate text-[10px] text-gray-500 dark:text-zinc-500">{listing.category}</span>
+      <div className="flex min-h-[118px] flex-1 flex-col p-3 sm:p-3.5">
+        <p className="line-clamp-2 min-h-[2.45rem] text-[12px] font-semibold leading-[1.25rem] text-[var(--foreground)] sm:text-[13px]">{listing.title}</p>
+        <p className="mt-2 text-[14px] font-extrabold tracking-[-0.025em] text-[var(--brand)] sm:text-[15px]">{price}</p>
+        <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-2.5">
+          <span className="flex min-w-0 items-center gap-1 truncate text-[10px] text-[var(--muted)]"><MapPin className="h-3 w-3 shrink-0" aria-hidden="true" /><span className="truncate">{listing.location || listing.campus || 'Campus pickup'}</span></span>
+          {verified ? <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[var(--brand)]" aria-label="Verified seller" /> : null}
         </div>
-        <span className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition group-hover:bg-blue-700">View listing</span>
+        {listing.sellerName ? <p className="mt-1 truncate text-[10px] text-[var(--muted)]">{listing.sellerName}</p> : null}
+        <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-bold text-[var(--brand)]">View listing <ArrowRight className="h-3 w-3" /></span>
       </div>
     </Link>
   );

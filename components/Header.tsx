@@ -2,174 +2,90 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Bell, Settings, X } from 'lucide-react';
+import { Bell, Settings, Users, X, MapPin, ChevronDown } from 'lucide-react';
 import useUser from '../hooks/useUser';
 import Logo from './Logo';
 import SettingsPanel from './SettingsPanel';
 import { institutionLabel, normalizeInstitution, SUPPORTED_INSTITUTIONS } from '../lib/validation';
 
 export default function Header() {
-  const {
-    user,
-    loading,
-    isAdmin,
-    notifications,
-    unreadNotifications,
-    markAllNotificationsRead,
-    deleteNotification,
-    clearNotifications,
-    institution,
-    setInstitution,
-  } = useUser();
+  const { user, loading, isAdmin, notifications, unreadNotifications, markAllNotificationsRead, deleteNotification, clearNotifications, institution, setInstitution } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const userLabel = user?.email ? user.email : 'Signed in';
+  const userLabel = user?.email || 'Your account';
   const avatar = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-0 flex-1 sm:flex-none">
-            <div className="sm:hidden">
-              <Logo compact />
-            </div>
-            <div className="hidden sm:block">
-              <Logo />
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[66px] max-w-[1440px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="shrink-0"><Logo compact /></div>
+
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-7 lg:flex">
+            <Link href="/categories" className="text-[13px] font-semibold text-[var(--foreground)] transition hover:text-[var(--brand)]">Shop</Link>
+            <Link href="/community" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">Community</Link>
+            <Link href="/help" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">How it works</Link>
+            <Link href="/sell" className="text-[13px] font-bold text-[var(--brand)] transition hover:text-[var(--brand-strong)]">Sell</Link>
+            {user ? <Link href="/messages" className="text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--brand)]">Inbox</Link> : null}
+          </div>
+
+          <div className="hidden shrink-0 md:flex">
+            <label htmlFor="institution-select" className="sr-only">Choose your campus</label>
+            <div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-2">
+              <MapPin className="h-3.5 w-3.5 text-[var(--brand)]" aria-hidden="true" />
+              <select id="institution-select" value={institution} onChange={(event) => setInstitution(normalizeInstitution(event.target.value))} className="max-w-[170px] bg-transparent text-xs font-semibold text-[var(--foreground)] outline-none">
+                {SUPPORTED_INSTITUTIONS.map((option) => <option key={option} value={option}>{institutionLabel(option)}</option>)}
+              </select>
+              <ChevronDown className="h-3 w-3 text-[var(--muted)]" aria-hidden="true" />
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 sm:flex">
-            <label htmlFor="institution-select" className="sr-only">
-              Choose institution
-            </label>
-            <select
-              id="institution-select"
-              value={institution}
-              onChange={(event) => setInstitution(normalizeInstitution(event.target.value))}
-              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
-            >
-              {SUPPORTED_INSTITUTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {institutionLabel(option)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Link href="/community" aria-label="Campus community" title="Community" className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)] lg:hidden">
+              <Users className="h-[18px] w-[18px]" aria-hidden="true" />
+            </Link>
             {user ? (
               <div className="relative">
-                <button
-                  aria-label="Notifications"
-                  onClick={() => {
-                    setNotificationsOpen((current) => !current);
-                    if (!notificationsOpen && unreadNotifications > 0) {
-                      void markAllNotificationsRead();
-                    }
-                  }}
-                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
-                >
-                  <Bell className="h-5 w-5" aria-hidden="true" />
-                  {unreadNotifications > 0 ? (
-                    <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                      {unreadNotifications}
-                    </span>
-                  ) : null}
+                <button aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => { setNotificationsOpen((current) => !current); if (!notificationsOpen && unreadNotifications > 0) void markAllNotificationsRead(); }} className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)]">
+                  <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+                  {unreadNotifications > 0 ? <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#D97735] ring-2 ring-[var(--surface)]" /> : null}
                 </button>
-
                 {notificationsOpen ? (
-                  <div className="fixed right-3 top-16 z-[60] w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:absolute sm:right-0 sm:top-14 sm:w-80 dark:border-slate-800 dark:bg-slate-950">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Notifications</p>
+                  <div className="absolute right-0 top-12 z-[80] w-[min(360px,calc(100vw-24px))] rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[0_18px_60px_rgba(13,30,20,.16)]">
+                    <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                      <p className="text-sm font-bold text-[var(--foreground)]">Notifications</p>
                       <div className="flex items-center gap-1">
-                        {notifications.length > 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => void clearNotifications()}
-                            className="rounded-xl px-2 py-1 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40"
-                          >
-                            Clear all
-                          </button>
-                        ) : null}
-                        <button
-                          aria-label="Close notifications"
-                          onClick={() => setNotificationsOpen(false)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
-                        >
-                          <X className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                        {notifications.length > 0 ? <button type="button" onClick={() => void clearNotifications()} className="rounded-lg px-2 py-1 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)]">Clear all</button> : null}
+                        <button aria-label="Close notifications" onClick={() => setNotificationsOpen(false)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface-muted)]"><X className="h-4 w-4" /></button>
                       </div>
                     </div>
-                    <div className="max-h-72 space-y-2 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.map((notification) => (
-                          <div key={notification.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex items-start gap-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-300">{notification.type}</p>
-                                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
-                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{notification.body}</p>
-                              </div>
-                              <button
-                                type="button"
-                                aria-label="Delete notification"
-                                onClick={() => void deleteNotification(notification.id)}
-                                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
-                              >
-                                <X className="h-3.5 w-3.5" aria-hidden="true" />
-                              </button>
+                    <div className="max-h-80 space-y-2 overflow-y-auto">
+                      {notifications.length ? notifications.map((notification) => (
+                        <div key={notification.id} className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+                          <div className="flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--brand)]">{notification.type}</p>
+                              <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">{notification.title}</p>
+                              <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{notification.body}</p>
                             </div>
+                            <button type="button" aria-label="Delete notification" onClick={() => void deleteNotification(notification.id)} className="rounded-lg p-1 text-[var(--muted)] hover:bg-[var(--surface-muted)]"><X className="h-3.5 w-3.5" /></button>
                           </div>
-                        ))
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                          No notifications yet.
                         </div>
-                      )}
+                      )) : <p className="rounded-xl bg-[var(--background)] p-4 text-center text-sm text-[var(--muted)]">You are all caught up.</p>}
                     </div>
                   </div>
                 ) : null}
               </div>
             ) : null}
-            <button
-              aria-label="Manage"
-              onClick={() => setSettingsOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-600"
-            >
-              <Settings className="h-5 w-5" aria-hidden="true" />
-            </button>
-            {loading ? (
-              <div className="h-10 w-10 animate-pulse rounded-2xl bg-slate-200 sm:w-32 dark:bg-slate-800" />
-            ) : user ? (
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-2 py-2 text-sm text-slate-900 transition hover:border-blue-300 sm:gap-3 sm:px-4 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:hover:border-blue-600"
-              >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 text-xs font-bold text-white">
-                  {avatar}
-                </span>
-                <span className="hidden max-w-[10rem] truncate font-medium sm:inline md:max-w-[12rem]">{userLabel}</span>
-                {isAdmin ? (
-                  <span className="hidden rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700 sm:inline dark:bg-emerald-900/40 dark:text-emerald-200">
-                    ADMIN
-                  </span>
-                ) : null}
+            <button aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)} className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--brand)]"><Settings className="h-[18px] w-[18px]" aria-hidden="true" /></button>
+            {loading ? <span className="h-9 w-9 animate-pulse rounded-full bg-[var(--surface-muted)]" /> : user ? (
+              <Link href="/profile" title={userLabel} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--brand-soft)] text-xs font-bold text-[var(--brand)] transition hover:border-[var(--brand)] sm:h-10 sm:w-10">
+                {avatar}<span className="sr-only">{userLabel}{isAdmin ? ', admin' : ''}</span>
               </Link>
-            ) : (
-              <Link
-                href="/signin?mode=signin"
-                className="rounded-2xl bg-gradient-to-r from-slate-600 to-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:from-blue-700 hover:to-emerald-600 sm:px-6"
-              >
-                Sign In
-              </Link>
-            )}
+            ) : <Link href="/signin?mode=signin" className="rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[var(--brand-strong)] sm:px-5 sm:text-sm">Sign in</Link>}
           </div>
         </div>
       </header>
-      <div aria-hidden="true" className="h-[65px] sm:h-[73px]" />
-
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );

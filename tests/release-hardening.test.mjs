@@ -301,6 +301,46 @@ test('homepage search and social metadata consistently describe CampusTrader', a
   assert.ok(source.includes("card: 'summary_large_image'"));
 });
 
+test('saved marketplace preferences hydrate after the server-safe initial render', async () => {
+  const source = await read('../components/AppProvider.tsx');
+  assert.ok(source.includes("useState<Theme>('light')"));
+  assert.ok(source.includes('useState<ProfileContext>(personalProfileContext)'));
+  assert.ok(source.includes('useState<Institution>(DEFAULT_CAMPUS)'));
+  assert.ok(source.includes("window.localStorage.getItem('campustrader-theme')"));
+  assert.ok(source.includes("window.localStorage.getItem('campustrader-institution')"));
+  assert.ok(source.includes('if (!profileContextHydrated) return;'));
+  assert.ok(source.includes('if (!institutionHydrated) return;'));
+});
+
+test('marketplace search applies catalogue filters and campus scope before pagination', async () => {
+  const [listings, homepage] = await Promise.all([
+    read('../lib/listings.ts'),
+    read('../app/page.tsx'),
+  ]);
+  const searchStart = listings.indexOf('export async function searchMarketplaceListings(');
+  const searchEnd = listings.indexOf('export async function getServiceListings(', searchStart);
+  assert.ok(searchStart >= 0 && searchEnd > searchStart);
+  const search = listings.slice(searchStart, searchEnd);
+  assert.ok(search.includes(".eq('status', 'active')"));
+  assert.ok(search.includes(".eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000')"));
+  assert.ok(search.includes("query.or(["));
+  assert.ok(search.includes("'title.ilike.' + pattern"));
+  assert.ok(search.includes("'description.ilike.' + pattern"));
+  assert.ok(search.includes("query.eq('listing_type', 'PHYSICAL_PRODUCT')"));
+  assert.ok(search.includes("query.eq('condition', 'service')"));
+  assert.ok(search.includes("query.not('business_id', 'is', null)"));
+  assert.ok(search.includes("query.gte('price', filters.minPrice)"));
+  assert.ok(search.includes("query.lte('price', filters.maxPrice)"));
+  assert.ok(search.includes(".range(offset, offset + limit - 1)"));
+  assert.ok(search.indexOf("query.or([") < search.indexOf(".range(offset, offset + limit - 1)"));
+  assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, 0, campus, activeSearchFilters)'));
+  assert.ok(homepage.includes('searchMarketplaceListings(PAGE_SIZE, searchOffset, searchCampus, activeSearchFilters)'));
+  assert.ok(homepage.includes("const campus = institution;"));
+  assert.ok(homepage.includes("const [mode, setMode] = useState<BrowseMode>('All')"));
+  assert.ok(homepage.includes("const categoryParam = params.get('category')"));
+  assert.ok(homepage.includes("|| sort !== 'newest'"));
+});
+
 test('official CampusTrader mark is reused across header, favicon, manifest and generated PWA icons', async () => {
   const [logo, mark, favicon, layout, manifestText, serviceWorker, icon192, icon512, appleIcon, renderer] = await Promise.all([
     read('../components/Logo.tsx'),
@@ -318,14 +358,18 @@ test('official CampusTrader mark is reused across header, favicon, manifest and 
   assert.match(logo, /BrandMark/);
   assert.doesNotMatch(logo, /ShoppingBag|GraduationCap/);
   assert.match(mark, /campustrader-mark-gradient/);
-  assert.match(mark, /M111 198H401/);
+  assert.match(mark, /viewBox="0 0 48 48"/);
+  assert.match(mark, /rect x="1" y="1" width="46" height="46"/);
+  assert.match(mark, /stopColor="#1d7559"/);
   assert.match(favicon, /campustrader-mark-gradient/);
+  assert.match(favicon, /circle cx="366.9" cy="140.8"/);
+  assert.match(favicon, /fill="#E6A641"/);
   assert.ok(layout.includes("url: '/pwa-icon/192'"));
   assert.ok(layout.includes("url: '/pwa-icon/180'"));
   assert.ok(layout.includes('https://campus-trader.vercel.app/pwa-icon/512'));
   assert.equal(manifest.icons.find((icon) => icon.sizes === '192x192')?.src, '/pwa-icon/192');
   assert.equal(manifest.icons.find((icon) => icon.sizes === '512x512')?.src, '/pwa-icon/512');
-  assert.ok(serviceWorker.includes('campustrader-offline-v3'));
+  assert.ok(serviceWorker.includes('campustrader-offline-v4'));
   assert.ok(serviceWorker.includes("'/pwa-icon/192'"));
   assert.match(icon192, /renderPwaIcon\(192\)/);
   assert.match(icon512, /renderPwaIcon\(512\)/);

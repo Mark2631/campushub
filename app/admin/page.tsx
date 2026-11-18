@@ -101,7 +101,7 @@ function StatusPill({ status }: { status: string }) {
         : status === 'reviewed' || status === 'reported'
           ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
           : status === 'admin'
-            ? 'border-blue-500/30 bg-blue-500/10 text-blue-200'
+            ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
             : 'border-zinc-700 bg-zinc-900 text-zinc-300';
 
   return <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${color}`}>{formatStatus(status)}</span>;
@@ -135,7 +135,7 @@ function ModalDialog({
           <button onClick={onClose} disabled={isLoading} className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-zinc-600 disabled:opacity-60">
             Cancel
           </button>
-          <button onClick={onConfirm} disabled={isLoading} className="flex-1 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+          <button onClick={onConfirm} disabled={isLoading} className="flex-1 rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
             {isLoading ? 'Processing...' : confirmText}
           </button>
         </div>
@@ -587,14 +587,14 @@ export default function AdminPage() {
             <div className="mb-4">
               <Logo />
             </div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-300">CampusTrader Admin</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-[var(--brand)]">CampusTrader Admin</p>
             <h1 className="mt-2 text-2xl font-bold sm:text-3xl">Moderation dashboard</h1>
             <p className="mt-2 text-sm text-zinc-400">Control users, businesses, listings, verification, and handle reports.</p>
           </div>
           <button
             onClick={loadDashboard}
             disabled={loadingDashboard}
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:border-blue-500 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:border-[var(--brand)] hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loadingDashboard ? 'Refreshing...' : 'Refresh'}
           </button>
@@ -630,7 +630,7 @@ export default function AdminPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-3 text-sm font-semibold transition ${
-                tab === t ? 'border-b-2 border-blue-500 text-blue-300' : 'text-zinc-400 hover:text-zinc-300'
+                tab === t ? 'border-b-2 border-[var(--brand)] text-[var(--brand)]' : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
               {t === 'payments' ? 'Escrow' : t === 'delivery' ? 'D-Delivery' : t === 'service-delivery' ? 'Service delivery' : formatStatus(t)}
@@ -727,12 +727,12 @@ export default function AdminPage() {
                   value={newAdminEmail}
                   onChange={(event) => setNewAdminEmail(event.target.value)}
                   placeholder="admin@email.com"
-                  className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                  className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   required
                 />
                 <button
                   disabled={workingId === 'add-admin'}
-                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                  className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60"
                 >
                   {workingId === 'add-admin' ? 'Adding...' : 'Add admin'}
                 </button>
@@ -763,7 +763,7 @@ export default function AdminPage() {
                             await loadDashboard();
                           }}
                           disabled={workingId === user.id}
-                          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                          className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60"
                         >
                           {workingId === user.id ? 'Saving...' : user.role === 'admin' ? 'Remove admin' : 'Make admin'}
                         </button>
@@ -947,7 +947,7 @@ export default function AdminPage() {
                           {request.document_urls?.length ? (
                             <div className="mt-2 flex flex-wrap gap-2">
                               {request.document_urls.map((url) => (
-                                <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-blue-300 underline">
+                                <a key={url} href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-[var(--brand)] underline">
                                   View
                                 </a>
                               ))}
@@ -1039,7 +1039,7 @@ export default function AdminPage() {
                               `Report marked as ${status}.`
                             );
                           }}
-                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-[var(--brand)]"
                         >
                           {reportStatuses.map((status) => (
                             <option key={status} value={status}>
@@ -1054,7 +1054,7 @@ export default function AdminPage() {
                             setModalMessage('Send a response to the reporter?');
                             setModalNotes('');
                           }}
-                          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                          className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)]"
                         >
                           Respond
                         </button>
@@ -1080,7 +1080,7 @@ export default function AdminPage() {
               <select
                 value={selectedCommunityId}
                 onChange={(event) => setSelectedCommunityId(event.target.value)}
-                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500"
+                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-[var(--brand)]"
               >
                 {communities.map((community) => (
                   <option key={community.id} value={community.id}>
@@ -1098,18 +1098,18 @@ export default function AdminPage() {
                     value={communityForm.name}
                     onChange={(event) => setCommunityForm((current) => ({ ...current, name: event.target.value }))}
                     placeholder="Community name"
-                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   />
                   <input
                     value={communityForm.category}
                     onChange={(event) => setCommunityForm((current) => ({ ...current, category: event.target.value }))}
                     placeholder="Category"
-                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   />
                   <select
                     value={communityForm.postingMode}
                     onChange={(event) => setCommunityForm((current) => ({ ...current, postingMode: event.target.value as 'everyone' | 'admin_only' }))}
-                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   >
                     <option value="everyone">Everyone can post</option>
                     <option value="admin_only">Admin-only posting</option>
@@ -1129,9 +1129,9 @@ export default function AdminPage() {
                     onChange={(event) => setCommunityForm((current) => ({ ...current, description: event.target.value }))}
                     rows={3}
                     placeholder="Description"
-                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   />
-                  <button disabled={communityWorking} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+                  <button disabled={communityWorking} className="w-full rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
                     {communityWorking ? 'Saving...' : 'Create community'}
                   </button>
                 </form>
@@ -1153,7 +1153,7 @@ export default function AdminPage() {
                           onClick={() => {
                             setSelectedCommunityId(community.id);
                           }}
-                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-blue-500"
+                          className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-[var(--brand)]"
                         >
                           Manage
                         </button>
@@ -1213,7 +1213,7 @@ export default function AdminPage() {
                     onChange={(event) => setCommunityPostForm((current) => ({ ...current, content: event.target.value }))}
                     rows={4}
                     placeholder="Official post content"
-                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full resize-none rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-[var(--brand)]"
                   />
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <label className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-semibold text-zinc-100">
@@ -1238,7 +1238,7 @@ export default function AdminPage() {
                   {communityMedia.length > 0 ? (
                     <p className="text-xs text-zinc-500">{communityMedia.length} media file(s) selected</p>
                   ) : null}
-                  <button disabled={communityWorking || !selectedCommunityId} className="w-full rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60">
+                  <button disabled={communityWorking || !selectedCommunityId} className="w-full rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
                     {communityWorking ? 'Publishing...' : 'Publish post'}
                   </button>
                 </form>
@@ -1264,7 +1264,7 @@ export default function AdminPage() {
                                 () => updateCommunityPostPin(post.id, authUser!.id, authUser!.email, !post.is_pinned),
                                 post.is_pinned ? 'Post unpinned.' : 'Post pinned.'
                               )}
-                              className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                              className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60"
                             >
                               {post.is_pinned ? 'Unpin' : 'Pin'}
                             </button>
@@ -1332,7 +1332,7 @@ export default function AdminPage() {
               placeholder="Add notes or message (optional)"
               value={modalNotes}
               onChange={(e) => setModalNotes(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-[var(--brand)]"
               rows={3}
             />
           )}
