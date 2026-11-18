@@ -37,10 +37,13 @@ test('verification selection persists in the file picker and displays selected c
   assert.match(profile, /documentFiles\.length} document/);
 });
 
-test('order checkout is disabled during launch', async () => {
+test('order requests use the listing checkout and reject ineligible products', async () => {
   const buy = await read('../components/BuyOrderButton.tsx');
   const order = await read('../app/orders/new/page.tsx');
-  assert.match(buy, /disabled aria-disabled="true"/);
-  assert.match(order, /Orders coming soon/);
-  assert.doesNotMatch(order, /OrderCheckoutForm/);
+  const orders = await read('../app/orders/page.tsx');
+  assert.match(buy, /orders\/new\?listing=/);
+  assert.match(order, /isDirectPurchaseListing\(listing\)/);
+  assert.match(order, /<OrderCheckoutForm/);
+  assert.doesNotMatch(order, /Orders coming soon/);
+  assert.match(orders, /OrdersPageContent initialView="buying"/);
 });
