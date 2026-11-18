@@ -31,9 +31,9 @@ export default function OrdersPageContent({ initialView }: Props) {
           <section className="mt-5 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
             <div className="flex items-center gap-3">
               <ShieldCheck className="size-5 text-[var(--brand)]" aria-hidden="true" />
-              <h2 className="font-bold">Protected payment status</h2>
+              <h2 className="font-bold">Payment status</h2>
             </div>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">An M-PESA request is not proof of payment. Orders show Payment secured only after backend verification. Seller settlement is manually handled and is never inferred from a receipt or screenshot.</p>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">A payment is marked secured only after backend verification. Direct cash or M-PESA arrangements between a buyer and seller happen outside CampusTrader and are not verified by the app. A screenshot or message is not proof of payment.</p>
           </section>
         ) : null}
 
