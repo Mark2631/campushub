@@ -282,7 +282,7 @@ export default async function ListingPage({ params }: Props) {
                     </button>
                   ) : (
                     <>
-                      <BuyOrderButton listingId={listing.id} />
+                      {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
                       <WhatsAppButton listingId={listing.id} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
