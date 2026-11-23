@@ -71,14 +71,13 @@ test('housing owners manage posts as available or unavailable rather than sold',
   assert.match(profile, /isLivingListing\(listing\) && listing\.status === 'sold' \? 'Unavailable'/);
 });
 
-test('housing owners manage posts as available or unavailable rather than sold', async () => {
-  const profile = await read('../app/profile/page.tsx');
-  assert.match(profile, /function isLivingListing\(listing: Pick<Listing, 'listing_type'>\)/);
-  assert.match(profile, /isLivingListing\(listing\) \? 'Mark unavailable' : 'Sold'/);
-  assert.match(profile, /'Make available'/);
-  assert.match(profile, /Marked as unavailable and removed from the marketplace/);
-  assert.match(profile, /Sold \/ unavailable/);
-  assert.match(profile, /isLivingListing\(listing\) && listing\.status === 'sold' \? 'Unavailable'/);
+test('public unavailable rental and roommate pages use accurate status language', async () => {
+  const detail = await read('../app/listing/[id]/page.tsx');
+  assert.match(detail, /const unavailableLabel = isLivingListing \? 'Unavailable' : 'Sold'/);
+  assert.match(detail, /This accommodation is currently marked unavailable/);
+  assert.match(detail, /This roommate opening is currently marked unavailable/);
+  assert.match(detail, /Ask about future availability/);
+  assert.match(detail, /Need help confirming the listing details or arranging a viewing/);
 });
 
 test('rental and roommate cards and detail pages use monthly pricing and relevant actions', async () => {
