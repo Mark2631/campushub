@@ -282,7 +282,9 @@ export default async function ListingPage({ params }: Props) {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
+                  {listing.listing_type === 'PHYSICAL_PRODUCT' ? (
+                    <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
+                  ) : null}
                   {listing.status === 'sold' ? (
                     <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]" disabled>
                       Sold
@@ -292,7 +294,7 @@ export default async function ListingPage({ params }: Props) {
                       {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
                       <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Arrange a viewing" : isRoommateListing ? "Contact about sharing" : "Message Seller"} />
                       <WhatsAppButton listingId={listing.id} />
-                      {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
+                      {listing.listing_type === 'PHYSICAL_PRODUCT' && listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
                       <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">{isRentalListing ? "Message the lister to arrange a viewing and confirm rent, deposit and terms." : isRoommateListing ? "Start a conversation about the space, monthly share, house rules and move-in date." : "Message the seller to confirm availability, collection and payment details."}</p>
