@@ -21,9 +21,12 @@ test('direct orders can be accepted by the seller without being described as pai
   const activity = await read('../components/OrdersActivity.tsx');
 
   assert.match(activity, /canSellerRespond = !isBuying && orderCanProgress\(order\)/);
+  assert.match(activity, /Decline this direct-arranged order\?/);
+  assert.match(activity, /Agree any direct-payment resolution with the buyer outside CampusTrader/);
   assert.match(activity, /Direct payment is arranged between you and the buyer/);
   assert.match(activity, /CampusTrader does not receive or verify it/);
   assert.match(activity, /Order accepted\. Agree on direct payment and collection details with the buyer/);
+  assert.match(activity, /Order accepted\. Agree on direct payment and delivery arrangements with the buyer/);
   assert.match(activity, /canSellerConfirmHandover = !isBuying && isSelfPickup && orderIsPaid\(order\)/);
 });
 
@@ -56,6 +59,8 @@ test('direct requests can be cancelled before seller acceptance without using th
   assert.match(activity, /canCancelUnpaidProtected = isBuying && !orderIsDirect\(order\)/);
   assert.match(activity, /Cancel order request/);
   assert.match(activity, /CampusTrader does not receive or verify any direct payment/);
+  assert.match(activity, /Confirm collection only after you have physically collected and checked the item/);
+  assert.match(activity, /Confirm receipt only after the delivery is marked arrived or delivered/);
 });
 
 test('direct completed orders can be reviewed after buyer receipt while protected seller handover remains secured-only', async () => {

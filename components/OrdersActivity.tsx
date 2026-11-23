@@ -180,7 +180,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
   async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline' | 'handover') {
     if (action === 'receipt' && !window.confirm(orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Only confirm after the delivery has arrived and you have checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have physically collected and checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
-    if (action === 'decline' && !window.confirm('Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
+    if (action === 'decline' && !window.confirm(orderIsDirect(order) ? 'Decline this direct-arranged order? CampusTrader has not received or verified payment. Agree any direct-payment resolution with the buyer outside CampusTrader.' : 'Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
     if (action === 'handover' && !window.confirm('Confirm only after you have physically handed the item to the buyer. This will be recorded in the transaction history. Continue?')) return;
 
     setBusyKey(`${order.id}:${action}`);
@@ -200,7 +200,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const successText = action === 'receipt'
           ? orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Delivery receipt confirmed. Direct payment remains between you and the seller; CampusTrader has not verified it.' : 'Collection confirmed. Direct payment remains between you and the buyer; CampusTrader has not verified it.' : 'Receipt confirmed. The protected transaction is awaiting the configured settlement workflow.'
           : action === 'accept'
-            ? orderIsDirect(order) ? 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
+            ? orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Order accepted. Agree on direct payment and delivery arrangements with the buyer.' : 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
             : action === 'decline'
               ? orderIsDirect(order) ? 'Order declined before direct payment was verified by CampusTrader. Agree any outstanding arrangement directly with the buyer.' : 'Order declined. Refund handling remains subject to backend processing.'
               : 'Pickup handover recorded. The buyer can confirm receipt in Orders.';
@@ -489,7 +489,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             ) : null}
             {isBuying && orderIsDirect(order) && !orderIsClosed(order) ? (
               <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-sm leading-6 text-[var(--foreground)]">
-                Direct payment is arranged with the seller. CampusTrader does not receive or verify it. Confirm receipt only after you have physically collected the item.
+                Direct payment is arranged with the seller. CampusTrader does not receive or verify it. {isSelfPickup ? 'Confirm collection only after you have physically collected and checked the item.' : 'Confirm receipt only after the delivery is marked arrived or delivered and you have checked the item.'}
               </p>
             ) : null}
             {!isBuying && orderIsPaid(order) ? (
