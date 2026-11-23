@@ -20,6 +20,8 @@ test('review insertion is tied to the signed-in buyer and database-enforced purc
 test('buyers can only open the review form after completed order and confirmed receipt', async () => {
   const activity = await read('../components/OrdersActivity.tsx');
   assert.match(activity, /orderState === 'COMPLETED'/);
+  assert.match(activity, /orderIsPaid\\(order\\)/);
+  assert.match(activity, /buyerReviewsLoading/);
   assert.match(activity, /buyerReceiptState\)\);/);
   assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderState === 'COMPLETED'[\s\S]*?CONFIRMED/);
   assert.match(activity, /createVerifiedPurchaseReview\(/);
