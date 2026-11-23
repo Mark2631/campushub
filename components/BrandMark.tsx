@@ -10,7 +10,7 @@ export default function BrandMark({ size = 44, className, title }: BrandMarkProp
       <path d="M18.5 20v-3.6a5.5 5.5 0 0 1 11 0V20" fill="none" stroke="#F7F7F1" strokeWidth="2.8" strokeLinecap="round" />
       <path d="M18.8 27.2c2.2 2.1 8.2 2.1 10.4 0" fill="none" stroke="#26394d" strokeWidth="2" strokeLinecap="round" />
       <circle cx="34.4" cy="13.2" r="4.3" fill="#F4A62A" />
-      <circle cx="34.4" cy="13.2" r="1.4" fill="#125B47" />
+      <circle cx="34.4" cy="13.2" r="1.4" fill="#26394d" />
     </svg>
   );
 }
