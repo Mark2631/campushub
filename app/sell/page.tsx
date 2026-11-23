@@ -38,7 +38,7 @@ function SellPageContent() {
     category: categories[0],
     price: '',
     negotiable: false,
-    condition: conditions[0],
+    condition: '',
     description: '',
     location: '',
   });
@@ -121,7 +121,9 @@ function SellPageContent() {
         category: listing.listing_type === 'PROPERTY_RENTAL' ? 'Accommodation' : listing.listing_type === 'ROOMMATE' ? 'Roommates' : listing.category,
         price: listing.price != null && listing.price > 0 ? listing.price.toString() : '',
         negotiable: listing.negotiable,
-        condition: normalizeListingCondition(listing.condition, listing.category),
+        condition: ['Accommodation', 'Roommates'].includes(listing.listing_type === 'PROPERTY_RENTAL' ? 'Accommodation' : listing.listing_type === 'ROOMMATE' ? 'Roommates' : listing.category)
+          ? ''
+          : normalizeListingCondition(listing.condition, listing.category),
         description: listing.description || '',
         location: listing.location || '',
       });
@@ -188,7 +190,7 @@ function SellPageContent() {
         ...current,
         title: current.title || request.title,
         category: nextCategory,
-        condition: normalizeListingCondition(current.condition, nextCategory),
+        condition: nextCategory === 'Services' ? 'service' : nextCategory === 'Refurbished' ? 'refurbished' : '',
         description: current.description || [request.title, request.description].filter(Boolean).join('\n\n'),
         location: current.location || request.location || '',
       }));
@@ -206,18 +208,23 @@ function SellPageContent() {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === 'category'
-          ? normalizeCategory(value)
+    setFormData((prev) => {
+      const nextCategory = name === 'category' ? normalizeCategory(value) : prev.category;
+      const nextCondition = name === 'category'
+        ? nextCategory === 'Services' ? 'service' : nextCategory === 'Refurbished' ? 'refurbished' : ''
+        : name === 'condition' ? value : prev.condition;
+      return {
+        ...prev,
+        [name]: name === 'category'
+          ? nextCategory
           : name === 'condition'
-            ? normalizeListingCondition(value, prev.category)
+            ? value
             : type === 'checkbox'
               ? checked
               : value,
-      ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, normalizeCategory(value)) } : {}),
-    }));
+        condition: nextCondition,
+      };
+    });
   };
 
   const handleRequestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -370,7 +377,7 @@ function SellPageContent() {
       category: categories[0],
       price: '',
       negotiable: false,
-      condition: conditions[0],
+      condition: '',
       description: '',
       location: '',
     });
@@ -386,6 +393,7 @@ function SellPageContent() {
   const validateListingForm = () => {
     if (!user) return 'Sign in to post a listing.';
     if (!formData.title.trim()) return 'Title is required.';
+    if (!['Services', 'Accommodation', 'Roommates', 'Refurbished'].includes(formData.category) && !formData.condition) return 'Choose the seller-reported condition.';
     if (requiresListingPhoto && images.length + existingMediaUrls.length === 0) return 'Add at least one clear photo of the actual item or room.';
     if (requiresListingPhoto && formData.description.trim().length < 30) return 'Add a short description covering the model, what is included, and any wear or defects.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
@@ -989,8 +997,10 @@ function SellPageContent() {
                 value={formData.condition}
                 onChange={handleChange}
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
+                required
               >
-                {conditions.map((condition) => (
+                <option value="" disabled>Choose condition</option>
+                {conditions.filter((condition) => condition !== 'service').map((condition) => (
                   <option key={condition} value={condition}>
                     {condition.charAt(0).toUpperCase() + condition.slice(1)}
                   </option>
