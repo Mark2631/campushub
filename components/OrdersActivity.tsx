@@ -325,7 +325,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
           && orderIsPaid(order)
           && orderState !== 'DISPUTED'
           && orderState === 'COMPLETED'
-          && ['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState);
+          && buyerReceiptState === 'CONFIRMED';
         const existingReview = buyerReviews.find((review) =>
           review.seller_id === order.seller_id && review.listing_id === order.listing_id
         );
