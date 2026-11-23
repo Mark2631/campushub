@@ -233,6 +233,12 @@ export default async function ListingPage({ params }: Props) {
                     <p className="text-sm font-semibold text-[var(--muted)]">Posted</p>
                     <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{formattedDate}</p>
                   </div>
+                  {(isRentalListing || isRoommateListing) && listing.updated_at && new Date(listing.updated_at).getTime() > new Date(listing.created_at).getTime() + 60000 ? (
+                    <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
+                      <p className="text-sm font-semibold text-[var(--muted)]">Details last updated</p>
+                      <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{new Date(listing.updated_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
