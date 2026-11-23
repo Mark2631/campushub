@@ -78,6 +78,14 @@ test('budget shortcuts open low-to-high product discovery for price-sensitive st
   assert.match(home, /Under KSh \{ceiling\.toLocaleString\('en-KE'\)\}/);
 });
 
+test('housing filters use monthly labels and do not retain product condition filters', async () => {
+  const home = await read('../app/page.tsx');
+  assert.match(home, /Monthly rent range \(KSh\)/);
+  assert.match(home, /Monthly share range \(KSh\)/);
+  assert.match(home, /mode !== 'Housing' && mode !== 'Roommates'/);
+  assert.match(home, /value === 'Housing' \|\| value === 'Roommates'[\s\S]*?condition: 'all'/);
+});
+
 test('rentals and roommate listings cannot enter physical-product checkout', async () => {
   const [detail, checkout] = await Promise.all([
     read('../app/listing/[id]/page.tsx'),
