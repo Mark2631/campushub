@@ -459,7 +459,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
           Dispatch is manual in this pilot. Status, rider contact, and private drop-off details are saved only by the backend&apos;s admin operation; if that RPC is not installed, the update will fail without changing the delivery.
         </div>
       ) : null}
-      {feedback ? <p role={feedback.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm leading-6 ${feedback.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-blue-500/30 bg-blue-500/10 text-blue-100'}`}>{feedback.text}</p> : null}
+      {feedback ? <p role={feedback.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm leading-6 ${feedback.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'}`}>{feedback.text}</p> : null}
       {error ? <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-100">{error.message}</p> : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
@@ -500,7 +500,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
               <article key={order.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <button type="button" onClick={() => setExpandedId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="flex w-full items-start justify-between gap-4 text-left">
                   <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-blue-300">{order.order_number}</span>
+                    <span className="block text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">{order.order_number}</span>
                     <span className="mt-2 block font-semibold text-white">{order.listing_title_snapshot}</span>
                     <span className="mt-1 block text-xs text-zinc-500">Buyer: {names[order.buyer_id] || 'CampusTrader user'} · Seller: {names[order.seller_id] || 'CampusTrader user'}</span>
                   </span>
@@ -545,7 +545,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
                           <Detail label="Rider phone" value={fulfillmentDetails?.rider_phone || 'Not recorded'} />
                         </dl>
                       ) : null}
-                      {normalizedOrderRiderPhone ? <a href={`tel:${normalizedOrderRiderPhone}`} className="mt-3 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-blue-200">Call rider</a> : null}
+                      {normalizedOrderRiderPhone ? <a href={`tel:${normalizedOrderRiderPhone}`} className="mt-3 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-[var(--brand)]">Call rider</a> : null}
                     </section>
 
                     {latestDispute ? (
@@ -625,7 +625,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
               <article key={delivery.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                 <button type="button" onClick={() => setExpandedId(isExpanded ? null : delivery.id)} aria-expanded={isExpanded} className="flex w-full items-start justify-between gap-4 text-left">
                   <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-blue-300">{linkedOrder?.order_number || delivery.order_id}</span>
+                    <span className="block text-xs font-semibold uppercase tracking-wider text-[var(--brand)]">{linkedOrder?.order_number || delivery.order_id}</span>
                     <span className="mt-2 block font-semibold text-white">{linkedOrder?.listing_title_snapshot || 'D-Delivery request'}</span>
                     <span className="mt-1 block text-xs text-zinc-500">Buyer: {names[delivery.buyer_id] || 'CampusTrader user'} · Seller: {names[delivery.seller_id] || 'CampusTrader user'}</span>
                   </span>
@@ -654,7 +654,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
                           <Detail label="Status" value={pretty(delivery.delivery_state)} />
                         </dl>
                       ) : null}
-                      {normalizedRiderPhone ? <a href={`tel:${normalizedRiderPhone}`} className="mt-3 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-blue-200">Call rider</a> : null}
+                      {normalizedRiderPhone ? <a href={`tel:${normalizedRiderPhone}`} className="mt-3 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-[var(--brand)]">Call rider</a> : null}
                     </section>
 
                     <section className="rounded-xl border border-zinc-800 p-3" aria-label="Manual delivery operation update">
@@ -680,7 +680,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
                           <textarea id={`delivery-note-${delivery.id}`} value={draft.operatorNote} onChange={(event) => updateManualDeliveryDraft(delivery, { operatorNote: event.target.value })} maxLength={1000} rows={2} className="mt-1 w-full resize-y rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm" />
                         </label>
                       </div>
-                      <button type="button" onClick={() => saveManualDelivery(delivery, draft)} disabled={workingId !== null || fulfillmentLoading || Boolean(fulfillmentError)} className="mt-3 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                      <button type="button" onClick={() => saveManualDelivery(delivery, draft)} disabled={workingId !== null || fulfillmentLoading || Boolean(fulfillmentError)} className="mt-3 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
                         {workingId === `${delivery.id}:delivery` ? 'Saving delivery update…' : 'Save dispatch update'}
                       </button>
                     </section>
