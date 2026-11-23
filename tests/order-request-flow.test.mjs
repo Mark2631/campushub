@@ -36,7 +36,6 @@ test('orders route reuses the existing buyer and seller activity screen', async 
 test('protected payment stays unavailable unless the server explicitly enables it', async () => {
   const checkout = await read('../components/OrderCheckoutForm.tsx');
   assert.match(checkout, /config\.payment_initiation_available === true/);
-  assert.match(checkout, /config\.payment_initiation_available === true/);
   assert.match(checkout, /\{protectedPaymentsReady \? \(/);
 });
 
