@@ -180,7 +180,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
 
   async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline' | 'handover') {
     if (action === 'receipt' && !window.confirm(orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Only confirm after the delivery has arrived and you have checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have physically collected and checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
-    if (action === 'decline' && !window.confirm('Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
+    if (action === 'decline' && !window.confirm(orderIsDirect(order) ? 'Decline this direct-arranged order? CampusTrader has not received or verified payment. Agree any direct-payment resolution with the buyer outside CampusTrader.' : 'Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
     if (action === 'handover' && !window.confirm('Confirm only after you have physically handed the item to the buyer. This will be recorded in the transaction history. Continue?')) return;
 
     setBusyKey(`${order.id}:${action}`);
