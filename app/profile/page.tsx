@@ -48,6 +48,10 @@ function statusLabel(status?: string | null) {
   return status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function isLivingListing(listing: Pick<Listing, 'listing_type'>) {
+  return listing.listing_type === 'PROPERTY_RENTAL' || listing.listing_type === 'ROOMMATE';
+}
+
 function statusClass(status?: string | null) {
   if (status === 'verified') return 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]';
   if (status === 'pending') return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200';
@@ -59,7 +63,7 @@ type ListingFilter = 'active' | 'sold' | 'hidden' | 'pending_payment';
 
 function listingEmptyText(filter: ListingFilter) {
   if (filter === 'active') return 'No active listings';
-  if (filter === 'sold') return 'No sold listings';
+  if (filter === 'sold') return 'No sold or unavailable listings';
   if (filter === 'pending_payment') return 'No pending listings';
   return 'No hidden listings';
 }
@@ -246,6 +250,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const handleListingStatus = async (listingId: string, status: 'sold' | 'hidden' | 'active') => {
     if (!user || listingActionId) return;
 
+    const changedListing = userListings.find((listing) => listing.id === listingId);
+    const isLivingListingAction = Boolean(changedListing && isLivingListing(changedListing));
     setListingActionId(listingId);
     setMessage(null);
 
@@ -257,7 +263,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         return;
       }
 
-      // Keep all lifecycle states in profile memory so Sold/Hidden tabs and
+      // Keep all lifecycle states in profile memory so Sold/Unavailable/Hidden tabs and
       // summary counts stay correct; the active tab naturally stops showing it.
       setUserListings((current) => current.map((listing) => (
         listing.id === listingId
@@ -271,7 +277,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
       showToast({
         type: 'success',
         message: status === 'sold'
-          ? 'Marked as sold and removed from the marketplace.'
+          ? isLivingListingAction ? 'Marked as unavailable and removed from the marketplace.' : 'Marked as sold and removed from the marketplace.'
           : status === 'hidden'
             ? 'Listing hidden from the marketplace.'
             : 'Listing restored to the marketplace.',
@@ -514,7 +520,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold">My Listings</h2>
-                  <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Manage active, pending, sold, and hidden listings.</p>
+                  <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">Manage active, pending, sold or unavailable, and hidden listings.</p>
                 </div>
                 <Link href="/sell" className="rounded-2xl bg-[var(--brand)] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)]">Post listing</Link>
               </div>
@@ -522,7 +528,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mb-4 grid grid-cols-4 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-1 dark:border-[var(--border)] dark:bg-[var(--background)]">
                 {(['active', 'pending_payment', 'sold', 'hidden'] as const).map((status) => (
                   <button key={status} type="button" onClick={() => setListingFilter(status)} className={`rounded-xl px-3 py-2 text-sm font-bold capitalize ${listingFilter === status ? 'bg-[var(--brand)] text-white' : 'text-[var(--muted)] dark:text-[var(--foreground)]'}`}>
-                    {status === 'pending_payment' ? 'Pending' : status}
+                    {status === 'pending_payment' ? 'Pending' : status === 'sold' ? 'Sold / unavailable' : status}
                   </button>
                 ))}
               </div>
@@ -535,7 +541,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         <div className="min-w-0">
                           <p className="truncate font-bold">{listing.title}</p>
                           <p className="mt-1 text-sm text-[var(--muted)] dark:text-[var(--muted)]">
-                            {listing.price ? `KSh ${listing.price.toLocaleString()}` : 'No price'} · {listing.location || 'MUST'} · {statusLabel(listing.status)}
+                            {listing.price ? `KSh ${listing.price.toLocaleString()}${isLivingListing(listing) ? ' / month' : ''}` : 'No price'} · {listing.location || 'MUST'} · {isLivingListing(listing) && listing.status === 'sold' ? 'Unavailable' : statusLabel(listing.status)}
                           </p>
                         </div>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -543,7 +549,11 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                           <Link href={`/sell?edit=${listing.id}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-center text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">Edit</Link>
                           {listing.status !== 'sold' ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'sold')} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-                              {listingActionId === listing.id ? 'Saving…' : 'Sold'}
+                              {listingActionId === listing.id ? 'Saving…' : isLivingListing(listing) ? 'Mark unavailable' : 'Sold'}
+                            </button>
+                          ) : listing.status === 'sold' && isLivingListing(listing) ? (
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                              {listingActionId === listing.id ? 'Saving…' : 'Make available'}
                             </button>
                           ) : null}
                           {listing.status !== 'hidden' ? (
