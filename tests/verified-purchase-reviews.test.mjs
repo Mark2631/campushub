@@ -57,17 +57,17 @@ test('public reputation endpoint exposes aggregate ratings only and is scoped to
 
   assert.match(migration, /SECURITY DEFINER/);
   assert.match(migration, /SET search_path = pg_catalog, public/);
-  assert.match(migration, /ROUND\\(AVG\\(r\\.rating\\)::numeric, 1\\)/);
-  assert.match(migration, /COUNT\\(\\*\\)::bigint/);
-  assert.match(migration, /active_listing\\.status = 'active'/);
-  assert.match(migration, /REVOKE ALL ON FUNCTION public\\.get_public_seller_rating\\(uuid\\) FROM PUBLIC/);
-  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\\.get_public_seller_rating\\(uuid\\) TO anon, authenticated/);
-  assert.doesNotMatch(migration, /reviewer_id|r\\.comment/);
+  assert.match(migration, /ROUND\(AVG\(r\.rating\)::numeric, 1\)/);
+  assert.match(migration, /COUNT\(\*\)::bigint/);
+  assert.match(migration, /active_listing\.status = 'active'/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid\) FROM PUBLIC/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid\) TO anon, authenticated/);
+  assert.doesNotMatch(migration, /reviewer_id|r\.comment/);
   assert.match(reviews, /supabase\\.rpc\\('get_public_seller_rating'/);
   assert.match(reviews, /average_rating/);
   assert.match(reviews, /review_count/);
-  assert.match(detail, /publicSellerRating\\.averageRating\\.toFixed\\(1\\)/);
-  assert.match(detail, /publicSellerRating\\.reviewCount/);
+  assert.match(detail, /publicSellerRating\.averageRating\.toFixed\(1\)/);
+  assert.match(detail, /publicSellerRating\.reviewCount/);
 });
 
 test('review form is hidden from seller-side, unpaid, disputed or unconfirmed orders', async () => {
