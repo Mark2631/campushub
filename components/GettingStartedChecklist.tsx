@@ -56,7 +56,7 @@ export default function GettingStartedChecklist() {
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]"><div className="h-full rounded-full bg-[var(--brand)]" style={{ width: `${completed / steps.length * 100}%` }} /></div>
       {expanded && <div className="mt-2 divide-y divide-[var(--border)]">
         {steps.map(step => <Link key={step.label} href={step.href} className="flex items-center gap-2 py-2 text-xs text-[var(--foreground)]">
-          <CheckCircle2 className={`h-4 w-4 shrink-0 ${step.done ? 'text-emerald-600' : 'text-[var(--muted)]'}`} />
+          <CheckCircle2 className={`h-4 w-4 shrink-0 ${step.done ? 'text-[var(--brand)]' : 'text-[var(--muted)]'}`} />
           <span className="flex-1">{step.label}</span><ChevronRight className="h-3.5 w-3.5" />
         </Link>)}
         <Link href="/help" className="block pt-2 text-xs font-semibold text-[var(--brand)]">How CampusTrader works</Link>
