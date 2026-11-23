@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ShieldCheck, UserRound, X } from 'lucide-react';
+import { ShieldCheck, Star, UserRound, X } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 import Header from '../../components/Header';
 import Logo from '../../components/Logo';
@@ -31,6 +31,7 @@ import {
 } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 import { institutionLabel, normalizeInstitution } from '../../lib/validation';
+import { getReviewsReceivedBySeller, type SellerReview } from '../../lib/reviews';
 
 const verificationTypes = [
   { value: 'student', label: 'Student ID' },
@@ -75,6 +76,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
   const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
+  const [sellerReviews, setSellerReviews] = useState<SellerReview[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(helpRequested);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
@@ -112,6 +114,9 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const soldListingsCount = userListings.filter((listing) => listing.status === 'sold').length;
   const hiddenListingsCount = userListings.filter((listing) => listing.status === 'hidden').length;
   const pendingListingsCount = userListings.filter((listing) => listing.status === 'pending_payment').length;
+  const sellerReviewAverage = sellerReviews.length
+    ? sellerReviews.reduce((total, review) => total + review.rating, 0) / sellerReviews.length
+    : 0;
   const filteredListings = userListings.filter((listing) => listing.status === listingFilter);
   const authNextPath = helpRequested ? '/profile?manage=help#manage-help' : '/profile';
   const createAccountHref = `/signin?next=${encodeURIComponent(authNextPath)}`;
@@ -120,11 +125,12 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const loadProfile = useCallback(async () => {
     if (!user) return;
     setProfileLoading(true);
-    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }] = await Promise.all([
+    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }, { reviews: receivedReviews }] = await Promise.all([
       upsertProfile(user),
       getBusinessProfiles(user.id),
       getListingsByUser(user.id),
       getLatestVerificationRequest(user.id),
+      getReviewsReceivedBySeller(user.id),
     ]);
 
     setProfile(syncedProfile);
@@ -132,6 +138,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     setPhoneInput(syncedProfile?.phone_number || '');
     setBusinesses(userBusinesses);
     setUserListings(listings);
+    setSellerReviews(receivedReviews);
     setVerificationRequest(request);
     setProfileLoading(false);
   }, [user]);
@@ -493,8 +500,39 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                 ))}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)] dark:border-[var(--border)] dark:text-[var(--muted)]">
-                Rating and reviews will appear here after more completed trades.
+              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 dark:border-[var(--border)] dark:bg-[var(--background)]">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Buyer feedback</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">Ratings from completed purchases where buyers confirmed receipt.</p>
+                  </div>
+                  {sellerReviews.length > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+                      <span className="text-lg font-bold">{sellerReviewAverage.toFixed(1)}</span>
+                      <span className="text-xs text-[var(--muted)]">({sellerReviews.length})</span>
+                    </div>
+                  ) : null}
+                </div>
+                {sellerReviews.length === 0 ? (
+                  <p className="mt-3 text-sm text-[var(--muted)]">No buyer feedback yet. Reviews unlock after a completed order and confirmed receipt.</p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {sellerReviews.slice(0, 3).map((review) => (
+                      <article key={review.id} className="border-t border-[var(--border)] pt-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-1" aria-label={`${review.rating} out of 5 stars`}>
+                            {Array.from({ length: review.rating }, (_, index) => <Star key={index} className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />)}
+                            <span className="ml-1 text-xs font-semibold">{review.rating}/5</span>
+                          </div>
+                          <time className="text-[11px] text-[var(--muted)]">{new Date(review.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</time>
+                        </div>
+                        {review.comment ? <p className="mt-2 text-sm leading-6 text-[var(--foreground)]">{review.comment}</p> : <p className="mt-2 text-xs text-[var(--muted)]">Rating submitted without a comment.</p>}
+                      </article>
+                    ))}
+                    {sellerReviews.length > 3 ? <p className="text-xs text-[var(--muted)]">Showing the 3 most recent of {sellerReviews.length} reviews.</p> : null}
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 dark:border-[var(--border)] dark:bg-[var(--background)]">
