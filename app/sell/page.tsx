@@ -15,7 +15,7 @@ import { getProfileById, type ProfileRecord } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 import { isValidUuid } from '../../lib/validation';
 
-const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Business', 'Refurbished', 'Other'];
+const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Accommodation', 'Roommates', 'Business', 'Refurbished', 'Other'];
 const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
 const maxVideoSize = 15 * 1024 * 1024;
@@ -117,7 +117,7 @@ function SellPageContent() {
 
       setFormData({
         title: listing.title,
-        category: listing.category,
+        category: listing.listing_type === 'PROPERTY_RENTAL' ? 'Accommodation' : listing.listing_type === 'ROOMMATE' ? 'Roommates' : listing.category,
         price: listing.price != null && listing.price > 0 ? listing.price.toString() : '',
         negotiable: listing.negotiable,
         condition: normalizeListingCondition(listing.condition, listing.category),
@@ -388,6 +388,9 @@ function SellPageContent() {
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
     if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
     if (formData.price.trim() && Number(formData.price) === 0) return 'Leave the price blank if buyers should contact you to agree on a price.';
+    if (formData.category === 'Accommodation' && !formData.price.trim()) return 'Add the monthly rent so students can compare places.';
+    if (['Accommodation', 'Roommates'].includes(formData.category) && !formData.location.trim()) return 'Add the neighbourhood or campus area.';
+    if (['Accommodation', 'Roommates'].includes(formData.category) && formData.description.trim().length < 30) return 'Add a few details about the space, costs and move-in arrangements.';
     return null;
   };
 
@@ -593,7 +596,7 @@ function SellPageContent() {
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
           <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
-          <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)] mt-2">Post items, services, or campus requests for MUST students.</p>
+          <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)] mt-2">Post products, rentals, roommate openings or services for students at your campus.</p>
         </header>
 
         <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
@@ -943,18 +946,18 @@ function SellPageContent() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Price (KSh, optional)</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Monthly rent (KSh)' : formData.category === 'Roommates' ? 'Monthly share per person (KSh, optional)' : 'Price (KSh, optional)'}</span>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="Leave blank to ask seller"
+                placeholder={formData.category === 'Accommodation' ? 'e.g. 8500 per month' : formData.category === 'Roommates' ? 'e.g. 6000 monthly share' : 'Leave blank to ask seller'}
                 min="1"
                 step="1"
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
-              <span className="block text-xs text-[var(--muted)] dark:text-[var(--muted)]">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
+              <span className="block text-xs text-[var(--muted)] dark:text-[var(--muted)]">{formData.category === 'Accommodation' ? 'Enter monthly rent. Add deposit and other charges in the description.' : formData.category === 'Roommates' ? 'Use the expected monthly share if known. Explain how bills are split in the description.' : 'Leave blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.'}</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-sm cursor-pointer hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition">
               <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Negotiable</span>
@@ -968,6 +971,7 @@ function SellPageContent() {
             </label>
           </div>
 
+          {formData.category !== 'Accommodation' && formData.category !== 'Roommates' ? (
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
               <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Condition</span>
@@ -994,11 +998,19 @@ function SellPageContent() {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="Campus area or building"
+                placeholder={formData.category === 'Accommodation' || formData.category === 'Roommates' ? 'Neighbourhood, estate or campus area' : 'Campus area or building'}
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
             </label>
           </div>
+          ) : null}
+
+          {formData.category === 'Accommodation' || formData.category === 'Roommates' ? (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-6 text-[var(--muted)]">
+              <p className="font-semibold text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Help students assess the place' : 'Make it easier to find a compatible roommate'}</p>
+              <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, amenities, exact area, move-in date and when a viewing can be arranged.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
+            </div>
+          ) : null}
 
           <label className="space-y-2 text-sm">
             <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Description</span>
@@ -1006,9 +1018,9 @@ function SellPageContent() {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={4}
+              rows={formData.category === 'Accommodation' || formData.category === 'Roommates' ? 5 : 4}
               className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
-              placeholder="Tell buyers what makes this item special, its condition, and any defects."
+              placeholder={formData.category === 'Accommodation' ? 'Describe the room, utilities, amenities, deposit and viewing arrangements.' : formData.category === 'Roommates' ? 'Do you have a room or need one? Describe the space, sharing costs, house rules and move-in date.' : 'Describe the item, condition, what is included and any defects buyers should know.'}
             />
           </label>
 
