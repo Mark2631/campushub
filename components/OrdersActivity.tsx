@@ -489,7 +489,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             ) : null}
             {isBuying && orderIsDirect(order) && !orderIsClosed(order) ? (
               <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-sm leading-6 text-[var(--foreground)]">
-                Direct payment is arranged with the seller. CampusTrader does not receive or verify it. Confirm receipt only after you have physically collected the item.
+                Direct payment is arranged with the seller. CampusTrader does not receive or verify it. {isSelfPickup ? 'Confirm collection only after you have physically collected and checked the item.' : 'Confirm receipt only after the delivery is marked arrived or delivered and you have checked the item.'}
               </p>
             ) : null}
             {!isBuying && orderIsPaid(order) ? (
