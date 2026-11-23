@@ -123,6 +123,18 @@ test('housing filters use monthly labels and do not retain product condition fil
   assert.match(home, /event\.target\.value === 'Accommodation' \|\| event\.target\.value === 'Roommates'[\s\S]*?condition: 'all'/);
 });
 
+test('active accommodation and roommate listings can be reconfirmed without changing status', async () => {
+  const profile = await read('../app/profile/page.tsx');
+  const listings = await read('../lib/listings.ts');
+  assert.match(profile, /listing\.status === 'active' && isLivingListing\(listing\)/);
+  assert.match(profile, /handleListingStatus\(listing\.id, 'active'\)/);
+  assert.match(profile, /'Confirm available'/);
+  assert.match(profile, /wasAlreadyActive = changedListing\?\.status === 'active'/);
+  assert.match(profile, /Availability reconfirmed\. The listing freshness date has been updated/);
+  assert.match(listings, /\.update\(\{ status \}\)/);
+  assert.match(listings, /\.eq\('seller_id', sellerId\)/);
+});
+
 test('rentals and roommate listings cannot enter physical-product checkout', async () => {
   const [detail, checkout] = await Promise.all([
     read('../app/listing/[id]/page.tsx'),
