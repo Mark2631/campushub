@@ -503,8 +503,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 dark:border-[var(--border)] dark:bg-[var(--background)]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold">Buyer feedback</p>
-                    <p className="mt-1 text-xs text-[var(--muted)]">Ratings from completed purchases where buyers confirmed receipt.</p>
+                    <p className="text-sm font-semibold">Recent buyer feedback</p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">Recent average · ratings from completed purchases with confirmed receipt.</p>
                   </div>
                   {sellerReviews.length > 0 ? (
                     <div className="flex items-center gap-1.5">
