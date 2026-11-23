@@ -381,7 +381,7 @@ export default function CommunityGroupPage({ params }: Props) {
       <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-4 py-10">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-[var(--border)]" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-[var(--brand)] dark:border-[var(--border)]" />
         </main>
         <BottomNav />
       </div>
