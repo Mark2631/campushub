@@ -29,8 +29,11 @@ test('housing and roommate discovery filters use their own listing types', async
 });
 
 test('creating and editing a rental or roommate listing preserves its dedicated database type', async () => {
-  const listings = await read('../lib/listings.ts');
-  const sell = await read('../app/sell/page.tsx');
+  const [listings, sell, detail] = await Promise.all([
+    read('../lib/listings.ts'),
+    read('../app/sell/page.tsx'),
+    read('../app/listing/[id]/page.tsx'),
+  ]);
 
   assert.equal((listings.match(/validated\.value\.category === 'Accommodation'/g) || []).length, 2);
   assert.equal((listings.match(/'PROPERTY_RENTAL'/g) || []).length >= 2, true);
