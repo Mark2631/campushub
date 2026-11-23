@@ -44,7 +44,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] dark:text-[var(--muted)]">{user ? 'Signed in as' : 'Account'}</p>
             <p className="mt-2 break-words text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">{user?.email || 'Not signed in'}</p>
             {isAdmin ? (
-              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+              <p className="mt-2 inline-flex rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--brand)]">
                 Admin badge
               </p>
             ) : null}
