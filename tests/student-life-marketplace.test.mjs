@@ -46,6 +46,8 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /!\['Services', 'Accommodation', 'Roommates', 'Refurbished'\]\.includes\(formData\.category\)/);
   assert.match(sell, /Choose condition/);
   assert.match(sell, /Choose the seller-reported condition/);
+  assert.match(sell, /condition: formData\.condition/);
+  assert.doesNotMatch(sell, /condition: normalizeListingCondition\(formData\.condition, formData\.category\)/);
   assert.match(listings, /Choose the seller-reported condition/);
   assert.match(sell, /nextCategory === 'Services' \? 'service' : nextCategory === 'Refurbished' \? 'refurbished' : ''/);
   assert.match(sell, /Add the neighbourhood or campus area/);
