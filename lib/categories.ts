@@ -8,6 +8,8 @@ export function normalizeCategory(value?: string | null) {
   const raw = String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 
   if (['service', 'services', 'campus services', 'skill', 'skills'].includes(raw)) return 'Services';
+  if (['accommodation', 'accommodations', 'housing', 'rental', 'rentals', 'property rental', 'room rental'].includes(raw)) return 'Accommodation';
+  if (['roommate', 'roommates', 'flatmate', 'flatmates', 'shared room', 'shared accommodation'].includes(raw)) return 'Roommates';
   if (['electronic', 'electronics', 'gadget', 'gadgets'].includes(raw)) return 'Electronics';
   if (['book', 'books', 'notes', 'study'].includes(raw)) return 'Books';
   if (['fashion', 'clothes', 'clothing', 'cloth designs'].includes(raw)) return 'Fashion';
@@ -43,6 +45,8 @@ export const STANDARD_CATEGORIES = [
   'Food',
   'Services',
   'Refurbished',
+  'Accommodation',
+  'Roommates',
   'Business',
   'Other',
 ] as const;
