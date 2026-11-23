@@ -429,6 +429,9 @@ function validateListingInput(data: {
 }) {
   const title = cleanText(data.title, 120);
   const category = normalizeCategory(data.category);
+  if (!['Services', 'Accommodation', 'Roommates', 'Refurbished'].includes(category) && !String(data.condition || '').trim()) {
+    return { error: 'Choose the seller-reported condition.' as const };
+  }
   const condition = normalizeListingCondition(data.condition, category);
   const parsedPrice = parseOptionalNumber(data.price);
   // Zero means "not provided" in this marketplace, never a free item.
