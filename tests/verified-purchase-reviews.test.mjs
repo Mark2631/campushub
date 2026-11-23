@@ -50,6 +50,26 @@ test('seller profile shows feedback from seller-owned reviews allowed by row-lev
   assert.match(profile, /Private to you · ratings from completed purchases with confirmed receipt/);
 });
 
+test('public reputation endpoint exposes aggregate ratings only and is scoped to active sellers', async () => {
+  const migration = await read('../supabase/migrations/20261123191500_public_seller_rating_aggregate.sql');
+  const reviews = await read('../lib/reviews.ts');
+  const detail = await read('../app/listing/[id]/page.tsx');
+
+  assert.match(migration, /SECURITY DEFINER/);
+  assert.match(migration, /SET search_path = pg_catalog, public/);
+  assert.match(migration, /ROUND\\(AVG\\(r\\.rating\\)::numeric, 1\\)/);
+  assert.match(migration, /COUNT\\(\\*\\)::bigint/);
+  assert.match(migration, /active_listing\\.status = 'active'/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\\.get_public_seller_rating\\(uuid\\) FROM PUBLIC/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\\.get_public_seller_rating\\(uuid\\) TO anon, authenticated/);
+  assert.doesNotMatch(migration, /reviewer_id|r\\.comment/);
+  assert.match(reviews, /supabase\\.rpc\\('get_public_seller_rating'/);
+  assert.match(reviews, /average_rating/);
+  assert.match(reviews, /review_count/);
+  assert.match(detail, /publicSellerRating\\.averageRating\\.toFixed\\(1\\)/);
+  assert.match(detail, /publicSellerRating\\.reviewCount/);
+});
+
 test('review form is hidden from seller-side, unpaid, disputed or unconfirmed orders', async () => {
   const activity = await read('../components/OrdersActivity.tsx');
   assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderIsPaid\(order\)[\s\S]*?orderState !== 'DISPUTED'[\s\S]*?CONFIRMED/);
