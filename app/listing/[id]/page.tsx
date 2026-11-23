@@ -115,6 +115,8 @@ export default async function ListingPage({ params }: Props) {
     month: 'short',
     day: 'numeric',
   });
+  const isRentalListing = listing.listing_type === 'PROPERTY_RENTAL';
+  const isRoommateListing = listing.listing_type === 'ROOMMATE';
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
   const { listings: relatedCandidates } = listing.status === 'active'
@@ -174,7 +176,7 @@ export default async function ListingPage({ params }: Props) {
         <div className="mx-auto max-w-5xl space-y-8">
           <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm sm:p-6 md:p-8">
             <div className="mb-6 sm:mb-8">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{listing.category}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand)]">{isRentalListing ? "Student accommodation" : isRoommateListing ? "Roommate listing" : listing.category}</p>
               <h1 className="mt-3 text-2xl font-bold text-[var(--foreground)] sm:text-3xl md:text-4xl dark:text-[var(--foreground)]">{listing.title}</h1>
             </div>
 
@@ -200,9 +202,9 @@ export default async function ListingPage({ params }: Props) {
                 ) : null}
 
                 <div className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand)]">Price</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand)]">{isRentalListing ? "Monthly rent" : isRoommateListing ? "Monthly share" : "Price"}</p>
                   <p className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand)] sm:text-4xl">
-                    {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}` : 'Ask seller for price'}
+                    {listing.price != null && listing.price > 0 ? `KSh ${listing.price.toLocaleString()}${isRentalListing || isRoommateListing ? " / month" : ""}` : isRentalListing ? "Ask for monthly rent" : isRoommateListing ? "Ask for monthly share" : "Ask seller for price"}
                   </p>
                   {listing.negotiable ? <p className="mt-2 text-sm font-semibold text-[var(--brand)] dark:text-[var(--brand)]">Negotiable</p> : null}
                 </div>
@@ -212,10 +214,17 @@ export default async function ListingPage({ params }: Props) {
                     <p className="text-sm font-semibold text-[var(--muted)]">Category</p>
                     <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{listing.category}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--muted)]">Condition</p>
-                    <p className="mt-2 text-lg font-bold capitalize text-[var(--foreground)]">{listing.condition}</p>
-                  </div>
+                  {!isRentalListing && !isRoommateListing ? (
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--muted)]">Condition</p>
+                      <p className="mt-2 text-lg font-bold capitalize text-[var(--foreground)]">{listing.condition}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--muted)]">Listing type</p>
+                      <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{isRentalListing ? "Room or rental" : "Roommate search"}</p>
+                    </div>
+                  )}
                   <div className="border-t border-[var(--border)] pt-4 dark:border-[var(--border)]">
                     <p className="text-sm font-semibold text-[var(--muted)]">Location</p>
                     <p className="mt-2 text-lg font-bold text-[var(--foreground)]">{listing.location || 'Campus location'}</p>
@@ -281,12 +290,12 @@ export default async function ListingPage({ params }: Props) {
                   ) : (
                     <>
                       {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
-                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} />
+                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Arrange a viewing" : isRoommateListing ? "Contact about sharing" : "Message Seller"} />
                       <WhatsAppButton listingId={listing.id} />
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
-                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Message the seller to confirm availability, collection and payment details.</p>
+                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">{isRentalListing ? "Message the lister to arrange a viewing and confirm rent, deposit and terms." : isRoommateListing ? "Start a conversation about the space, monthly share, house rules and move-in date." : "Message the seller to confirm availability, collection and payment details."}</p>
                     </>
                   )}
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
