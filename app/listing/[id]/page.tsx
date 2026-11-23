@@ -216,7 +216,7 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   {!isRentalListing && !isRoommateListing ? (
                     <div>
-                      <p className="text-sm font-semibold text-[var(--muted)]">Condition</p>
+                      <p className="text-sm font-semibold text-[var(--muted)]">Seller-reported condition</p>
                       <p className="mt-2 text-lg font-bold capitalize text-[var(--foreground)]">{listing.condition}</p>
                     </div>
                   ) : (
