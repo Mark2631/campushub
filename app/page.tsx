@@ -490,9 +490,9 @@ export default function Home() {
               aria-label="Search category"
               value={category}
               onChange={(event) => { setCategory(event.target.value); setMode('All'); }}
-              className="hidden h-10 max-w-[138px] shrink-0 border-r border-[var(--border)] bg-[var(--surface-muted)] px-2 text-xs font-semibold text-[var(--foreground)] outline-none sm:block"
+              className="h-10 max-w-[94px] shrink-0 border-r border-[var(--border)] bg-[var(--surface-muted)] px-1.5 text-[10px] font-semibold text-[var(--foreground)] outline-none sm:max-w-[138px] sm:px-2 sm:text-xs"
             >
-              <option value="All">All categories</option>
+              <option value="All">All</option>
               {categoryMeta.map(({ name }) => <option key={name} value={name}>{name}</option>)}
             </select>
             <input
