@@ -529,6 +529,39 @@ export default function Home() {
           ) : null}
         </section>
 
+        <section aria-label="Browse by budget" className="relative z-10 mb-6 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-[11px] font-semibold text-[var(--muted)]">Products within your budget</span>
+          {[500, 1000, 3000].map((ceiling) => {
+            const active = mode === 'Products' && category === 'All' && filters.maxPrice === String(ceiling)
+              && !filters.minPrice && sort === 'price-low';
+            return (
+              <button
+                key={ceiling}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  setMode('Products');
+                  setCategory('All');
+                  setQuery('');
+                  setSort('price-low');
+                  setFilters({
+                    minPrice: '',
+                    maxPrice: String(ceiling),
+                    condition: 'all',
+                    location: '',
+                    seller: 'all',
+                    negotiableOnly: false,
+                  });
+                }}
+                className={'rounded-full border px-3 py-2 text-[11px] font-semibold transition ' + (active
+                  ? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+                  : 'border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--brand)]')}
+              >
+                Under KSh {ceiling.toLocaleString('en-KE')}
+              </button>
+            );
+          })}
+        </section>
 
         <section className="mb-7 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-stretch">
           <div className="flex flex-col justify-center rounded-[26px] bg-[var(--brand)] px-5 py-7 text-white sm:px-8 sm:py-9">
