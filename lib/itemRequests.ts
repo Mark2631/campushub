@@ -230,3 +230,62 @@ export async function deleteItemRequest(requestId: string) {
     return { error: 'Could not delete this request. Please try again.' };
   }
 }
+
+/**
+ * Owners may mark their own open request fulfilled or reopen a fulfilled request.
+ * The database RLS policy and tenant guard remain authoritative for the update.
+ */
+export async function updateItemRequestStatus(
+  requestId: string,
+  userId: string,
+  status: 'open' | 'fulfilled',
+) {
+  if (!isValidUuid(requestId) || !isValidUuid(userId) || !['open', 'fulfilled'].includes(status)) {
+    return { request: null as Pick<ItemRequest, 'id' | 'status' | 'updated_at'> | null, error: 'That request could not be updated.' };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || authData.user?.id !== userId) {
+    return { request: null as Pick<ItemRequest, 'id' | 'status' | 'updated_at'> | null, error: 'Sign in again to update your request.' };
+  }
+
+  try {
+    const updatedAt = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('item_requests')
+      .update({ status, updated_at: updatedAt })
+      .eq('id', requestId)
+      .eq('user_id', userId)
+      .in('status', ['open', 'fulfilled'])
+      .select('id, status, updated_at')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error updating item request status:', serializeError(error));
+      return {
+        request: null as Pick<ItemRequest, 'id' | 'status' | 'updated_at'> | null,
+        error: error.code === '42501'
+          ? 'Your campus account could not update this request. Refresh your profile and try again.'
+          : 'Could not update this request. Please try again.',
+      };
+    }
+
+    if (!data || data.id !== requestId || data.status !== status) {
+      return {
+        request: null as Pick<ItemRequest, 'id' | 'status' | 'updated_at'> | null,
+        error: 'This request is no longer open for updates. Refresh and try again.',
+      };
+    }
+
+    return {
+      request: data as Pick<ItemRequest, 'id' | 'status' | 'updated_at'>,
+      error: null,
+    };
+  } catch (error) {
+    console.error('Unexpected request status update failure:', error);
+    return {
+      request: null as Pick<ItemRequest, 'id' | 'status' | 'updated_at'> | null,
+      error: 'Could not update this request. Please try again.',
+    };
+  }
+}
