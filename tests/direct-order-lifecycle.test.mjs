@@ -23,7 +23,7 @@ test('direct orders can be accepted by the seller without being described as pai
   assert.match(activity, /canSellerRespond = !isBuying && orderCanProgress\(order\)/);
   assert.match(activity, /Direct payment is arranged between you and the buyer/);
   assert.match(activity, /CampusTrader does not receive or verify it/);
-  assert.match(activity, /Order accepted\\. Agree on direct payment and collection details with the buyer/);
+  assert.match(activity, /Order accepted\. Agree on direct payment and collection details with the buyer/);
   assert.match(activity, /canSellerConfirmHandover = !isBuying && isSelfPickup && orderIsPaid\(order\)/);
 });
 
@@ -33,7 +33,7 @@ test('direct pickup receipt can only be confirmed after seller acceptance', asyn
   assert.match(activity, /directPickupReady = orderIsDirect\(order\)[\s\S]*?isSelfPickup[\s\S]*?SELLER_ACCEPTED/);
   assert.match(activity, /orderIsDirect\(order\) \? isSelfPickup \? 'Confirm collection'/);
   assert.match(activity, /Only confirm after you have physically collected and checked the item/);
-  assert.match(activity, /Confirm collection\. Direct payment remains between you and the buyer/);
+  assert.match(activity, /Collection confirmed\. Direct payment remains between you and the buyer/);
 });
 
 test('direct D-Delivery receipt waits for the buyer-visible delivery record to arrive', async () => {
