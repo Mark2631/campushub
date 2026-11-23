@@ -24,7 +24,7 @@ function NoticeBanner({ notice }: { notice: Notice | null }) {
 
   const classes =
     notice.tone === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200'
+      ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
       : notice.tone === 'info'
         ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]'
         : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200';
