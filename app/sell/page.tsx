@@ -666,7 +666,7 @@ function SellPageContent() {
             </div>
 
             {requestMessage ? (
-              <div className={`rounded-2xl border p-3 text-sm font-semibold ${requestMessage.type === 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900/40 dark:bg-green-950/40 dark:text-green-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200'}`}>
+              <div className={`rounded-2xl border p-3 text-sm font-semibold ${requestMessage.type === 'success' ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200'}`}>
                 {requestMessage.text}
               </div>
             ) : null}
@@ -727,7 +727,7 @@ function SellPageContent() {
         ) : null}
 
         {activeTab === 'sell' && message && (
-          <div className={`mb-6 rounded-2xl border p-4 ${message.type === 'success' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
+          <div className={`mb-6 rounded-2xl border p-4 ${message.type === 'success' ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'}`}>
             <p className="font-medium">{message.text}</p>
             {message.type === 'success' && (
               <div className="mt-2 flex flex-wrap gap-3 text-sm">
