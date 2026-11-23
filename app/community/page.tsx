@@ -148,7 +148,7 @@ export default function CommunityPage() {
               <h2 className="text-sm font-bold text-[var(--foreground)] dark:text-[var(--foreground)]">Official groups</h2>
             </div>
             {isAdmin ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+              <span className="rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-xs font-bold text-[var(--brand)]">
                 Admin controls
               </span>
             ) : null}
