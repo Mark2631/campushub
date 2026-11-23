@@ -46,7 +46,8 @@ const prettyPaymentState = (value?: string | null) => {
   const state = normalizeState(value);
   if (['STK_REQUESTED', 'REQUEST_SENT'].includes(state)) return 'Payment request sent';
   if (['PENDING', 'PENDING_PAYMENT', 'PAYMENT_PENDING'].includes(state)) return 'Payment pending';
-  if (['PAYMENT_SECURED', 'SECURED', 'PAID'].includes(state)) return 'Payment secured';
+  if (state === 'DIRECT_ARRANGED') return 'Direct payment · not verified by CampusTrader';
+  if (['PAYMENT_SECURED', 'SECURED', 'PAID'].includes(state)) return 'Protected payment secured';
   if (['FAILED', 'PAYMENT_FAILED', 'STK_FAILED'].includes(state)) return 'Payment failed';
   if (['CANCELLED', 'PAYMENT_CANCELLED'].includes(state)) return 'Payment cancelled';
   if (['VERIFICATION_FAILED', 'PAYMENT_VERIFICATION_FAILED'].includes(state)) return 'Payment verification failed';
@@ -55,8 +56,19 @@ const prettyPaymentState = (value?: string | null) => {
 };
 const formatKes = (value: number) => `KSh ${Number(value || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 })}`;
 
+function orderIsDirect(order: MarketplaceOrder) {
+  return normalizeState(order.payment_option) === 'DIRECT';
+}
+
 function orderIsPaid(order: MarketplaceOrder) {
   return ['PAYMENT_SECURED', 'SECURED', 'PAID'].includes(normalizeState(order.payment_state));
+}
+
+// Direct arrangements are not verified payments, but the backend permits the
+// seller acceptance and buyer receipt steps for eligible direct orders.
+function orderCanProgress(order: MarketplaceOrder) {
+  return orderIsPaid(order)
+    || (orderIsDirect(order) && normalizeState(order.payment_state) === 'DIRECT_ARRANGED');
 }
 
 function orderIsClosed(order: MarketplaceOrder) {
@@ -141,7 +153,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   );
 
   async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline' | 'handover') {
-    if (action === 'receipt' && !window.confirm('Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
+    if (action === 'receipt' && !window.confirm(orderIsDirect(order) ? 'Only confirm after you have physically collected and checked the item. CampusTrader does not verify direct payment. This confirmation cannot be undone. Continue?' : 'Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
     if (action === 'decline' && !window.confirm('Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
     if (action === 'handover' && !window.confirm('Confirm only after you have physically handed the item to the buyer. This will be recorded in the transaction history. Continue?')) return;
 
@@ -160,9 +172,9 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         setFeedback({ type: 'error', text: actionError });
       } else {
         const successText = action === 'receipt'
-          ? 'Receipt confirmed. The transaction is awaiting the configured release workflow.'
+          ? orderIsDirect(order) ? 'Collection confirmed. Direct payment remains between you and the buyer; CampusTrader has not verified it.' : 'Receipt confirmed. The protected transaction is awaiting the configured settlement workflow.'
           : action === 'accept'
-            ? 'Order accepted. Payment remains protected; prepare the item for handover.'
+            ? orderIsDirect(order) ? 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
             : action === 'decline'
               ? 'Order declined. Refund handling remains subject to backend processing.'
               : 'Pickup handover recorded. The buyer can confirm receipt in Orders.';
@@ -202,7 +214,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   async function submitReview(order: MarketplaceOrder) {
     if (
       order.buyer_id !== userId
-      || !orderIsPaid(order)
+      || !orderCanProgress(order)
       || normalizeState(order.order_state) !== 'COMPLETED'
       || normalizeState(order.buyer_receipt_state) !== 'CONFIRMED'
       || !order.listing_id
@@ -296,20 +308,30 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const sellerPending = ['SELLER_PENDING', 'PENDING', 'WAITING', 'NOT_STARTED'].includes(sellerState)
           || (!sellerState && ['SELLER_PENDING', 'AWAITING_SELLER', 'PAYMENT_SECURED'].includes(orderState));
         const sellerAccepted = ['ACCEPTED', 'SELLER_ACCEPTED'].includes(sellerState) || orderState === 'SELLER_ACCEPTED';
-        const canSellerRespond = !isBuying && orderIsPaid(order) && sellerPending && !orderIsClosed(order) && orderState !== 'DISPUTED';
+        const canSellerRespond = !isBuying && orderCanProgress(order) && sellerPending && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const deliveryOption = normalizeState(order.delivery_option);
         const isSelfPickup = ['PICKUP', 'SELF_PICKUP'].includes(deliveryOption);
         const canSellerConfirmHandover = !isBuying && isSelfPickup && orderIsPaid(order) && sellerAccepted
           && ['AWAITING_HANDOVER', 'SELLER_ACCEPTED', 'HANDED_OVER'].includes(orderState)
           && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const buyerReceiptState = normalizeState(order.buyer_receipt_state);
-        const canConfirmReceipt = isBuying && orderIsPaid(order)
-          && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER', 'RECEIPT_CONFIRMED'].includes(orderState)
+        const directPickupReady = orderIsDirect(order)
+          && isSelfPickup
+          && ['SELLER_ACCEPTED', 'AWAITING_RECEIPT'].includes(orderState);
+        const protectedReceiptReady = orderIsPaid(order)
+          && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER', 'RECEIPT_CONFIRMED'].includes(orderState);
+        const canConfirmReceipt = isBuying
+          && (directPickupReady || protectedReceiptReady)
           && !['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState)
           && orderState !== 'DISPUTED';
         const paymentState = normalizeState(order.payment_state);
-        const canCancel = isBuying && !orderIsPaid(order)
-          && ['', 'NOT_STARTED', 'FAILED', 'PAYMENT_FAILED', 'CANCELLED', 'PAYMENT_CANCELLED', 'TIMED_OUT'].includes(paymentState)
+        const canCancelDirectRequest = isBuying
+          && orderIsDirect(order)
+          && paymentState === 'DIRECT_ARRANGED'
+          && orderState === 'CREATED';
+        const canCancelUnpaidProtected = isBuying && !orderIsDirect(order) && !orderIsPaid(order)
+          && ['', 'NOT_STARTED', 'FAILED', 'PAYMENT_FAILED', 'CANCELLED', 'PAYMENT_CANCELLED', 'TIMED_OUT'].includes(paymentState);
+        const canCancel = (canCancelDirectRequest || canCancelUnpaidProtected)
           && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const canDispute = isBuying && !orderIsClosed(order) && orderState !== 'DISPUTED';
         const nameId = isBuying ? order.seller_id : order.buyer_id;
@@ -322,7 +344,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const isExpanded = expandedOrderId === order.id;
         const orderEvents = isExpanded ? events || [] : [];
         const completedReceipt = isBuying
-          && orderIsPaid(order)
+          && orderCanProgress(order)
           && orderState !== 'DISPUTED'
           && orderState === 'COMPLETED'
           && buyerReceiptState === 'CONFIRMED';
@@ -345,7 +367,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-[var(--background)] p-4 text-sm dark:bg-[var(--background)] sm:grid-cols-3">
               <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Quantity</dt><dd className="mt-1 font-semibold">{order.quantity}</dd></div>
               <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Fulfilment</dt><dd className="mt-1 font-semibold">{prettyState(order.delivery_option)}</dd></div>
-              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Payment</dt><dd className="mt-1 font-semibold">{prettyPaymentState(order.payment_state)}</dd></div>
+              <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Payment</dt><dd className="mt-1 font-semibold">{orderIsDirect(order) ? 'Direct · not verified' : prettyPaymentState(order.payment_state)}</dd></div>
               <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Order status</dt><dd className="mt-1 font-semibold">{prettyState(order.order_state)}</dd></div>
               <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Product amount</dt><dd className="mt-1 font-semibold">{formatKes(productAmount)}</dd></div>
                 <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Platform + delivery fees</dt><dd className="mt-1 font-semibold">{formatKes(fee + deliveryFee)}</dd></div>
@@ -424,9 +446,19 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
             ) : null}
 
             {isBuying && orderState === 'DISPUTED' ? <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">Transaction under review. It cannot be released while this dispute is active.</p> : null}
+            {!isBuying && orderIsDirect(order) && !orderIsClosed(order) ? (
+              <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-sm leading-6 text-[var(--foreground)]">
+                Direct payment is arranged between you and the buyer. CampusTrader does not receive or verify it. Agree on the payment and collection details before handover.
+              </p>
+            ) : null}
+            {isBuying && orderIsDirect(order) && !orderIsClosed(order) ? (
+              <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-sm leading-6 text-[var(--foreground)]">
+                Direct payment is arranged with the seller. CampusTrader does not receive or verify it. Confirm receipt only after you have physically collected the item.
+              </p>
+            ) : null}
             {!isBuying && orderIsPaid(order) ? (
               <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] p-3 text-sm leading-6 text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)] dark:text-[var(--foreground)]">
-                Payment secured. {sellerAccepted ? 'Order accepted; please prepare the item.' : sellerPending ? 'Waiting for your response.' : prettyState(order.seller_acceptance_state)} Settlement is operator-managed after handover and buyer confirmation; no automatic payout is promised.
+                Protected payment secured. {sellerAccepted ? 'Order accepted; please prepare the item.' : sellerPending ? 'Waiting for your response.' : prettyState(order.seller_acceptance_state)} Settlement is operator-managed after handover and buyer confirmation; no automatic payout is promised.
               </p>
             ) : null}
 
@@ -438,14 +470,18 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                 </>
               ) : null}
               {canSellerConfirmHandover ? <button type="button" onClick={() => runOrderAction(order, 'handover')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:handover` ? 'Recording handover…' : 'Confirm pickup handover'}</button> : null}
-              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : 'Confirm receipt'}</button> : null}
-              {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : 'Cancel unpaid order'}</button> : null}
+              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : orderIsDirect(order) ? 'Confirm collection' : 'Confirm receipt'}</button> : null}
+              {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : orderIsDirect(order) ? 'Cancel order request' : 'Cancel unpaid order'}</button> : null}
               {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)] disabled:opacity-50">Report a problem / dispute</button> : null}
               <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">{isExpanded ? 'Hide order details' : 'View order details'}</button>
               {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">View listing</Link> : null}
             </div>
 
-            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">{isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'} Settlement status is shown when recorded by the backend.</p> : null}
+            {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">
+              {orderIsDirect(order)
+                ? isSelfPickup ? 'Direct payment is arranged with the buyer. Confirm collection details before handover; the buyer confirms collection in Orders.' : 'Direct D-Delivery is coordinated manually. CampusTrader does not verify direct payment or simulate rider dispatch.'
+                : isSelfPickup ? 'Confirm pickup handover only after the buyer has collected the item. The buyer then confirms receipt in Orders.' : 'CampusTrader coordinates the delivery handoff. The backend records delivery status; no rider dispatch is simulated here.'}
+            </p> : null}
 
             {disputeOrderId === order.id ? (
               <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
