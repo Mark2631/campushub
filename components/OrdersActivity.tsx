@@ -8,6 +8,7 @@ import {
   cancelMarketplaceOrder,
   confirmOrderReceipt,
   getMyOrders,
+  getBuyerDeliveryStatus,
   getOrderEvents,
   getOrderFulfillmentDetails,
   getOrderParticipantNames,
@@ -131,6 +132,31 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const orders = (data?.orders || []).filter((order) => activeTab === 'buying' ? order.buyer_id === userId : order.seller_id === userId);
   const participantNames = data?.participantNames || {};
   const expandedOrder = orders.find((order) => order.id === expandedOrderId);
+  const shouldLoadDirectDelivery = Boolean(
+    activeTab === 'buying'
+    && expandedOrder
+    && expandedOrder.buyer_id === userId
+    && orderIsDirect(expandedOrder)
+    && normalizeState(expandedOrder.delivery_option) === 'D_DELIVERY'
+    && !orderIsClosed(expandedOrder)
+  );
+  const directDeliveryKey = shouldLoadDirectDelivery && expandedOrderId
+    ? ['campustrader-direct-delivery-status', expandedOrderId] as const
+    : null;
+  const {
+    data: buyerDeliveryState,
+    error: buyerDeliveryError,
+    isLoading: buyerDeliveryLoading,
+    mutate: mutateBuyerDelivery,
+  } = useSWR(
+    directDeliveryKey,
+    async ([, orderId]) => {
+      const result = await getBuyerDeliveryStatus(String(orderId), userId);
+      if (result.error) throw result.error;
+      return normalizeState(result.status);
+    },
+    { revalidateOnFocus: true, refreshInterval: directDeliveryKey ? 10000 : 0 },
+  );
   const canReadFulfillmentDetails = Boolean(expandedOrder && (
     expandedOrder.buyer_id === userId
     || (expandedOrder.seller_id === userId && orderIsPaid(expandedOrder))
@@ -153,7 +179,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   );
 
   async function runOrderAction(order: MarketplaceOrder, action: 'receipt' | 'accept' | 'decline' | 'handover') {
-    if (action === 'receipt' && !window.confirm(orderIsDirect(order) ? 'Only confirm after you have physically collected and checked the item. CampusTrader does not verify direct payment. This confirmation cannot be undone. Continue?' : 'Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
+    if (action === 'receipt' && !window.confirm(orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Only confirm after the delivery has arrived and you have checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have physically collected and checked the item. CampusTrader does not verify direct payment. Continue?' : 'Only confirm after you have received and checked your order. This confirmation cannot be undone. Continue?')) return;
     if (action === 'decline' && !window.confirm('Declining sends the order to the backend refund workflow. A refund is not automatic. Continue?')) return;
     if (action === 'handover' && !window.confirm('Confirm only after you have physically handed the item to the buyer. This will be recorded in the transaction history. Continue?')) return;
 
@@ -172,16 +198,19 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         setFeedback({ type: 'error', text: actionError });
       } else {
         const successText = action === 'receipt'
-          ? orderIsDirect(order) ? 'Collection confirmed. Direct payment remains between you and the buyer; CampusTrader has not verified it.' : 'Receipt confirmed. The protected transaction is awaiting the configured settlement workflow.'
+          ? orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Delivery receipt confirmed. Direct payment remains between you and the seller; CampusTrader has not verified it.' : 'Collection confirmed. Direct payment remains between you and the buyer; CampusTrader has not verified it.' : 'Receipt confirmed. The protected transaction is awaiting the configured settlement workflow.'
           : action === 'accept'
             ? orderIsDirect(order) ? 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
             : action === 'decline'
-              ? 'Order declined. Refund handling remains subject to backend processing.'
+              ? orderIsDirect(order) ? 'Order declined before direct payment was verified by CampusTrader. Agree any outstanding arrangement directly with the buyer.' : 'Order declined. Refund handling remains subject to backend processing.'
               : 'Pickup handover recorded. The buyer can confirm receipt in Orders.';
         setFeedback({ type: 'success', text: successText });
       }
       await mutate();
-      if (expandedOrderId === order.id) await mutateEvents();
+      if (expandedOrderId === order.id) {
+        await mutateEvents();
+        await mutateBuyerDelivery();
+      }
     } catch {
       setFeedback({ type: 'error', text: 'The transaction service could not complete that action. Refresh the order before retrying.' });
     } finally {
@@ -190,7 +219,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   }
 
   async function cancelUnpaidOrder(order: MarketplaceOrder) {
-    if (!window.confirm('Cancel this unpaid order? The backend will release its reserved stock if the order is still eligible.')) return;
+    if (!window.confirm(orderIsDirect(order) ? 'Cancel this order request before the seller accepts it? CampusTrader does not receive or verify any direct payment arranged outside the platform.' : 'Cancel this unpaid order? The backend will release its reserved stock if the order is still eligible.')) return;
     cancellationKeys.current[order.id] ??= crypto.randomUUID();
     setBusyKey(`${order.id}:cancel`);
     setFeedback(null);
@@ -203,7 +232,10 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         setFeedback({ type: 'success', text: 'Order cancellation was recorded by the backend. No payment or refund is assumed.' });
       }
       await mutate();
-      if (expandedOrderId === order.id) await mutateEvents();
+      if (expandedOrderId === order.id) {
+        await mutateEvents();
+        await mutateBuyerDelivery();
+      }
     } catch {
       setFeedback({ type: 'error', text: 'Cancellation could not be confirmed. Refresh Orders before retrying; the backend remains authoritative.' });
     } finally {
@@ -318,10 +350,14 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const directPickupReady = orderIsDirect(order)
           && isSelfPickup
           && ['SELLER_ACCEPTED', 'AWAITING_RECEIPT'].includes(orderState);
+        const directDeliveryReady = orderIsDirect(order)
+          && !isSelfPickup
+          && ['ARRIVED', 'DELIVERED'].includes(expandedOrderId === order.id ? buyerDeliveryState || '' : '')
+          && ['SELLER_ACCEPTED', 'OUT_FOR_DELIVERY', 'AWAITING_RECEIPT'].includes(orderState);
         const protectedReceiptReady = orderIsPaid(order)
           && ['DELIVERED', 'AWAITING_CONFIRMATION', 'AWAITING_RECEIPT', 'HANDED_OVER', 'RECEIPT_CONFIRMED'].includes(orderState);
         const canConfirmReceipt = isBuying
-          && (directPickupReady || protectedReceiptReady)
+          && (directPickupReady || directDeliveryReady || protectedReceiptReady)
           && !['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState)
           && orderState !== 'DISPUTED';
         const paymentState = normalizeState(order.payment_state);
@@ -470,13 +506,18 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                 </>
               ) : null}
               {canSellerConfirmHandover ? <button type="button" onClick={() => runOrderAction(order, 'handover')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:handover` ? 'Recording handover…' : 'Confirm pickup handover'}</button> : null}
-              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : orderIsDirect(order) ? 'Confirm collection' : 'Confirm receipt'}</button> : null}
+              {canConfirmReceipt ? <button type="button" onClick={() => runOrderAction(order, 'receipt')} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:receipt` ? 'Confirming…' : orderIsDirect(order) ? isSelfPickup ? 'Confirm collection' : 'Confirm delivery received' : 'Confirm receipt'}</button> : null}
               {canCancel ? <button type="button" onClick={() => cancelUnpaidOrder(order)} disabled={busyKey !== null} className="rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50 dark:border-amber-900/60 dark:text-amber-200">{busyKey === `${order.id}:cancel` ? 'Cancelling…' : orderIsDirect(order) ? 'Cancel order request' : 'Cancel unpaid order'}</button> : null}
               {canDispute ? <button type="button" onClick={() => { setDisputeOrderId(disputeOrderId === order.id ? null : order.id); setFeedback(null); }} disabled={busyKey !== null} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)] disabled:opacity-50">Report a problem / dispute</button> : null}
               <button type="button" onClick={() => setExpandedOrderId(isExpanded ? null : order.id)} aria-expanded={isExpanded} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">{isExpanded ? 'Hide order details' : 'View order details'}</button>
               {order.listing_id ? <Link href={`/listing/${order.listing_id}`} className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold dark:border-[var(--border)]">View listing</Link> : null}
             </div>
 
+            {isBuying && orderIsDirect(order) && !isSelfPickup && isExpanded ? (
+              <p className="mt-3 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">
+                {buyerDeliveryLoading ? 'Checking delivery status…' : buyerDeliveryError ? 'Delivery status is unavailable. Refresh Orders before confirming receipt.' : buyerDeliveryState ? `Delivery status: ${prettyState(buyerDeliveryState)}. Receipt confirmation appears after the backend records arrival.` : 'Waiting for the delivery record. Confirm receipt only after the item has arrived and you have checked it.'}
+              </p>
+            ) : null}
             {!isBuying && sellerAccepted ? <p className="mt-3 text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">
               {orderIsDirect(order)
                 ? isSelfPickup ? 'Direct payment is arranged with the buyer. Confirm collection details before handover; the buyer confirms collection in Orders.' : 'Direct D-Delivery is coordinated manually. CampusTrader does not verify direct payment or simulate rider dispatch.'
