@@ -15,7 +15,7 @@ import ListingCard from '../components/ListingCard';
 import GettingStartedChecklist from '../components/GettingStartedChecklist';
 import useUser from '../hooks/useUser';
 import { getListings, searchMarketplaceListings, type Listing, type MarketplaceSearchFilters } from '../lib/listings';
-import { getItemRequests, deleteItemRequest, type ItemRequest } from '../lib/itemRequests';
+import { getItemRequests, deleteItemRequest, updateItemRequestStatus, type ItemRequest } from '../lib/itemRequests';
 import { sendMessage } from '../lib/conversations';
 import { supabase } from '../lib/supabase';
 import { STANDARD_CATEGORIES, listingBelongsToCategory } from '../lib/categories';
@@ -109,7 +109,7 @@ function formatRequestBudget(request: ItemRequest) {
 
 export default function Home() {
   const router = useRouter();
-  const { user, institution, setInstitution, isAdmin } = useUser();
+  const { user, institution, setInstitution, isAdmin, showToast } = useUser();
   const [listings, setListings] = useState<Listing[]>([]);
   const [searchResults, setSearchResults] = useState<Listing[]>([]);
   const [requests, setRequests] = useState<ItemRequest[]>([]);
@@ -144,6 +144,7 @@ export default function Home() {
     negotiableOnly: false,
   });
   const [deletingRequest, setDeletingRequest] = useState<string | null>(null);
+  const [updatingRequest, setUpdatingRequest] = useState<string | null>(null);
   const [messagingRequest, setMessagingRequest] = useState<string | null>(null);
   const [requestActionError, setRequestActionError] = useState<string | null>(null);
 
@@ -438,6 +439,37 @@ export default function Home() {
       setRequestActionError('Could not open a conversation. Please try again.');
     } finally {
       setMessagingRequest(null);
+    }
+  };
+
+  const changeRequestStatus = async (request: ItemRequest, status: 'open' | 'fulfilled') => {
+    if (!user || user.id !== request.user_id || updatingRequest || !['open', 'fulfilled'].includes(request.status)) return;
+    if (status === 'fulfilled' && !window.confirm('Mark this request fulfilled? It will stop appearing to other students, but you can reopen it if needed.')) return;
+
+    setUpdatingRequest(request.id);
+    setRequestActionError(null);
+    try {
+      const result = await updateItemRequestStatus(request.id, user.id, status);
+      if (result.error || !result.request) {
+        setRequestActionError(result.error || 'Could not update this request. Please try again.');
+        return;
+      }
+
+      setRequests((current) => current.map((item) => (
+        item.id === request.id
+          ? { ...item, status: result.request!.status, updated_at: result.request!.updated_at }
+          : item
+      )));
+      showToast({
+        type: 'success',
+        message: status === 'fulfilled' ? 'Request marked fulfilled and removed from public requests.' : 'Request reopened and visible to campus sellers.',
+      });
+      window.dispatchEvent(new Event('campustrader:requests-refresh'));
+    } catch (error) {
+      console.error('Request lifecycle update failed:', error);
+      setRequestActionError('Could not update this request. Please try again.');
+    } finally {
+      setUpdatingRequest(null);
     }
   };
 
@@ -757,7 +789,12 @@ export default function Home() {
               {requests.slice(0, 6).map((request) => (
                 <article key={request.id} className="flex min-w-0 flex-col rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand)]/45">
                   <div className="flex items-start justify-between gap-3">
-                    <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand)]">{request.category || 'Campus request'}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--brand)]">{request.category || 'Campus request'}</span>
+                      {request.status !== 'open' ? (
+                        <span className="rounded-full border border-[var(--border)] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{request.status}</span>
+                      ) : null}
+                    </div>
                     {(isAdmin || user?.id === request.user_id) ? <button type="button" disabled={deletingRequest === request.id} onClick={() => void removeRequest(request)} className="text-[10px] font-semibold text-[var(--muted)] hover:text-red-600">{deletingRequest === request.id ? 'Removing…' : 'Remove'}</button> : null}
                   </div>
                   <h3 className="mt-3 line-clamp-2 text-sm font-bold text-[var(--foreground)]">{request.title}</h3>
@@ -767,11 +804,26 @@ export default function Home() {
                     <span className="inline-flex items-center gap-1"><Tag className="h-3 w-3" />{formatRequestBudget(request)}</span>
                   </div>
                   {user?.id === request.user_id ? (
-                    <p className="mt-4 rounded-xl bg-[var(--background)] px-3 py-2 text-[10px] font-semibold text-[var(--muted)]">Your request · students can message you</p>
-                  ) : (
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--background)] px-3 py-2">
+                      <p className="text-[10px] font-semibold text-[var(--muted)]">
+                        {request.status === 'open' ? 'Your open request · students can message you' : request.status === 'fulfilled' ? 'Fulfilled · no longer shown to other students' : `Your request · ${request.status}`}
+                      </p>
+                      {request.status === 'open' ? (
+                        <button type="button" disabled={updatingRequest === request.id} onClick={() => void changeRequestStatus(request, 'fulfilled')} className="rounded-lg border border-[var(--border)] px-3 py-2 text-[10px] font-bold text-[var(--foreground)] disabled:opacity-60">
+                          {updatingRequest === request.id ? 'Saving…' : 'Mark fulfilled'}
+                        </button>
+                      ) : request.status === 'fulfilled' ? (
+                        <button type="button" disabled={updatingRequest === request.id} onClick={() => void changeRequestStatus(request, 'open')} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-[10px] font-bold text-white disabled:opacity-60">
+                          {updatingRequest === request.id ? 'Reopening…' : 'Reopen request'}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : request.status === 'open' ? (
                     <button type="button" disabled={messagingRequest === request.id} onClick={() => void messageRequestOwner(request)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand)] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60">
                       <MessageCircle className="h-3.5 w-3.5" />{messagingRequest === request.id ? 'Opening chat…' : 'I can help with this'}
                     </button>
+                  ) : (
+                    <p className="mt-4 rounded-xl bg-[var(--background)] px-3 py-2 text-[10px] font-semibold text-[var(--muted)]">This request is no longer open.</p>
                   )}
                 </article>
               ))}
