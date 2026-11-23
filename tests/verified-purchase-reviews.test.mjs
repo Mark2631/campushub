@@ -79,7 +79,7 @@ test('public reputation endpoint exposes aggregate ratings only within the curre
 
 test('review form is hidden from seller-side, unpaid, disputed or unconfirmed orders', async () => {
   const activity = await read('../components/OrdersActivity.tsx');
-  assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderIsPaid\(order\)[\s\S]*?orderState !== 'DISPUTED'[\s\S]*?CONFIRMED/);
+  assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderCanProgress\(order\)[\s\S]*?orderState !== 'DISPUTED'[\s\S]*?CONFIRMED/);
   assert.match(activity, /order\.buyer_id !== userId/);
   assert.match(activity, /normalizeState\(order\.buyer_receipt_state\) !== 'CONFIRMED'/);
   assert.match(activity, /normalizeState\(order\.order_state\) !== 'COMPLETED'/);

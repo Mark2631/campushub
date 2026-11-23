@@ -27,6 +27,7 @@ export type MarketplaceOrder = {
   platform_fee_amount: number | null;
   delivery_fee_snapshot: number | null;
   order_state: string;
+  payment_option: string;
   payment_state: string;
   seller_acceptance_state: string | null;
   buyer_receipt_state: string | null;
@@ -179,7 +180,7 @@ export async function getMyOrders(userId: string) {
 
   return supabase
     .from('orders')
-    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, item_unit_price, item_subtotal, platform_fee_percent, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, refund_state, payout_state, delivery_option, created_at, updated_at, expires_at')
+    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, item_unit_price, item_subtotal, platform_fee_percent, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_option, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, refund_state, payout_state, delivery_option, created_at, updated_at, expires_at')
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(100);
@@ -208,6 +209,31 @@ export async function getOrderEvents(orderId: string) {
 
 export async function getOrderFulfillmentDetails(orderId: string) {
   return supabase.rpc('get_order_fulfillment_details', { p_order_id: orderId });
+}
+
+/**
+ * Read delivery progress for the signed-in buyer only.
+ * The deliveries RLS policy is authoritative; the explicit buyer filter
+ * narrows the query to this order participant.
+ */
+export async function getBuyerDeliveryStatus(orderId: string, buyerId: string) {
+  if (!isValidUuid(orderId) || !isValidUuid(buyerId)) {
+    return { status: null as string | null, error: new Error('Invalid order.') };
+  }
+
+  const { data, error } = await supabase
+    .from('deliveries')
+    .select('delivery_state')
+    .eq('order_id', orderId)
+    .eq('buyer_id', buyerId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Buyer delivery status lookup failed:', error);
+    return { status: null as string | null, error };
+  }
+
+  return { status: typeof data?.delivery_state === 'string' ? data.delivery_state : null, error: null };
 }
 
 export async function cancelMarketplaceOrder(orderId: string, idempotencyKey: string) {
