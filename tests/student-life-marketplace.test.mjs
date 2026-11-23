@@ -61,6 +61,16 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(detail, /Seller-reported condition/);
 });
 
+test('housing owners manage posts as available or unavailable rather than sold', async () => {
+  const profile = await read('../app/profile/page.tsx');
+  assert.match(profile, /function isLivingListing\(listing: Pick<Listing, 'listing_type'>\)/);
+  assert.match(profile, /isLivingListing\(listing\) \? 'Mark unavailable' : 'Sold'/);
+  assert.match(profile, /'Make available'/);
+  assert.match(profile, /Marked as unavailable and removed from the marketplace/);
+  assert.match(profile, /Sold \/ unavailable/);
+  assert.match(profile, /isLivingListing\(listing\) && listing\.status === 'sold' \? 'Unavailable'/);
+});
+
 test('rental and roommate cards and detail pages use monthly pricing and relevant actions', async () => {
   const [card, detail, message] = await Promise.all([
     read('../components/ListingCard.tsx'),
