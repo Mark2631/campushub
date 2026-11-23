@@ -69,6 +69,7 @@ function SellPageContent() {
   const [activeTab, setActiveTab] = useState<SellTab>(requestMode ? 'requests' : 'sell');
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
+  const requiresListingPhoto = !['Services', 'Roommates'].includes(formData.category);
   const isNewBusinessPost = !editListingId && profileContext.mode === 'business' && Boolean(profileContext.businessId);
   const activeSellerProfile = sellerProfile?.id === user?.id ? sellerProfile : null;
   const invalidSourceRequest = Boolean(sourceRequestId && !isValidUuid(sourceRequestId));
@@ -385,6 +386,8 @@ function SellPageContent() {
   const validateListingForm = () => {
     if (!user) return 'Sign in to post a listing.';
     if (!formData.title.trim()) return 'Title is required.';
+    if (requiresListingPhoto && images.length + existingMediaUrls.length === 0) return 'Add at least one clear photo of the actual item or room.';
+    if (requiresListingPhoto && formData.description.trim().length < 30) return 'Add a short description covering the model, what is included, and any wear or defects.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
     if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
     if (formData.price.trim() && Number(formData.price) === 0) return 'Leave the price blank if buyers should contact you to agree on a price.';
@@ -476,6 +479,12 @@ function SellPageContent() {
     if (validationError) {
       setMessage({ type: 'error', text: validationError });
       showToast({ type: 'error', message: validationError });
+      return;
+    }
+    if (options?.skipMedia && requiresListingPhoto && existingMediaUrls.length === 0) {
+      const text = 'This listing needs at least one stored photo. Retry the upload before posting.';
+      setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
       return;
     }
 
@@ -754,7 +763,7 @@ function SellPageContent() {
                 </button>
               </div>
             )}
-            {message.type === 'error' && postWithoutMediaReady ? (
+            {message.type === 'error' && postWithoutMediaReady && (!requiresListingPhoto || existingMediaUrls.length > 0) ? (
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -783,7 +792,7 @@ function SellPageContent() {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">1</div>
             <div>
               <h2 className="font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Step 1: Media</h2>
-              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Upload up to 10 images and 1 optional video.</p>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Products and rentals need at least one clear photo of the actual item or room. Add extra angles to show condition and details.</p>
             </div>
           </div>
 
@@ -798,9 +807,9 @@ function SellPageContent() {
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
               <ImagePlus className="mx-auto mb-3 h-8 w-8 text-[var(--brand)] dark:text-[var(--brand)] sm:h-10 sm:w-10" aria-hidden="true" />
-              <p className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Click to upload images</p>
+              <p className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Add actual item or room photos</p>
               <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">or drag and drop</p>
-              <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
+              <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">Use your own photos, not catalogue images. JPG, PNG or WebP · up to 10 images</p>
             </label>
 
             {existingMediaUrls.length > 0 ? (
@@ -974,7 +983,7 @@ function SellPageContent() {
           {formData.category !== 'Accommodation' && formData.category !== 'Roommates' ? (
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Condition</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Seller-reported condition</span>
               <select
                 name="condition"
                 value={formData.condition}
@@ -1034,7 +1043,7 @@ function SellPageContent() {
               onChange={handleChange}
               rows={formData.category === 'Accommodation' || formData.category === 'Roommates' ? 5 : 4}
               className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
-              placeholder={formData.category === 'Accommodation' ? 'Describe the room, utilities, amenities, deposit and viewing arrangements.' : formData.category === 'Roommates' ? 'Do you have a room or need one? Describe the space, sharing costs, house rules and move-in date.' : 'Describe the item, condition, what is included and any defects buyers should know.'}
+              placeholder={formData.category === 'Accommodation' ? 'Describe the room, utilities, amenities, deposit and viewing arrangements.' : formData.category === 'Roommates' ? 'Do you have a room or need one? Describe the space, sharing costs, house rules and move-in date.' : formData.category === 'Services' ? 'Describe the service, what is included, your experience and the expected result.' : 'Describe the brand/model, what is included, and any wear, defects or missing parts. Use your own photos.'}
             />
           </label>
 
