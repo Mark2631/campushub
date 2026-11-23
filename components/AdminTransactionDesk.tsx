@@ -589,11 +589,11 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
                     </section>
 
                     {ready ? (
-                      <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
-                        <button type="button" onClick={() => releaseOrder(order)} disabled={workingId !== null} className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
+                      <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--brand-soft)] p-3">
+                        <button type="button" onClick={() => releaseOrder(order)} disabled={workingId !== null} className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
                           {workingId === order.id ? 'Recording payout…' : 'Record manual payout'}
                         </button>
-                        <p className="mt-2 text-xs leading-5 text-emerald-100/80">Only use this after the external settlement has already happened. This records the admin attestation and does not transfer funds.</p>
+                        <p className="mt-2 text-xs leading-5 text-[var(--brand)]/80">Only use this after the external settlement has already happened. This records the admin attestation and does not transfer funds.</p>
                       </div>
                     ) : null}
                     {refundPending ? (
@@ -605,7 +605,7 @@ export default function AdminTransactionDesk({ mode }: { mode: 'escrow' | 'deliv
                       </div>
                     ) : null}
                     {disputed ? <p className="mt-4 text-sm font-semibold text-amber-200">Transaction under review. Payout is blocked while the dispute is active.</p> : null}
-                    {released ? <p className="mt-4 text-sm font-semibold text-emerald-200">Manual payout status is recorded by the backend.</p> : null}
+                    {released ? <p className="mt-4 text-sm font-semibold text-[var(--brand)]">Manual payout status is recorded by the backend.</p> : null}
                   </div>
                 ) : null}
               </article>
