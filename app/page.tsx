@@ -570,6 +570,7 @@ export default function Home() {
             <p className="mt-3 max-w-lg text-sm leading-6 text-white/75 sm:text-[15px]">Discover useful things from students and businesses around campus. Browse first, compare your options, then connect directly.</p>
             <div className="mt-6 flex flex-wrap gap-2.5">
               <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-xs font-extrabold text-[var(--foreground)] transition hover:brightness-95">Explore categories <ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href="/sell?mode=request" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Post a request</Link>
               <Link href="/sell" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Start selling</Link>
             </div>
           </div>
@@ -600,7 +601,7 @@ export default function Home() {
           <section className="mb-8 flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-[var(--foreground)]">Browsing is open. Join to trade.</p>
-              <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]">Create an account to save finds, message sellers and manage your listings.</p>
+              <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]">Create an account to save finds, ask the campus for what you need, message sellers and manage your listings.</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <Link href="/signin?mode=signup" className="rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[var(--brand-strong)]">Create account</Link>
