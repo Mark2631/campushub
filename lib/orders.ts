@@ -27,6 +27,7 @@ export type MarketplaceOrder = {
   platform_fee_amount: number | null;
   delivery_fee_snapshot: number | null;
   order_state: string;
+  payment_option: string;
   payment_state: string;
   seller_acceptance_state: string | null;
   buyer_receipt_state: string | null;
@@ -179,7 +180,7 @@ export async function getMyOrders(userId: string) {
 
   return supabase
     .from('orders')
-    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, item_unit_price, item_subtotal, platform_fee_percent, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, refund_state, payout_state, delivery_option, created_at, updated_at, expires_at')
+    .select('id, order_number, buyer_id, seller_id, listing_id, listing_title_snapshot, quantity, item_unit_price, item_subtotal, platform_fee_percent, total_amount, platform_fee_amount, delivery_fee_snapshot, order_state, payment_option, payment_state, seller_acceptance_state, buyer_receipt_state, seller_release_state, refund_state, payout_state, delivery_option, created_at, updated_at, expires_at')
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(100);
