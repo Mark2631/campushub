@@ -51,7 +51,7 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
 
   if (loading) {
     return (
-      <button className="w-full rounded-2xl bg-blue-600 px-5 py-4 text-sm font-semibold text-white transition opacity-70 cursor-not-allowed">
+      <button className="w-full rounded-2xl bg-[var(--brand)] px-5 py-4 text-sm font-semibold text-white transition opacity-70 cursor-not-allowed">
         Loading...
       </button>
     );
@@ -61,7 +61,7 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
     <div className="space-y-3">
       <button
         onClick={handleClick}
-        className="w-full rounded-2xl bg-blue-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-50"
+        className="w-full rounded-2xl bg-[var(--brand)] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-50"
         disabled={busy}
       >
         {busy ? 'Opening...' : 'Message Seller'}
