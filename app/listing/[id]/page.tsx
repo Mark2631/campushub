@@ -117,6 +117,13 @@ export default async function ListingPage({ params }: Props) {
   });
   const isRentalListing = listing.listing_type === 'PROPERTY_RENTAL';
   const isRoommateListing = listing.listing_type === 'ROOMMATE';
+  const isLivingListing = isRentalListing || isRoommateListing;
+  const unavailableLabel = isLivingListing ? 'Unavailable' : 'Sold';
+  const unavailableMessage = isRentalListing
+    ? 'This accommodation is currently marked unavailable. Contact the lister before making plans.'
+    : isRoommateListing
+      ? 'This roommate opening is currently marked unavailable. Check with the lister before making plans.'
+      : 'This listing has been marked as sold.';
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
   const { listings: relatedCandidates } = listing.status === 'active'
@@ -197,7 +204,7 @@ export default async function ListingPage({ params }: Props) {
               <div className="space-y-6">
                 {listing.status === 'sold' ? (
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--foreground)]">
-                    This listing has been marked as sold.
+                    {unavailableMessage}
                   </div>
                 ) : null}
 
@@ -292,9 +299,14 @@ export default async function ListingPage({ params }: Props) {
                     <ListingInventoryManager listingId={listing.id} sellerId={listing.seller_id} listingStatus={listing.status} />
                   ) : null}
                   {listing.status === 'sold' ? (
-                    <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]" disabled>
-                      Sold
-                    </button>
+                    <>
+                      <button className="w-full rounded-2xl bg-gray-300 px-5 py-4 text-sm font-semibold text-[var(--foreground)] dark:bg-[var(--surface-muted)] dark:text-[var(--foreground)]" disabled>
+                        {unavailableLabel}
+                      </button>
+                      {isLivingListing ? (
+                        <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label="Ask about future availability" />
+                      ) : null}
+                    </>
                   ) : (
                     <>
                       {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
@@ -306,7 +318,7 @@ export default async function ListingPage({ params }: Props) {
                       <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">{isRentalListing ? "Message the lister to arrange a viewing and confirm rent, deposit and terms." : isRoommateListing ? "Start a conversation about the space, monthly share, house rules and move-in date." : "Message the seller to confirm availability, collection and payment details."}</p>
                     </>
                   )}
-                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">{isRentalListing || isRoommateListing ? "Need help confirming the listing details or arranging a viewing?" : "Need help checking this item or arranging delivery?"}</p><HelpContactAction /></div>
                   <SaveListingButton listingId={listing.id} />
                   <ReportButton targetType="listing" targetId={listing.id} />
                 </div>
