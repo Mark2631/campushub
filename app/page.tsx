@@ -493,7 +493,7 @@ export default function Home() {
             <select
               aria-label="Search category"
               value={category}
-              onChange={(event) => { setCategory(event.target.value); setMode('All'); }}
+              onChange={(event) => { setCategory(event.target.value); setMode('All'); if (event.target.value === 'Accommodation' || event.target.value === 'Roommates') setFilters((current) => ({ ...current, condition: 'all' })); }}
               className="h-10 max-w-[94px] shrink-0 border-r border-[var(--border)] bg-[var(--surface-muted)] px-1.5 text-[10px] font-semibold text-[var(--foreground)] outline-none sm:max-w-[138px] sm:px-2 sm:text-xs"
             >
               <option value="All">All</option>
