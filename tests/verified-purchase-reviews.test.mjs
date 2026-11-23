@@ -50,25 +50,29 @@ test('seller profile shows feedback from seller-owned reviews allowed by row-lev
   assert.match(profile, /Private to you · ratings from completed purchases with confirmed receipt/);
 });
 
-test('public reputation endpoint exposes aggregate ratings only and is scoped to active sellers', async () => {
-  const migration = await read('../supabase/migrations/20261123191500_public_seller_rating_aggregate.sql');
+test('public reputation endpoint exposes aggregate ratings only within the current listing institution', async () => {
+  const migration = await read('../supabase/migrations/20261123192000_scope_public_seller_rating_to_listing_institution.sql');
   const reviews = await read('../lib/reviews.ts');
   const detail = await read('../app/listing/[id]/page.tsx');
 
+  assert.match(migration, /DROP FUNCTION IF EXISTS public\.get_public_seller_rating\(uuid\)/);
+  assert.match(migration, /get_public_seller_rating\(\s*p_seller_id uuid,\s*p_listing_id uuid/);
   assert.match(migration, /SECURITY DEFINER/);
   assert.match(migration, /SET search_path = pg_catalog, public/);
   assert.match(migration, /ROUND\(AVG\(r\.rating\)::numeric, 1\)/);
   assert.match(migration, /COUNT\(\*\)::bigint/);
+  assert.match(migration, /reviewed_listing\.institution_id = target_listing\.institution_id/);
+  assert.match(migration, /active_listing\.institution_id = target_listing\.institution_id/);
   assert.match(migration, /active_listing\.status = 'active'/);
   assert.match(migration, /completed_order\.order_state = 'completed'/);
   assert.match(migration, /completed_order\.buyer_receipt_state = 'confirmed'/);
-  assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid\) FROM PUBLIC/);
-  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid\) TO anon, authenticated/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid, uuid\) FROM PUBLIC/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid, uuid\) TO anon, authenticated/);
   assert.match(migration, /RETURNS TABLE \([\s\S]*?average_rating numeric,[\s\S]*?review_count bigint/);
-  assert.doesNotMatch(migration, /r\.comment/);
+  assert.doesNotMatch(migration, /r\.comment|reviewer_id:/);
   assert.match(reviews, /supabase\.rpc\('get_public_seller_rating'/);
-  assert.match(reviews, /average_rating/);
-  assert.match(reviews, /review_count/);
+  assert.match(reviews, /p_listing_id: listingId/);
+  assert.match(detail, /getPublicSellerRating\(listing\.seller_id, listing\.id\)/);
   assert.match(detail, /publicSellerRating\.averageRating\.toFixed\(1\)/);
   assert.match(detail, /publicSellerRating\.reviewCount/);
 });

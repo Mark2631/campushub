@@ -101,11 +101,12 @@ export type PublicSellerRating = {
  * Public rating endpoint returns aggregate values only. Until its reviewed SQL
  * migration is applied, an unavailable RPC simply hides the rating badge.
  */
-export async function getPublicSellerRating(sellerId: string): Promise<PublicSellerRating | null> {
-  if (!isValidUuid(sellerId)) return null;
+export async function getPublicSellerRating(sellerId: string, listingId: string): Promise<PublicSellerRating | null> {
+  if (!isValidUuid(sellerId) || !isValidUuid(listingId)) return null;
 
   const { data, error } = await supabase.rpc('get_public_seller_rating', {
     p_seller_id: sellerId,
+    p_listing_id: listingId,
   });
 
   if (error) return null;
