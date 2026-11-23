@@ -23,6 +23,15 @@ AS $function$
     AND reviewed_listing.deleted_at IS NULL
     AND EXISTS (
       SELECT 1
+      FROM public.orders AS completed_order
+      WHERE completed_order.buyer_id = r.reviewer_id
+        AND completed_order.seller_id = r.seller_id
+        AND completed_order.listing_id = r.listing_id
+        AND completed_order.order_state = 'completed'
+        AND completed_order.buyer_receipt_state = 'confirmed'
+    )
+    AND EXISTS (
+      SELECT 1
       FROM public.listings AS active_listing
       WHERE active_listing.seller_id = p_seller_id
         AND active_listing.status = 'active'
