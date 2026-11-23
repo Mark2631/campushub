@@ -455,7 +455,7 @@ function SellPageContent() {
       category: formData.category,
       price: formData.price,
       negotiable: formData.negotiable,
-      condition: normalizeListingCondition(formData.condition, formData.category),
+      condition: formData.condition,
       description: formData.description,
       location: formData.location,
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
