@@ -43,7 +43,7 @@ test('direct D-Delivery receipt waits for the buyer-visible delivery record to a
   ]);
 
   assert.match(orders, /getBuyerDeliveryStatus\(orderId: string, buyerId: string\)/);
-  assert.match(orders, /\\.from\\('deliveries'\\)[\\s\\S]*?\\.eq\\('order_id', orderId\\)[\\s\\S]*?\\.eq\\('buyer_id', buyerId/);
+  assert.match(orders, /\.from\('deliveries'\)[\s\S]*?\.eq\('order_id', orderId\)[\s\S]*?\.eq\('buyer_id', buyerId/);
   assert.match(activity, /getBuyerDeliveryStatus\(String\(orderId\), userId\)/);
   assert.match(activity, /directDeliveryReady = orderIsDirect\(order\)[\s\S]*?ARRIVED', 'DELIVERED/);
   assert.match(activity, /Confirm delivery received/);
