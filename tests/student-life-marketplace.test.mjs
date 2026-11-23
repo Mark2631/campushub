@@ -43,6 +43,7 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /listing\.listing_type === 'ROOMMATE' \? 'Roommates'/);
   assert.match(sell, /Add the monthly rent so students can compare places/);
   assert.match(sell, /condition: ''/);
+  assert.match(sell, /!\['Services', 'Accommodation', 'Roommates', 'Refurbished'\]\.includes\(formData\.category\)/);
   assert.match(sell, /Choose condition/);
   assert.match(sell, /Choose the seller-reported condition/);
   assert.match(listings, /Choose the seller-reported condition/);
