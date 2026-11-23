@@ -91,3 +91,34 @@ export async function createVerifiedPurchaseReview(input: {
 
   return { review: data as SellerReview, error: null };
 }
+
+export type PublicSellerRating = {
+  averageRating: number;
+  reviewCount: number;
+};
+
+/**
+ * Public rating endpoint returns aggregate values only. Until its reviewed SQL
+ * migration is applied, an unavailable RPC simply hides the rating badge.
+ */
+export async function getPublicSellerRating(sellerId: string): Promise<PublicSellerRating | null> {
+  if (!isValidUuid(sellerId)) return null;
+
+  const { data, error } = await supabase.rpc('get_public_seller_rating', {
+    p_seller_id: sellerId,
+  });
+
+  if (error) return null;
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row !== 'object') return null;
+
+  const record = row as { average_rating?: unknown; review_count?: unknown };
+  const averageRating = Number(record.average_rating);
+  const reviewCount = Number(record.review_count);
+
+  if (!Number.isFinite(averageRating) || !Number.isInteger(reviewCount) || reviewCount < 1) return null;
+  if (averageRating < 1 || averageRating > 5) return null;
+
+  return { averageRating, reviewCount };
+}
