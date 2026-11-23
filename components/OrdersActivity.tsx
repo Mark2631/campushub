@@ -94,6 +94,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const {
     data: buyerReviews = [],
     error: buyerReviewsError,
+    isLoading: buyerReviewsLoading,
     mutate: mutateBuyerReviews,
   } = useSWR(
     userId ? `campustrader-reviews-written:${userId}` : null,
@@ -201,6 +202,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   async function submitReview(order: MarketplaceOrder) {
     if (
       order.buyer_id !== userId
+      || !orderIsPaid(order)
       || normalizeState(order.order_state) !== 'COMPLETED'
       || normalizeState(order.buyer_receipt_state) !== 'CONFIRMED'
       || !order.listing_id
@@ -320,6 +322,8 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const isExpanded = expandedOrderId === order.id;
         const orderEvents = isExpanded ? events || [] : [];
         const completedReceipt = isBuying
+          && orderIsPaid(order)
+          && orderState !== 'DISPUTED'
           && orderState === 'COMPLETED'
           && ['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState);
         const existingReview = buyerReviews.find((review) =>
@@ -361,6 +365,8 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                       <span className="text-sm font-bold">{existingReview.rating}/5</span>
                     </div>
                   </div>
+                ) : buyerReviewsLoading ? (
+                  <p className="text-sm text-[var(--muted)]">Checking your review history…</p>
                 ) : buyerReviewsError ? (
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-sm text-[var(--muted)]">Your review history could not be checked.</p>
