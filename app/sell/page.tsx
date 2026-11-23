@@ -1030,7 +1030,7 @@ function SellPageContent() {
               </label>
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-6 text-[var(--muted)]">
                 <p className="font-semibold text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Help students assess the place' : 'Make it easier to find a compatible roommate'}</p>
-                <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, amenities, exact area, move-in date and when a viewing can be arranged.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
+                <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, room type, amenities, approximate distance to campus, move-in date and viewing availability.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
               </div>
             </>
           ) : null}
@@ -1052,7 +1052,7 @@ function SellPageContent() {
                 formData.category === 'Furniture' ? 'Include dimensions, material, condition, collection point and whether transport is available.' :
                 formData.category === 'Food' ? 'Include portion size, ingredients, allergens, preparation or collection times and how orders are handled.' :
                 formData.category === 'Refurbished' ? 'Include what was repaired or replaced, who did the work if known, when it was serviced and what is still worn.' :
-                formData.category === 'Accommodation' ? 'Include deposit, utility costs, room type, amenities, move-in date and when a viewing can be arranged.' :
+                formData.category === 'Accommodation' ? 'Include deposit, utility costs, room type, amenities, approximate distance to campus, move-in date and viewing availability.' :
                 formData.category === 'Roommates' ? 'Say whether you have a room or need one. Include the monthly share, bills, house rules, area and move-in date.' :
                 formData.category === 'Services' ? 'Explain what is included, your experience, expected turnaround, any materials needed and the final result.' :
                 'Include useful specifications, what is included, the condition and anything a student should confirm before agreeing.'}
