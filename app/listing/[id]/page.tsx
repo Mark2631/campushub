@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import Header from '../../../components/Header';
 import BottomNav from '../../../components/BottomNav';
 import MessageSellerButton from '../../../components/MessageSellerButton';
@@ -17,6 +17,7 @@ import HelpContactAction from '../../../components/HelpContactAction';
 import ListingCard from '../../../components/ListingCard';
 import ListingMediaGallery from '../../../components/ListingMediaGallery';
 import { isValidUuid } from '../../../lib/validation';
+import { getPublicSellerRating } from '../../../lib/reviews';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +118,7 @@ export default async function ListingPage({ params }: Props) {
   });
   const isRentalListing = listing.listing_type === 'PROPERTY_RENTAL';
   const isRoommateListing = listing.listing_type === 'ROOMMATE';
+  const publicSellerRating = await getPublicSellerRating(listing.seller_id);
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
   const { listings: relatedCandidates } = listing.status === 'active'
@@ -258,7 +260,19 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-bold text-[var(--foreground)]">{listing.sellerName || 'CampusTrader seller'}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold text-[var(--foreground)]">{listing.sellerName || 'CampusTrader seller'}</p>
+                          {publicSellerRating ? (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[10px] font-semibold text-[var(--foreground)]"
+                              title="Average rating from completed orders where buyers confirmed receipt"
+                            >
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+                              {publicSellerRating.averageRating.toFixed(1)}
+                              <span className="text-[var(--muted)]">({publicSellerRating.reviewCount})</span>
+                            </span>
+                          ) : null}
+                        </div>
                         {listing.badgeType === 'gold' ? (
                           <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                             Gold tick
