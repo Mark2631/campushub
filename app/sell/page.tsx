@@ -639,7 +639,7 @@ function SellPageContent() {
                     {sellerBadge}
                   </span>
                   {activeSellerProfile?.phone_number ? (
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                    <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[var(--brand)]">
                       WhatsApp ready
                     </span>
                   ) : null}
