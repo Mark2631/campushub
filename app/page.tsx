@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowRight, ArrowUpDown, BookOpen, BriefcaseBusiness, Cable, ChefHat,
   ChevronRight, MapPin, MessageCircle, PackageOpen, Search,
-  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle
+  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle, Building2, UsersRound
 } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
@@ -31,10 +31,12 @@ const categoryMeta = [
   { name: 'Food', description: 'Meals, snacks and treats', Icon: ChefHat },
   { name: 'Services', description: 'Repairs, design and skills', Icon: Wrench },
   { name: 'Refurbished', description: 'Pre-owned value finds', Icon: Recycle },
+  { name: 'Accommodation', description: 'Rooms and rentals near campus', Icon: Building2 },
+  { name: 'Roommates', description: 'Find a person to share with', Icon: UsersRound },
   { name: 'Business', description: 'Shops and campus businesses', Icon: BriefcaseBusiness },
 ] as const;
 
-type BrowseMode = 'All' | 'Products' | 'Services' | 'Businesses';
+type BrowseMode = 'All' | 'Products' | 'Housing' | 'Roommates' | 'Services' | 'Businesses';
 type SortMode = 'newest' | 'price-low' | 'price-high';
 
 async function getListingsWithDeadline(campus: string, offset = 0) {
@@ -158,7 +160,7 @@ export default function Home() {
         setMode('All');
       }
       if (queryParam) setQuery(queryParam);
-      if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
+      if (modeParam === 'Products' || modeParam === 'Housing' || modeParam === 'Roommates' || modeParam === 'Services' || modeParam === 'Businesses') {
         setMode(modeParam);
         setCategory('All');
       }
@@ -238,8 +240,10 @@ export default function Home() {
       const matchesCategory = category === 'All' || listingBelongsToCategory(listing, category);
       const listingType = String(listing.listing_type || '').toUpperCase();
       const matchesMode = mode === 'All'
-        || (mode === 'Products' && !['SERVICE', 'SERVICES'].includes(listingType) && !listingBelongsToCategory(listing, 'Services'))
-        || (mode === 'Services' && listingBelongsToCategory(listing, 'Services'))
+        || (mode === 'Products' && listingType === 'PHYSICAL_PRODUCT')
+        || (mode === 'Housing' && listingType === 'PROPERTY_RENTAL')
+        || (mode === 'Roommates' && listingType === 'ROOMMATE')
+        || (mode === 'Services' && (listingType === 'SERVICE_ENQUIRY' || listingBelongsToCategory(listing, 'Services')))
         || (mode === 'Businesses' && (listing.sellerType === 'business' || Boolean(listing.business_id)));
       const price = typeof listing.price === 'number' && listing.price > 0 ? listing.price : null;
       const min = filters.minPrice.trim() ? Number(filters.minPrice) : null;
@@ -604,6 +608,8 @@ export default function Home() {
             {([
               ['All', 'For you'],
               ['Products', 'Products'],
+              ['Housing', 'Housing'],
+              ['Roommates', 'Roommates'],
               ['Services', 'Services'],
               ['Businesses', 'Businesses'],
             ] as const).map(([value, label]) => (
