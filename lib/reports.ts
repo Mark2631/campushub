@@ -90,7 +90,7 @@ export async function createReport(data: {
     return { report: null, error: GENERIC_ERROR };
   }
 
-  const reason = reportReasons.includes(data.reason) ? data.reason : 'Other';
+  const reason = reportReasons.some((allowedReason) => allowedReason === data.reason) ? data.reason : 'Other';
   const details = cleanMultilineText(data.details, 1000);
 
   const reportToInsert = {
