@@ -479,7 +479,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
               <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   ['Active', activeListingsCount],
-                  ['Sold', soldListingsCount],
+                  ['Sold / unavailable', soldListingsCount],
                   ['Pending', pendingListingsCount],
                   ['Hidden', hiddenListingsCount],
                 ].map(([label, value]) => (
