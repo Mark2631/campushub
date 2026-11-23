@@ -123,6 +123,23 @@ test('housing filters use monthly labels and do not retain product condition fil
   assert.match(home, /event\.target\.value === 'Accommodation' \|\| event\.target\.value === 'Roommates'[\s\S]*?condition: 'all'/);
 });
 
+test('listing reports collect category-specific marketplace trust issues', async () => {
+  const [reports, reportButton, detail] = await Promise.all([
+    read('../lib/reports.ts'),
+    read('../components/ReportButton.tsx'),
+    read('../app/listing/[id]/page.tsx'),
+  ]);
+  assert.match(reports, /Suspected counterfeit or fake product/);
+  assert.match(reports, /Product condition or photos do not match/);
+  assert.match(reports, /Rental is no longer available/);
+  assert.match(reports, /Rent or deposit differs from listing/);
+  assert.match(reports, /Roommate post is no longer available/);
+  assert.match(reports, /Monthly share or bills differ from listing/);
+  assert.match(reports, /Service differs from listing/);
+  assert.match(reportButton, /getReportReasons\(targetType, context\)/);
+  assert.match(detail, /context=\{isRentalListing \? 'accommodation' : isRoommateListing \? 'roommate'/);
+});
+
 test('active accommodation and roommate listings can be reconfirmed without changing status', async () => {
   const profile = await read('../app/profile/page.tsx');
   const listings = await read('../lib/listings.ts');
