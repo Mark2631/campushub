@@ -22,7 +22,7 @@ test('buyers can only open the review form after a paid completed order and conf
   assert.match(activity, /orderState === 'COMPLETED'/);
   assert.match(activity, /orderIsPaid\(order\)/);
   assert.match(activity, /buyerReviewsLoading/);
-  assert.match(activity, /includes\(buyerReceiptState\)/);
+  assert.match(activity, /buyerReceiptState === 'CONFIRMED'/);
   assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderState === 'COMPLETED'[\s\S]*?CONFIRMED/);
   assert.match(activity, /createVerifiedPurchaseReview\(/);
   assert.match(activity, /Reviews are available only after you confirm receipt/);
@@ -43,7 +43,7 @@ test('seller profile shows feedback from seller-owned reviews allowed by row-lev
   const profile = await read('../app/profile/page.tsx');
   const reviews = await read('../lib/reviews.ts');
   assert.match(profile, /getReviewsReceivedBySeller\(user\.id\)/);
-  assert.match(profile, /Buyer feedback/);
+  assert.match(profile, /Recent buyer feedback/);
   assert.match(profile, /sellerReviewAverage\.toFixed\(1\)/);
   assert.match(profile, /sellerReviews\.slice\(0, 3\)/);
   assert.match(reviews, /\.eq\('seller_id', sellerId\)/);
