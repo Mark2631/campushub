@@ -40,6 +40,10 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /listing\.listing_type === 'ROOMMATE' \? 'Roommates'/);
   assert.match(sell, /Add the monthly rent so students can compare places/);
   assert.match(sell, /Add the neighbourhood or campus area/);
+  assert.match(sell, /requiresListingPhoto && images\.length \+ existingMediaUrls\.length === 0/);
+  assert.match(sell, /options\?\.skipMedia && requiresListingPhoto && existingMediaUrls\.length === 0/);
+  assert.match(sell, /Use your own photos, not catalogue images/);
+  assert.match(detail, /Seller-reported condition/);
 });
 
 test('rental and roommate cards and detail pages use monthly pricing and relevant actions', async () => {
