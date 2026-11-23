@@ -43,6 +43,7 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /listing\.listing_type === 'ROOMMATE' \? 'Roommates'/);
   assert.match(sell, /Add the monthly rent so students can compare places/);
   assert.match(sell, /Add the neighbourhood or campus area/);
+  assert.match(sell, /approximate distance to campus/);
   assert.match(sell, /requiresListingPhoto && images\.length \+ existingMediaUrls\.length === 0/);
   assert.match(sell, /options\?\.skipMedia && requiresListingPhoto && existingMediaUrls\.length === 0/);
   assert.match(sell, /Use your own photos, not catalogue images/);
@@ -65,6 +66,7 @@ test('rental and roommate cards and detail pages use monthly pricing and relevan
   assert.match(detail, /isRentalListing \? "Monthly rent" : isRoommateListing \? "Monthly share"/);
   assert.match(detail, /Arrange a viewing/);
   assert.match(detail, /Contact about sharing/);
+  assert.match(detail, /Details last updated/);
   assert.match(message, /label = 'Message Seller'/);
 });
 
