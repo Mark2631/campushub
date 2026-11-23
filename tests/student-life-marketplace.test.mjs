@@ -68,6 +68,16 @@ test('rental and roommate cards and detail pages use monthly pricing and relevan
   assert.match(message, /label = 'Message Seller'/);
 });
 
+test('budget shortcuts open low-to-high product discovery for price-sensitive students', async () => {
+  const home = await read('../app/page.tsx');
+  assert.match(home, /aria-label="Browse by budget"/);
+  assert.match(home, /\[500, 1000, 3000\]/);
+  assert.match(home, /setMode\('Products'\)/);
+  assert.match(home, /setSort\('price-low'\)/);
+  assert.match(home, /maxPrice: String\(ceiling\)/);
+  assert.match(home, /Under KSh \{ceiling\.toLocaleString\('en-KE'\)\}/);
+});
+
 test('rentals and roommate listings cannot enter physical-product checkout', async () => {
   const [detail, checkout] = await Promise.all([
     read('../app/listing/[id]/page.tsx'),
