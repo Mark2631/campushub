@@ -85,7 +85,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report', c
               <select
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[var(--brand)] dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
               >
                 {reasons.map((item) => (
                   <option key={item} value={item}>
@@ -101,17 +101,17 @@ export default function ReportButton({ targetType, targetId, label = 'Report', c
                 value={details}
                 onChange={(event) => setDetails(event.target.value)}
                 rows={4}
-                className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[var(--brand)] dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
                 placeholder={context === 'product' ? 'Which details or photos differ? Include the item model, condition or agreed price.' : context === 'accommodation' ? 'What was different about the room, rent, deposit or viewing? Include dates and what was agreed.' : context === 'roommate' ? 'What changed about the monthly share, space or house rules? Include relevant details.' : context === 'service' ? 'What was promised, what happened and what price was agreed?' : 'Add context for the admin team.'}
               />
             </label>
 
-            {message ? <p className="mt-4 text-sm text-blue-600 dark:text-blue-300">{message}</p> : null}
+            {message ? <p className="mt-4 text-sm text-[var(--brand)]">{message}</p> : null}
 
             <button
               type="submit"
               disabled={submitting}
-              className="mt-5 w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-500"
+              className="mt-5 w-full rounded-2xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:cursor-not-allowed disabled:bg-gray-500"
             >
               {submitting ? 'Submitting...' : 'Submit report'}
             </button>
