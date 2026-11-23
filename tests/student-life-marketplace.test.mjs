@@ -70,6 +70,12 @@ test('rental and roommate cards and detail pages use monthly pricing and relevan
   assert.match(message, /label = 'Message Seller'/);
 });
 
+test('students can post an item request directly from the homepage', async () => {
+  const home = await read('../app/page.tsx');
+  assert.match(home, /href="\/sell\?mode=request"/);
+  assert.match(home, /ask the campus for what you need/);
+});
+
 test('budget shortcuts open low-to-high product discovery for price-sensitive students', async () => {
   const home = await read('../app/page.tsx');
   assert.match(home, /aria-label="Browse by budget"/);
