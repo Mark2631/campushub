@@ -52,7 +52,7 @@ export async function findOrCreateConversation(
   sellerId: string
 ) {
   if (!isValidUuid(listingId) || !isValidUuid(buyerId) || !isValidUuid(sellerId)) {
-    return { conversation: null, error: 'Unable to open conversation. Please try again.' };
+    return { conversation: null, error: 'Unable to open conversation. Please try again.', created: false };
   }
 
   const { data: existing, error: fetchError } = await supabase
@@ -65,7 +65,7 @@ export async function findOrCreateConversation(
 
   if (fetchError) {
     console.error('Error fetching conversation:', serializeError(fetchError));
-    return { conversation: null, error: GENERIC_ERROR };
+    return { conversation: null, error: GENERIC_ERROR, created: false };
   }
 
   if (existing) {
@@ -77,7 +77,7 @@ export async function findOrCreateConversation(
         .eq('id', existing.id);
       if (unhideError) console.error('Conversation unhide failed:', serializeError(unhideError));
     }
-    return { conversation: existing, error: null };
+    return { conversation: existing, error: null, created: false };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -88,10 +88,10 @@ export async function findOrCreateConversation(
 
   if (insertError) {
     console.error('Error creating conversation:', serializeError(insertError));
-    return { conversation: null, error: GENERIC_ERROR };
+    return { conversation: null, error: GENERIC_ERROR, created: false };
   }
 
-  return { conversation: inserted, error: null };
+  return { conversation: inserted, error: null, created: true };
 }
 
 async function fetchConversationMessages(conversationIds: string[]) {
