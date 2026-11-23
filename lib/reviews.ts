@@ -34,7 +34,7 @@ export async function getReviewsWrittenByBuyer(reviewerId: string): Promise<Revi
 export async function getReviewsReceivedBySeller(sellerId: string): Promise<ReviewResult> {
   if (!isValidUuid(sellerId)) return { reviews: [], count: 0, error: new Error('Invalid seller.') };
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('reviews')
     .select('id, rating, comment, created_at', { count: 'exact' })
     .eq('seller_id', sellerId)
