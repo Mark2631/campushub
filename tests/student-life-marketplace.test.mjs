@@ -84,6 +84,7 @@ test('housing filters use monthly labels and do not retain product condition fil
   assert.match(home, /Monthly share range \(KSh\)/);
   assert.match(home, /mode !== 'Housing' && mode !== 'Roommates'/);
   assert.match(home, /value === 'Housing' \|\| value === 'Roommates'[\s\S]*?condition: 'all'/);
+  assert.match(home, /event\.target\.value === 'Accommodation' \|\| event\.target\.value === 'Roommates'[\s\S]*?condition: 'all'/);
 });
 
 test('rentals and roommate listings cannot enter physical-product checkout', async () => {
