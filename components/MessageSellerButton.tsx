@@ -10,9 +10,10 @@ import AuthPromptModal from './AuthPromptModal';
 type Props = {
   listingId: string;
   sellerId: string;
+  label?: string;
 };
 
-export default function MessageSellerButton({ listingId, sellerId }: Props) {
+export default function MessageSellerButton({ listingId, sellerId, label = 'Message Seller' }: Props) {
   const router = useRouter();
   const { user, loading } = useUser();
   const [status, setStatus] = useState<string | null>(null);
@@ -64,7 +65,7 @@ export default function MessageSellerButton({ listingId, sellerId }: Props) {
         className="w-full rounded-2xl bg-[var(--brand)] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-50"
         disabled={busy}
       >
-        {busy ? 'Opening...' : 'Message Seller'}
+        {busy ? 'Opening...' : label}
       </button>
       {needsSignIn ? (
         <AuthPromptModal open={needsSignIn} next={`/listing/${listingId}`} onClose={() => setNeedsSignIn(false)} />
