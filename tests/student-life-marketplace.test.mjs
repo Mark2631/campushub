@@ -92,8 +92,8 @@ test('rental and roommate cards and detail pages use monthly pricing and relevan
   assert.match(card, /listing\.listing_type === 'ROOMMATE'/);
   assert.match(card, /\/mo/);
   assert.match(detail, /isRentalListing \? "Monthly rent" : isRoommateListing \? "Monthly share"/);
-  assert.match(detail, /Arrange a viewing/);
-  assert.match(detail, /Contact about sharing/);
+  assert.match(detail, /Message about viewing/);
+  assert.match(detail, /Message about sharing/);
   assert.match(detail, /Details last updated/);
   assert.match(message, /label = 'Message Seller'/);
 });
