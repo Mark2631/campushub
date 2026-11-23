@@ -126,6 +126,17 @@ export default async function ListingPage({ params }: Props) {
     : isRoommateListing
       ? 'This roommate opening is currently marked unavailable. Check with the lister before making plans.'
       : 'This listing has been marked as sold.';
+  const sellerStarterMessage = isRentalListing
+    ? listing.status === 'sold'
+      ? 'Hello, I am interested in ' + listing.title + '. It is marked unavailable. Do you expect it to become available again, and when might a viewing be possible?'
+      : 'Hello, I am interested in ' + listing.title + '. Is it still available for viewing? Could you confirm the monthly rent, deposit, utility costs, amenities, distance to campus and a suitable viewing time?'
+    : isRoommateListing
+      ? listing.status === 'sold'
+        ? 'Hello, I am interested in ' + listing.title + '. Is there a chance the roommate opening may become available again?'
+        : 'Hello, I am interested in ' + listing.title + '. Is the opening still available? Could you share the monthly share, how bills are split, house rules, the area and move-in date?'
+      : listing.listing_type === 'SERVICE_ENQUIRY'
+        ? 'Hello, I am interested in ' + listing.title + '. Could you confirm what is included, the total price, expected turnaround and what you need from me to get started?'
+        : 'Hello, I am interested in ' + listing.title + '. Is it still available? Could you confirm the exact model, seller-reported condition, what is included, any known defects and the available collection or delivery options?';
   const mediaUrls = Array.isArray(listing.media_urls) ? listing.media_urls : [];
   const productImages = mediaUrls.filter((item): item is string => typeof item === 'string' && (item.startsWith('https://') || item.startsWith('http://')));
   const { listings: relatedCandidates } = listing.status === 'active'
@@ -318,13 +329,13 @@ export default async function ListingPage({ params }: Props) {
                         {unavailableLabel}
                       </button>
                       {isLivingListing ? (
-                        <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label="Ask about future availability" />
+                        <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label="Ask about future availability" starterMessage={sellerStarterMessage} />
                       ) : null}
                     </>
                   ) : (
                     <>
                       {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
-                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Message about viewing" : isRoommateListing ? "Message about sharing" : "Message Seller"} />
+                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Message about viewing" : isRoommateListing ? "Message about sharing" : listing.listing_type === 'SERVICE_ENQUIRY' ? "Ask about this service" : "Message Seller"} starterMessage={sellerStarterMessage} />
                       <WhatsAppButton listingId={listing.id} />
                       {listing.listing_type === 'PHYSICAL_PRODUCT' && listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
