@@ -43,6 +43,9 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /requiresListingPhoto && images\.length \+ existingMediaUrls\.length === 0/);
   assert.match(sell, /options\?\.skipMedia && requiresListingPhoto && existingMediaUrls\.length === 0/);
   assert.match(sell, /Use your own photos, not catalogue images/);
+  assert.match(sell, /battery health if known, repairs, accessories and every known defect/);
+  assert.match(sell, /edition, course or unit/);
+  assert.match(sell, /dimensions, material, condition/);
   assert.match(detail, /Seller-reported condition/);
 });
 
