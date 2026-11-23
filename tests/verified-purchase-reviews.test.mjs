@@ -17,12 +17,12 @@ test('review insertion is tied to the signed-in buyer and database-enforced purc
   assert.match(reviews, /error\.code === '42501'/);
 });
 
-test('buyers can only open the review form after completed order and confirmed receipt', async () => {
+test('buyers can only open the review form after a paid completed order and confirmed receipt', async () => {
   const activity = await read('../components/OrdersActivity.tsx');
   assert.match(activity, /orderState === 'COMPLETED'/);
-  assert.match(activity, /orderIsPaid\\(order\\)/);
+  assert.match(activity, /orderIsPaid\(order\)/);
   assert.match(activity, /buyerReviewsLoading/);
-  assert.match(activity, /buyerReceiptState\)\);/);
+  assert.match(activity, /includes\(buyerReceiptState\)/);
   assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderState === 'COMPLETED'[\s\S]*?CONFIRMED/);
   assert.match(activity, /createVerifiedPurchaseReview\(/);
   assert.match(activity, /Reviews are available only after you confirm receipt/);
@@ -39,7 +39,7 @@ test('review uniqueness is checked by buyer, seller and listing before showing f
   assert.match(reviews, /\.eq\('seller_id', sellerId\)/);
 });
 
-test('seller profile shows feedback from the seller-owned reviews allowed by row-level security', async () => {
+test('seller profile shows feedback from seller-owned reviews allowed by row-level security', async () => {
   const profile = await read('../app/profile/page.tsx');
   const reviews = await read('../lib/reviews.ts');
   assert.match(profile, /getReviewsReceivedBySeller\(user\.id\)/);
@@ -50,9 +50,9 @@ test('seller profile shows feedback from the seller-owned reviews allowed by row
   assert.match(profile, /Ratings from completed purchases where buyers confirmed receipt/);
 });
 
-test('review form is absent for seller-side, unpaid, disputed or unconfirmed orders', async () => {
+test('review form is hidden from seller-side, unpaid, disputed or unconfirmed orders', async () => {
   const activity = await read('../components/OrdersActivity.tsx');
-  assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderState === 'COMPLETED'[\s\S]*?CONFIRMED/);
+  assert.match(activity, /const completedReceipt = isBuying[\s\S]*?orderIsPaid\(order\)[\s\S]*?orderState !== 'DISPUTED'[\s\S]*?CONFIRMED/);
   assert.match(activity, /order\.buyer_id !== userId/);
   assert.match(activity, /normalizeState\(order\.buyer_receipt_state\) !== 'CONFIRMED'/);
   assert.match(activity, /normalizeState\(order\.order_state\) !== 'COMPLETED'/);
