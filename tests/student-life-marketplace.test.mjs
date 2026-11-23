@@ -84,5 +84,7 @@ test('rentals and roommate listings cannot enter physical-product checkout', asy
     read('../app/orders/new/page.tsx'),
   ]);
   assert.match(detail, /listing\.listing_type === 'PHYSICAL_PRODUCT'[\s\S]*?<BuyOrderButton/);
+  assert.match(detail, /listing\.listing_type === 'PHYSICAL_PRODUCT' \? \([\s\S]*?<ListingInventoryManager/);
+  assert.match(detail, /listing\.listing_type === 'PHYSICAL_PRODUCT' && listing\.business_id && listing\.businessDeliveryAvailable/);
   assert.match(checkout, /isDirectPurchaseListing\(listing\)/);
 });
