@@ -428,7 +428,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         ) : user ? (
           <>
             {message ? (
-              <div className={`mb-5 rounded-2xl border p-4 text-sm font-semibold ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
+              <div className={`mb-5 rounded-2xl border p-4 text-sm font-semibold ${message.type === 'success' ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
                 {message.text}
               </div>
             ) : null}
@@ -450,7 +450,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         {statusLabel(verificationStatus)}
                       </span>
                       {isAdmin ? (
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin</span>
+                        <span className="rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-xs font-bold text-[var(--brand)]">Admin</span>
                       ) : null}
                     </div>
                     <p className="mt-2 truncate text-sm text-[var(--muted)] dark:text-[var(--muted)]">{profile?.email || user.email}</p>
