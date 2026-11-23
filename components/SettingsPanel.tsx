@@ -74,7 +74,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             </Link>
 
             {isAdmin ? (
-              <Link href="/admin" onClick={onClose} className="block rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] px-4 py-4 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-[var(--border)]/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <Link href="/admin" onClick={onClose} className="block rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] px-4 py-4 text-sm font-semibold text-[var(--brand)] transition hover:border-[var(--brand)]/50 dark:border-[var(--border)]/60 dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
                 Admin Panel
               </Link>
             ) : null}
