@@ -28,24 +28,14 @@ export default function OrdersPageContent({ initialView }: Props) {
         </div>
 
         {user ? (
-          <section className="mt-5 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="size-5 text-[var(--brand)]" aria-hidden="true" />
-              <h2 className="font-bold">Payment status</h2>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-[var(--muted)] dark:text-[var(--muted)]">A payment is marked secured only after backend verification. Direct cash or M-PESA arrangements between a buyer and seller happen outside CampusTrader and are not verified by the app. A screenshot or message is not proof of payment.</p>
-          </section>
-        ) : null}
-
-        {user ? (
           <section aria-label="Request shortcuts" className="mt-5 grid grid-cols-2 gap-3">
             <button type="button" onClick={() => setActiveTab('buying')} className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] p-4 text-left transition hover:border-[var(--brand)] dark:border-[var(--border)] dark:bg-[var(--brand-soft)]">
               <span className="block text-sm font-bold text-[var(--brand)] dark:text-[var(--brand)]">My requests</span>
               <span className="mt-1 block text-xs leading-5 text-[var(--brand)]/70 dark:text-[var(--brand)]/70">Orders you placed</span>
             </button>
-            <button type="button" onClick={() => setActiveTab('selling')} className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left transition hover:border-emerald-400 dark:border-emerald-950 dark:bg-emerald-950/30">
-              <span className="block text-sm font-bold text-emerald-700 dark:text-emerald-200">Incoming requests</span>
-              <span className="mt-1 block text-xs leading-5 text-emerald-700/70 dark:text-emerald-200/70">Requests for your listings</span>
+            <button type="button" onClick={() => setActiveTab('selling')} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-left transition hover:border-[var(--brand)]">
+              <span className="block text-sm font-bold text-[var(--brand)]">Incoming requests</span>
+              <span className="mt-1 block text-xs leading-5 text-[var(--muted)]">Requests for your listings</span>
             </button>
           </section>
         ) : null}
