@@ -308,7 +308,11 @@ export default async function ListingPage({ params }: Props) {
                   )}
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>
                   <SaveListingButton listingId={listing.id} />
-                  <ReportButton targetType="listing" targetId={listing.id} />
+                  <ReportButton
+                    targetType="listing"
+                    targetId={listing.id}
+                    context={isRentalListing ? 'accommodation' : isRoommateListing ? 'roommate' : listing.listing_type === 'SERVICE_ENQUIRY' ? 'service' : 'product'}
+                  />
                 </div>
               </div>
             </div>
