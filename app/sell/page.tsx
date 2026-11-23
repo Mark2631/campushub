@@ -1045,6 +1045,18 @@ function SellPageContent() {
               className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               placeholder={formData.category === 'Accommodation' ? 'Describe the room, utilities, amenities, deposit and viewing arrangements.' : formData.category === 'Roommates' ? 'Do you have a room or need one? Describe the space, sharing costs, house rules and move-in date.' : formData.category === 'Services' ? 'Describe the service, what is included, your experience and the expected result.' : 'Describe the brand/model, what is included, and any wear, defects or missing parts. Use your own photos.'}
             />
+            <p className="text-xs leading-5 text-[var(--muted)]">
+              {formData.category === 'Electronics' ? 'Include the exact brand and model, storage, battery health if known, repairs, accessories and every known defect.' :
+                formData.category === 'Books' ? 'Include the title, author, edition, course or unit, and whether there are highlights, notes or missing pages.' :
+                formData.category === 'Fashion' ? 'Include the size, measurements, material, fit and any stains, tears or signs of wear.' :
+                formData.category === 'Furniture' ? 'Include dimensions, material, condition, collection point and whether transport is available.' :
+                formData.category === 'Food' ? 'Include portion size, ingredients, allergens, preparation or collection times and how orders are handled.' :
+                formData.category === 'Refurbished' ? 'Include what was repaired or replaced, who did the work if known, when it was serviced and what is still worn.' :
+                formData.category === 'Accommodation' ? 'Include deposit, utility costs, room type, amenities, move-in date and when a viewing can be arranged.' :
+                formData.category === 'Roommates' ? 'Say whether you have a room or need one. Include the monthly share, bills, house rules, area and move-in date.' :
+                formData.category === 'Services' ? 'Explain what is included, your experience, expected turnaround, any materials needed and the final result.' :
+                'Include useful specifications, what is included, the condition and anything a student should confirm before agreeing.'}
+            </p>
           </label>
 
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-[var(--background)] p-4 sm:flex-row sm:items-center dark:bg-[var(--surface-muted)]">
