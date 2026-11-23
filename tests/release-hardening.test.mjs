@@ -360,10 +360,10 @@ test('official CampusTrader mark is reused across header, favicon, manifest and 
   assert.match(mark, /campustrader-mark-gradient/);
   assert.match(mark, /viewBox="0 0 48 48"/);
   assert.match(mark, /rect x="1" y="1" width="46" height="46"/);
-  assert.match(mark, /stopColor="#1d7559"/);
+  assert.match(mark, /stopColor="#26394d"/);
   assert.match(favicon, /campustrader-mark-gradient/);
   assert.match(favicon, /circle cx="366.9" cy="140.8"/);
-  assert.match(favicon, /fill="#E6A641"/);
+  assert.match(favicon, /fill="#F4A62A"/);
   assert.ok(layout.includes("url: '/pwa-icon/192'"));
   assert.ok(layout.includes("url: '/pwa-icon/180'"));
   assert.ok(layout.includes('https://campus-trader.vercel.app/pwa-icon/512'));
