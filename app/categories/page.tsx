@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, BriefcaseBusiness, Cable, ChefHat, CircleHelp, Shirt, Sofa, Wrench, Recycle, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, BriefcaseBusiness, Cable, ChefHat, CircleHelp, Shirt, Sofa, Wrench, Recycle, Users, Building2, UsersRound } from 'lucide-react';
 import Header from '../../components/Header';
 import BottomNav from '../../components/BottomNav';
 
@@ -11,6 +11,8 @@ const categories = [
   { name: 'Food', description: 'Meals, snacks and campus food businesses', Icon: ChefHat, label: 'Food & groceries' },
   { name: 'Services', description: 'Repairs, design, tutoring and useful skills', Icon: Wrench, label: 'Skills & services' },
   { name: 'Refurbished', description: 'Pre-owned and professionally restored finds', Icon: Recycle, label: 'Value finds' },
+  { name: 'Accommodation', description: 'Rooms and rentals around your campus', Icon: Building2, label: 'Find a place' },
+  { name: 'Roommates', description: 'Find someone to share a room or flat with', Icon: UsersRound, label: 'Share a space' },
   { name: 'Business', description: 'Discover registered campus-area businesses', Icon: BriefcaseBusiness, label: 'Local businesses' },
   { name: 'Other', description: 'Useful items and services that need their own space', Icon: CircleHelp, label: 'More to explore' },
 ];

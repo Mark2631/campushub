@@ -15,7 +15,7 @@ import { getProfileById, type ProfileRecord } from '../../lib/profiles';
 import { compressImageFile, validateUploadFile } from '../../lib/storage';
 import { isValidUuid } from '../../lib/validation';
 
-const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Business', 'Refurbished', 'Other'];
+const categories = ['Electronics', 'Fashion', 'Furniture', 'Books', 'Food', 'Services', 'Accommodation', 'Roommates', 'Business', 'Refurbished', 'Other'];
 const conditions = ['new', 'used', 'refurbished', 'service'];
 const maxImageSize = 5 * 1024 * 1024;
 const maxVideoSize = 15 * 1024 * 1024;
@@ -38,7 +38,7 @@ function SellPageContent() {
     category: categories[0],
     price: '',
     negotiable: false,
-    condition: conditions[0],
+    condition: '',
     description: '',
     location: '',
   });
@@ -69,6 +69,7 @@ function SellPageContent() {
   const [activeTab, setActiveTab] = useState<SellTab>(requestMode ? 'requests' : 'sell');
 
   const hasPreviewContent = images.length > 0 || Boolean(videoPreview) || Boolean(formData.title.trim());
+  const requiresListingPhoto = !['Services', 'Roommates'].includes(formData.category);
   const isNewBusinessPost = !editListingId && profileContext.mode === 'business' && Boolean(profileContext.businessId);
   const activeSellerProfile = sellerProfile?.id === user?.id ? sellerProfile : null;
   const invalidSourceRequest = Boolean(sourceRequestId && !isValidUuid(sourceRequestId));
@@ -117,10 +118,12 @@ function SellPageContent() {
 
       setFormData({
         title: listing.title,
-        category: listing.category,
+        category: listing.listing_type === 'PROPERTY_RENTAL' ? 'Accommodation' : listing.listing_type === 'ROOMMATE' ? 'Roommates' : listing.category,
         price: listing.price != null && listing.price > 0 ? listing.price.toString() : '',
         negotiable: listing.negotiable,
-        condition: normalizeListingCondition(listing.condition, listing.category),
+        condition: ['Accommodation', 'Roommates'].includes(listing.listing_type === 'PROPERTY_RENTAL' ? 'Accommodation' : listing.listing_type === 'ROOMMATE' ? 'Roommates' : listing.category)
+          ? ''
+          : normalizeListingCondition(listing.condition, listing.category),
         description: listing.description || '',
         location: listing.location || '',
       });
@@ -187,7 +190,7 @@ function SellPageContent() {
         ...current,
         title: current.title || request.title,
         category: nextCategory,
-        condition: normalizeListingCondition(current.condition, nextCategory),
+        condition: nextCategory === 'Services' ? 'service' : nextCategory === 'Refurbished' ? 'refurbished' : '',
         description: current.description || [request.title, request.description].filter(Boolean).join('\n\n'),
         location: current.location || request.location || '',
       }));
@@ -205,18 +208,23 @@ function SellPageContent() {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === 'category'
-          ? normalizeCategory(value)
+    setFormData((prev) => {
+      const nextCategory = name === 'category' ? normalizeCategory(value) : prev.category;
+      const nextCondition = name === 'category'
+        ? nextCategory === 'Services' ? 'service' : nextCategory === 'Refurbished' ? 'refurbished' : ''
+        : name === 'condition' ? value : prev.condition;
+      return {
+        ...prev,
+        [name]: name === 'category'
+          ? nextCategory
           : name === 'condition'
-            ? normalizeListingCondition(value, prev.category)
+            ? value
             : type === 'checkbox'
               ? checked
               : value,
-      ...(name === 'category' ? { condition: normalizeListingCondition(prev.condition, normalizeCategory(value)) } : {}),
-    }));
+        condition: nextCondition,
+      };
+    });
   };
 
   const handleRequestChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -369,7 +377,7 @@ function SellPageContent() {
       category: categories[0],
       price: '',
       negotiable: false,
-      condition: conditions[0],
+      condition: '',
       description: '',
       location: '',
     });
@@ -385,9 +393,15 @@ function SellPageContent() {
   const validateListingForm = () => {
     if (!user) return 'Sign in to post a listing.';
     if (!formData.title.trim()) return 'Title is required.';
+    if (!['Services', 'Accommodation', 'Roommates', 'Refurbished'].includes(formData.category) && !formData.condition) return 'Choose the seller-reported condition.';
+    if (requiresListingPhoto && images.length + existingMediaUrls.length === 0) return 'Add at least one clear photo of the actual item or room.';
+    if (requiresListingPhoto && formData.description.trim().length < 30) return 'Add a short description covering the model, what is included, and any wear or defects.';
     if (formData.price.trim() && Number.isNaN(Number(formData.price))) return 'Price must be a valid number.';
     if (formData.price.trim() && Number(formData.price) < 0) return 'Price cannot be negative.';
     if (formData.price.trim() && Number(formData.price) === 0) return 'Leave the price blank if buyers should contact you to agree on a price.';
+    if (formData.category === 'Accommodation' && !formData.price.trim()) return 'Add the monthly rent so students can compare places.';
+    if (['Accommodation', 'Roommates'].includes(formData.category) && !formData.location.trim()) return 'Add the neighbourhood or campus area.';
+    if (['Accommodation', 'Roommates'].includes(formData.category) && formData.description.trim().length < 30) return 'Add a few details about the space, costs and move-in arrangements.';
     return null;
   };
 
@@ -441,7 +455,7 @@ function SellPageContent() {
       category: formData.category,
       price: formData.price,
       negotiable: formData.negotiable,
-      condition: normalizeListingCondition(formData.condition, formData.category),
+      condition: formData.condition,
       description: formData.description,
       location: formData.location,
       businessId: profileContext.mode === 'business' ? profileContext.businessId : null,
@@ -473,6 +487,12 @@ function SellPageContent() {
     if (validationError) {
       setMessage({ type: 'error', text: validationError });
       showToast({ type: 'error', message: validationError });
+      return;
+    }
+    if (options?.skipMedia && requiresListingPhoto && existingMediaUrls.length === 0) {
+      const text = 'This listing needs at least one stored photo. Retry the upload before posting.';
+      setMessage({ type: 'error', text });
+      showToast({ type: 'error', message: text });
       return;
     }
 
@@ -593,7 +613,7 @@ function SellPageContent() {
       <main className="max-w-6xl mx-auto w-full px-4 py-6 sm:py-8">
         <header className="mb-5">
           <h1 className="text-3xl font-bold">{editListingId ? 'Edit listing' : 'Sell'}</h1>
-          <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)] mt-2">Post items, services, or campus requests for MUST students.</p>
+          <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)] mt-2">Post products, rentals, roommate openings or services for students at your campus.</p>
         </header>
 
         <div className="mb-5 grid grid-cols-3 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-sm dark:border-[var(--border)] dark:bg-[var(--surface)]">
@@ -751,7 +771,7 @@ function SellPageContent() {
                 </button>
               </div>
             )}
-            {message.type === 'error' && postWithoutMediaReady ? (
+            {message.type === 'error' && postWithoutMediaReady && (!requiresListingPhoto || existingMediaUrls.length > 0) ? (
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -780,7 +800,7 @@ function SellPageContent() {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)] text-white font-semibold text-sm">1</div>
             <div>
               <h2 className="font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">Step 1: Media</h2>
-              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Upload up to 10 images and 1 optional video.</p>
+              <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">Products and rentals need at least one clear photo of the actual item or room. Add extra angles to show condition and details.</p>
             </div>
           </div>
 
@@ -795,9 +815,9 @@ function SellPageContent() {
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
               <ImagePlus className="mx-auto mb-3 h-8 w-8 text-[var(--brand)] dark:text-[var(--brand)] sm:h-10 sm:w-10" aria-hidden="true" />
-              <p className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Click to upload images</p>
+              <p className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Add actual item or room photos</p>
               <p className="text-sm text-[var(--muted)] dark:text-[var(--muted)]">or drag and drop</p>
-              <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">JPG, JPEG, PNG, or WebP up to 10 images</p>
+              <p className="text-xs text-[var(--muted)] dark:text-[var(--muted)] mt-2">Use your own photos, not catalogue images. JPG, PNG or WebP · up to 10 images</p>
             </label>
 
             {existingMediaUrls.length > 0 ? (
@@ -943,18 +963,18 @@ function SellPageContent() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Price (KSh, optional)</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Monthly rent (KSh)' : formData.category === 'Roommates' ? 'Monthly share per person (KSh, optional)' : 'Price (KSh, optional)'}</span>
               <input
                 type="number"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="Leave blank to ask seller"
+                placeholder={formData.category === 'Accommodation' ? 'e.g. 8500 per month' : formData.category === 'Roommates' ? 'e.g. 6000 monthly share' : 'Leave blank to ask seller'}
                 min="1"
                 step="1"
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
-              <span className="block text-xs text-[var(--muted)] dark:text-[var(--muted)]">Leave it blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.</span>
+              <span className="block text-xs text-[var(--muted)] dark:text-[var(--muted)]">{formData.category === 'Accommodation' ? 'Enter monthly rent. Add deposit and other charges in the description.' : formData.category === 'Roommates' ? 'Use the expected monthly share if known. Explain how bills are split in the description.' : 'Leave blank if buyers should contact you to agree on a price. Enter a price above KSh 0 when you have a fixed price.'}</span>
             </label>
             <label className="flex items-center justify-between rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-sm cursor-pointer hover:border-[var(--brand)] dark:hover:border-[var(--brand)] transition">
               <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Negotiable</span>
@@ -968,16 +988,19 @@ function SellPageContent() {
             </label>
           </div>
 
+          {!['Services', 'Accommodation', 'Roommates', 'Refurbished'].includes(formData.category) ? (
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
-              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Condition</span>
+              <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Seller-reported condition</span>
               <select
                 name="condition"
                 value={formData.condition}
                 onChange={handleChange}
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
+                required
               >
-                {conditions.map((condition) => (
+                <option value="" disabled>Choose condition</option>
+                {conditions.filter((condition) => condition !== 'service').map((condition) => (
                   <option key={condition} value={condition}>
                     {condition.charAt(0).toUpperCase() + condition.slice(1)}
                   </option>
@@ -994,11 +1017,33 @@ function SellPageContent() {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="Campus area or building"
+                placeholder={formData.category === 'Accommodation' || formData.category === 'Roommates' ? 'Neighbourhood, estate or campus area' : 'Campus area or building'}
                 className="w-full rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
               />
             </label>
           </div>
+          ) : null}
+
+          {formData.category === 'Accommodation' || formData.category === 'Roommates' ? (
+            <>
+              <label className="block space-y-2 text-sm">
+                <span className="font-medium text-[var(--foreground)]">Neighbourhood or campus area *</span>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Gachanka, Makutano, near the main gate"
+                  required
+                  className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20"
+                />
+              </label>
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-6 text-[var(--muted)]">
+                <p className="font-semibold text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Help students assess the place' : 'Make it easier to find a compatible roommate'}</p>
+                <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, room type, amenities, approximate distance to campus, move-in date and viewing availability.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
+              </div>
+            </>
+          ) : null}
 
           <label className="space-y-2 text-sm">
             <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Description</span>
@@ -1006,10 +1051,22 @@ function SellPageContent() {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={4}
+              rows={formData.category === 'Accommodation' || formData.category === 'Roommates' ? 5 : 4}
               className="w-full resize-none rounded-2xl bg-[var(--surface)] dark:bg-[var(--background)] border border-[var(--border)] dark:border-[var(--border)] px-4 py-3 text-[var(--foreground)] dark:text-[var(--foreground)] placeholder-[var(--muted)] dark:placeholder-[var(--muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20"
-              placeholder="Tell buyers what makes this item special, its condition, and any defects."
+              placeholder={formData.category === 'Accommodation' ? 'Describe the room, utilities, amenities, deposit and viewing arrangements.' : formData.category === 'Roommates' ? 'Do you have a room or need one? Describe the space, sharing costs, house rules and move-in date.' : formData.category === 'Services' ? 'Describe the service, what is included, your experience and the expected result.' : 'Describe the brand/model, what is included, and any wear, defects or missing parts. Use your own photos.'}
             />
+            <p className="text-xs leading-5 text-[var(--muted)]">
+              {formData.category === 'Electronics' ? 'Include the exact brand and model, storage, battery health if known, repairs, accessories and every known defect.' :
+                formData.category === 'Books' ? 'Include the title, author, edition, course or unit, and whether there are highlights, notes or missing pages.' :
+                formData.category === 'Fashion' ? 'Include the size, measurements, material, fit and any stains, tears or signs of wear.' :
+                formData.category === 'Furniture' ? 'Include dimensions, material, condition, collection point and whether transport is available.' :
+                formData.category === 'Food' ? 'Include portion size, ingredients, allergens, preparation or collection times and how orders are handled.' :
+                formData.category === 'Refurbished' ? 'Include what was repaired or replaced, who did the work if known, when it was serviced and what is still worn.' :
+                formData.category === 'Accommodation' ? 'Include deposit, utility costs, room type, amenities, approximate distance to campus, move-in date and viewing availability.' :
+                formData.category === 'Roommates' ? 'Say whether you have a room or need one. Include the monthly share, bills, house rules, area and move-in date.' :
+                formData.category === 'Services' ? 'Explain what is included, your experience, expected turnaround, any materials needed and the final result.' :
+                'Include useful specifications, what is included, the condition and anything a student should confirm before agreeing.'}
+            </p>
           </label>
 
           <div className="mt-8 flex flex-col items-start gap-3 rounded-2xl bg-[var(--background)] p-4 sm:flex-row sm:items-center dark:bg-[var(--surface-muted)]">

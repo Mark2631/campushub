@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowRight, ArrowUpDown, BookOpen, BriefcaseBusiness, Cable, ChefHat,
   ChevronRight, MapPin, MessageCircle, PackageOpen, Search,
-  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle
+  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle, Building2, UsersRound
 } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
@@ -31,10 +31,12 @@ const categoryMeta = [
   { name: 'Food', description: 'Meals, snacks and treats', Icon: ChefHat },
   { name: 'Services', description: 'Repairs, design and skills', Icon: Wrench },
   { name: 'Refurbished', description: 'Pre-owned value finds', Icon: Recycle },
+  { name: 'Accommodation', description: 'Rooms and rentals near campus', Icon: Building2 },
+  { name: 'Roommates', description: 'Find a person to share with', Icon: UsersRound },
   { name: 'Business', description: 'Shops and campus businesses', Icon: BriefcaseBusiness },
 ] as const;
 
-type BrowseMode = 'All' | 'Products' | 'Services' | 'Businesses';
+type BrowseMode = 'All' | 'Products' | 'Housing' | 'Roommates' | 'Services' | 'Businesses';
 type SortMode = 'newest' | 'price-low' | 'price-high';
 
 async function getListingsWithDeadline(campus: string, offset = 0) {
@@ -158,7 +160,7 @@ export default function Home() {
         setMode('All');
       }
       if (queryParam) setQuery(queryParam);
-      if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
+      if (modeParam === 'Products' || modeParam === 'Housing' || modeParam === 'Roommates' || modeParam === 'Services' || modeParam === 'Businesses') {
         setMode(modeParam);
         setCategory('All');
       }
@@ -238,8 +240,10 @@ export default function Home() {
       const matchesCategory = category === 'All' || listingBelongsToCategory(listing, category);
       const listingType = String(listing.listing_type || '').toUpperCase();
       const matchesMode = mode === 'All'
-        || (mode === 'Products' && !['SERVICE', 'SERVICES'].includes(listingType) && !listingBelongsToCategory(listing, 'Services'))
-        || (mode === 'Services' && listingBelongsToCategory(listing, 'Services'))
+        || (mode === 'Products' && listingType === 'PHYSICAL_PRODUCT')
+        || (mode === 'Housing' && listingType === 'PROPERTY_RENTAL')
+        || (mode === 'Roommates' && listingType === 'ROOMMATE')
+        || (mode === 'Services' && (listingType === 'SERVICE_ENQUIRY' || listingBelongsToCategory(listing, 'Services')))
         || (mode === 'Businesses' && (listing.sellerType === 'business' || Boolean(listing.business_id)));
       const price = typeof listing.price === 'number' && listing.price > 0 ? listing.price : null;
       const min = filters.minPrice.trim() ? Number(filters.minPrice) : null;
@@ -489,7 +493,7 @@ export default function Home() {
             <select
               aria-label="Search category"
               value={category}
-              onChange={(event) => { setCategory(event.target.value); setMode('All'); }}
+              onChange={(event) => { setCategory(event.target.value); setMode('All'); if (event.target.value === 'Accommodation' || event.target.value === 'Roommates') setFilters((current) => ({ ...current, condition: 'all' })); }}
               className="h-10 max-w-[94px] shrink-0 border-r border-[var(--border)] bg-[var(--surface-muted)] px-1.5 text-[10px] font-semibold text-[var(--foreground)] outline-none sm:max-w-[138px] sm:px-2 sm:text-xs"
             >
               <option value="All">All</option>
@@ -525,6 +529,39 @@ export default function Home() {
           ) : null}
         </section>
 
+        <section aria-label="Browse by budget" className="relative z-10 mb-6 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-[11px] font-semibold text-[var(--muted)]">Products within your budget</span>
+          {[500, 1000, 3000].map((ceiling) => {
+            const active = mode === 'Products' && category === 'All' && filters.maxPrice === String(ceiling)
+              && !filters.minPrice && sort === 'price-low';
+            return (
+              <button
+                key={ceiling}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  setMode('Products');
+                  setCategory('All');
+                  setQuery('');
+                  setSort('price-low');
+                  setFilters({
+                    minPrice: '',
+                    maxPrice: String(ceiling),
+                    condition: 'all',
+                    location: '',
+                    seller: 'all',
+                    negotiableOnly: false,
+                  });
+                }}
+                className={'rounded-full border px-3 py-2 text-[11px] font-semibold transition ' + (active
+                  ? 'border-[var(--brand)] bg-[var(--brand)] text-white'
+                  : 'border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--brand)]')}
+              >
+                Under KSh {ceiling.toLocaleString('en-KE')}
+              </button>
+            );
+          })}
+        </section>
 
         <section className="mb-7 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-stretch">
           <div className="flex flex-col justify-center rounded-[26px] bg-[var(--brand)] px-5 py-7 text-white sm:px-8 sm:py-9">
@@ -533,6 +570,7 @@ export default function Home() {
             <p className="mt-3 max-w-lg text-sm leading-6 text-white/75 sm:text-[15px]">Discover useful things from students and businesses around campus. Browse first, compare your options, then connect directly.</p>
             <div className="mt-6 flex flex-wrap gap-2.5">
               <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-xs font-extrabold text-[var(--foreground)] transition hover:brightness-95">Explore categories <ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href="/sell?mode=request" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Post a request</Link>
               <Link href="/sell" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Start selling</Link>
             </div>
           </div>
@@ -563,7 +601,7 @@ export default function Home() {
           <section className="mb-8 flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-[var(--foreground)]">Browsing is open. Join to trade.</p>
-              <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]">Create an account to save finds, message sellers and manage your listings.</p>
+              <p className="mt-0.5 text-xs leading-5 text-[var(--muted)]">Create an account to save finds, ask the campus for what you need, message sellers and manage your listings.</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <Link href="/signin?mode=signup" className="rounded-full bg-[var(--brand)] px-4 py-2.5 text-xs font-bold text-white hover:bg-[var(--brand-strong)]">Create account</Link>
@@ -583,7 +621,7 @@ export default function Home() {
                 && Boolean(listing.media_urls[0])
               );
               return (
-                <button key={name} type="button" onClick={() => { setCategory(name); setMode('All'); setQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="group flex min-w-0 flex-col items-center rounded-[17px] border border-[var(--border)] bg-[var(--surface)] px-1.5 py-3 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-sm sm:px-2 sm:py-4">
+                <button key={name} type="button" onClick={() => { setCategory(name); setMode('All'); setQuery(''); if (name === 'Accommodation' || name === 'Roommates') setFilters((current) => ({ ...current, condition: 'all' })); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="group flex min-w-0 flex-col items-center rounded-[17px] border border-[var(--border)] bg-[var(--surface)] px-1.5 py-3 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand)]/45 hover:shadow-sm sm:px-2 sm:py-4">
                   <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[14px] bg-[var(--brand-soft)] text-[var(--brand)] transition group-hover:bg-[var(--brand)] group-hover:text-white sm:h-12 sm:w-12">
                     {categoryPhoto?.media_urls[0] ? (
                       <Image src={categoryPhoto.media_urls[0]} alt="" fill sizes="48px" className="object-cover transition duration-300 group-hover:scale-105" unoptimized />
@@ -604,10 +642,12 @@ export default function Home() {
             {([
               ['All', 'For you'],
               ['Products', 'Products'],
+              ['Housing', 'Housing'],
+              ['Roommates', 'Roommates'],
               ['Services', 'Services'],
               ['Businesses', 'Businesses'],
             ] as const).map(([value, label]) => (
-              <button key={value} type="button" onClick={() => { setMode(value); setCategory('All'); }} className={'shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition ' + (mode === value && category === 'All' ? 'bg-[var(--brand)] text-white' : 'text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]')}>
+              <button key={value} type="button" onClick={() => { setMode(value); setCategory('All'); if (value === 'Housing' || value === 'Roommates') setFilters((current) => ({ ...current, condition: 'all' })); }} className={'shrink-0 rounded-full px-3.5 py-2 text-xs font-bold transition ' + (mode === value && category === 'All' ? 'bg-[var(--brand)] text-white' : 'text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]')}>
                 {label}
               </button>
             ))}
@@ -780,18 +820,20 @@ export default function Home() {
             </div>
             <div className="grid gap-4">
               <div>
-                <label className="mb-2 block text-xs font-bold text-[var(--foreground)]">Price range (KSh)</label>
+                <label className="mb-2 block text-xs font-bold text-[var(--foreground)]">{mode === 'Housing' || category === 'Accommodation' ? 'Monthly rent range (KSh)' : mode === 'Roommates' || category === 'Roommates' ? 'Monthly share range (KSh)' : 'Price range (KSh)'}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <input inputMode="numeric" value={filters.minPrice} onChange={(event) => setFilters((current) => ({ ...current, minPrice: event.target.value }))} placeholder="Minimum" className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
                   <input inputMode="numeric" value={filters.maxPrice} onChange={(event) => setFilters((current) => ({ ...current, maxPrice: event.target.value }))} placeholder="Maximum" className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
                 </div>
               </div>
+              {mode !== 'Housing' && mode !== 'Roommates' && category !== 'Accommodation' && category !== 'Roommates' ? (
               <div className="grid gap-1.5">
                 <label htmlFor="filter-condition" className="text-xs font-bold">Condition</label>
                 <select id="filter-condition" value={filters.condition} onChange={(event) => setFilters((current) => ({ ...current, condition: event.target.value }))} className="h-11 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]">
                   <option value="all">Any condition</option><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="service">Service</option>
                 </select>
               </div>
+              ) : null}
               <div className="grid gap-1.5">
                 <label htmlFor="filter-location" className="text-xs font-bold">Location</label>
                 <input id="filter-location" value={filters.location} onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))} placeholder="e.g. main campus, town" className="h-11 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand)]" />
