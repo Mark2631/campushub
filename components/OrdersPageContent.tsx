@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowLeft, Package, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Package } from 'lucide-react';
 import BottomNav from './BottomNav';
 import Header from './Header';
 import OrdersActivity from './OrdersActivity';
