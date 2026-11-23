@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Star } from 'lucide-react';
 import { useRef, useState } from 'react';
 import useSWR from 'swr';
 import {
@@ -19,6 +20,7 @@ import {
   type OrderEvent,
   type OrderFulfillmentDetails,
 } from '../lib/orders';
+import { createVerifiedPurchaseReview, getReviewsWrittenByBuyer } from '../lib/reviews';
 
 type Props = { userId: string; activeTab: 'buying' | 'selling' };
 type DisputeReason = {
@@ -68,6 +70,9 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
   const [disputeOrderId, setDisputeOrderId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState('ITEM_NOT_RECEIVED');
   const [disputeDescription, setDisputeDescription] = useState('');
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
   const cancellationKeys = useRef<Record<string, string>>({});
 
   const { data, error, isLoading, mutate } = useSWR(
@@ -84,6 +89,20 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
       revalidateOnFocus: true,
       refreshInterval: (latestData) => latestData?.orders.some((order) => ['STK_REQUESTED', 'PENDING', 'PENDING_PAYMENT', 'PAYMENT_PENDING', 'PENDING_VERIFICATION'].includes(normalizeState(order.payment_state))) ? 8000 : 0,
     },
+  );
+
+  const {
+    data: buyerReviews = [],
+    error: buyerReviewsError,
+    mutate: mutateBuyerReviews,
+  } = useSWR(
+    userId ? `campustrader-reviews-written:${userId}` : null,
+    async () => {
+      const result = await getReviewsWrittenByBuyer(userId);
+      if (result.error) throw result.error;
+      return result.reviews;
+    },
+    { revalidateOnFocus: true },
   );
 
   const eventKey = expandedOrderId ? ['campustrader-order-events', expandedOrderId] as const : null;
@@ -179,6 +198,45 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
     }
   }
 
+  async function submitReview(order: MarketplaceOrder) {
+    if (
+      order.buyer_id !== userId
+      || normalizeState(order.order_state) !== 'COMPLETED'
+      || normalizeState(order.buyer_receipt_state) !== 'CONFIRMED'
+      || !order.listing_id
+      || !order.seller_id
+    ) {
+      setFeedback({ type: 'error', text: 'Reviews are available only after you confirm receipt of a completed order.' });
+      return;
+    }
+
+    setBusyKey(`${order.id}:review`);
+    setFeedback(null);
+    try {
+      const result = await createVerifiedPurchaseReview({
+        reviewerId: userId,
+        sellerId: order.seller_id,
+        listingId: order.listing_id,
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+      if (result.error) {
+        setFeedback({ type: 'error', text: result.error });
+        return;
+      }
+
+      setReviewOrderId(null);
+      setReviewRating(5);
+      setReviewComment('');
+      setFeedback({ type: 'success', text: 'Thank you. Your verified-purchase feedback has been saved.' });
+      await mutateBuyerReviews();
+    } catch {
+      setFeedback({ type: 'error', text: 'Your review could not be saved. Refresh the order and try again.' });
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
   async function submitDispute(order: MarketplaceOrder) {
     if (!disputeDescription.trim()) {
       setFeedback({ type: 'error', text: 'Describe the issue before opening a dispute.' });
@@ -261,6 +319,12 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
           : Math.max(0, Number(order.total_amount || 0) - fee - deliveryFee);
         const isExpanded = expandedOrderId === order.id;
         const orderEvents = isExpanded ? events || [] : [];
+        const completedReceipt = isBuying
+          && orderState === 'COMPLETED'
+          && ['CONFIRMED', 'BUYER_CONFIRMED', 'RECEIVED'].includes(buyerReceiptState);
+        const existingReview = buyerReviews.find((review) =>
+          review.seller_id === order.seller_id && review.listing_id === order.listing_id
+        );
 
         return (
           <article key={order.id} id={isBuying ? 'buying' : 'selling'} className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 dark:border-[var(--border)] dark:bg-[var(--surface)]">
@@ -283,6 +347,75 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                 <div><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Platform + delivery fees</dt><dd className="mt-1 font-semibold">{formatKes(fee + deliveryFee)}</dd></div>
                 {order.expires_at && ['PENDING_PAYMENT', 'PAYMENT_PENDING', 'SELLER_PENDING'].includes(orderState) ? <div className="col-span-2 sm:col-span-3"><dt className="text-xs text-[var(--muted)] dark:text-[var(--muted)]">Order expires</dt><dd className="mt-1 font-semibold">{new Date(order.expires_at).toLocaleString('en-KE')}</dd></div> : null}
               </dl>
+
+            {completedReceipt ? (
+              <section className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4" aria-label="Seller feedback">
+                {existingReview ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">Your feedback is recorded</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">Verified purchase · {existingReview.comment ? existingReview.comment : 'Rating submitted without a comment.'}</p>
+                    </div>
+                    <div className="flex items-center gap-1" aria-label={`${existingReview.rating} out of 5 stars`}>
+                      <Star className="h-4 w-4 fill-current text-amber-500" />
+                      <span className="text-sm font-bold">{existingReview.rating}/5</span>
+                    </div>
+                  </div>
+                ) : buyerReviewsError ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-[var(--muted)]">Your review history could not be checked.</p>
+                    <button type="button" onClick={() => mutateBuyerReviews()} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm font-semibold">Retry</button>
+                  </div>
+                ) : reviewOrderId === order.id ? (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold">How was this purchase?</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">Rate the seller based on the item, communication and handover.</p>
+                    </div>
+                    <div className="flex items-center gap-1" role="group" aria-label="Choose seller rating">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-label={`${value} star${value === 1 ? '' : 's'}`}
+                          aria-pressed={reviewRating === value}
+                          onClick={() => setReviewRating(value)}
+                          className="rounded-lg p-2 transition hover:bg-[var(--surface)]"
+                        >
+                          <Star className={`h-6 w-6 ${value <= reviewRating ? 'fill-amber-400 text-amber-500' : 'text-[var(--muted)]'}`} />
+                        </button>
+                      ))}
+                      <span className="ml-2 text-sm font-semibold">{reviewRating}/5</span>
+                    </div>
+                    <label className="block text-sm font-medium" htmlFor={`seller-review-${order.id}`}>What should other students know? <span className="font-normal text-[var(--muted)]">(optional)</span></label>
+                    <textarea
+                      id={`seller-review-${order.id}`}
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value.slice(0, 600))}
+                      rows={3}
+                      maxLength={600}
+                      placeholder="Was the item as described? Was communication and handover clear?"
+                      className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-sm"
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs text-[var(--muted)]">{reviewComment.length}/600</span>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setReviewOrderId(null)} disabled={busyKey !== null} className="rounded-xl border border-[var(--border)] px-3 py-2 text-sm font-semibold">Cancel</button>
+                        <button type="button" onClick={() => submitReview(order)} disabled={busyKey !== null} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{busyKey === `${order.id}:review` ? 'Saving…' : 'Submit review'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">Purchase completed</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">Leave feedback to help other students choose reliable sellers.</p>
+                    </div>
+                    <button type="button" onClick={() => { setReviewOrderId(order.id); setReviewRating(5); setReviewComment(''); }} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">Rate seller</button>
+                  </div>
+                )}
+              </section>
+            ) : null}
 
             {isBuying && orderState === 'DISPUTED' ? <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">Transaction under review. It cannot be released while this dispute is active.</p> : null}
             {!isBuying && orderIsPaid(order) ? (
