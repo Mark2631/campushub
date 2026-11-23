@@ -247,7 +247,7 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
 export type MarketplaceSearchFilters = {
   query?: string;
   category?: string;
-  mode?: 'All' | 'Products' | 'Services' | 'Businesses';
+  mode?: 'All' | 'Products' | 'Housing' | 'Roommates' | 'Services' | 'Businesses';
   minPrice?: number | null;
   maxPrice?: number | null;
   condition?: string;
@@ -311,6 +311,10 @@ export async function searchMarketplaceListings(
 
     if (filters.mode === 'Products') {
       query.eq('listing_type', 'PHYSICAL_PRODUCT');
+    } else if (filters.mode === 'Housing') {
+      query.eq('listing_type', 'PROPERTY_RENTAL');
+    } else if (filters.mode === 'Roommates') {
+      query.eq('listing_type', 'ROOMMATE');
     } else if (filters.mode === 'Services' && selectedCategory !== 'Services') {
       query.eq('condition', 'service');
     }
@@ -489,11 +493,15 @@ export async function insertListing(
       title: validated.value.title,
       description: validated.value.description,
       category: validated.value.category,
-      // The database requires a listing_type. The current sell form supports
-      // products and services; keep checkout limited to priced physical goods.
-      listing_type: validated.value.condition === 'service'
-        ? 'SERVICE_ENQUIRY'
-        : 'PHYSICAL_PRODUCT',
+      // Keep discovery types aligned with the existing listing_type constraint.
+      // Checkout remains available only for PHYSICAL_PRODUCT listings.
+      listing_type: validated.value.category === 'Accommodation'
+        ? 'PROPERTY_RENTAL'
+        : validated.value.category === 'Roommates'
+          ? 'ROOMMATE'
+          : validated.value.condition === 'service'
+            ? 'SERVICE_ENQUIRY'
+            : 'PHYSICAL_PRODUCT',
       price: validated.value.price == null ? null : Number(validated.value.price),
       negotiable: Boolean(data.negotiable),
       condition: validated.value.condition,
@@ -683,9 +691,13 @@ export async function updateListing(
     title: validated.value.title,
     description: validated.value.description,
     category: validated.value.category,
-    listing_type: validated.value.condition === 'service'
-      ? 'SERVICE_ENQUIRY'
-      : 'PHYSICAL_PRODUCT',
+    listing_type: validated.value.category === 'Accommodation'
+      ? 'PROPERTY_RENTAL'
+      : validated.value.category === 'Roommates'
+        ? 'ROOMMATE'
+        : validated.value.condition === 'service'
+          ? 'SERVICE_ENQUIRY'
+          : 'PHYSICAL_PRODUCT',
     price: validated.value.price == null ? null : Number(validated.value.price),
     negotiable: Boolean(data.negotiable),
     condition: validated.value.condition,
