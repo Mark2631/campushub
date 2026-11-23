@@ -42,6 +42,11 @@ test('creating and editing a rental or roommate listing preserves its dedicated 
   assert.match(sell, /listing\.listing_type === 'PROPERTY_RENTAL' \? 'Accommodation'/);
   assert.match(sell, /listing\.listing_type === 'ROOMMATE' \? 'Roommates'/);
   assert.match(sell, /Add the monthly rent so students can compare places/);
+  assert.match(sell, /condition: ''/);
+  assert.match(sell, /Choose condition/);
+  assert.match(sell, /Choose the seller-reported condition/);
+  assert.match(listings, /Choose the seller-reported condition/);
+  assert.match(sell, /nextCategory === 'Services' \? 'service' : nextCategory === 'Refurbished' \? 'refurbished' : ''/);
   assert.match(sell, /Add the neighbourhood or campus area/);
   assert.match(sell, /approximate distance to campus/);
   assert.match(sell, /requiresListingPhoto && images\.length \+ existingMediaUrls\.length === 0/);
