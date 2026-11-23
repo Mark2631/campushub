@@ -33,7 +33,7 @@ test('review uniqueness is checked by buyer, seller and listing before showing f
   const activity = await read('../components/OrdersActivity.tsx');
   const reviews = await read('../lib/reviews.ts');
   assert.match(activity, /review\.seller_id === order\.seller_id && review\.listing_id === order\.listing_id/);
-  assert.match(activity, /Your feedback is recorded/);
+  assert.match(activity, /You already reviewed this seller for this item/);
   assert.match(reviews, /You have already reviewed this seller for this item/);
   assert.match(reviews, /\.eq\('reviewer_id', reviewerId\)/);
   assert.match(reviews, /\.eq\('seller_id', sellerId\)/);
@@ -65,7 +65,7 @@ test('public reputation endpoint exposes aggregate ratings only and is scoped to
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid\) FROM PUBLIC/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid\) TO anon, authenticated/);
   assert.doesNotMatch(migration, /reviewer_id|r\.comment/);
-  assert.match(reviews, /supabase\\.rpc\\('get_public_seller_rating'/);
+  assert.match(reviews, /supabase\.rpc\('get_public_seller_rating'/);
   assert.match(reviews, /average_rating/);
   assert.match(reviews, /review_count/);
   assert.match(detail, /publicSellerRating\.averageRating\.toFixed\(1\)/);
