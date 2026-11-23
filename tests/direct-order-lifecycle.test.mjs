@@ -26,6 +26,7 @@ test('direct orders can be accepted by the seller without being described as pai
   assert.match(activity, /Direct payment is arranged between you and the buyer/);
   assert.match(activity, /CampusTrader does not receive or verify it/);
   assert.match(activity, /Order accepted\. Agree on direct payment and collection details with the buyer/);
+  assert.match(activity, /Order accepted\. Agree on direct payment and delivery arrangements with the buyer/);
   assert.match(activity, /canSellerConfirmHandover = !isBuying && isSelfPickup && orderIsPaid\(order\)/);
 });
 
