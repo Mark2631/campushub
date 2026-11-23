@@ -298,7 +298,7 @@ export default async function ListingPage({ params }: Props) {
                   ) : (
                     <>
                       {listing.status === 'active' && listing.listing_type === 'PHYSICAL_PRODUCT' && typeof listing.price === 'number' && Number.isFinite(listing.price) && listing.price > 0 ? <BuyOrderButton listingId={listing.id} /> : null}
-                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Arrange a viewing" : isRoommateListing ? "Contact about sharing" : "Message Seller"} />
+                      <MessageSellerButton listingId={listing.id} sellerId={listing.seller_id} label={isRentalListing ? "Message about viewing" : isRoommateListing ? "Message about sharing" : "Message Seller"} />
                       <WhatsAppButton listingId={listing.id} />
                       {listing.listing_type === 'PHYSICAL_PRODUCT' && listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
