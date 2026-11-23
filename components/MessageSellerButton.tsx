@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useUser from '../hooks/useUser';
-import { findOrCreateConversation } from '../lib/conversations';
+import { findOrCreateConversation, sendMessage } from '../lib/conversations';
 import { isValidUuid } from '../lib/validation';
 import AuthPromptModal from './AuthPromptModal';
 
@@ -11,11 +11,12 @@ type Props = {
   listingId: string;
   sellerId: string;
   label?: string;
+  starterMessage?: string;
 };
 
-export default function MessageSellerButton({ listingId, sellerId, label = 'Message Seller' }: Props) {
+export default function MessageSellerButton({ listingId, sellerId, label = 'Message Seller', starterMessage }: Props) {
   const router = useRouter();
-  const { user, loading } = useUser();
+  const { user, loading, showToast } = useUser();
   const [status, setStatus] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,16 +39,30 @@ export default function MessageSellerButton({ listingId, sellerId, label = 'Mess
     }
 
     setBusy(true);
-    const { conversation, error } = await findOrCreateConversation(listingId, user.id, sellerId);
-    setBusy(false);
+    setStatus(null);
+    try {
+      const { conversation, error, created } = await findOrCreateConversation(listingId, user.id, sellerId);
 
-    if (error || !conversation) {
-      if (error) console.error('Conversation open failed:', error);
+      if (error || !conversation) {
+        if (error) console.error('Conversation open failed:', error);
+        setStatus('Unable to open conversation. Please try again.');
+        return;
+      }
+
+      if (created && starterMessage?.trim()) {
+        const { error: starterError } = await sendMessage(conversation.id, user.id, starterMessage);
+        if (starterError) {
+          showToast({ type: 'info', message: 'Chat opened, but your opening message could not be sent. You can send it here.' });
+        }
+      }
+
+      router.push(`/messages/${conversation.id}`);
+    } catch (error) {
+      console.error('Conversation open failed:', error);
       setStatus('Unable to open conversation. Please try again.');
-      return;
+    } finally {
+      setBusy(false);
     }
-
-    router.push(`/messages/${conversation.id}`);
   };
 
   if (loading) {
