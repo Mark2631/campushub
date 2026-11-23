@@ -43,11 +43,11 @@ test('seller profile shows feedback from seller-owned reviews allowed by row-lev
   const profile = await read('../app/profile/page.tsx');
   const reviews = await read('../lib/reviews.ts');
   assert.match(profile, /getReviewsReceivedBySeller\(user\.id\)/);
-  assert.match(profile, /Recent buyer feedback/);
+  assert.match(profile, /Seller feedback/);
   assert.match(profile, /sellerReviewAverage\.toFixed\(1\)/);
   assert.match(profile, /sellerReviews\.slice\(0, 3\)/);
   assert.match(reviews, /\.eq\('seller_id', sellerId\)/);
-  assert.match(profile, /Ratings from completed purchases where buyers confirmed receipt/);
+  assert.match(profile, /Private to you · ratings from completed purchases with confirmed receipt/);
 });
 
 test('review form is hidden from seller-side, unpaid, disputed or unconfirmed orders', async () => {
