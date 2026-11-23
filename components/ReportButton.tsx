@@ -2,18 +2,20 @@
 
 import { useState } from 'react';
 import useUser from '../hooks/useUser';
-import { createReport, reportReasons } from '../lib/reports';
+import { createReport, getReportReasons, type ReportContext } from '../lib/reports';
 
 type Props = {
   targetType: 'listing' | 'message' | 'user' | 'business';
   targetId: string;
   label?: string;
+  context?: ReportContext;
 };
 
-export default function ReportButton({ targetType, targetId, label = 'Report' }: Props) {
+export default function ReportButton({ targetType, targetId, label = 'Report', context }: Props) {
   const { user, pushNotification, showToast } = useUser();
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState(reportReasons[0]);
+  const reasons = getReportReasons(targetType, context);
+  const [reason, setReason] = useState(reasons[0]);
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -85,7 +87,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
                 onChange={(event) => setReason(event.target.value)}
                 className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
               >
-                {reportReasons.map((item) => (
+                {reasons.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
@@ -100,7 +102,7 @@ export default function ReportButton({ targetType, targetId, label = 'Report' }:
                 onChange={(event) => setDetails(event.target.value)}
                 rows={4}
                 className="w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                placeholder="Add context for the admin team."
+                placeholder={context === 'product' ? 'Which details or photos differ? Include the item model, condition or agreed price.' : context === 'accommodation' ? 'What was different about the room, rent, deposit or viewing? Include dates and what was agreed.' : context === 'roommate' ? 'What changed about the monthly share, space or house rules? Include relevant details.' : context === 'service' ? 'What was promised, what happened and what price was agreed?' : 'Add context for the admin team.'}
               />
             </label>
 
