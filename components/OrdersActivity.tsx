@@ -393,7 +393,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                       ))}
                       <span className="ml-2 text-sm font-semibold">{reviewRating}/5</span>
                     </div>
-                    <label className="block text-sm font-medium" htmlFor={`seller-review-${order.id}`}>What should other students know? <span className="font-normal text-[var(--muted)]">(optional)</span></label>
+                    <label className="block text-sm font-medium" htmlFor={`seller-review-${order.id}`}>Share how the purchase went <span className="font-normal text-[var(--muted)]">(optional)</span></label>
                     <textarea
                       id={`seller-review-${order.id}`}
                       value={reviewComment}
@@ -415,7 +415,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold">Purchase completed</p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">Leave feedback to help other students choose reliable sellers.</p>
+                      <p className="mt-1 text-xs text-[var(--muted)]">Share how the order went. Your feedback is saved on the seller’s account.</p>
                     </div>
                     <button type="button" onClick={() => { setReviewOrderId(order.id); setReviewRating(5); setReviewComment(''); }} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white">Rate seller</button>
                   </div>
