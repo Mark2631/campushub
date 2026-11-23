@@ -21,6 +21,8 @@ test('direct orders can be accepted by the seller without being described as pai
   const activity = await read('../components/OrdersActivity.tsx');
 
   assert.match(activity, /canSellerRespond = !isBuying && orderCanProgress\(order\)/);
+  assert.match(activity, /Decline this direct-arranged order\?/);
+  assert.match(activity, /Agree any direct-payment resolution with the buyer outside CampusTrader/);
   assert.match(activity, /Direct payment is arranged between you and the buyer/);
   assert.match(activity, /CampusTrader does not receive or verify it/);
   assert.match(activity, /Order accepted\. Agree on direct payment and collection details with the buyer/);
