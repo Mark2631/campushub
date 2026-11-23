@@ -142,7 +142,7 @@ export default function ManualDeliveryRequests() {
           {loading ? 'Refreshing…' : 'Refresh requests'}
         </button>
       </header>
-      {message ? <p role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm ${message.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'}`}>{message.text}</p> : null}
+      {message ? <p role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm ${message.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'}`}>{message.text}</p> : null}
       {loading ? <p className="py-8 text-center text-sm text-zinc-400">Loading delivery requests…</p> : null}
       {!loading && requests.length === 0 ? <div className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-400">No delivery requests yet.</div> : null}
       <div className="space-y-4">
