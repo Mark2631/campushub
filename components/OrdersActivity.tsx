@@ -200,7 +200,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
         const successText = action === 'receipt'
           ? orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Delivery receipt confirmed. Direct payment remains between you and the seller; CampusTrader has not verified it.' : 'Collection confirmed. Direct payment remains between you and the buyer; CampusTrader has not verified it.' : 'Receipt confirmed. The protected transaction is awaiting the configured settlement workflow.'
           : action === 'accept'
-            ? orderIsDirect(order) ? 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
+            ? orderIsDirect(order) ? normalizeState(order.delivery_option) === 'D_DELIVERY' ? 'Order accepted. Agree on direct payment and delivery arrangements with the buyer.' : 'Order accepted. Agree on direct payment and collection details with the buyer.' : 'Order accepted. Payment remains protected; prepare the item for handover.'
             : action === 'decline'
               ? orderIsDirect(order) ? 'Order declined before direct payment was verified by CampusTrader. Agree any outstanding arrangement directly with the buyer.' : 'Order declined. Refund handling remains subject to backend processing.'
               : 'Pickup handover recorded. The buyer can confirm receipt in Orders.';
