@@ -1006,10 +1006,24 @@ function SellPageContent() {
           ) : null}
 
           {formData.category === 'Accommodation' || formData.category === 'Roommates' ? (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-6 text-[var(--muted)]">
-              <p className="font-semibold text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Help students assess the place' : 'Make it easier to find a compatible roommate'}</p>
-              <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, amenities, exact area, move-in date and when a viewing can be arranged.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
-            </div>
+            <>
+              <label className="block space-y-2 text-sm">
+                <span className="font-medium text-[var(--foreground)]">Neighbourhood or campus area *</span>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Gachanka, Makutano, near the main gate"
+                  required
+                  className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20"
+                />
+              </label>
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm leading-6 text-[var(--muted)]">
+                <p className="font-semibold text-[var(--foreground)]">{formData.category === 'Accommodation' ? 'Help students assess the place' : 'Make it easier to find a compatible roommate'}</p>
+                <p className="mt-1">{formData.category === 'Accommodation' ? 'Include deposit, utilities, amenities, exact area, move-in date and when a viewing can be arranged.' : 'Say whether you have a room or are looking for one. Include expected share, house rules, area and move-in date.'}</p>
+              </div>
+            </>
           ) : null}
 
           <label className="space-y-2 text-sm">
