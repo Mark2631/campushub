@@ -77,6 +77,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const [verificationRequest, setVerificationRequest] = useState<VerificationRequestRecord | null>(null);
   const [userListings, setUserListings] = useState<Listing[]>([]);
   const [sellerReviews, setSellerReviews] = useState<SellerReview[]>([]);
+  const [sellerReviewCount, setSellerReviewCount] = useState(0);
+  const [sellerReviewsError, setSellerReviewsError] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(helpRequested);
   const [profileEditOpen, setProfileEditOpen] = useState(false);
@@ -125,7 +127,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
   const loadProfile = useCallback(async () => {
     if (!user) return;
     setProfileLoading(true);
-    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }, { reviews: receivedReviews }] = await Promise.all([
+    const [{ profile: syncedProfile }, { businesses: userBusinesses }, { listings }, { request }, { reviews: receivedReviews, count: receivedReviewCount, error: reviewLoadError }] = await Promise.all([
       upsertProfile(user),
       getBusinessProfiles(user.id),
       getListingsByUser(user.id),
@@ -139,6 +141,8 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
     setBusinesses(userBusinesses);
     setUserListings(listings);
     setSellerReviews(receivedReviews);
+    setSellerReviewCount(receivedReviewCount);
+    setSellerReviewsError(Boolean(reviewLoadError));
     setVerificationRequest(request);
     setProfileLoading(false);
   }, [user]);
@@ -510,11 +514,13 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                     <div className="flex items-center gap-1.5">
                       <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
                       <span className="text-lg font-bold">{sellerReviewAverage.toFixed(1)}</span>
-                      <span className="text-xs text-[var(--muted)]">({sellerReviews.length})</span>
+                      <span className="text-xs text-[var(--muted)]">({sellerReviewCount})</span>
                     </div>
                   ) : null}
                 </div>
-                {sellerReviews.length === 0 ? (
+                {sellerReviewsError ? (
+                  <p className="mt-3 text-sm text-[var(--muted)]">Buyer feedback could not be loaded. Refresh your profile to try again.</p>
+                ) : sellerReviewCount === 0 ? (
                   <p className="mt-3 text-sm text-[var(--muted)]">No buyer feedback yet. Reviews unlock after a completed order and confirmed receipt.</p>
                 ) : (
                   <div className="mt-3 space-y-3">
@@ -530,7 +536,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         {review.comment ? <p className="mt-2 text-sm leading-6 text-[var(--foreground)]">{review.comment}</p> : <p className="mt-2 text-xs text-[var(--muted)]">Rating submitted without a comment.</p>}
                       </article>
                     ))}
-                    {sellerReviews.length > 3 ? <p className="text-xs text-[var(--muted)]">Showing the 3 most recent of {sellerReviews.length} reviews.</p> : null}
+                    {sellerReviewCount > 3 ? <p className="text-xs text-[var(--muted)]">Showing the 3 most recent of {sellerReviewCount} reviews.</p> : null}
                   </div>
                 )}
               </div>
