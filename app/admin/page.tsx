@@ -95,7 +95,7 @@ function EmptyState({ text }: { text: string }) {
 function StatusPill({ status }: { status: string }) {
   const color =
     status === 'verified' || status === 'approved' || status === 'resolved'
-      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+      ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
       : status === 'rejected' || status === 'hidden' || status === 'banned' || status === 'suspended'
         ? 'border-red-500/30 bg-red-500/10 text-red-200'
         : status === 'reviewed' || status === 'reported'
@@ -604,7 +604,7 @@ export default function AdminPage() {
           <div
             className={`mb-6 rounded-2xl border p-4 ${
               message.type === 'success'
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'
+                ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
                 : 'border-red-500/30 bg-red-500/10 text-red-100'
             }`}
           >
@@ -781,7 +781,7 @@ export default function AdminPage() {
                         </button>
                         <button
                           onClick={() => openModal('user_unblock', 'Unblock User', `Unblock ${user.full_name || user.email}?`, user.id, 'user')}
-                          className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                          className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)]"
                         >
                           Unblock
                         </button>
@@ -825,7 +825,7 @@ export default function AdminPage() {
                           <>
                             <button
                               onClick={() => openModal('business_approve', 'Approve Business', `Approve "${business.business_name}"?`, business.id, 'business')}
-                              className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                              className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)]"
                             >
                               Approve
                             </button>
@@ -902,7 +902,7 @@ export default function AdminPage() {
                         {listing.status === 'hidden' && (
                           <button
                             onClick={() => openModal('listing_restore', 'Restore Listing', `Restore "${listing.title}"?`, listing.id, 'listing')}
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                            className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)]"
                           >
                             Restore
                           </button>
@@ -971,7 +971,7 @@ export default function AdminPage() {
                               }
                             }}
                             disabled={workingId === request.id}
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                            className="rounded-xl bg-[var(--brand)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-strong)] disabled:opacity-60"
                           >
                             Approve
                           </button>

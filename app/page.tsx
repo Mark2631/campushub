@@ -6,14 +6,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight, ArrowUpDown, BookOpen, BriefcaseBusiness, Cable, ChefHat,
-  ChevronRight, MapPin, MessageCircle, PackageOpen, Search, ShieldCheck,
-  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle, Sparkles
+  ChevronRight, MapPin, MessageCircle, PackageOpen, Search,
+  SlidersHorizontal, Sofa, Store, Tag, Users, Wrench, X, Shirt, Recycle
 } from 'lucide-react';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import ListingCard from '../components/ListingCard';
 import GettingStartedChecklist from '../components/GettingStartedChecklist';
-import SafetyBanner from '../components/SafetyBanner';
 import useUser from '../hooks/useUser';
 import { getListings, searchMarketplaceListings, type Listing, type MarketplaceSearchFilters } from '../lib/listings';
 import { getItemRequests, deleteItemRequest, type ItemRequest } from '../lib/itemRequests';
@@ -151,12 +150,14 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const categoryParam = params.get('category');
     const modeParam = params.get('mode');
+    const queryParam = params.get('q');
     void Promise.resolve().then(() => {
       if (!active) return;
       if (categoryParam && STANDARD_CATEGORIES.includes(categoryParam as typeof STANDARD_CATEGORIES[number])) {
         setCategory(categoryParam);
         setMode('All');
       }
+      if (queryParam) setQuery(queryParam);
       if (modeParam === 'Products' || modeParam === 'Services' || modeParam === 'Businesses') {
         setMode(modeParam);
         setCategory('All');
@@ -482,13 +483,56 @@ export default function Home() {
           </Link>
         </div>
 
+        <section className="relative z-20 mb-8">
+          <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-[12px] border-2 border-[var(--accent)] bg-[var(--surface)] p-1.5 shadow-[0_5px_18px_rgba(23,33,43,.06)] transition focus-within:shadow-[0_8px_24px_rgba(23,33,43,.10)]">
+            <Search className="ml-2 h-5 w-5 shrink-0 text-[var(--muted)]" />
+            <select
+              aria-label="Search category"
+              value={category}
+              onChange={(event) => { setCategory(event.target.value); setMode('All'); }}
+              className="h-10 max-w-[94px] shrink-0 border-r border-[var(--border)] bg-[var(--surface-muted)] px-1.5 text-[10px] font-semibold text-[var(--foreground)] outline-none sm:max-w-[138px] sm:px-2 sm:text-xs"
+            >
+              <option value="All">All</option>
+              {STANDARD_CATEGORIES.map((name) => <option key={name} value={name}>{name}</option>)}
+            </select>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => window.setTimeout(() => setSearchFocused(false), 140)}
+              onKeyDown={(event) => { if (event.key === 'Escape') setSearchFocused(false); }}
+              type="search"
+              aria-label="Search marketplace"
+              placeholder="Search phones, textbooks, fashion and more..."
+              className="h-11 min-w-0 flex-1 bg-transparent px-1 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] sm:text-[15px]"
+            />
+            {query ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')} className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface-muted)]"><X className="h-4 w-4" /></button> : null}
+            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/50">
+              <SlidersHorizontal className="h-4 w-4 text-[var(--brand)]" /><span className="hidden sm:inline">Filters</span>
+            </button>
+            <button type="submit" className="h-10 shrink-0 rounded-lg bg-[var(--accent)] px-4 text-xs font-extrabold text-[var(--foreground)] transition hover:brightness-95">Search</button>
+          </form>
+
+          {searchFocused && suggestions.length > 0 ? (
+            <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 mx-2 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(13,30,20,.15)]">
+              <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--muted)]">Matching listings</p>
+              {suggestions.map((suggestion) => (
+                <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(suggestion); setSearchFocused(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)]">
+                  <Search className="h-4 w-4 text-[var(--muted)]" />{suggestion}<ArrowRight className="ml-auto h-3.5 w-3.5 text-[var(--muted)]" />
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </section>
+
+
         <section className="mb-7 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-stretch">
           <div className="flex flex-col justify-center rounded-[26px] bg-[var(--brand)] px-5 py-7 text-white sm:px-8 sm:py-9">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/65">The campus marketplace</p>
             <h1 className="mt-3 max-w-2xl text-[30px] font-extrabold leading-[1.06] tracking-[-0.055em] sm:text-[42px]">Good finds.<br className="hidden sm:block" /> Closer to you.</h1>
             <p className="mt-3 max-w-lg text-sm leading-6 text-white/75 sm:text-[15px]">Discover useful things from students and businesses around campus. Browse first, compare your options, then connect directly.</p>
             <div className="mt-6 flex flex-wrap gap-2.5">
-              <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-bold text-[var(--brand)] transition hover:bg-[#f1f4ed]">Explore categories <ArrowRight className="h-3.5 w-3.5" /></Link>
+              <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-5 py-3 text-xs font-extrabold text-[var(--foreground)] transition hover:brightness-95">Explore categories <ArrowRight className="h-3.5 w-3.5" /></Link>
               <Link href="/sell" className="inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-3 text-xs font-bold text-white transition hover:bg-white/10">Start selling</Link>
             </div>
           </div>
@@ -498,7 +542,7 @@ export default function Home() {
               <Image src={heroListing.media_urls[0]} alt={heroListing.title} fill sizes="(min-width: 1024px) 380px, 0px" className="object-cover transition duration-700 group-hover:scale-[1.04]" unoptimized />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] backdrop-blur"><Sparkles className="h-3 w-3" /> On campus now</span>
+                <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] backdrop-blur">Featured nearby</span>
                 <p className="mt-2 line-clamp-2 text-base font-bold">{heroListing.title}</p>
                 <p className="mt-1 text-sm font-semibold">{formatListingPrice(heroListing)}</p>
               </div>
@@ -513,39 +557,6 @@ export default function Home() {
               </div>
             </div>
           )}
-        </section>
-
-        <section className="relative z-20 mb-8">
-          <form onSubmit={submitSearch} className="flex items-center gap-2 rounded-[18px] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_8px_28px_rgba(18,45,30,.05)] transition focus-within:border-[var(--brand)]/60 focus-within:shadow-[0_8px_30px_rgba(18,91,71,.10)]">
-            <Search className="ml-2 h-5 w-5 shrink-0 text-[var(--muted)]" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => window.setTimeout(() => setSearchFocused(false), 140)}
-              onKeyDown={(event) => { if (event.key === 'Escape') setSearchFocused(false); }}
-              type="search"
-              aria-label="Search marketplace"
-              placeholder="Search phones, textbooks, fashion, services..."
-              className="h-11 min-w-0 flex-1 bg-transparent px-1 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] sm:text-[15px]"
-            />
-            {query ? <button type="button" aria-label="Clear search" onClick={() => setQuery('')} className="rounded-full p-2 text-[var(--muted)] hover:bg-[var(--surface-muted)]"><X className="h-4 w-4" /></button> : null}
-            <button type="button" onClick={() => setFiltersOpen(true)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] transition hover:border-[var(--brand)]/50">
-              <SlidersHorizontal className="h-4 w-4 text-[var(--brand)]" /><span className="hidden sm:inline">Filters</span>
-            </button>
-            <button type="submit" className="hidden h-10 shrink-0 rounded-xl bg-[var(--brand)] px-5 text-xs font-bold text-white transition hover:bg-[var(--brand-strong)] sm:block">Search</button>
-          </form>
-
-          {searchFocused && suggestions.length > 0 ? (
-            <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 mx-2 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(13,30,20,.15)]">
-              <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--muted)]">Matching listings</p>
-              {suggestions.map((suggestion) => (
-                <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setQuery(suggestion); setSearchFocused(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-[var(--foreground)] hover:bg-[var(--surface-muted)]">
-                  <Search className="h-4 w-4 text-[var(--muted)]" />{suggestion}<ArrowRight className="ml-auto h-3.5 w-3.5 text-[var(--muted)]" />
-                </button>
-              ))}
-            </div>
-          ) : null}
         </section>
 
         {!user ? (
@@ -746,17 +757,16 @@ export default function Home() {
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]"><Users className="h-5 w-5" /></span>
           </Link>
           <div className="rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-5">
-            <div className="flex items-center gap-2 text-[var(--brand)]"><ShieldCheck className="h-4 w-4" /><span className="text-[10px] font-bold uppercase tracking-[0.14em]">Shop with care</span></div>
-            <p className="mt-2 text-sm font-bold text-[var(--foreground)]">Inspect before you pay.</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">Meet in a public place, check the item and keep payment discussions clear.</p>
-            <Link href="/help" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--brand)]">Marketplace safety <ChevronRight className="h-3.5 w-3.5" /></Link>
+            <div className="flex items-center gap-2 text-[var(--brand)]"><PackageOpen className="h-4 w-4" /><span className="text-[10px] font-bold uppercase tracking-[0.14em]">Order options</span></div>
+            <p className="mt-2 text-sm font-bold text-[var(--foreground)]">Pickup or campus delivery.</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--muted)]">Available collection and delivery choices are shown as you place an order.</p>
+            <Link href="/help" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--brand)]">How ordering works <ChevronRight className="h-3.5 w-3.5" /></Link>
           </div>
         </section>
 
         <section className="border-t border-[var(--border)] pt-5">
           <h2 className="text-xs font-bold text-[var(--foreground)]">CampusTrader: buy and sell on campus in Kenya</h2>
           <p className="mt-2 max-w-4xl text-[11px] leading-5 text-[var(--muted)]">CampusTrader is a student marketplace for second-hand electronics, books, fashion, furniture, food, and services. Browse listings from students and nearby businesses, compare options and connect directly.</p>
-          <div className="mt-4"><SafetyBanner compact /></div>
           <Link href="/help" className="mt-3 inline-flex text-xs font-bold text-[var(--brand)] hover:underline">How CampusTrader works</Link>
         </section>
       </main>

@@ -381,7 +381,7 @@ export default function CommunityGroupPage({ params }: Props) {
       <div className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)]">
         <Header />
         <main className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-4 py-10">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-[var(--border)]" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-300 border-t-[var(--brand)] dark:border-[var(--border)]" />
         </main>
         <BottomNav />
       </div>
@@ -436,7 +436,7 @@ export default function CommunityGroupPage({ params }: Props) {
         </header>
 
         {message ? (
-          <div className={`mb-4 rounded-2xl border p-3 text-sm font-semibold ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
+          <div className={`mb-4 rounded-2xl border p-3 text-sm font-semibold ${message.type === 'success' ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
             {message.text}
           </div>
         ) : null}

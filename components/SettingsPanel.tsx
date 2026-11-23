@@ -44,7 +44,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] dark:text-[var(--muted)]">{user ? 'Signed in as' : 'Account'}</p>
             <p className="mt-2 break-words text-sm font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">{user?.email || 'Not signed in'}</p>
             {isAdmin ? (
-              <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+              <p className="mt-2 inline-flex rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-semibold text-[var(--brand)]">
                 Admin badge
               </p>
             ) : null}
@@ -74,7 +74,7 @@ export default function SettingsPanel({ open, onClose }: Props) {
             </Link>
 
             {isAdmin ? (
-              <Link href="/admin" onClick={onClose} className="block rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] px-4 py-4 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-[var(--border)]/60 dark:bg-emerald-900/20 dark:text-emerald-200">
+              <Link href="/admin" onClick={onClose} className="block rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] px-4 py-4 text-sm font-semibold text-[var(--brand)] transition hover:border-[var(--brand)]/50 dark:border-[var(--border)]/60 dark:bg-[var(--brand-soft)] dark:text-[var(--brand)]">
                 Admin Panel
               </Link>
             ) : null}

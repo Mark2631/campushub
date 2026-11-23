@@ -8,7 +8,6 @@ import MessageSellerButton from '../../../components/MessageSellerButton';
 import BuyOrderButton from '../../../components/BuyOrderButton';
 import ListingInventoryManager from '../../../components/ListingInventoryManager';
 import ReportButton from '../../../components/ReportButton';
-import SafetyBanner from '../../../components/SafetyBanner';
 import SaveListingButton from '../../../components/SaveListingButton';
 import WhatsAppButton from '../../../components/WhatsAppButton';
 import DeliveryRequestButton from '../../../components/DeliveryRequestButton';
@@ -191,7 +190,6 @@ export default async function ListingPage({ params }: Props) {
                   <video src={listing.video_url} controls className="w-full rounded-2xl bg-black" />
                 ) : null}
 
-                <SafetyBanner compact />
               </div>
 
               <div className="space-y-6">
@@ -251,7 +249,7 @@ export default async function ListingPage({ params }: Props) {
                             Gold tick
                           </span>
                         ) : listing.badgeType === 'admin' ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                          <span className="rounded-full bg-[var(--brand-soft)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--brand)]">
                             Admin
                           </span>
                         ) : listing.badgeType === 'blue' ? (
@@ -288,7 +286,7 @@ export default async function ListingPage({ params }: Props) {
                       {listing.business_id && listing.businessDeliveryAvailable && listing.status === 'active' ? (
                         <DeliveryRequestButton listingId={listing.id} listingTitle={listing.title} businessId={listing.business_id} sellerId={listing.seller_id} pickupLocation={listing.location || 'MUST'} />
                       ) : null}
-                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Use WhatsApp only when you are comfortable. Avoid advance payments before inspection.</p>
+                      <p className="text-xs leading-5 text-[var(--muted)] dark:text-[var(--muted)]">Message the seller to confirm availability, collection and payment details.</p>
                     </>
                   )}
                   <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"><p className="text-sm font-semibold">Need help checking this item or arranging delivery?</p><HelpContactAction /></div>

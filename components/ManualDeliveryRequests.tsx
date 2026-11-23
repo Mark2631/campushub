@@ -142,7 +142,7 @@ export default function ManualDeliveryRequests() {
           {loading ? 'Refreshing…' : 'Refresh requests'}
         </button>
       </header>
-      {message ? <p role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm ${message.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100'}`}>{message.text}</p> : null}
+      {message ? <p role={message.type === 'error' ? 'alert' : 'status'} className={`rounded-xl border p-3 text-sm ${message.type === 'error' ? 'border-red-500/30 bg-red-500/10 text-red-100' : 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'}`}>{message.text}</p> : null}
       {loading ? <p className="py-8 text-center text-sm text-zinc-400">Loading delivery requests…</p> : null}
       {!loading && requests.length === 0 ? <div className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-400">No delivery requests yet.</div> : null}
       <div className="space-y-4">
@@ -165,7 +165,7 @@ export default function ManualDeliveryRequests() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Contact</p>
                   <p className="mt-1 font-semibold text-white">{request.contact_name}</p>
                   <a href={`tel:${request.contact_phone}`} className="mt-1 block text-sm text-zinc-200 underline underline-offset-2">{request.contact_phone}</a>
-                  <a href={`https://wa.me/${request.contact_phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-emerald-300 underline underline-offset-2">Message on WhatsApp</a>
+                  <a href={`https://wa.me/${request.contact_phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-xs font-semibold text-[var(--brand)] underline underline-offset-2">Message on WhatsApp</a>
                 </div>
                 <div className="rounded-xl bg-black/50 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Route</p>
@@ -187,7 +187,7 @@ export default function ManualDeliveryRequests() {
                 </label>
               </div>
               <div className="mt-3 flex justify-end">
-                <button type="button" onClick={() => void saveRequest(request.id)} disabled={busyId !== null} className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                <button type="button" onClick={() => void saveRequest(request.id)} disabled={busyId !== null} className="rounded-xl bg-[var(--brand)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                   {busyId === request.id ? 'Saving…' : 'Save update'}
                 </button>
               </div>

@@ -36,7 +36,7 @@ test('orders route reuses the existing buyer and seller activity screen', async 
 test('protected payment stays unavailable unless the server explicitly enables it', async () => {
   const checkout = await read('../components/OrderCheckoutForm.tsx');
   assert.match(checkout, /config\.payment_initiation_available === true/);
-  assert.match(checkout, /Available only when the server enables payment initiation and verification/);
+  assert.match(checkout, /\{protectedPaymentsReady \? \(/);
 });
 
 test('D-Delivery is presented as a request rather than a confirmed rider booking', async () => {
@@ -44,7 +44,8 @@ test('D-Delivery is presented as a request rather than a confirmed rider booking
     read('../components/OrderCheckoutForm.tsx'),
     read('../README.md'),
   ]);
-  assert.match(checkout, /rider assignment is confirmed separately/i);
+  assert.match(checkout, /Request delivery to your campus location\./);
+  assert.match(checkout, /\{canDeliver \? \(/);
   assert.match(readme, /a submitted request is not a confirmed booking/i);
   assert.match(readme, /does not provide automated rider matching, self-service rider onboarding, GPS tracking, or live ETAs/i);
 });

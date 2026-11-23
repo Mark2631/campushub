@@ -69,9 +69,9 @@ export default function PWAInstallPrompt() {
   if (!installEvent || dismissed) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
+    <div className="fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-2xl">
       <div className="flex items-center gap-3">
-        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand)] text-white">
           <Download className="h-5 w-5" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
@@ -81,14 +81,14 @@ export default function PWAInstallPrompt() {
         <button
           type="button"
           onClick={handleInstall}
-          className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+          className="rounded-xl bg-[var(--accent)] px-3 py-2 text-xs font-extrabold text-[var(--foreground)] transition hover:brightness-95"
         >
           Install
         </button>
         <button
           type="button"
           onClick={handleDismiss}
-          className="rounded-xl px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+          className="rounded-xl px-3 py-2 text-xs font-semibold text-[var(--muted)] transition hover:bg-[var(--surface-muted)]"
         >
           Not now
         </button>

@@ -428,7 +428,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
         ) : user ? (
           <>
             {message ? (
-              <div className={`mb-5 rounded-2xl border p-4 text-sm font-semibold ${message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
+              <div className={`mb-5 rounded-2xl border p-4 text-sm font-semibold ${message.type === 'success' ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200'}`}>
                 {message.text}
               </div>
             ) : null}
@@ -450,7 +450,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                         {statusLabel(verificationStatus)}
                       </span>
                       {isAdmin ? (
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin</span>
+                        <span className="rounded-full border border-[var(--border)] bg-[var(--brand-soft)] px-3 py-1 text-xs font-bold text-[var(--brand)]">Admin</span>
                       ) : null}
                     </div>
                     <p className="mt-2 truncate text-sm text-[var(--muted)] dark:text-[var(--muted)]">{profile?.email || user.email}</p>
@@ -660,7 +660,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                     </select>
                     <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf" multiple={verificationType === 'business'} onChange={handleDocumentChange} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm dark:border-[var(--border)] dark:bg-[var(--surface)]" />
                     {documentFiles.length > 0 ? (
-                      <div role="status" aria-live="polite" className="space-y-2 text-sm text-emerald-700 dark:text-emerald-300">
+                      <div role="status" aria-live="polite" className="space-y-2 text-sm text-[var(--brand)]">
                         <p className="font-semibold">{documentFiles.length} document{documentFiles.length === 1 ? "" : "s"} selected</p>
                         {documentFiles.map((file) => <p key={`${file.name}-${file.size}`} className="truncate">{file.name}</p>)}
                       </div>
@@ -696,7 +696,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                   <button type="button" onClick={toggleTheme} className="rounded-2xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] dark:border-[var(--border)] dark:bg-[var(--surface)] dark:text-[var(--foreground)]">
                     {theme === 'dark' ? 'Use light mode' : 'Use dark mode'}
                   </button>
-                  {isAdmin ? <Link href="/admin" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Admin panel</Link> : null}
+                  {isAdmin ? <Link href="/admin" className="rounded-2xl border border-[var(--border)] bg-[var(--brand-soft)] px-4 py-3 text-sm font-semibold text-[var(--brand)]">Admin panel</Link> : null}
                 </div>
               </section>
 
