@@ -146,7 +146,11 @@ test('new seller listings include the required listing_type and use the verified
   const end = source.indexOf('export async function getListingById(', start);
   assert.ok(start >= 0 && end > start, 'insertListing function should exist');
   const fn = source.slice(start, end);
-  assert.match(fn, /listing_type:\s*validated\.value\.condition === 'service'/);
+  assert.match(fn, /listing_type:\s*validated\.value\.category === 'Accommodation'/);
+  assert.match(fn, /validated\.value\.category === 'Roommates'/);
+  assert.match(fn, /validated\.value\.condition === 'service'/);
+  assert.match(fn, /'PROPERTY_RENTAL'/);
+  assert.match(fn, /'ROOMMATE'/);
   assert.match(fn, /institution_id:\s*institutionId/);
   assert.match(fn, /price:\s*validated\.value\.price == null \? null/);
 });
@@ -406,7 +410,9 @@ test('zero and missing listing prices are never presented as free', async () => 
     read('../app/admin/page.tsx'),
   ]);
   assert.ok(listings.includes('const price = parsedPrice === 0 ? null : parsedPrice;'));
-  assert.ok(sell.includes('Leave it blank if buyers should contact you to agree on a price.'));
+  assert.ok(sell.includes('Leave blank if buyers should contact you to agree on a price.'));
+  assert.ok(sell.includes('Monthly rent (KSh)'));
+  assert.ok(sell.includes('Monthly share per person (KSh, optional)'));
   for (const source of [card, detail]) {
     assert.ok(source.includes('Ask seller for price'));
     assert.ok(!source.includes("'Free'"));
