@@ -118,7 +118,7 @@ export default async function ListingPage({ params }: Props) {
   });
   const isRentalListing = listing.listing_type === 'PROPERTY_RENTAL';
   const isRoommateListing = listing.listing_type === 'ROOMMATE';
-  const publicSellerRating = await getPublicSellerRating(listing.seller_id);
+  const publicSellerRating = await getPublicSellerRating(listing.seller_id, listing.id);
   const isLivingListing = isRentalListing || isRoommateListing;
   const unavailableLabel = isLivingListing ? 'Unavailable' : 'Sold';
   const unavailableMessage = isRentalListing
