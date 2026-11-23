@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
             <div
               className={`mt-6 rounded-2xl border p-4 text-sm ${
                 notice.type === 'success'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200'
+                  ? 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
                   : 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200'
               }`}
             >
