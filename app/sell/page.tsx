@@ -988,7 +988,7 @@ function SellPageContent() {
             </label>
           </div>
 
-          {formData.category !== 'Accommodation' && formData.category !== 'Roommates' ? (
+          {!['Services', 'Accommodation', 'Roommates', 'Refurbished'].includes(formData.category) ? (
           <div className="grid gap-4 lg:grid-cols-2">
             <label className="space-y-2 text-sm">
               <span className="font-medium text-[var(--foreground)] dark:text-[var(--foreground)]">Seller-reported condition</span>
