@@ -369,7 +369,7 @@ test('official CampusTrader mark is reused across header, favicon, manifest and 
   assert.ok(layout.includes('https://campus-trader.vercel.app/pwa-icon/512'));
   assert.equal(manifest.icons.find((icon) => icon.sizes === '192x192')?.src, '/pwa-icon/192');
   assert.equal(manifest.icons.find((icon) => icon.sizes === '512x512')?.src, '/pwa-icon/512');
-  assert.ok(serviceWorker.includes('campustrader-offline-v4'));
+  assert.ok(serviceWorker.includes('campustrader-offline-v5'));
   assert.ok(serviceWorker.includes("'/pwa-icon/192'"));
   assert.match(icon192, /renderPwaIcon\(192\)/);
   assert.match(icon512, /renderPwaIcon\(512\)/);
