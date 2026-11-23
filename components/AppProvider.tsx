@@ -387,7 +387,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-100'
                   : toast.type === 'warning'
                     ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100'
-                    : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100'
+                    : 'border-[var(--border)] bg-[var(--brand-soft)] text-[var(--brand)]'
             }`}
           >
             {toast.message}
