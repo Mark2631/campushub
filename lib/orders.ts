@@ -211,6 +211,31 @@ export async function getOrderFulfillmentDetails(orderId: string) {
   return supabase.rpc('get_order_fulfillment_details', { p_order_id: orderId });
 }
 
+/**
+ * Read delivery progress for the signed-in buyer only.
+ * The deliveries RLS policy is authoritative; the explicit buyer filter
+ * narrows the query to this order participant.
+ */
+export async function getBuyerDeliveryStatus(orderId: string, buyerId: string) {
+  if (!isValidUuid(orderId) || !isValidUuid(buyerId)) {
+    return { status: null as string | null, error: new Error('Invalid order.') };
+  }
+
+  const { data, error } = await supabase
+    .from('deliveries')
+    .select('delivery_state')
+    .eq('order_id', orderId)
+    .eq('buyer_id', buyerId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Buyer delivery status lookup failed:', error);
+    return { status: null as string | null, error };
+  }
+
+  return { status: typeof data?.delivery_state === 'string' ? data.delivery_state : null, error: null };
+}
+
 export async function cancelMarketplaceOrder(orderId: string, idempotencyKey: string) {
   return supabase.rpc('cancel_marketplace_order', {
     p_order_id: orderId,
