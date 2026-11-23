@@ -64,7 +64,8 @@ test('public reputation endpoint exposes aggregate ratings only and is scoped to
   assert.match(migration, /completed_order\.buyer_receipt_state = 'confirmed'/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid\) FROM PUBLIC/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid\) TO anon, authenticated/);
-  assert.doesNotMatch(migration, /reviewer_id|r\.comment/);
+  assert.match(migration, /RETURNS TABLE \([\s\S]*?average_rating numeric,[\s\S]*?review_count bigint/);
+  assert.doesNotMatch(migration, /r\.comment/);
   assert.match(reviews, /supabase\.rpc\('get_public_seller_rating'/);
   assert.match(reviews, /average_rating/);
   assert.match(reviews, /review_count/);
