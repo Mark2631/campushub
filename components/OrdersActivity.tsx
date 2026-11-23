@@ -357,7 +357,7 @@ export default function OrdersActivity({ userId, activeTab }: Props) {
                 {existingReview ? (
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold">Your feedback is recorded</p>
+                      <p className="text-sm font-semibold">You already reviewed this seller for this item.</p>
                       <p className="mt-1 text-xs text-[var(--muted)]">Verified purchase · {existingReview.comment ? existingReview.comment : 'Rating submitted without a comment.'}</p>
                     </div>
                     <div className="flex items-center gap-1" aria-label={`${existingReview.rating} out of 5 stars`}>
