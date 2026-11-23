@@ -3,46 +3,46 @@ import { cleanMultilineText, isValidUuid } from './validation';
 
 export type SellerReview = {
   id: string;
-  reviewer_id: string;
-  seller_id: string;
-  listing_id: string | null;
+  reviewer_id?: string;
+  seller_id?: string;
+  listing_id?: string | null;
   rating: number;
   comment: string | null;
   created_at: string;
 };
 
-type ReviewResult = { reviews: SellerReview[]; error: Error | null };
+type ReviewResult = { reviews: SellerReview[]; count: number; error: Error | null };
 
 function toError(value: unknown) {
   return value instanceof Error ? value : new Error('Reviews could not be loaded.');
 }
 
 export async function getReviewsWrittenByBuyer(reviewerId: string): Promise<ReviewResult> {
-  if (!isValidUuid(reviewerId)) return { reviews: [], error: new Error('Invalid reviewer.') };
+  if (!isValidUuid(reviewerId)) return { reviews: [], count: 0, error: new Error('Invalid reviewer.') };
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('reviews')
-    .select('id, reviewer_id, seller_id, listing_id, rating, comment, created_at')
+    .select('id, seller_id, listing_id, rating, comment, created_at', { count: 'exact' })
     .eq('reviewer_id', reviewerId)
     .order('created_at', { ascending: false })
     .limit(100);
 
-  if (error) return { reviews: [], error: toError(error) };
-  return { reviews: (data || []) as SellerReview[], error: null };
+  if (error) return { reviews: [], count: 0, error: toError(error) };
+  return { reviews: (data || []) as SellerReview[], count: count || 0, error: null };
 }
 
 export async function getReviewsReceivedBySeller(sellerId: string): Promise<ReviewResult> {
-  if (!isValidUuid(sellerId)) return { reviews: [], error: new Error('Invalid seller.') };
+  if (!isValidUuid(sellerId)) return { reviews: [], count: 0, error: new Error('Invalid seller.') };
 
   const { data, error } = await supabase
     .from('reviews')
-    .select('id, reviewer_id, seller_id, listing_id, rating, comment, created_at')
+    .select('id, rating, comment, created_at', { count: 'exact' })
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })
     .limit(50);
 
-  if (error) return { reviews: [], error: toError(error) };
-  return { reviews: (data || []) as SellerReview[], error: null };
+  if (error) return { reviews: [], count: 0, error: toError(error) };
+  return { reviews: (data || []) as SellerReview[], count: count || 0, error: null };
 }
 
 export async function createVerifiedPurchaseReview(input: {
