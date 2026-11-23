@@ -52,5 +52,5 @@ export default function WhatsAppButton({ listingId, label = 'Continue on WhatsAp
     }
   };
 
-  return <button type="button" onClick={openWhatsApp} disabled={busy} className="w-full rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">{busy ? 'Opening WhatsApp...' : label}</button>;
+  return <button type="button" onClick={openWhatsApp} disabled={busy} className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 py-4 text-sm font-semibold text-[var(--brand)] transition hover:bg-[var(--brand-soft)] disabled:opacity-60">{busy ? 'Opening WhatsApp...' : label}</button>;
 }
