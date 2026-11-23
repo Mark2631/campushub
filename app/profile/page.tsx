@@ -252,6 +252,7 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
 
     const changedListing = userListings.find((listing) => listing.id === listingId);
     const isLivingListingAction = Boolean(changedListing && isLivingListing(changedListing));
+    const wasAlreadyActive = changedListing?.status === 'active';
     setListingActionId(listingId);
     setMessage(null);
 
@@ -280,7 +281,9 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
           ? isLivingListingAction ? 'Marked as unavailable and removed from the marketplace.' : 'Marked as sold and removed from the marketplace.'
           : status === 'hidden'
             ? 'Listing hidden from the marketplace.'
-            : 'Listing restored to the marketplace.',
+            : isLivingListingAction && wasAlreadyActive
+              ? 'Availability reconfirmed. The listing freshness date has been updated.'
+              : 'Listing restored to the marketplace.',
       });
     } catch (err) {
       console.error('Unexpected listing status update failure:', err);
@@ -554,6 +557,11 @@ function ProfilePageContent({ helpRequested, setupAction }: { helpRequested: boo
                           ) : listing.status === 'sold' && isLivingListing(listing) ? (
                             <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                               {listingActionId === listing.id ? 'Saving…' : 'Make available'}
+                            </button>
+                          ) : null}
+                          {listing.status === 'active' && isLivingListing(listing) ? (
+                            <button disabled={listingActionId !== null} onClick={() => handleListingStatus(listing.id, 'active')} className="rounded-xl border border-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand)] disabled:opacity-60">
+                              {listingActionId === listing.id ? 'Saving…' : 'Confirm available'}
                             </button>
                           ) : null}
                           {listing.status !== 'hidden' ? (
