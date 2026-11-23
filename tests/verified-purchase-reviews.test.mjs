@@ -60,6 +60,8 @@ test('public reputation endpoint exposes aggregate ratings only and is scoped to
   assert.match(migration, /ROUND\(AVG\(r\.rating\)::numeric, 1\)/);
   assert.match(migration, /COUNT\(\*\)::bigint/);
   assert.match(migration, /active_listing\.status = 'active'/);
+  assert.match(migration, /completed_order\.order_state = 'completed'/);
+  assert.match(migration, /completed_order\.buyer_receipt_state = 'confirmed'/);
   assert.match(migration, /REVOKE ALL ON FUNCTION public\.get_public_seller_rating\(uuid\) FROM PUBLIC/);
   assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.get_public_seller_rating\(uuid\) TO anon, authenticated/);
   assert.doesNotMatch(migration, /reviewer_id|r\.comment/);
