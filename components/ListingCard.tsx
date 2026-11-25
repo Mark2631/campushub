@@ -66,7 +66,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           <p className="text-base font-bold text-blue-700 dark:text-blue-300">
             {listing.price != null && listing.price > 0
               ? `KSh ${listing.price.toLocaleString('en-KE')}`
-              : 'Price on request'}
+              : 'Ask seller for price'}
           </p>
           {listing.negotiable ? (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Negotiable</span>
@@ -101,7 +101,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
         </div>
 
         <span className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-blue-700">
-          View details
+          View listing
         </span>
       </div>
     </Link>
