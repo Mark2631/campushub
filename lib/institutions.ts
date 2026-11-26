@@ -44,8 +44,8 @@ export async function getInstitutionIdForCode(code: string) {
         .from('institutions')
         .select('id')
         .ilike('code', normalized)
-        .maybeSingle()
-        .abortSignal(AbortSignal.timeout(2500));
+        .abortSignal(AbortSignal.timeout(2500))
+        .maybeSingle();
 
       if (error) {
         console.error('Institution lookup failed:', error);
