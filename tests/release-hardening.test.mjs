@@ -397,3 +397,46 @@ test('Google favicon uses the stable PNG endpoint and remains crawlable by HTTP 
   assert.ok(route.includes('renderPwaIcon(192)'));
   assert.ok(smoke.includes("'/favicon.png'"));
 });
+
+
+test('institution resolution coalesces concurrent lookups and bounds resolver requests', async () => {
+  const source = await read('../lib/institutions.ts');
+  assert.match(source, /pendingIdLookups = new Map<string, Promise<string \| null>>\(\)/);
+  assert.match(source, /pendingIdLookups\.get\(normalized\)/);
+  assert.match(source, /AbortSignal\.timeout\(2500\)/);
+});
+
+test('marketplace listing reads fail visibly on tenant resolution errors and abort stalled requests', async () => {
+  const source = await read('../lib/listings.ts');
+  const start = source.indexOf('export async function getListings(');
+  const end = source.indexOf('export async function getServiceListings(', start);
+  assert.ok(start >= 0 && end > start, 'public listing feed function should exist');
+  const fn = source.slice(start, end);
+  assert.match(fn, /if \(!institutionId\)[\s\S]*?error: GENERIC_ERROR/);
+  assert.match(fn, /\.abortSignal\(AbortSignal\.timeout\(4500\)\)/);
+  assert.doesNotMatch(fn, /00000000-0000-0000-0000-000000000000/);
+});
+
+test('all historically applied Supabase migrations remain tracked for preview database alignment', async () => {
+  const versions = [
+    '20260511201250_optimize_marketplace_core_indexes_and_storage_policies.sql',
+    '20260823121431_free_business_posting_and_launch_hardening_v3.sql',
+    '20260823123453_seed_must_launch_institution.sql',
+    '20260823123503_launch_feed_and_query_indexes.sql',
+    '20261016164855_restore_public_marketplace_discovery_20261016.sql',
+    '20261016164958_remove_conflicting_restrictive_marketplace_read_20261016.sql',
+    '20261023070232_item_request_owner_and_admin_delete.sql',
+    '20261023070251_item_request_admin_cross_campus_moderation.sql',
+    '20261023070351_item_request_owners_can_view_own_requests.sql',
+    '20261027142907_business_delivery_requests_20261027.sql',
+    '20261027170238_seller_contact_phone_active_listings_20261027.sql',
+    '20261027181101_active_listing_whatsapp_contact.sql',
+    '20261027181909_seller_contact_phone_active_listings.sql',
+    '20261110184942_restore_authenticated_item_request_reads.sql',
+    '20261110185134_enable_completed_order_seller_reviews.sql',
+    '20261114200940_centralize_campustrader_whatsapp_contact_20261114.sql',
+    '20261115024837_campustrader_management_contact_20261115.sql',
+  ];
+  const files = await Promise.all(versions.map((version) => read(`../supabase/migrations/${version}`)));
+  assert.ok(files.every((content) => content.trim().length > 0));
+});
