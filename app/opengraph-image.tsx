@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 import BrandMark from '../components/BrandMark';
 
-export const runtime = 'edge';
 export const alt = 'CampusTrader — student marketplace in Kenya.';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
