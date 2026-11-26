@@ -222,11 +222,20 @@ export async function getListings(limit = 20, offset = 0, institution: string = 
     if (institution) {
       const normalizedInstitution = normalizeInstitution(institution);
       const institutionId = await getInstitutionIdForCode(normalizedInstitution);
-      // Fail closed when an institution cannot be mapped.
-      query.eq('institution_id', institutionId || '00000000-0000-0000-0000-000000000000');
+      // Fail closed and surface a recoverable error instead of silently returning
+      // an empty feed when the tenant resolver is temporarily unavailable.
+      if (!institutionId) {
+        console.error('Listing feed institution could not be resolved:', normalizedInstitution);
+        return { listings: [] as Listing[], error: GENERIC_ERROR };
+      }
+      query.eq('institution_id', institutionId);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1).limit(limit);
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+      .limit(limit)
+      .abortSignal(AbortSignal.timeout(4500));
 
     if (error) {
       logSupabaseError('Error fetching listings:', error);
